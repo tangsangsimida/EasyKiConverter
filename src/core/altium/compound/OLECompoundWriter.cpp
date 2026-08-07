@@ -256,7 +256,14 @@ void OLECompoundWriter::buildSubTree(int nodeIdx) {
     }
 
     QVector<int> sorted = node.children;
-    std::sort(sorted.begin(), sorted.end(), [this](int a, int b) { return m_nodes[a].name < m_nodes[b].name; });
+    std::sort(sorted.begin(), sorted.end(), [this](int a, int b) {
+        const QString& nameA = m_nodes[a].name;
+        const QString& nameB = m_nodes[b].name;
+        if (nameA.size() != nameB.size()) {
+            return nameA.size() < nameB.size();
+        }
+        return nameA.compare(nameB, Qt::CaseInsensitive) < 0;
+    });
 
     m_directory[node.dirIndex].child = buildChildTree(node.dirIndex, sorted);
 
@@ -339,8 +346,9 @@ void OLECompoundWriter::serializeFileHeader(QByteArray& header) const {
     header[offset++] = static_cast<char>((totalFatSectors >> 24) & 0xFF);
 
     // First directory sector
-    // 目录紧跟在 FAT 扇区之后
-    uint32_t firstDirSector = totalFatSectors + 1;  // +1 for header sector
+    // CFB sector 0 starts right after the 512-byte header. FAT occupies sectors
+    // 0..totalFatSectors-1, so the directory begins at sector totalFatSectors.
+    uint32_t firstDirSector = totalFatSectors;
     header[offset++] = static_cast<char>(firstDirSector & 0xFF);
     header[offset++] = static_cast<char>((firstDirSector >> 8) & 0xFF);
     header[offset++] = static_cast<char>((firstDirSector >> 16) & 0xFF);
@@ -358,10 +366,9 @@ void OLECompoundWriter::serializeFileHeader(QByteArray& header) const {
     // First mini FAT sector
     uint32_t firstMiniFatSector = ENDOFCHAIN;
     if (!m_miniFat.isEmpty()) {
-        // Mini FAT 在目录之后
         uint32_t dirSectors =
             (static_cast<uint32_t>(m_directory.size()) * DIR_ENTRY_SIZE + SECTOR_SIZE - 1) / SECTOR_SIZE;
-        firstMiniFatSector = totalFatSectors + 1 + dirSectors;
+        firstMiniFatSector = totalFatSectors + dirSectors;
     }
     header[offset++] = static_cast<char>(firstMiniFatSector & 0xFF);
     header[offset++] = static_cast<char>((firstMiniFatSector >> 8) & 0xFF);
@@ -386,10 +393,10 @@ void OLECompoundWriter::serializeFileHeader(QByteArray& header) const {
     offset += 4;
 
     // DIFAT array (109 entries)
-    // 前 totalFatSectors 个 FAT 扇区号
+    // The first FAT sector is CFB sector 0, immediately after the header.
     for (uint32_t i = 0; i < 109; ++i) {
         if (i < totalFatSectors) {
-            uint32_t sectorNum = i + 1;  // FAT 扇区从 1 开始（0 是头部）
+            uint32_t sectorNum = i;
             header[offset++] = static_cast<char>(sectorNum & 0xFF);
             header[offset++] = static_cast<char>((sectorNum >> 8) & 0xFF);
             header[offset++] = static_cast<char>((sectorNum >> 16) & 0xFF);
@@ -524,26 +531,29 @@ void OLECompoundWriter::finalize() {
         m_directory.append(empty);
     }
 
-    // ---- 构建完整的 FAT（包含所有扇区的条目）----
-    // 文件布局：header(0) | FAT(1..N) | dir(N+1..N+D) | data(N+D+1..)
-    // m_fat 目前只有数据扇区的链式条目，需要补充 header/FAT/dir 的条目
+    // 确保 Mini-FAT 大小是扇区对齐的
+    while (!m_miniFat.isEmpty() && m_miniFat.size() % (SECTOR_SIZE / 4) != 0) {
+        m_miniFat.append(FREESECT);
+    }
+    uint32_t miniFatSectors = static_cast<uint32_t>((m_miniFat.size() * 4 + SECTOR_SIZE - 1) / SECTOR_SIZE);
 
-    // 计算 FAT 扇区数（数据扇区条目数 + header(1) + FAT自身 + dir 扇区数）
-    // FAT 自身扇区数取决于总条目数，需要迭代计算
-    uint32_t actualDataEntries = static_cast<uint32_t>(m_fat.size());
-    // FAT 总条目需要扇区对齐，先估算包含 padding 的条目数
+    // ---- 构建完整的 FAT（包含所有扇区的条目）----
+    // 文件布局：FAT(0..N-1) | dir(N..N+D-1) | MiniFAT | data
+    // m_fat 目前只有数据扇区的链式条目（每个条目=一个数据扇区的后继指针）
+    // 需要补充 FAT/dir/MiniFAT 的条目，并为未使用的数据扇区填 FREESECT
+    uint32_t dataSectorCount = static_cast<uint32_t>(m_fat.size());
     uint32_t entriesPerSector = SECTOR_SIZE / 4;
 
-    // 迭代计算 FAT 扇区数
-    // totalEntries = 1(header) + fatSectors + dirSectors + actualDataEntries（+后续 padding）
+    // 迭代计算 FAT 扇区数（FAT 扇区自身也占条目）
     uint32_t fatSectors = 0;
-    uint32_t totalEntries = 1 + dirSectors + actualDataEntries;
+    uint32_t totalEntries = 0;
     for (int iter = 0; iter < 10; ++iter) {
-        uint32_t newTotal = 1 + fatSectors + dirSectors + actualDataEntries;
-        // 对齐到扇区边界
+        uint32_t newTotal = fatSectors + dirSectors + miniFatSectors + dataSectorCount;
         newTotal = ((newTotal + entriesPerSector - 1) / entriesPerSector) * entriesPerSector;
         uint32_t newFatSectors = newTotal / entriesPerSector;
-        if (newFatSectors == fatSectors && newTotal == totalEntries) break;
+        if (newFatSectors == fatSectors && newTotal == totalEntries) {
+            break;
+        }
         fatSectors = newFatSectors;
         totalEntries = newTotal;
     }
@@ -552,36 +562,52 @@ void OLECompoundWriter::finalize() {
     QVector<uint32_t> fullFat;
     fullFat.reserve(totalEntries);
 
-    // [0] Header sector → FREESECT
-    fullFat.append(FREESECT);
-
-    // [1..fatSectors] FAT sectors → 标记为 FATSECT
+    // [0..fatSectors-1] FAT sectors → 标记为 FATSECT
     for (uint32_t i = 0; i < fatSectors; ++i) {
         fullFat.append(FATSECT);
     }
 
-    // [fatSectors+1 .. fatSectors+dirSectors] Directory sectors → 链式
+    // [fatSectors .. fatSectors+dirSectors-1] Directory sectors → 链式
     for (uint32_t i = 0; i < dirSectors; ++i) {
         if (i < dirSectors - 1) {
-            fullFat.append(fatSectors + 1 + i + 1);  // 指向下一个目录扇区
+            fullFat.append(fatSectors + i + 1);
         } else {
             fullFat.append(ENDOFCHAIN);
         }
     }
 
-    // [fatSectors+1+dirSectors ..] Data sectors → 来自 m_fat
-    fullFat.append(m_fat);
+    // MiniFAT sectors（通过 header 引用，FAT 中标记为普通已分配扇区）
+    for (uint32_t i = 0; i < miniFatSectors; ++i) {
+        fullFat.append(ENDOFCHAIN);
+    }
 
-    // 填充 FREESECT 到 totalEntries（对齐到 FAT 扇区边界）
+    // Data sectors → 来自 m_fat，需要加偏移量
+    // m_fat 中的链式指针是从 0 开始的数据扇区索引，需要偏移到文件中的实际位置
+    uint32_t dataOffset = fatSectors + dirSectors + miniFatSectors;  // 不含 dataSectorCount
+    for (uint32_t val : m_fat) {
+        if (val == ENDOFCHAIN) {
+            fullFat.append(ENDOFCHAIN);
+        } else {
+            fullFat.append(val + dataOffset);
+        }
+    }
+
+    // 填充 FREESECT 到 totalEntries（未使用的数据扇区 + FAT 对齐）
     while (static_cast<uint32_t>(fullFat.size()) < totalEntries) {
         fullFat.append(FREESECT);
     }
 
     m_fat = fullFat;
 
-    // 确保 Mini-FAT 大小是扇区对齐的
-    while (!m_miniFat.isEmpty() && m_miniFat.size() % (SECTOR_SIZE / 4) != 0) {
-        m_miniFat.append(FREESECT);
+    // Directory stream start sectors must be absolute CFB sector numbers.
+    // Mini-stream entries keep their offset inside the root mini stream.
+    for (DirectoryEntry& entry : m_directory) {
+        if (entry.objectType == ObjectType::Root && entry.streamSize > 0) {
+            entry.startSector += dataOffset;
+        } else if (entry.objectType == ObjectType::Stream && entry.streamSize >= MINI_STREAM_CUTOFF &&
+                   entry.startSector != ENDOFCHAIN) {
+            entry.startSector += dataOffset;
+        }
     }
 }
 

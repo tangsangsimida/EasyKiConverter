@@ -478,9 +478,6 @@ void AltiumPcbLibWriter::writePad(AltiumBinaryWriter& writer, const AltiumPcbPad
     // Object ID
     writer.writeUInt8(2);
 
-    // 开始块
-    writer.beginBlock();
-
     // 子记录 1: Designator 字符串块
     writer.writeStringBlock(pad.designator);
 
@@ -534,8 +531,8 @@ void AltiumPcbLibWriter::writePad(AltiumBinaryWriter& writer, const AltiumPcbPad
         writer.writeUInt8(pad.isPlated ? 1 : 0);
 
         // 剩余字节填充到主记录总大小
-        // 当前位置应该是 13 + 4*2 + 4*6 + 4 + 3 + 8 + 1 = 69
-        // 需要填充 PCB_PAD_MAIN_RECORD_SIZE - 69 = PCB_PAD_MAIN_PADDING_SIZE 字节
+        // 当前位置应该是 13 + 4*2 + 4*6 + 4 + 3 + 8 + 1 = 61
+        // 需要填充 PCB_PAD_MAIN_RECORD_SIZE - 61 = PCB_PAD_MAIN_PADDING_SIZE 字节
         QByteArray padding(AltiumConstants::PCB_PAD_MAIN_PADDING_SIZE, 0);
         padding[1] = 0;  // stack mode = Simple
         padding[40] = 1;  // paste mask expansion mode = Rule
@@ -576,8 +573,6 @@ void AltiumPcbLibWriter::writePad(AltiumBinaryWriter& writer, const AltiumPcbPad
         writer.writeBytes(sizeData);
     }
     writer.endBlock();
-
-    writer.endBlock();  // 结束主块
 }
 
 /**

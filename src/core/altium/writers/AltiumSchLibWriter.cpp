@@ -272,6 +272,8 @@ void AltiumSchLibWriter::writeComponentRecord(AltiumBinaryWriter& writer, const 
     params["SourceLibraryName"] = "*";
     params["SheetPartFileName"] = "*";
     params["TargetFileName"] = "*";
+    params["DesignatorPrefix"] = component.designatorPrefix.isEmpty() ? "IC" : component.designatorPrefix;
+    params["ALLPINCOUNT"] = QString::number(component.pins.size());
 
     addUniqueID(params);
     writer.writeCStringParameterBlock(params);

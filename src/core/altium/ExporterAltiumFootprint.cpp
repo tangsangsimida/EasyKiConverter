@@ -7,6 +7,8 @@
 #include <QFile>
 #include <QFileInfo>
 
+#include <climits>
+
 namespace EasyKiConverter {
 
 /**
@@ -92,6 +94,9 @@ AltiumPcbComponent ExporterAltiumFootprint::convertFootprint(const IR::Footprint
     for (const IR::FootprintRegionIR& region : data.regions) {
         component.regions.append(convertSolidRegion(region));
     }
+
+    // 坐标居中：计算所有图元的包围盒，将原点移到中心
+    centerComponent(component);
 
     // 加载 3D 模型
     if (!model3DPath.isEmpty()) {
@@ -271,6 +276,93 @@ QByteArray ExporterAltiumFootprint::loadStepData(const QString& stepPath) {
         return QByteArray();
     }
     return file.readAll();
+}
+
+/**
+ * @brief 将封装图元坐标居中到原点附近
+ * @details 计算所有焊盘/走线/区域的包围盒中心，将所有坐标平移使中心对齐原点。
+ *          Altium Designer 标准库的封装通常以原点为参考点。
+ */
+void ExporterAltiumFootprint::centerComponent(AltiumPcbComponent& component) {
+    if (component.pads.isEmpty() && component.tracks.isEmpty() && component.arcs.isEmpty() &&
+        component.regions.isEmpty() && component.fills.isEmpty()) {
+        return;
+    }
+
+    // 计算包围盒（使用焊盘位置和走线端点）
+    int minX = INT_MAX, minY = INT_MAX, maxX = INT_MIN, maxY = INT_MIN;
+
+    for (const auto& pad : component.pads) {
+        minX = qMin(minX, pad.locationX);
+        minY = qMin(minY, pad.locationY);
+        maxX = qMax(maxX, pad.locationX);
+        maxY = qMax(maxY, pad.locationY);
+    }
+    for (const auto& track : component.tracks) {
+        minX = qMin(minX, qMin(track.startX, track.endX));
+        minY = qMin(minY, qMin(track.startY, track.endY));
+        maxX = qMax(maxX, qMax(track.startX, track.endX));
+        maxY = qMax(maxY, qMax(track.startY, track.endY));
+    }
+    for (const auto& arc : component.arcs) {
+        minX = qMin(minX, arc.centerX - arc.radius);
+        minY = qMin(minY, arc.centerY - arc.radius);
+        maxX = qMax(maxX, arc.centerX + arc.radius);
+        maxY = qMax(maxY, arc.centerY + arc.radius);
+    }
+    for (const auto& fill : component.fills) {
+        minX = qMin(minX, qMin(fill.corner1X, fill.corner2X));
+        minY = qMin(minY, qMin(fill.corner1Y, fill.corner2Y));
+        maxX = qMax(maxX, qMax(fill.corner1X, fill.corner2X));
+        maxY = qMax(maxY, qMax(fill.corner1Y, fill.corner2Y));
+    }
+    for (const auto& region : component.regions) {
+        for (const QPointF& v : region.vertices) {
+            int vx = static_cast<int>(v.x());
+            int vy = static_cast<int>(v.y());
+            minX = qMin(minX, vx);
+            minY = qMin(minY, vy);
+            maxX = qMax(maxX, vx);
+            maxY = qMax(maxY, vy);
+        }
+    }
+
+    if (minX == INT_MAX) return;  // 无图元
+
+    // 计算中心偏移
+    int offsetX = (minX + maxX) / 2;
+    int offsetY = (minY + maxY) / 2;
+
+    // 平移所有图元
+    for (auto& pad : component.pads) {
+        pad.locationX -= offsetX;
+        pad.locationY -= offsetY;
+    }
+    for (auto& track : component.tracks) {
+        track.startX -= offsetX;
+        track.startY -= offsetY;
+        track.endX -= offsetX;
+        track.endY -= offsetY;
+    }
+    for (auto& arc : component.arcs) {
+        arc.centerX -= offsetX;
+        arc.centerY -= offsetY;
+    }
+    for (auto& fill : component.fills) {
+        fill.corner1X -= offsetX;
+        fill.corner1Y -= offsetY;
+        fill.corner2X -= offsetX;
+        fill.corner2Y -= offsetY;
+    }
+    for (auto& region : component.regions) {
+        for (QPointF& v : region.vertices) {
+            v = QPointF(v.x() - offsetX, v.y() - offsetY);
+        }
+    }
+    for (auto& text : component.texts) {
+        text.locationX -= offsetX;
+        text.locationY -= offsetY;
+    }
 }
 
 }  // namespace EasyKiConverter

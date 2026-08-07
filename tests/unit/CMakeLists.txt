@@ -75,6 +75,18 @@ target_include_directories(test_atomic_file_writer PRIVATE
 )
 add_test(NAME test_atomic_file_writer COMMAND test_atomic_file_writer)
 
+add_executable(test_altium_ole test_altium_ole.cpp)
+target_link_libraries(test_altium_ole PRIVATE
+    Qt6::Test
+    EasyKiConverterLib
+)
+target_include_directories(test_altium_ole PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}/src/core/altium
+    ${CMAKE_SOURCE_DIR}
+)
+add_test(NAME test_altium_ole COMMAND test_altium_ole)
+
 add_executable(test_temp_file_manager test_temp_file_manager.cpp)
 target_link_libraries(test_temp_file_manager PRIVATE
     Qt6::Test

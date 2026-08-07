@@ -144,31 +144,31 @@ inline uint8_t toAltiumPinOrientation(IR::PinDirection dir) {
 inline int fromLayerTypeToAltium(IR::LayerType layer) {
     switch (layer) {
         case IR::LayerType::TopCopper:
-            return 1;
+            return 1;   // Top Layer
         case IR::LayerType::BottomCopper:
-            return 2;
+            return 32;  // Bottom Layer
         case IR::LayerType::TopSilk:
-            return 3;
+            return 33;  // Top Overlay
         case IR::LayerType::BottomSilk:
-            return 4;
+            return 34;  // Bottom Overlay
         case IR::LayerType::TopPaste:
-            return 5;
+            return 35;  // Top Paste
         case IR::LayerType::BottomPaste:
-            return 6;
+            return 36;  // Bottom Paste
         case IR::LayerType::TopMask:
-            return 7;
+            return 37;  // Top Solder Mask
         case IR::LayerType::BottomMask:
-            return 8;
+            return 38;  // Bottom Solder Mask
         case IR::LayerType::MultiLayer:
-            return 74;
+            return 74;  // Multi Layer
         case IR::LayerType::EdgeCuts:
-            return 11;
+            return 11;  // Board outline (mechanical)
         case IR::LayerType::KeepOut:
-            return 99;
+            return 56;  // Keepout
         case IR::LayerType::TopAssembly:
-            return 13;
+            return 57;  // Mechanical 1
         case IR::LayerType::BottomAssembly:
-            return 14;
+            return 58;  // Mechanical 2
         default:
             return 0;
     }

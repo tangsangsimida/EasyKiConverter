@@ -95,6 +95,11 @@ private:
      */
     QByteArray loadStepData(const QString& stepPath);
 
+    /**
+     * @brief 将封装图元坐标居中到原点附近
+     */
+    void centerComponent(AltiumPcbComponent& component);
+
     AltiumPcbLibWriter m_writer;
 };
 

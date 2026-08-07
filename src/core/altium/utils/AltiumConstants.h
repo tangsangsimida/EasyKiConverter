@@ -191,8 +191,8 @@ constexpr int DEFAULT_STROKE_WIDTH = 10000;
 /** @brief 焊盘主记录总大小（字节） */
 constexpr int PCB_PAD_MAIN_RECORD_SIZE = 202;
 
-/** @brief 焊盘主记录填充大小（总大小 - 已写入字段 = 202 - 69 = 133） */
-constexpr int PCB_PAD_MAIN_PADDING_SIZE = 133;
+/** @brief 焊盘主记录填充大小（总大小 - 已写入字段 = 202 - 61 = 141） */
+constexpr int PCB_PAD_MAIN_PADDING_SIZE = 141;
 
 /** @brief 焊盘尺寸/形状覆盖数据总大小（字节） */
 constexpr int PCB_PAD_SIZE_OVERRIDE_SIZE = 596;
