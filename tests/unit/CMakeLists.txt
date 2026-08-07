@@ -21,6 +21,7 @@ add_test(NAME test_easyeda_api COMMAND test_easyeda_api)
 add_executable(test_models test_models.cpp)
 target_link_libraries(test_models PRIVATE
     Qt6::Test
+    Qt6::Gui
     EasyKiConverterLib
 )
 target_include_directories(test_models PRIVATE
@@ -409,6 +410,7 @@ add_executable(test_exporter_3d_model
 )
 target_link_libraries(test_exporter_3d_model PRIVATE
     Qt6::Test
+    Qt6::Gui
     EasyKiConverterLib
 )
 target_include_directories(test_exporter_3d_model PRIVATE
