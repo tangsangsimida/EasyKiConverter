@@ -222,9 +222,9 @@ void ParallelExportService::cancelPreload() {
 }
 
 void ParallelExportService::registerStageAndStart(ExportTypeStage* stage,
-                                                   const QString& typeName,
-                                                   const QStringList& componentIds,
-                                                   quint64 runGeneration) {
+                                                  const QString& typeName,
+                                                  const QStringList& componentIds,
+                                                  quint64 runGeneration) {
     QPointer<ExportTypeStage> stagePtr(stage);
     m_exportStages[typeName] = stage;
 

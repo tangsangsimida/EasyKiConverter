@@ -38,6 +38,14 @@ bool OLECompoundWriter::create() {
         return false;
     }
 
+    // 创建根节点并注册到 m_pathToNode，避免 finalize() 中 prepend 导致索引偏移
+    StorageNode rootNode;
+    rootNode.name = "Root Entry";
+    rootNode.fullPath = "";
+    rootNode.dirIndex = 0;
+    m_nodes.append(rootNode);
+    m_pathToNode[""] = 0;
+
     m_initialized = true;
     return true;
 }
@@ -212,6 +220,9 @@ void OLECompoundWriter::serializeDirectoryEntry(const DirectoryEntry& entry, QBy
 
 /**
  * @brief 使用递归构建红黑树子树
+ * @param parentIndex 父节点的目录索引
+ * @param children 子节点的 m_nodes 索引列表（已排序）
+ * @return 子树根节点的目录索引
  */
 uint32_t OLECompoundWriter::buildChildTree(int parentIndex, const QVector<int>& children) {
     if (children.isEmpty()) {
@@ -220,7 +231,8 @@ uint32_t OLECompoundWriter::buildChildTree(int parentIndex, const QVector<int>& 
 
     // 使用二分法构建平衡二叉树
     int mid = children.size() / 2;
-    int rootDirIdx = children[mid];
+    int nodeIdx = children[mid];
+    int rootDirIdx = m_nodes[nodeIdx].dirIndex;
 
     // 递归构建左子树
     QVector<int> leftChildren(children.begin(), children.begin() + mid);
@@ -234,42 +246,42 @@ uint32_t OLECompoundWriter::buildChildTree(int parentIndex, const QVector<int>& 
 }
 
 /**
+ * @brief 递归为存储节点及其子存储构建红黑树
+ * @param nodeIdx 节点在 m_nodes 中的索引
+ */
+void OLECompoundWriter::buildSubTree(int nodeIdx) {
+    StorageNode& node = m_nodes[nodeIdx];
+    if (node.children.isEmpty()) {
+        return;
+    }
+
+    QVector<int> sorted = node.children;
+    std::sort(sorted.begin(), sorted.end(), [this](int a, int b) { return m_nodes[a].name < m_nodes[b].name; });
+
+    m_directory[node.dirIndex].child = buildChildTree(node.dirIndex, sorted);
+
+    // 递归处理子存储节点
+    for (int childIdx : node.children) {
+        if (m_nodes[childIdx].dirIndex >= 0 &&
+            m_directory[m_nodes[childIdx].dirIndex].objectType == ObjectType::Storage) {
+            buildSubTree(childIdx);
+        }
+    }
+}
+
+/**
  * @brief 构建红黑树结构
+ * @details 为所有存储节点构建子节点的平衡二叉树。
+ *          目录条目已在 addStorage() / finalize() 中创建，无需重复创建。
  */
 void OLECompoundWriter::buildRedBlackTree() {
-    // 根节点是目录条目 0
+    // 根节点已在 create() 中创建，dirIndex=0
     int rootNodeIdx = m_pathToNode.value("", -1);
     if (rootNodeIdx < 0) {
         return;
     }
 
-    StorageNode& rootNode = m_nodes[rootNodeIdx];
-    rootNode.dirIndex = 0;
-
-    // 排序子节点
-    QVector<int> sortedChildren = rootNode.children;
-    std::sort(sortedChildren.begin(), sortedChildren.end(), [this](int a, int b) {
-        return m_nodes[a].name < m_nodes[b].name;
-    });
-
-    // 设置 Root Entry 的子节点
-    m_directory[0].child = buildChildTree(0, sortedChildren);
-
-    // 为所有存储节点递归设置子节点
-    for (int nodeIdx : rootNode.children) {
-        StorageNode& node = m_nodes[nodeIdx];
-        if (!node.children.isEmpty()) {
-            // 更新目录条目索引
-            for (int& childNodeIdx : node.children) {
-                m_nodes[childNodeIdx].dirIndex = createDirectoryEntry(m_nodes[childNodeIdx].name, ObjectType::Storage);
-            }
-
-            QVector<int> sorted = node.children;
-            std::sort(sorted.begin(), sorted.end(), [this](int a, int b) { return m_nodes[a].name < m_nodes[b].name; });
-
-            m_directory[node.dirIndex].child = buildChildTree(node.dirIndex, sorted);
-        }
-    }
+    buildSubTree(rootNodeIdx);
 }
 
 /**
@@ -319,8 +331,8 @@ void OLECompoundWriter::serializeFileHeader(QByteArray& header) const {
     // Total directory sectors (4 bytes) = 0 for V3
     offset += 4;
 
-    // 计算 FAT 扇区数
-    uint32_t totalFatSectors = static_cast<uint32_t>(m_fat.size());
+    // 计算 FAT 扇区数（每个扇区 128 个条目）
+    uint32_t totalFatSectors = static_cast<uint32_t>(m_fat.size()) / (SECTOR_SIZE / 4);
     header[offset++] = static_cast<char>(totalFatSectors & 0xFF);
     header[offset++] = static_cast<char>((totalFatSectors >> 8) & 0xFF);
     header[offset++] = static_cast<char>((totalFatSectors >> 16) & 0xFF);
@@ -395,15 +407,8 @@ void OLECompoundWriter::serializeFileHeader(QByteArray& header) const {
  * @brief 最终处理：分配扇区、构建目录、准备序列化数据
  */
 void OLECompoundWriter::finalize() {
-    // 确保根节点存在
-    if (!m_pathToNode.contains("")) {
-        StorageNode rootNode;
-        rootNode.name = "Root Entry";
-        rootNode.fullPath = "";
-        rootNode.dirIndex = 0;
-        m_nodes.prepend(rootNode);
-        m_pathToNode[""] = 0;
-    }
+    // 根节点已在 create() 中创建并注册到 m_pathToNode[""]
+    // 此处无需再创建，避免 prepend 导致索引偏移
 
     // 为所有流创建目录条目并分配数据
     for (const StreamData& stream : m_streams) {
@@ -458,20 +463,26 @@ void OLECompoundWriter::finalize() {
             }
         }
 
-        // 将流添加到父存储的子列表
-        QString parentPath = stream.storagePath;
-        if (parentPath.isEmpty()) {
-            if (m_pathToNode.contains("")) {
-                m_nodes[m_pathToNode[""]].children.append(m_nodes.size() - 1);
-            }
-        }
-        // 注意：流的目录条目已在 createDirectoryEntry 中创建
-        // 但节点还未添加到 m_nodes，这里补充
+        // 创建流节点并添加到正确的父节点
         StorageNode streamNode;
         streamNode.name = stream.streamName;
-        streamNode.fullPath = parentPath.isEmpty() ? stream.streamName : parentPath + "/" + stream.streamName;
+        streamNode.fullPath =
+            stream.storagePath.isEmpty() ? stream.streamName : stream.storagePath + "/" + stream.streamName;
         streamNode.dirIndex = dirIndex;
+        int streamNodeIdx = m_nodes.size();
         m_nodes.append(streamNode);
+
+        if (stream.storagePath.isEmpty()) {
+            // 根流：添加到 Root Entry 的子列表
+            if (m_pathToNode.contains("")) {
+                m_nodes[m_pathToNode[""]].children.append(streamNodeIdx);
+            }
+        } else {
+            // 子流：添加到父 Storage 的子列表
+            if (m_pathToNode.contains(stream.storagePath)) {
+                m_nodes[m_pathToNode[stream.storagePath]].children.append(streamNodeIdx);
+            }
+        }
     }
 
     // 为 Root Entry 分配 Mini-Stream 的存储扇区
@@ -504,16 +515,6 @@ void OLECompoundWriter::finalize() {
     // 构建红黑树
     buildRedBlackTree();
 
-    // 确保 FAT 大小是扇区对齐的
-    while (m_fat.size() % (SECTOR_SIZE / 4) != 0) {
-        m_fat.append(FREESECT);
-    }
-
-    // 确保 Mini-FAT 大小是扇区对齐的
-    while (!m_miniFat.isEmpty() && m_miniFat.size() % (SECTOR_SIZE / 4) != 0) {
-        m_miniFat.append(FREESECT);
-    }
-
     // 确保目录大小是扇区对齐的
     uint32_t dirSectors = (static_cast<uint32_t>(m_directory.size()) * DIR_ENTRY_SIZE + SECTOR_SIZE - 1) / SECTOR_SIZE;
     while (m_directory.size() < static_cast<int>(dirSectors * (SECTOR_SIZE / DIR_ENTRY_SIZE))) {
@@ -521,6 +522,66 @@ void OLECompoundWriter::finalize() {
         empty.objectType = ObjectType::Unknown;
         empty.startSector = FREESECT;
         m_directory.append(empty);
+    }
+
+    // ---- 构建完整的 FAT（包含所有扇区的条目）----
+    // 文件布局：header(0) | FAT(1..N) | dir(N+1..N+D) | data(N+D+1..)
+    // m_fat 目前只有数据扇区的链式条目，需要补充 header/FAT/dir 的条目
+
+    // 计算 FAT 扇区数（数据扇区条目数 + header(1) + FAT自身 + dir 扇区数）
+    // FAT 自身扇区数取决于总条目数，需要迭代计算
+    uint32_t actualDataEntries = static_cast<uint32_t>(m_fat.size());
+    // FAT 总条目需要扇区对齐，先估算包含 padding 的条目数
+    uint32_t entriesPerSector = SECTOR_SIZE / 4;
+
+    // 迭代计算 FAT 扇区数
+    // totalEntries = 1(header) + fatSectors + dirSectors + actualDataEntries（+后续 padding）
+    uint32_t fatSectors = 0;
+    uint32_t totalEntries = 1 + dirSectors + actualDataEntries;
+    for (int iter = 0; iter < 10; ++iter) {
+        uint32_t newTotal = 1 + fatSectors + dirSectors + actualDataEntries;
+        // 对齐到扇区边界
+        newTotal = ((newTotal + entriesPerSector - 1) / entriesPerSector) * entriesPerSector;
+        uint32_t newFatSectors = newTotal / entriesPerSector;
+        if (newFatSectors == fatSectors && newTotal == totalEntries) break;
+        fatSectors = newFatSectors;
+        totalEntries = newTotal;
+    }
+
+    // 构建完整的 FAT 向量
+    QVector<uint32_t> fullFat;
+    fullFat.reserve(totalEntries);
+
+    // [0] Header sector → FREESECT
+    fullFat.append(FREESECT);
+
+    // [1..fatSectors] FAT sectors → 标记为 FATSECT
+    for (uint32_t i = 0; i < fatSectors; ++i) {
+        fullFat.append(FATSECT);
+    }
+
+    // [fatSectors+1 .. fatSectors+dirSectors] Directory sectors → 链式
+    for (uint32_t i = 0; i < dirSectors; ++i) {
+        if (i < dirSectors - 1) {
+            fullFat.append(fatSectors + 1 + i + 1);  // 指向下一个目录扇区
+        } else {
+            fullFat.append(ENDOFCHAIN);
+        }
+    }
+
+    // [fatSectors+1+dirSectors ..] Data sectors → 来自 m_fat
+    fullFat.append(m_fat);
+
+    // 填充 FREESECT 到 totalEntries（对齐到 FAT 扇区边界）
+    while (static_cast<uint32_t>(fullFat.size()) < totalEntries) {
+        fullFat.append(FREESECT);
+    }
+
+    m_fat = fullFat;
+
+    // 确保 Mini-FAT 大小是扇区对齐的
+    while (!m_miniFat.isEmpty() && m_miniFat.size() % (SECTOR_SIZE / 4) != 0) {
+        m_miniFat.append(FREESECT);
     }
 }
 
@@ -558,10 +619,11 @@ bool OLECompoundWriter::saveToFile(const QString& filePath) {
     serializeFileHeader(header);
     file.write(header);
 
-    // 写入 FAT 扇区
-    for (uint32_t i = 0; i < static_cast<uint32_t>(m_fat.size()); ++i) {
+    // 写入 FAT 扇区（每个扇区 128 个条目）
+    uint32_t fatSectorCount = static_cast<uint32_t>(m_fat.size()) / (SECTOR_SIZE / 4);
+    uint32_t entriesPerSector = SECTOR_SIZE / 4;
+    for (uint32_t i = 0; i < fatSectorCount; ++i) {
         QByteArray sectorData(SECTOR_SIZE, 0);
-        uint32_t entriesPerSector = SECTOR_SIZE / 4;
         uint32_t startIdx = i * entriesPerSector;
         for (uint32_t j = 0; j < entriesPerSector && (startIdx + j) < static_cast<uint32_t>(m_fat.size()); ++j) {
             uint32_t val = m_fat[startIdx + j];

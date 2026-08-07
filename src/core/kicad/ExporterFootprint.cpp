@@ -330,8 +330,9 @@ void ExporterFootprint::generateFootprintBaseContent(const IR::FootprintComponen
     content += "    (effects (font (size 1 1) (thickness 0.15)))\n";
     content += "  )\n";
 
-    content +=
-        QString("  (fp_text value %1 (at 0 %2) (layer F.Fab)\n").arg(footprint.name).arg(yHigh + 4 * IR::EASYEDA_PX_TO_MM);
+    content += QString("  (fp_text value %1 (at 0 %2) (layer F.Fab)\n")
+                   .arg(footprint.name)
+                   .arg(yHigh + 4 * IR::EASYEDA_PX_TO_MM);
     content += "    (effects (font (size 1 1) (thickness 0.15)))\n";
     content += "  )\n";
 

@@ -69,6 +69,7 @@ private:
     /** @brief OLE 常量 */
     static constexpr uint32_t ENDOFCHAIN = 0xFFFFFFFE;
     static constexpr uint32_t FREESECT = 0xFFFFFFFF;
+    static constexpr uint32_t FATSECT = 0xFFFFFFFD;
     static constexpr uint32_t NOSTREAM = 0xFFFFFFFF;
     static constexpr uint32_t SECTOR_SIZE = 512;
     static constexpr uint32_t MINI_SECTOR_SIZE = 64;
@@ -108,6 +109,7 @@ private:
     // ---- 目录操作 ----
     int createDirectoryEntry(const QString& name, ObjectType type);
     void buildRedBlackTree();
+    void buildSubTree(int nodeIdx);
     uint32_t buildChildTree(int parentIndex, const QVector<int>& children);
 
     // ---- 数据写入 ----
