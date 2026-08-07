@@ -9,8 +9,6 @@ set(EXPORT_HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/Model3DExportStage.h
     ${CMAKE_CURRENT_SOURCE_DIR}/PreviewImagesExportStage.h
     ${CMAKE_CURRENT_SOURCE_DIR}/DatasheetExportStage.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/SymbolExportWorker.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/FootprintExportWorker.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Model3DExportWorker.h
     ${CMAKE_CURRENT_SOURCE_DIR}/PreviewImagesExportWorker.h
     ${CMAKE_CURRENT_SOURCE_DIR}/DatasheetExportWorker.h
@@ -30,8 +28,6 @@ set(EXPORT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Model3DExportStage.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/PreviewImagesExportStage.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/DatasheetExportStage.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/SymbolExportWorker.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/FootprintExportWorker.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Model3DExportWorker.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/PreviewImagesExportWorker.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/DatasheetExportWorker.cpp

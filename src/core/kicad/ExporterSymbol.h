@@ -25,6 +25,14 @@ public:
     ~ExporterSymbol();
 
     /**
+     * @brief 获取符号库文件扩展名
+     * @return ".kicad_sym"
+     */
+    QString libraryFileExtension() const override {
+        return QStringLiteral(".kicad_sym");
+    }
+
+    /**
      * @brief 导出单个 KiCad 符号。
      *
      * @param symbol 符号 IR 数据

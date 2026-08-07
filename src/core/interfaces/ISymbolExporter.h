@@ -17,6 +17,12 @@ public:
     virtual ~ISymbolExporter() = default;
 
     /**
+     * @brief 获取符号库文件扩展名
+     * @return 文件扩展名（如 ".kicad_sym"、".SchLib"），包含点号
+     */
+    virtual QString libraryFileExtension() const = 0;
+
+    /**
      * @brief 导出单个符号到文件
      * @param symbol 符号 IR 数据
      * @param filePath 输出文件路径

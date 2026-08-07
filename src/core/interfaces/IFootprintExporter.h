@@ -17,6 +17,18 @@ public:
     virtual ~IFootprintExporter() = default;
 
     /**
+     * @brief 获取封装库文件/目录扩展名
+     * @return 文件扩展名（如 ".pretty"、".PcbLib"），包含点号
+     */
+    virtual QString libraryFileExtension() const = 0;
+
+    /**
+     * @brief 输出是否为目录结构
+     * @return true 表示输出为目录（如 KiCad .pretty），false 表示单文件（如 Altium .PcbLib）
+     */
+    virtual bool isDirectoryOutput() const = 0;
+
+    /**
      * @brief 导出单个封装到文件（单 3D 模型路径）
      * @param footprint 封装 IR 数据
      * @param filePath 输出文件路径

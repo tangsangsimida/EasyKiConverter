@@ -186,9 +186,16 @@ void SymbolExportStage::doLibraryExport(const QStringList& componentIds,
     };
 
     QString libName = m_options.libName.isEmpty() ? QStringLiteral("EasyKiConverter") : m_options.libName;
-    // 根据目标格式选择文件扩展名
-    const QString fileExt =
-        (m_options.targetFormat == TargetEdaFormat::Altium) ? QStringLiteral(".SchLib") : QStringLiteral(".kicad_sym");
+
+    // 创建导出器（提前创建以获取格式自描述信息）
+    auto exporter = ExporterFactory::createSymbolExporter(m_options.targetFormat);
+    if (!exporter) {
+        abortExport(QStringLiteral("Failed to create symbol exporter for target format"));
+        return;
+    }
+
+    // 从导出器获取文件扩展名
+    const QString fileExt = exporter->libraryFileExtension();
     QString fileName = libName + fileExt;
     QString outputDir = m_options.outputPath;
     if (outputDir.isEmpty()) {
@@ -268,11 +275,6 @@ void SymbolExportStage::doLibraryExport(const QStringList& componentIds,
     bool exportSuccess = false;
     QString libraryDescription = m_options.symbolLibraryDescription;
     {
-        auto exporter = ExporterFactory::createSymbolExporter(m_options.targetFormat);
-        if (!exporter) {
-            abortExport(QStringLiteral("Failed to create symbol exporter for target format"));
-            return;
-        }
         bool appendMode = !m_options.overwriteExistingFiles;
         // 转换旧类型列表到 IR 类型
         QList<IR::SymbolComponentIR> irSymbolList;

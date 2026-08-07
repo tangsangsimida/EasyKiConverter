@@ -451,8 +451,6 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
     };
 
     QString libName = m_options.libName.isEmpty() ? QStringLiteral("EasyKiConverter") : m_options.libName;
-    // 根据目标格式选择输出路径
-    const bool isAltium = (m_options.targetFormat == TargetEdaFormat::Altium);
     QString outputDir = m_options.outputPath;
     if (outputDir.isEmpty()) {
         outputDir = QDir::currentPath() + QStringLiteral("/export");
@@ -464,23 +462,33 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
         return;
     }
 
-    // Altium: 单个 .PcbLib 文件；KiCad: .pretty 目录
+    // 创建导出器（提前创建以获取格式自描述信息）
+    auto exporter = ExporterFactory::createFootprintExporter(m_options.targetFormat);
+    if (!exporter) {
+        abortExport(QStringLiteral("Failed to create footprint exporter for target format"));
+        return;
+    }
+
+    const QString fileExt = exporter->libraryFileExtension();
+    const bool isDirOutput = exporter->isDirectoryOutput();
+
+    // 根据输出结构类型选择路径
     QString finalPath;
     QString tempPath;
-    if (isAltium) {
-        finalPath = outputDir + QDir::separator() + libName + QStringLiteral(".PcbLib");
-        tempPath = m_tempManager.createSymbolTempPath(libName, QStringLiteral(".PcbLib"));
+    if (isDirOutput) {
+        finalPath = outputDir + QDir::separator() + libName + fileExt;
+        tempPath = m_tempManager.createTempDirectoryPath(libName + fileExt);
     } else {
-        finalPath = outputDir + QDir::separator() + libName + QStringLiteral(".pretty");
-        tempPath = m_tempManager.createTempDirectoryPath(libName + QStringLiteral(".pretty"));
+        finalPath = outputDir + QDir::separator() + libName + fileExt;
+        tempPath = m_tempManager.createSymbolTempPath(libName, fileExt);
     }
     if (tempPath.isEmpty()) {
         abortExport(QStringLiteral("Failed to create temp path"));
         return;
     }
 
-    // KiCad: 追加/更新封装库时，先将已有 .kicad_mod 复制到临时目录
-    if (!isAltium) {
+    // 目录输出时：追加/更新封装库，先将已有文件复制到临时目录
+    if (isDirOutput) {
         const bool preserveExistingFootprints =
             QDir(finalPath).exists() &&
             (!m_options.overwriteExistingFiles || m_options.updateMode || m_options.retryMode);
@@ -500,18 +508,11 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
     }
 
     qDebug() << "FootprintExportStage: Exporting" << footprintList.size() << "footprints to temp:" << tempPath;
-    qDebug() << "FootprintExportStage: targetFormat:" << static_cast<int>(m_options.targetFormat) << "("
-             << (m_options.targetFormat == TargetEdaFormat::Altium ? "Altium" : "KiCad") << ")";
+    qDebug() << "FootprintExportStage: fileExt:" << fileExt << "isDirOutput:" << isDirOutput;
 
     bool exportSuccess = false;
     QString libraryDescription = m_options.footprintLibraryDescription;
     {
-        auto exporter = ExporterFactory::createFootprintExporter(m_options.targetFormat);
-        qDebug() << "FootprintExportStage: exporter created:" << (exporter != nullptr);
-        if (!exporter) {
-            abortExport(QStringLiteral("Failed to create footprint exporter for target format"));
-            return;
-        }
         const bool preferWrl = m_options.needsModel3DWrl();
         const bool exportStep = m_options.needsModel3DStep();
         QString libraryKeywords = m_options.footprintLibraryKeywords;
@@ -546,7 +547,7 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
 
     // 提交临时文件/目录到最终路径
     bool commitSuccess = false;
-    if (isAltium) {
+    if (!isDirOutput) {
         commitSuccess = m_tempManager.commitWithBackup(tempPath, finalPath);
     } else {
         commitSuccess = m_tempManager.commitDirectoryWithBackup(tempPath, finalPath);
@@ -559,8 +560,8 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
         return;
     }
 
-    // KiCad 特有：注册库
-    if (!isAltium && !libraryDescription.isEmpty()) {
+    // 目录输出模式下注册库（如 KiCad 库表）
+    if (isDirOutput && !libraryDescription.isEmpty()) {
         KiCadLibraryTableManager::registerFootprintLibrary(outputDir, libName, finalPath, libraryDescription);
     }
 

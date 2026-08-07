@@ -14,6 +14,14 @@ namespace EasyKiConverter {
 class ExporterAltiumSymbol : public ISymbolExporter {
 public:
     /**
+     * @brief 获取符号库文件扩展名
+     * @return ".SchLib"
+     */
+    QString libraryFileExtension() const override {
+        return QStringLiteral(".SchLib");
+    }
+
+    /**
      * @brief 导出单个符号到 SchLib 文件
      */
     bool exportSymbol(const IR::SymbolComponentIR& symbol, const QString& filePath) override;

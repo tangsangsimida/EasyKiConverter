@@ -14,6 +14,22 @@ namespace EasyKiConverter {
 class ExporterAltiumFootprint : public IFootprintExporter {
 public:
     /**
+     * @brief 获取封装库文件扩展名
+     * @return ".PcbLib"
+     */
+    QString libraryFileExtension() const override {
+        return QStringLiteral(".PcbLib");
+    }
+
+    /**
+     * @brief 输出是否为目录结构
+     * @return false（Altium 封装库为单个 .PcbLib 文件）
+     */
+    bool isDirectoryOutput() const override {
+        return false;
+    }
+
+    /**
      * @brief 导出单个封装到 PcbLib 文件
      */
     bool exportFootprint(const IR::FootprintComponentIR& footprint,

@@ -79,6 +79,9 @@ void Model3DExportWorker::run() {
         return;
     }
 
+    // [NOTE] 直接使用 Exporter3DModel 而非 ExporterFactory，因为 Worker 依赖其
+    // downloadObjDataSync/downloadStepDataSync 等 EasyEDA 特有方法，
+    // 这些方法不在 IModel3DExporter 通用接口中。
     Exporter3DModel exporter;
 
     // 获取模型名称用于命名文件（仅在需要时）

@@ -221,6 +221,46 @@ void ParallelExportService::cancelPreload() {
     writeExportDetailedReport(QStringLiteral("preload-cancelled"));
 }
 
+void ParallelExportService::registerStageAndStart(ExportTypeStage* stage,
+                                                   const QString& typeName,
+                                                   const QStringList& componentIds,
+                                                   quint64 runGeneration) {
+    QPointer<ExportTypeStage> stagePtr(stage);
+    m_exportStages[typeName] = stage;
+
+    connect(stage,
+            &ExportTypeStage::itemStatusChanged,
+            this,
+            [this, typeName, runGeneration](const QString& componentId, const ExportItemStatus& status) {
+                if (runGeneration != m_activeRunGeneration) {
+                    return;
+                }
+                onExportItemStatusChanged(componentId, typeName, status);
+            });
+    connect(stage,
+            &ExportTypeStage::progressChanged,
+            this,
+            [this, typeName, runGeneration](const ExportTypeProgress& progress) {
+                if (runGeneration != m_activeRunGeneration) {
+                    return;
+                }
+                onExportTypeProgressChanged(typeName, progress);
+            });
+    connect(stage,
+            &ExportTypeStage::completed,
+            this,
+            [this, stagePtr, typeName, runGeneration](int success, int failed, int skipped) {
+                if (runGeneration != m_activeRunGeneration) {
+                    if (stagePtr) {
+                        discardExportStage(typeName, stagePtr.data());
+                    }
+                    return;
+                }
+                onExportTypeCompleted(typeName, success, failed, skipped);
+            });
+    stage->start(componentIds, m_cachedData);
+}
+
 void ParallelExportService::startExport() {
     if (m_progress.currentStage == ExportOverallProgress::Stage::Exporting) {
         qWarning() << "ParallelExportService: Export already in progress";
@@ -355,197 +395,32 @@ void ParallelExportService::startExport() {
     // 创建并启动各导出类型的Stage
     if (enableSymbol) {
         auto* stage = new SymbolExportStage(this);
-        QPointer<ExportTypeStage> stagePtr(stage);
         stage->setOptions(m_options);
-        m_exportStages[QStringLiteral("Symbol")] = stage;
-
-        connect(stage,
-                &SymbolExportStage::itemStatusChanged,
-                this,
-                [this, runGeneration](const QString& componentId, const ExportItemStatus& status) {
-                    if (runGeneration != m_activeRunGeneration) {
-                        return;
-                    }
-                    onExportItemStatusChanged(componentId, QStringLiteral("Symbol"), status);
-                });
-        connect(stage,
-                &SymbolExportStage::progressChanged,
-                this,
-                [this, runGeneration](const ExportTypeProgress& progress) {
-                    if (runGeneration != m_activeRunGeneration) {
-                        return;
-                    }
-                    onExportTypeProgressChanged(QStringLiteral("Symbol"), progress);
-                });
-        connect(stage,
-                &SymbolExportStage::completed,
-                this,
-                [this, stagePtr, runGeneration](int success, int failed, int skipped) {
-                    if (runGeneration != m_activeRunGeneration) {
-                        if (stagePtr) {
-                            discardExportStage(QStringLiteral("Symbol"), stagePtr.data());
-                        }
-                        return;
-                    }
-                    onExportTypeCompleted(QStringLiteral("Symbol"), success, failed, skipped);
-                });
-        stage->start(exportableComponentIds, m_cachedData);
+        registerStageAndStart(stage, QStringLiteral("Symbol"), exportableComponentIds, runGeneration);
     }
 
     if (enableFootprint) {
         auto* stage = new FootprintExportStage(this);
-        QPointer<ExportTypeStage> stagePtr(stage);
         stage->setOptions(m_options);
-        m_exportStages[QStringLiteral("Footprint")] = stage;
-
-        connect(stage,
-                &FootprintExportStage::itemStatusChanged,
-                this,
-                [this, runGeneration](const QString& componentId, const ExportItemStatus& status) {
-                    if (runGeneration != m_activeRunGeneration) {
-                        return;
-                    }
-                    onExportItemStatusChanged(componentId, QStringLiteral("Footprint"), status);
-                });
-        connect(stage,
-                &FootprintExportStage::progressChanged,
-                this,
-                [this, runGeneration](const ExportTypeProgress& progress) {
-                    if (runGeneration != m_activeRunGeneration) {
-                        return;
-                    }
-                    onExportTypeProgressChanged(QStringLiteral("Footprint"), progress);
-                });
-        connect(stage,
-                &FootprintExportStage::completed,
-                this,
-                [this, stagePtr, runGeneration](int success, int failed, int skipped) {
-                    if (runGeneration != m_activeRunGeneration) {
-                        if (stagePtr) {
-                            discardExportStage(QStringLiteral("Footprint"), stagePtr.data());
-                        }
-                        return;
-                    }
-                    onExportTypeCompleted(QStringLiteral("Footprint"), success, failed, skipped);
-                });
-        stage->start(exportableComponentIds, m_cachedData);
+        registerStageAndStart(stage, QStringLiteral("Footprint"), exportableComponentIds, runGeneration);
     }
 
     if (enableModel3D) {
         auto* stage = new Model3DExportStage(this);
-        QPointer<ExportTypeStage> stagePtr(stage);
         stage->setOptions(m_options);
-        m_exportStages[QStringLiteral("Model3D")] = stage;
-
-        connect(stage,
-                &Model3DExportStage::itemStatusChanged,
-                this,
-                [this, runGeneration](const QString& componentId, const ExportItemStatus& status) {
-                    if (runGeneration != m_activeRunGeneration) {
-                        return;
-                    }
-                    onExportItemStatusChanged(componentId, QStringLiteral("Model3D"), status);
-                });
-        connect(stage,
-                &Model3DExportStage::progressChanged,
-                this,
-                [this, runGeneration](const ExportTypeProgress& progress) {
-                    if (runGeneration != m_activeRunGeneration) {
-                        return;
-                    }
-                    onExportTypeProgressChanged(QStringLiteral("Model3D"), progress);
-                });
-        connect(stage,
-                &Model3DExportStage::completed,
-                this,
-                [this, stagePtr, runGeneration](int success, int failed, int skipped) {
-                    if (runGeneration != m_activeRunGeneration) {
-                        if (stagePtr) {
-                            discardExportStage(QStringLiteral("Model3D"), stagePtr.data());
-                        }
-                        return;
-                    }
-                    onExportTypeCompleted(QStringLiteral("Model3D"), success, failed, skipped);
-                });
-        stage->start(exportableComponentIds, m_cachedData);
+        registerStageAndStart(stage, QStringLiteral("Model3D"), exportableComponentIds, runGeneration);
     }
 
     if (enablePreview) {
         auto* stage = new PreviewImagesExportStage(this);
-        QPointer<ExportTypeStage> stagePtr(stage);
         stage->setOptions(m_options);
-        m_exportStages[QStringLiteral("PreviewImages")] = stage;
-
-        connect(stage,
-                &PreviewImagesExportStage::itemStatusChanged,
-                this,
-                [this, runGeneration](const QString& componentId, const ExportItemStatus& status) {
-                    if (runGeneration != m_activeRunGeneration) {
-                        return;
-                    }
-                    onExportItemStatusChanged(componentId, QStringLiteral("PreviewImages"), status);
-                });
-        connect(stage,
-                &PreviewImagesExportStage::progressChanged,
-                this,
-                [this, runGeneration](const ExportTypeProgress& progress) {
-                    if (runGeneration != m_activeRunGeneration) {
-                        return;
-                    }
-                    onExportTypeProgressChanged(QStringLiteral("PreviewImages"), progress);
-                });
-        connect(stage,
-                &PreviewImagesExportStage::completed,
-                this,
-                [this, stagePtr, runGeneration](int success, int failed, int skipped) {
-                    if (runGeneration != m_activeRunGeneration) {
-                        if (stagePtr) {
-                            discardExportStage(QStringLiteral("PreviewImages"), stagePtr.data());
-                        }
-                        return;
-                    }
-                    onExportTypeCompleted(QStringLiteral("PreviewImages"), success, failed, skipped);
-                });
-        stage->start(exportableComponentIds, m_cachedData);
+        registerStageAndStart(stage, QStringLiteral("PreviewImages"), exportableComponentIds, runGeneration);
     }
 
     if (enableDatasheet) {
         auto* stage = new DatasheetExportStage(this);
-        QPointer<ExportTypeStage> stagePtr(stage);
         stage->setOptions(m_options);
-        m_exportStages[QStringLiteral("Datasheet")] = stage;
-
-        connect(stage,
-                &DatasheetExportStage::itemStatusChanged,
-                this,
-                [this, runGeneration](const QString& componentId, const ExportItemStatus& status) {
-                    if (runGeneration != m_activeRunGeneration) {
-                        return;
-                    }
-                    onExportItemStatusChanged(componentId, QStringLiteral("Datasheet"), status);
-                });
-        connect(stage,
-                &DatasheetExportStage::progressChanged,
-                this,
-                [this, runGeneration](const ExportTypeProgress& progress) {
-                    if (runGeneration != m_activeRunGeneration) {
-                        return;
-                    }
-                    onExportTypeProgressChanged(QStringLiteral("Datasheet"), progress);
-                });
-        connect(stage,
-                &DatasheetExportStage::completed,
-                this,
-                [this, stagePtr, runGeneration](int success, int failed, int skipped) {
-                    if (runGeneration != m_activeRunGeneration) {
-                        if (stagePtr) {
-                            discardExportStage(QStringLiteral("Datasheet"), stagePtr.data());
-                        }
-                        return;
-                    }
-                    onExportTypeCompleted(QStringLiteral("Datasheet"), success, failed, skipped);
-                });
-        stage->start(exportableComponentIds, m_cachedData);
+        registerStageAndStart(stage, QStringLiteral("Datasheet"), exportableComponentIds, runGeneration);
     }
 
     // 重试模式仅对本次导出生效，避免影响后续正常导出

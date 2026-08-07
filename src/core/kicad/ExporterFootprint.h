@@ -22,6 +22,22 @@ public:
     ~ExporterFootprint();
 
     /**
+     * @brief 获取封装库目录扩展名
+     * @return ".pretty"
+     */
+    QString libraryFileExtension() const override {
+        return QStringLiteral(".pretty");
+    }
+
+    /**
+     * @brief 输出是否为目录结构
+     * @return true（KiCad 封装库为 .pretty 目录）
+     */
+    bool isDirectoryOutput() const override {
+        return true;
+    }
+
+    /**
      * @brief 导出单个 KiCad 封装（单 3D 模型）。
      *
      * @param footprint 封装 IR 数据
