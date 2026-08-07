@@ -133,5 +133,46 @@ inline uint8_t toAltiumPinOrientation(IR::PinDirection dir) {
     }
 }
 
+/**
+ * @brief IR LayerType 枚举 → Altium Protel 层编号
+ * @param layer IR 通用层类型
+ * @return Altium 兼容的层编号，无法映射时返回 0
+ *
+ * @note EasyEDA 和 Altium 共享 Protel 层编号体系，大部分可直接映射。
+ *       此函数替代原 EasyedaLayerMap::fromLayerTypeToAltium()。
+ */
+inline int fromLayerTypeToAltium(IR::LayerType layer) {
+    switch (layer) {
+        case IR::LayerType::TopCopper:
+            return 1;
+        case IR::LayerType::BottomCopper:
+            return 2;
+        case IR::LayerType::TopSilk:
+            return 3;
+        case IR::LayerType::BottomSilk:
+            return 4;
+        case IR::LayerType::TopPaste:
+            return 5;
+        case IR::LayerType::BottomPaste:
+            return 6;
+        case IR::LayerType::TopMask:
+            return 7;
+        case IR::LayerType::BottomMask:
+            return 8;
+        case IR::LayerType::MultiLayer:
+            return 74;
+        case IR::LayerType::EdgeCuts:
+            return 11;
+        case IR::LayerType::KeepOut:
+            return 99;
+        case IR::LayerType::TopAssembly:
+            return 13;
+        case IR::LayerType::BottomAssembly:
+            return 14;
+        default:
+            return 0;
+    }
+}
+
 }  // namespace AltiumLayerMap
 }  // namespace EasyKiConverter

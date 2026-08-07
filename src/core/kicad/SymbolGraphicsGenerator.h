@@ -1,7 +1,6 @@
 #ifndef SYMBOLGRAPHICSGENERATOR_H
 #define SYMBOLGRAPHICSGENERATOR_H
 
-#include "core/ir/EasyedaPinTypeMap.h"
 #include "core/ir/SymbolIR.h"
 
 #include <QString>

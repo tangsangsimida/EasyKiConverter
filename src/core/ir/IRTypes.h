@@ -14,6 +14,14 @@
 namespace EasyKiConverter {
 namespace IR {
 
+// ==================== EasyEDA 单位转换常量 ====================
+
+/** @brief EasyEDA 坐标单位 → mm 转换因子（1 EasyEDA 单位 = 10 mil = 0.254 mm） */
+constexpr double EASYEDA_PX_TO_MM = 0.254;
+
+/** @brief EasyEDA pt → mm 转换因子 */
+constexpr double EASYEDA_PT_TO_MM = 0.352778;
+
 /**
  * @brief 焊盘形状枚举
  * @note 替代 FootprintPad.shape 原始字符串（"RECT"/"ELLIPSE"/"POLYGON" 等）

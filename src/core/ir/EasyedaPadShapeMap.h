@@ -57,30 +57,6 @@ inline PadShape toPadShape(const QString& easyedaShape) {
     return PadShape::Rect;  // 默认
 }
 
-/**
- * @brief PadShape -> KiCad 焊盘形状字符串
- * @param shape 焊盘形状枚举
- * @return KiCad 格式的形状字符串
- */
-inline QString toKicadPadShape(PadShape shape) {
-    switch (shape) {
-        case PadShape::Rect:
-            return QStringLiteral("rect");
-        case PadShape::Ellipse:
-            return QStringLiteral("circle");
-        case PadShape::Oval:
-            return QStringLiteral("oval");
-        case PadShape::RoundRect:
-            return QStringLiteral("roundrect");
-        case PadShape::Polygon:
-            return QStringLiteral("custom");
-        case PadShape::Trapezoid:
-            return QStringLiteral("trapezoid");
-        default:
-            return QStringLiteral("rect");
-    }
-}
-
 }  // namespace EasyedaPadShapeMap
 }  // namespace IR
 }  // namespace EasyKiConverter

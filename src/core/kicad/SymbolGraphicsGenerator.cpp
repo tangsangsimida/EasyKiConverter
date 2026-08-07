@@ -1,6 +1,6 @@
 #include "SymbolGraphicsGenerator.h"
 
-#include "core/ir/EasyedaPinTypeMap.h"
+#include "KiCadTypeMap.h"
 
 #include <QDebug>
 #include <QRegularExpression>
@@ -65,7 +65,7 @@ QString SymbolGraphicsGenerator::generatePin(const IR::SymbolPinIR& pin) const {
     }
 
     // 使用 IR 映射获取 KiCad 引脚电气类型
-    const char* kicadPinType = IR::EasyedaPinTypeMap::toKicadPinType(pin.electricalType);
+    const char* kicadPinType = KiCadTypeMap::toKicadPinType(pin.electricalType);
 
     // 引脚样式：根据 hasDot 和 hasClock 计算
     QString kicadPinStyle = "line";
@@ -89,7 +89,7 @@ QString SymbolGraphicsGenerator::generatePin(const IR::SymbolPinIR& pin) const {
     }
 
     // 使用 IR 方向枚举获取 KiCad 角度
-    double kicadOrientation = IR::EasyedaPinTypeMap::toKicadAngle(pin.direction);
+    double kicadOrientation = KiCadTypeMap::toKicadAngle(pin.direction);
 
     content += QString("    (pin %1 %2\n").arg(kicadPinType, kicadPinStyle);
     content += QString("      (at %1 %2 %3)\n").arg(x, 0, 'f', 2).arg(y, 0, 'f', 2).arg(kicadOrientation, 0, 'f', 0);

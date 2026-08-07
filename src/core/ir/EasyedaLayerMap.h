@@ -81,46 +81,6 @@ inline LayerType toLayerType(int easyedaLayerId) {
     }
 }
 
-/**
- * @brief 通用 LayerType -> 用于 Altium 导出的数字层 ID
- * @param layer 通用层类型
- * @return Altium 兼容的层 ID，无法映射时返回 0
- *
- * @note EasyEDA 和 Altium 共享 Protel 层编号体系，大部分可直接映射。
- */
-inline int fromLayerTypeToAltium(LayerType layer) {
-    switch (layer) {
-        case LayerType::TopCopper:
-            return 1;
-        case LayerType::BottomCopper:
-            return 2;
-        case LayerType::TopSilk:
-            return 3;
-        case LayerType::BottomSilk:
-            return 4;
-        case LayerType::TopPaste:
-            return 5;
-        case LayerType::BottomPaste:
-            return 6;
-        case LayerType::TopMask:
-            return 7;
-        case LayerType::BottomMask:
-            return 8;
-        case LayerType::MultiLayer:
-            return 74;  // Altium MultiLayer
-        case LayerType::EdgeCuts:
-            return 11;
-        case LayerType::KeepOut:
-            return 99;
-        case LayerType::TopAssembly:
-            return 13;
-        case LayerType::BottomAssembly:
-            return 14;
-        default:
-            return 0;
-    }
-}
-
 }  // namespace EasyedaLayerMap
 }  // namespace IR
 }  // namespace EasyKiConverter

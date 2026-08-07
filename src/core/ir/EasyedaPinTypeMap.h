@@ -79,55 +79,6 @@ inline PinDirection toPinDirection(int easyedaRotation) {
     }
 }
 
-/**
- * @brief PinDirection -> KiCad 引脚方向角度
- * @param dir 引脚方向枚举
- * @return KiCad 格式的角度（度）
- */
-inline double toKicadAngle(PinDirection dir) {
-    // 旧代码使用 (180 + rotation) % 360 将 EasyEDA 引脚旋转转换为 KiCad 角度
-    switch (dir) {
-        case PinDirection::Right:
-            return 180.0;  // EasyEDA rotation=0 → KiCad angle 180
-        case PinDirection::Up:
-            return 270.0;  // EasyEDA rotation=90 → KiCad angle 270
-        case PinDirection::Left:
-            return 0.0;  // EasyEDA rotation=180 → KiCad angle 0
-        case PinDirection::Down:
-            return 90.0;  // EasyEDA rotation=270 → KiCad angle 90
-        default:
-            return 180.0;
-    }
-}
-
-/**
- * @brief PinElectricalType -> KiCad 引脚电气类型字符串
- * @param type 引脚电气类型枚举
- * @return KiCad 格式的电气类型字符串
- */
-inline const char* toKicadPinType(PinElectricalType type) {
-    switch (type) {
-        case PinElectricalType::Unspecified:
-            return "unspecified";
-        case PinElectricalType::Input:
-            return "input";
-        case PinElectricalType::Output:
-            return "output";
-        case PinElectricalType::Bidirectional:
-            return "bidirectional";
-        case PinElectricalType::Passive:
-            return "passive";
-        case PinElectricalType::Power:
-            return "power_in";
-        case PinElectricalType::OpenCollector:
-            return "open_collector";
-        case PinElectricalType::OpenEmitter:
-            return "open_emitter";
-        default:
-            return "unspecified";
-    }
-}
-
 }  // namespace EasyedaPinTypeMap
 }  // namespace IR
 }  // namespace EasyKiConverter

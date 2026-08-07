@@ -8,14 +8,15 @@
  * 3D 模型数据基本是 EDA 无关的，转换主要是字段名映射。
  */
 
+#include "IRTypes.h"
 #include "Model3DIR.h"
 #include "models/Model3DData.h"
 
 namespace EasyKiConverter {
 namespace IR {
 
-/** @brief EasyEDA 3D 模型位移单位 -> mm 转换因子（与坐标系一致，1 单位 = 10 mil = 0.254 mm） */
-constexpr double MODEL3D_PX_TO_MM = 0.254;
+/** @brief 向后兼容别名，新代码请使用 IR::EASYEDA_PX_TO_MM */
+constexpr double MODEL3D_PX_TO_MM = EASYEDA_PX_TO_MM;
 
 /**
  * @brief Model3DData -> Model3DIR 转换

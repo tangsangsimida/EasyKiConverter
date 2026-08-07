@@ -22,11 +22,11 @@
 namespace EasyKiConverter {
 namespace IR {
 
-/** @brief EasyEDA 坐标单位 -> mm 转换因子（1 EasyEDA 单位 = 10 mil = 0.254 mm） */
-constexpr double PX_TO_MM = 0.254;
+/** @brief 向后兼容别名，新代码请使用 IR::EASYEDA_PX_TO_MM */
+constexpr double PX_TO_MM = EASYEDA_PX_TO_MM;
 
-/** @brief pt -> mm 转换因子 */
-constexpr double PT_TO_MM = 0.352778;
+/** @brief 向后兼容别名，新代码请使用 IR::EASYEDA_PT_TO_MM */
+constexpr double PT_TO_MM = EASYEDA_PT_TO_MM;
 
 /**
  * @brief 解析 EasyEDA 空格分隔的扁平坐标字符串

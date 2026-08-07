@@ -1,6 +1,6 @@
 #include "FootprintGraphicsGenerator.h"
 
-#include "core/ir/EasyedaPadShapeMap.h"
+#include "KiCadTypeMap.h"
 
 #include <QDebug>
 #include <QRegularExpression>
@@ -61,7 +61,7 @@ QString FootprintGraphicsGenerator::generatePad(const IR::FootprintPadIR& pad, d
         height = qMax(height, 0.01);
     }
 
-    QString kicadShape = IR::EasyedaPadShapeMap::toKicadPadShape(pad.shape);
+    QString kicadShape = KiCadTypeMap::toKicadPadShape(pad.shape);
 
     QString kicadType = padTypeToKicad(pad);
     QString layers = padLayersToKicad(pad.layer);
