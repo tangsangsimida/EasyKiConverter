@@ -186,5 +186,42 @@ constexpr int DEFAULT_TEXT_HEIGHT = 60000;
 /** @brief 默认笔画宽度（1mil = 10,000 原始单位） */
 constexpr int DEFAULT_STROKE_WIDTH = 10000;
 
+// ==================== PcbLib 焊盘记录布局 ====================
+
+/** @brief 焊盘主记录总大小（字节） */
+constexpr int PCB_PAD_MAIN_RECORD_SIZE = 202;
+
+/** @brief 焊盘主记录填充大小（总大小 - 已写入字段 = 202 - 69 = 133） */
+constexpr int PCB_PAD_MAIN_PADDING_SIZE = 133;
+
+/** @brief 焊盘尺寸/形状覆盖数据总大小（字节） */
+constexpr int PCB_PAD_SIZE_OVERRIDE_SIZE = 596;
+
+/** @brief 焊盘尺寸覆盖中的层循环数 */
+constexpr int PCB_PAD_LAYER_COUNT = 29;
+
+/** @brief 焊盘尺寸覆盖中 Y 尺寸起始偏移（字节） */
+constexpr int PCB_PAD_SIZE_Y_OFFSET = 116;
+
+/** @brief 焊盘尺寸覆盖中形状起始偏移（字节） */
+constexpr int PCB_PAD_SHAPE_OFFSET = 232;
+
+/** @brief 焊盘尺寸覆盖中孔形状偏移（字节） */
+constexpr int PCB_PAD_HOLE_SHAPE_OFFSET = 262;
+
+// ==================== PcbLib 文本记录布局 ====================
+
+/** @brief 文本记录总大小（字节） */
+constexpr int PCB_TEXT_RECORD_SIZE = 252;
+
+/** @brief 文本记录中 WideString 索引的字段偏移 */
+constexpr int PCB_TEXT_WS_INDEX_FIELD_OFFSET = 115;
+
+/** @brief 文本记录中文字种类字段偏移 */
+constexpr int PCB_TEXT_KIND_FIELD_OFFSET = 160;
+
+/** @brief 文本记录中 V7 Layer ID 字段偏移 */
+constexpr int PCB_TEXT_V7LAYER_FIELD_OFFSET = 226;
+
 }  // namespace AltiumConstants
 }  // namespace EasyKiConverter

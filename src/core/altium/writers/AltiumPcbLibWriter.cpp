@@ -1,5 +1,6 @@
 #include "AltiumPcbLibWriter.h"
 
+#include "utils/AltiumConstants.h"
 #include "utils/AltiumCoord.h"
 #include "utils/AltiumLayerMap.h"
 #include "utils/AltiumWriterUtils.h"
@@ -498,8 +499,8 @@ void AltiumPcbLibWriter::writePad(AltiumBinaryWriter& writer, const AltiumPcbPad
     writer.beginBlock();
     {
         // 通用头部（13 字节）
-        uint8_t layer = pad.isSMD ? pad.layer : 74;  // SMD 用指定层，TH 用 MultiLayer
-        uint16_t flags = 0x08;  // FlagSaved
+        uint8_t layer = pad.isSMD ? pad.layer : AltiumConstants::PCB_LAYER_MULTI;
+        uint16_t flags = AltiumConstants::PCB_FLAG_SAVED;
         writeCommonPrimitiveHeader(writer, layer, flags, pad.netIndex, static_cast<uint16_t>(componentIndex));
 
         // 位置
@@ -532,10 +533,10 @@ void AltiumPcbLibWriter::writePad(AltiumBinaryWriter& writer, const AltiumPcbPad
         // 是否电镀
         writer.writeUInt8(pad.isPlated ? 1 : 0);
 
-        // 剩余字节填充到 202 字节
+        // 剩余字节填充到主记录总大小
         // 当前位置应该是 13 + 4*2 + 4*6 + 4 + 3 + 8 + 1 = 69
-        // 需要填充 202 - 69 = 133 字节
-        QByteArray padding(133, 0);
+        // 需要填充 PCB_PAD_MAIN_RECORD_SIZE - 69 = PCB_PAD_MAIN_PADDING_SIZE 字节
+        QByteArray padding(AltiumConstants::PCB_PAD_MAIN_PADDING_SIZE, 0);
         padding[1] = 0;  // stack mode = Simple
         padding[40] = 1;  // paste mask expansion mode = Rule
         padding[41] = 1;  // solder mask expansion mode = Rule
@@ -543,21 +544,21 @@ void AltiumPcbLibWriter::writePad(AltiumBinaryWriter& writer, const AltiumPcbPad
     }
     writer.endBlock();
 
-    // 子记录 6: 尺寸/形状覆盖数据（596 字节）
+    // 子记录 6: 尺寸/形状覆盖数据
     writer.beginBlock();
     {
-        QByteArray sizeData(596, 0);
+        QByteArray sizeData(AltiumConstants::PCB_PAD_SIZE_OVERRIDE_SIZE, 0);
 
         // 填充顶层尺寸到所有层
-        for (int i = 0; i < 29; ++i) {
+        for (int i = 0; i < AltiumConstants::PCB_PAD_LAYER_COUNT; ++i) {
             int offset = i * 4;
             sizeData[offset] = static_cast<char>(pad.sizeTopX & 0xFF);
             sizeData[offset + 1] = static_cast<char>((pad.sizeTopX >> 8) & 0xFF);
             sizeData[offset + 2] = static_cast<char>((pad.sizeTopX >> 16) & 0xFF);
             sizeData[offset + 3] = static_cast<char>((pad.sizeTopX >> 24) & 0xFF);
         }
-        for (int i = 0; i < 29; ++i) {
-            int offset = 116 + i * 4;
+        for (int i = 0; i < AltiumConstants::PCB_PAD_LAYER_COUNT; ++i) {
+            int offset = AltiumConstants::PCB_PAD_SIZE_Y_OFFSET + i * 4;
             sizeData[offset] = static_cast<char>(pad.sizeTopY & 0xFF);
             sizeData[offset + 1] = static_cast<char>((pad.sizeTopY >> 8) & 0xFF);
             sizeData[offset + 2] = static_cast<char>((pad.sizeTopY >> 16) & 0xFF);
@@ -565,12 +566,12 @@ void AltiumPcbLibWriter::writePad(AltiumBinaryWriter& writer, const AltiumPcbPad
         }
 
         // 形状
-        for (int i = 0; i < 29; ++i) {
-            sizeData[232 + i] = static_cast<char>(pad.shapeTop);
+        for (int i = 0; i < AltiumConstants::PCB_PAD_LAYER_COUNT; ++i) {
+            sizeData[AltiumConstants::PCB_PAD_SHAPE_OFFSET + i] = static_cast<char>(pad.shapeTop);
         }
 
         // 孔形状
-        sizeData[262] = 0;  // Round
+        sizeData[AltiumConstants::PCB_PAD_HOLE_SHAPE_OFFSET] = 0;  // Round
 
         writer.writeBytes(sizeData);
     }
@@ -657,22 +658,24 @@ void AltiumPcbLibWriter::writeText(AltiumBinaryWriter& writer, const AltiumPcbTe
         writer.writeUInt8(0);  // char set
         writer.writeUInt8(0);  // base font type (Stroke)
 
-        // 剩余填充到 252 字节（从偏移 44 开始）
-        QByteArray padding(252 - (13 + 4 * 2 + 4 + 2 + 8 + 1 + 4 + 3), 0);
+        // 剩余填充到文本记录总大小（从偏移 44 开始）
+        QByteArray padding(AltiumConstants::PCB_TEXT_RECORD_SIZE - (13 + 4 * 2 + 4 + 2 + 8 + 1 + 4 + 3), 0);
         // wide string index
         int wsIdx = addWideString(text.text);
-        padding[115 - 44] = static_cast<char>(wsIdx & 0xFF);
-        padding[116 - 44] = static_cast<char>((wsIdx >> 8) & 0xFF);
-        padding[117 - 44] = static_cast<char>((wsIdx >> 16) & 0xFF);
-        padding[118 - 44] = static_cast<char>((wsIdx >> 24) & 0xFF);
+        int wsBase = AltiumConstants::PCB_TEXT_WS_INDEX_FIELD_OFFSET - 44;
+        padding[wsBase] = static_cast<char>(wsIdx & 0xFF);
+        padding[wsBase + 1] = static_cast<char>((wsIdx >> 8) & 0xFF);
+        padding[wsBase + 2] = static_cast<char>((wsIdx >> 16) & 0xFF);
+        padding[wsBase + 3] = static_cast<char>((wsIdx >> 24) & 0xFF);
         // text kind = Stroke
-        padding[160 - 44] = 0;
+        padding[AltiumConstants::PCB_TEXT_KIND_FIELD_OFFSET - 44] = 0;
         // V7 layer ID
         uint32_t v7id = toV7LayerId(text.layer);
-        padding[226 - 44] = static_cast<char>(v7id & 0xFF);
-        padding[227 - 44] = static_cast<char>((v7id >> 8) & 0xFF);
-        padding[228 - 44] = static_cast<char>((v7id >> 16) & 0xFF);
-        padding[229 - 44] = static_cast<char>((v7id >> 24) & 0xFF);
+        int v7Base = AltiumConstants::PCB_TEXT_V7LAYER_FIELD_OFFSET - 44;
+        padding[v7Base] = static_cast<char>(v7id & 0xFF);
+        padding[v7Base + 1] = static_cast<char>((v7id >> 8) & 0xFF);
+        padding[v7Base + 2] = static_cast<char>((v7id >> 16) & 0xFF);
+        padding[v7Base + 3] = static_cast<char>((v7id >> 24) & 0xFF);
 
         writer.writeBytes(padding);
     }

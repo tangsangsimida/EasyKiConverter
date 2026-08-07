@@ -1,9 +1,10 @@
 #include "AltiumSchLibWriter.h"
 
+#include "utils/AltiumConstants.h"
 #include "utils/AltiumCoord.h"
-#include "utils/AltiumLayerMap.h"
 #include "utils/AltiumWriterUtils.h"
 
+#include <QDebug>
 #include <QRandomGenerator>
 
 namespace EasyKiConverter {
@@ -80,6 +81,7 @@ bool AltiumSchLibWriter::write(const QList<AltiumSchComponent>& components,
 
     OLECompoundWriter ole;
     if (!ole.create()) {
+        qWarning() << "AltiumSchLibWriter: Failed to create OLE compound document for" << filePath;
         return false;
     }
 
@@ -279,7 +281,7 @@ void AltiumSchLibWriter::writeComponentRecord(AltiumBinaryWriter& writer, const 
  * @brief 写入引脚记录 (RECORD=2, 二进制格式)
  */
 void AltiumSchLibWriter::writePinRecord(AltiumBinaryWriter& writer, const AltiumSchPin& pin, int partId) {
-    writer.beginBlock(0x01);  // flags = 0x01 表示二进制引脚记录
+    writer.beginBlock(AltiumConstants::SCH_BLOCK_FLAG_BINARY_PIN);
 
     writer.writeInt32(2);  // Record type = 2
     writer.writeUInt8(0);  // Unknown

@@ -3,6 +3,8 @@
 #include "utils/AltiumCoord.h"
 #include "utils/AltiumLayerMap.h"
 
+#include <QDebug>
+
 namespace EasyKiConverter {
 
 /**
@@ -11,7 +13,11 @@ namespace EasyKiConverter {
 bool ExporterAltiumSymbol::exportSymbol(const IR::SymbolComponentIR& symbol, const QString& filePath) {
     QList<AltiumSchComponent> components;
     components.append(convertSymbol(symbol));
-    return m_writer.write(components, filePath);
+    bool ok = m_writer.write(components, filePath);
+    if (!ok) {
+        qWarning() << "ExporterAltiumSymbol: Failed to write symbol to" << filePath;
+    }
+    return ok;
 }
 
 /**
@@ -27,7 +33,11 @@ bool ExporterAltiumSymbol::exportSymbolLibrary(const QList<IR::SymbolComponentIR
     for (const IR::SymbolComponentIR& symbol : symbols) {
         components.append(convertSymbol(symbol));
     }
-    return m_writer.write(components, filePath, libName);
+    bool ok = m_writer.write(components, filePath, libName);
+    if (!ok) {
+        qWarning() << "ExporterAltiumSymbol: Failed to write symbol library to" << filePath;
+    }
+    return ok;
 }
 
 /**

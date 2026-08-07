@@ -16,11 +16,6 @@ namespace EasyKiConverter {
  */
 namespace AltiumCoord {
 
-/** @brief 原始单位 → Altium PCB 原始单位（1:1 映射，无需转换） */
-constexpr int32_t toPcbRaw(int raw) {
-    return static_cast<int32_t>(raw);
-}
-
 /** @brief 原始单位 → DXP 整数部分（SchLib 参数记录使用） */
 constexpr int16_t toDxpInt(int raw) {
     return static_cast<int16_t>(raw / 100000);
@@ -99,15 +94,6 @@ constexpr int32_t mmToRaw(double mm) {
  */
 constexpr int32_t mmToSchematicUnits(double mm) {
     return static_cast<int32_t>(mm / 0.0254 * 10.0);
-}
-
-/**
- * @brief IR 坐标单位（mm）→ Altium PCB 原始单位
- * @details PCB 原始单位: 1 mil = 10,000 raw（与 Schematic raw 相同）
- *          换算: mm / 0.0254 * 10000
- */
-constexpr int32_t mmToPcbRaw(double mm) {
-    return static_cast<int32_t>(mm / 0.0254 * 10000.0);
 }
 
 }  // namespace AltiumCoord
