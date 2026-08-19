@@ -30,6 +30,8 @@ namespace EasyedaLayerMap {
  */
 inline LayerType toLayerType(int easyedaLayerId) {
     switch (easyedaLayerId) {
+        case 0:
+            return LayerType::TopSilk;  // EasyEDA Body/封装体层 → 顶层丝印
         case 1:
             return LayerType::TopCopper;
         case 2:

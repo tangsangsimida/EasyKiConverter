@@ -5,6 +5,8 @@
 
 #include <QDebug>
 
+#include <QSet>
+
 namespace EasyKiConverter {
 
 /**
@@ -104,6 +106,25 @@ AltiumSchPin ExporterAltiumSymbol::convertPin(const IR::SymbolPinIR& pin) {
     altiumPin.showName = pin.showName;
     altiumPin.showDesignator = pin.showDesignator;
     altiumPin.isHidden = !pin.showName && !pin.showDesignator;
+
+    // 电源引脚检测：EasyEDA 通常不区分电源引脚（type=3/Bidirectional），
+    // 通过引脚名称匹配常见电源网络名称，强制设为 Power 类型
+    if (altiumPin.electricalType != AltiumModels::PinElectricalType::Power) {
+        static const QSet<QString> powerPinNames = {
+            "GND", "AGND", "DGND", "PGND", "SGND", "CGND", "GNDP", "GNDN",
+            "VCC", "VDD", "AVCC", "AVDD", "DVDD", "IOVDD", "PVDD", "SVDD",
+            "VDDA", "VDDIO", "VDDS", "VDDP",
+            "VBUS", "VSYS", "VIN", "5V", "3V3", "1V8",
+            "USB_VDD", "ADC_AVDD",
+            "VREG_IN", "VREG_OUT", "VREG_VOUT",
+            "VEE", "VSS", "VSSA",
+        };
+        QString upperName = pin.name.toUpper().trimmed();
+        if (powerPinNames.contains(upperName)) {
+            altiumPin.electricalType = AltiumModels::PinElectricalType::Power;
+        }
+    }
+
     return altiumPin;
 }
 
