@@ -150,3 +150,8 @@ tests/fixtures/altium/常用AD元件库、封装库、3D封装库.rar
 opencode.json
 tests/fixtures/altium/
 PROJECT_INSTRUCTIONS.md
+
+# Large media files (use external hosting instead)
+*.mp4
+*.rar
+docs/submissions/北京开元工业软件研究/05-video.rar
