@@ -1,0 +1,7 @@
+<map id="EasyKiConverter::ComponentConverter" name="EasyKiConverter::ComponentConverter">
+<area shape="rect" id="Node000001" title="单个元器件转换器" alt="" coords="16,472,221,692"/>
+<area shape="rect" id="Node000002" href="$classEasyKiConverter_1_1BaseConverter.html" title="转换器基类" alt="" coords="5,119,232,424"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="121,438,121,472,116,472,116,438"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="85,5,152,71"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="121,84,121,119,116,119,116,84"/>
+</map>

@@ -1,0 +1,7 @@
+<map id="EasyKiConverter::DatasheetExporter" name="EasyKiConverter::DatasheetExporter">
+<area shape="rect" id="Node000001" title=" " alt="" coords="19,493,226,693"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="5,185,72,251"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="51,264,87,430,101,493,96,494,81,431,45,265"/>
+<area shape="rect" id="Node000003" href="$structEasyKiConverter_1_1ExportOptions.html" title="导出选项配置" alt="" coords="95,5,318,431"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="162,431,151,478,146,477,156,430"/>
+</map>

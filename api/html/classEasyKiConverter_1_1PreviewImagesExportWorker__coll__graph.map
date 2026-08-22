@@ -1,0 +1,11 @@
+<map id="EasyKiConverter::PreviewImagesExportWorker" name="EasyKiConverter::PreviewImagesExportWorker">
+<area shape="rect" id="Node000001" title="预览图导出Worker" alt="" coords="103,493,329,773"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="5,185,72,251"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="46,264,60,343,71,387,86,430,118,492,113,494,82,432,66,388,55,344,41,265"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="96,185,181,251"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="150,263,193,492,187,493,144,264"/>
+<area shape="rect" id="Node000004" href="$classEasyKiConverter_1_1IExportWorker.html" title="导出Worker接口" alt="" coords="205,138,381,298"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="279,312,245,494,239,493,273,311"/>
+<area shape="rect" id="Node000005" href="$structEasyKiConverter_1_1ExportOptions.html" title="导出选项配置" alt="" coords="406,5,629,431"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="408,414,395,432,341,501,337,498,391,429,404,411"/>
+</map>

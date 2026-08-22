@@ -1,0 +1,14 @@
+<map id="EasyKiConverter::PreviewImagesExportStage" name="EasyKiConverter::PreviewImagesExportStage">
+<area shape="rect" id="Node000001" title="预览图导出阶段" alt="" coords="250,1051,495,1291"/>
+<area shape="rect" id="Node000002" href="$classEasyKiConverter_1_1ExportTypeStage.html" title="导出类型阶段基类" alt="" coords="271,368,474,988"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="375,1002,375,1050,370,1050,370,1002"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="159,123,226,188"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="211,200,274,383,269,385,205,202"/>
+<area shape="rect" id="Node000006" href="$classEasyKiConverter_1_1TempFileManager.html" title="临时文件管理器" alt="" coords="5,441,247,915"/>
+<area shape="poly" id="edge6_Node000006_Node000003" title=" " alt="" coords="190,202,159,441,154,440,184,201"/>
+<area shape="rect" id="Node000004" href="$structEasyKiConverter_1_1ExportTypeProgress.html" title="单个导出类型的总体进度" alt="" coords="271,5,474,305"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="375,306,375,351,370,351,370,306"/>
+<area shape="rect" id="Node000005" href="$structEasyKiConverter_1_1ExportOptions.html" title="导出选项配置" alt="" coords="499,465,721,891"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="533,892,488,989,462,1038,457,1035,484,987,528,890"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="196,915,220,971,248,1025,255,1036,250,1039,244,1028,215,974,191,917"/>
+</map>

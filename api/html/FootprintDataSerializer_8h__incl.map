@@ -1,0 +1,22 @@
+<map id="models/FootprintDataSerializer.h" name="models/FootprintDataSerializer.h">
+<area shape="rect" id="Node000001" title=" " alt="" coords="361,5,595,31"/>
+<area shape="rect" id="Node000002" href="$FootprintData_8h.html" title=" " alt="" coords="310,79,433,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="462,33,402,73,399,69,459,28"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="483,225,585,251"/>
+<area shape="poly" id="edge11_Node000001_Node000005" title=" " alt="" coords="487,30,513,81,527,115,537,152,540,183,539,211,534,211,535,183,531,152,522,117,508,83,482,32"/>
+<area shape="rect" id="Node000003" href="$Model3DData_8h.html" title=" " alt="" coords="78,152,201,177"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="335,107,191,151,189,145,333,101"/>
+<area shape="poly" id="edge7_Node000002_Node000005" title=" " alt="" coords="425,102,470,120,492,133,511,150,527,180,535,210,529,212,522,182,507,154,489,137,468,124,423,106"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="5,225,76,251"/>
+<area shape="poly" id="edge10_Node000002_Node000006" title=" " alt="" coords="310,100,244,107,172,118,109,134,85,143,68,154,58,166,51,181,44,212,39,211,46,179,53,163,64,150,82,138,107,128,171,113,243,102,310,95"/>
+<area shape="rect" id="Node000007" title=" " alt="" coords="225,152,320,177"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="357,106,301,146,298,142,354,102"/>
+<area shape="rect" id="Node000008" title=" " alt="" coords="344,152,399,177"/>
+<area shape="poly" id="edge8_Node000002_Node000008" title=" " alt="" coords="374,104,374,138,369,138,369,104"/>
+<area shape="rect" id="Node000009" title=" " alt="" coords="423,152,496,177"/>
+<area shape="poly" id="edge9_Node000002_Node000009" title=" " alt="" coords="387,102,436,141,433,145,384,106"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="100,225,197,251"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="144,177,148,211,143,212,138,178"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="201,174,470,222,469,228,201,180"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="125,180,69,219,66,215,122,175"/>
+</map>

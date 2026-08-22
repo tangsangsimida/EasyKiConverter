@@ -1,0 +1,7 @@
+<map id="EasyKiConverter::ExportTypeStage" name="EasyKiConverter::ExportTypeStage">
+<area shape="rect" id="Node000001" title="导出类型阶段基类" alt="" coords="16,368,219,988"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="5,123,72,188"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="48,201,73,367,68,368,43,202"/>
+<area shape="rect" id="Node000003" href="$structEasyKiConverter_1_1ExportTypeProgress.html" title="单个导出类型的总体进度" alt="" coords="96,5,299,305"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="177,306,170,352,165,351,172,305"/>
+</map>

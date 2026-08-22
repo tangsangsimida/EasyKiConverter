@@ -1,0 +1,7 @@
+<map id="EasyKiConverter::ExporterSymbol" name="EasyKiConverter::ExporterSymbol">
+<area shape="rect" id="Node000001" title="KiCad 符号导出器类" alt="" coords="25,536,222,776"/>
+<area shape="rect" id="Node000002" href="$classEasyKiConverter_1_1SymbolGraphicsGenerator.html" title="符号图形元素生成器" alt="" coords="5,193,241,473"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="126,474,126,520,121,520,121,474"/>
+<area shape="rect" id="Node000003" href="$structEasyKiConverter_1_1SymbolBBox.html" title="边界" alt="" coords="17,5,230,131"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="126,131,126,177,121,177,121,131"/>
+</map>

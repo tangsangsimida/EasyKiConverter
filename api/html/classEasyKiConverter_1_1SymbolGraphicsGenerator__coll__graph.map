@@ -1,0 +1,5 @@
+<map id="EasyKiConverter::SymbolGraphicsGenerator" name="EasyKiConverter::SymbolGraphicsGenerator">
+<area shape="rect" id="Node000001" title="符号图形元素生成器" alt="" coords="5,193,241,473"/>
+<area shape="rect" id="Node000002" href="$structEasyKiConverter_1_1SymbolBBox.html" title="边界" alt="" coords="17,5,230,131"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="126,131,126,177,121,177,121,131"/>
+</map>

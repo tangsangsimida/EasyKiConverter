@@ -1,0 +1,617 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "https://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="zh">
+<head>
+<meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=11"/>
+<meta name="generator" content="Doxygen 1.9.8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>EasyKiConverter: EasyKiConverter::BatchConverter类 参考</title>
+<link href="tabs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="jquery.js"></script>
+<script type="text/javascript" src="dynsections.js"></script>
+<link href="navtree.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="resize.js"></script>
+<script type="text/javascript" src="navtreedata.js"></script>
+<script type="text/javascript" src="navtree.js"></script>
+<link href="search/search.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="search/searchdata.js"></script>
+<script type="text/javascript" src="search/search.js"></script>
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  extensions: ["tex2jax.js"],
+  jax: ["input/TeX","output/HTML-CSS"],
+});
+</script>
+<script type="text/javascript" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/MathJax.js"></script>
+<link href="doxygen.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+<div id="top"><!-- do not remove this div, it is closed by doxygen! -->
+<div id="titlearea">
+<table cellspacing="0" cellpadding="0">
+ <tbody>
+ <tr id="projectrow">
+  <td id="projectalign">
+   <div id="projectname">EasyKiConverter<span id="projectnumber">&#160;3.0.5</span>
+   </div>
+   <div id="projectbrief">LCSC/EasyEDA 元件转 KiCad 库文件转换器</div>
+  </td>
+ </tr>
+ </tbody>
+</table>
+</div>
+<!-- end header part -->
+<!-- 制作者 Doxygen 1.9.8 -->
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+var searchBox = new SearchBox("searchBox", "search/",'.html');
+/* @license-end */
+</script>
+<script type="text/javascript" src="menudata.js"></script>
+<script type="text/javascript" src="menu.js"></script>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(function() {
+  initMenu('',true,false,'search.php','搜索');
+  $(document).ready(function() { init_search(); });
+});
+/* @license-end */
+</script>
+<div id="main-nav"></div>
+</div><!-- top -->
+<div id="side-nav" class="ui-resizable side-nav-resizable">
+  <div id="nav-tree">
+    <div id="nav-tree-contents">
+      <div id="nav-sync" class="sync"></div>
+    </div>
+  </div>
+  <div id="splitbar" style="-moz-user-select:none;" 
+       class="ui-resizable-handle">
+  </div>
+</div>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(document).ready(function(){initNavTree('classEasyKiConverter_1_1BatchConverter.html',''); initResizable(); });
+/* @license-end */
+</script>
+<div id="doc-content">
+<!-- window showing the filter options -->
+<div id="MSearchSelectWindow"
+     onmouseover="return searchBox.OnSearchSelectShow()"
+     onmouseout="return searchBox.OnSearchSelectHide()"
+     onkeydown="return searchBox.OnSearchSelectKey(event)">
+</div>
+
+<!-- iframe showing the search results (closed by default) -->
+<div id="MSearchResultsWindow">
+<div id="MSearchResults">
+<div class="SRPage">
+<div id="SRIndex">
+<div id="SRResults"></div>
+<div class="SRStatus" id="Loading">载入中...</div>
+<div class="SRStatus" id="Searching">搜索中...</div>
+<div class="SRStatus" id="NoMatches">未找到</div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="header">
+  <div class="summary">
+<a href="#pub-methods">Public 成员函数</a> &#124;
+<a href="#pri-methods">Private 成员函数</a> &#124;
+<a href="#pri-attribs">Private 属性</a> &#124;
+<a href="classEasyKiConverter_1_1BatchConverter-members.html">所有成员列表</a>  </div>
+  <div class="headertitle"><div class="title">EasyKiConverter::BatchConverter类 参考</div></div>
+</div><!--header-->
+<div class="contents">
+
+<p>批量转换器  
+ <a href="classEasyKiConverter_1_1BatchConverter.html#details">更多...</a></p>
+
+<p><code>#include &lt;<a class="el" href="BatchConverter_8h_source.html">BatchConverter.h</a>&gt;</code></p>
+<div id="dynsection-0" onclick="return toggleVisibility(this)" class="dynheader closed" style="cursor:pointer;">
+  <img id="dynsection-0-trigger" src="closed.png" alt="+"/> 类 EasyKiConverter::BatchConverter 继承关系图:</div>
+<div id="dynsection-0-summary" class="dynsummary" style="display:block;">
+</div>
+<div id="dynsection-0-content" class="dyncontent" style="display:none;">
+<div class="center"><iframe scrolling="no" frameborder="0" src="classEasyKiConverter_1_1BatchConverter__inherit__graph.svg" width="242" height="723"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe></div>
+</div>
+<div id="dynsection-1" onclick="return toggleVisibility(this)" class="dynheader closed" style="cursor:pointer;">
+  <img id="dynsection-1-trigger" src="closed.png" alt="+"/> EasyKiConverter::BatchConverter 的协作图:</div>
+<div id="dynsection-1-summary" class="dynsummary" style="display:block;">
+</div>
+<div id="dynsection-1-content" class="dyncontent" style="display:none;">
+<div class="center"><iframe scrolling="no" frameborder="0" src="classEasyKiConverter_1_1BatchConverter__coll__graph.svg" width="1634" height="3510"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe></div>
+</div>
+<table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
+Public 成员函数</h2></td></tr>
+<tr class="memitem:afddd0902863612fa457672edfa305ae5" id="r_afddd0902863612fa457672edfa305ae5"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1BatchConverter.html#afddd0902863612fa457672edfa305ae5">BatchConverter</a> (<a class="el" href="classEasyKiConverter_1_1CliContext.html">CliContext</a> *<a class="el" href="classEasyKiConverter_1_1BaseConverter.html#a559cb7fd17665c52b65f12272d510c4b">context</a>, QObject *parent=nullptr)</td></tr>
+<tr class="memdesc:afddd0902863612fa457672edfa305ae5"><td class="mdescLeft">&#160;</td><td class="mdescRight">构造函数  <br /></td></tr>
+<tr class="separator:afddd0902863612fa457672edfa305ae5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa96819dc807a523a0f6cbd4801c76a6b" id="r_aa96819dc807a523a0f6cbd4801c76a6b"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1BatchConverter.html#aa96819dc807a523a0f6cbd4801c76a6b">~BatchConverter</a> () override=default</td></tr>
+<tr class="memdesc:aa96819dc807a523a0f6cbd4801c76a6b"><td class="mdescLeft">&#160;</td><td class="mdescRight">析构函数  <br /></td></tr>
+<tr class="separator:aa96819dc807a523a0f6cbd4801c76a6b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afb46328f558c122cb694f79ab3bc6170" id="r_afb46328f558c122cb694f79ab3bc6170"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1BatchConverter.html#afb46328f558c122cb694f79ab3bc6170">execute</a> () override</td></tr>
+<tr class="memdesc:afb46328f558c122cb694f79ab3bc6170"><td class="mdescLeft">&#160;</td><td class="mdescRight">执行批量转换  <br /></td></tr>
+<tr class="separator:afb46328f558c122cb694f79ab3bc6170"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="inherit_header pub_methods_classEasyKiConverter_1_1BaseConverter"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classEasyKiConverter_1_1BaseConverter')"><img src="closed.png" alt="-"/>&#160;Public 成员函数 继承自 <a class="el" href="classEasyKiConverter_1_1BaseConverter.html">EasyKiConverter::BaseConverter</a></td></tr>
+<tr class="memitem:a04de215f17b1912bd8607bbc287b4834 inherit pub_methods_classEasyKiConverter_1_1BaseConverter" id="r_a04de215f17b1912bd8607bbc287b4834"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1BaseConverter.html#a04de215f17b1912bd8607bbc287b4834">BaseConverter</a> (<a class="el" href="classEasyKiConverter_1_1CliContext.html">CliContext</a> *<a class="el" href="classEasyKiConverter_1_1BaseConverter.html#a559cb7fd17665c52b65f12272d510c4b">context</a>, QObject *parent=nullptr)</td></tr>
+<tr class="memdesc:a04de215f17b1912bd8607bbc287b4834 inherit pub_methods_classEasyKiConverter_1_1BaseConverter"><td class="mdescLeft">&#160;</td><td class="mdescRight">构造函数  <br /></td></tr>
+<tr class="separator:a04de215f17b1912bd8607bbc287b4834 inherit pub_methods_classEasyKiConverter_1_1BaseConverter"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a569f6a6ff6010fe3a74505bd1069991f inherit pub_methods_classEasyKiConverter_1_1BaseConverter" id="r_a569f6a6ff6010fe3a74505bd1069991f"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1BaseConverter.html#a569f6a6ff6010fe3a74505bd1069991f">~BaseConverter</a> () override=default</td></tr>
+<tr class="memdesc:a569f6a6ff6010fe3a74505bd1069991f inherit pub_methods_classEasyKiConverter_1_1BaseConverter"><td class="mdescLeft">&#160;</td><td class="mdescRight">析构函数  <br /></td></tr>
+<tr class="separator:a569f6a6ff6010fe3a74505bd1069991f inherit pub_methods_classEasyKiConverter_1_1BaseConverter"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a44a614299082a77b851e36870e0acf72 inherit pub_methods_classEasyKiConverter_1_1BaseConverter" id="r_a44a614299082a77b851e36870e0acf72"><td class="memItemLeft" align="right" valign="top">QString&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1BaseConverter.html#a44a614299082a77b851e36870e0acf72">errorMessage</a> () const</td></tr>
+<tr class="memdesc:a44a614299082a77b851e36870e0acf72 inherit pub_methods_classEasyKiConverter_1_1BaseConverter"><td class="mdescLeft">&#160;</td><td class="mdescRight">获取错误信息  <br /></td></tr>
+<tr class="separator:a44a614299082a77b851e36870e0acf72 inherit pub_methods_classEasyKiConverter_1_1BaseConverter"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a43aa256bb5738a105872b6c1efdd0ac5 inherit pub_methods_classEasyKiConverter_1_1BaseConverter" id="r_a43aa256bb5738a105872b6c1efdd0ac5"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1BaseConverter.html#a43aa256bb5738a105872b6c1efdd0ac5">progressUpdated</a> (int progress, const QString &amp;message)</td></tr>
+<tr class="memdesc:a43aa256bb5738a105872b6c1efdd0ac5 inherit pub_methods_classEasyKiConverter_1_1BaseConverter"><td class="mdescLeft">&#160;</td><td class="mdescRight">进度更新  <br /></td></tr>
+<tr class="separator:a43aa256bb5738a105872b6c1efdd0ac5 inherit pub_methods_classEasyKiConverter_1_1BaseConverter"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a427453aedddacacf782a9ae304c12e6c inherit pub_methods_classEasyKiConverter_1_1BaseConverter" id="r_a427453aedddacacf782a9ae304c12e6c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1BaseConverter.html#a427453aedddacacf782a9ae304c12e6c">conversionFinished</a> (bool success, const QString &amp;message)</td></tr>
+<tr class="memdesc:a427453aedddacacf782a9ae304c12e6c inherit pub_methods_classEasyKiConverter_1_1BaseConverter"><td class="mdescLeft">&#160;</td><td class="mdescRight">转换完成  <br /></td></tr>
+<tr class="separator:a427453aedddacacf782a9ae304c12e6c inherit pub_methods_classEasyKiConverter_1_1BaseConverter"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-methods" name="pri-methods"></a>
+Private 成员函数</h2></td></tr>
+<tr class="memitem:a1f2abaac99aa558f1e0e6f72a9ae23b2" id="r_a1f2abaac99aa558f1e0e6f72a9ae23b2"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1BatchConverter.html#a1f2abaac99aa558f1e0e6f72a9ae23b2">onPreloadCompleted</a> (int successCount, int failedCount)</td></tr>
+<tr class="memdesc:a1f2abaac99aa558f1e0e6f72a9ae23b2"><td class="mdescLeft">&#160;</td><td class="mdescRight">处理预加载完成  <br /></td></tr>
+<tr class="separator:a1f2abaac99aa558f1e0e6f72a9ae23b2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2007fd3ed60609e21b312c04e54abe84" id="r_a2007fd3ed60609e21b312c04e54abe84"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1BatchConverter.html#a2007fd3ed60609e21b312c04e54abe84">onProgressChanged</a> (const <a class="el" href="structEasyKiConverter_1_1ExportOverallProgress.html">ExportOverallProgress</a> &amp;progress)</td></tr>
+<tr class="memdesc:a2007fd3ed60609e21b312c04e54abe84"><td class="mdescLeft">&#160;</td><td class="mdescRight">处理导出进度更新  <br /></td></tr>
+<tr class="separator:a2007fd3ed60609e21b312c04e54abe84"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9f4abc3cddcbba45dc45b1fa86e0ec1d" id="r_a9f4abc3cddcbba45dc45b1fa86e0ec1d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1BatchConverter.html#a9f4abc3cddcbba45dc45b1fa86e0ec1d">onExportCompleted</a> (int successCount, int failedCount)</td></tr>
+<tr class="memdesc:a9f4abc3cddcbba45dc45b1fa86e0ec1d"><td class="mdescLeft">&#160;</td><td class="mdescRight">处理导出完成  <br /></td></tr>
+<tr class="separator:a9f4abc3cddcbba45dc45b1fa86e0ec1d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a04e84ec45219be90a8133fdd59cab784" id="r_a04e84ec45219be90a8133fdd59cab784"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1BatchConverter.html#a04e84ec45219be90a8133fdd59cab784">onExportFailed</a> (const QString &amp;error)</td></tr>
+<tr class="memdesc:a04e84ec45219be90a8133fdd59cab784"><td class="mdescLeft">&#160;</td><td class="mdescRight">处理导出失败  <br /></td></tr>
+<tr class="separator:a04e84ec45219be90a8133fdd59cab784"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-attribs" name="pri-attribs"></a>
+Private 属性</h2></td></tr>
+<tr class="memitem:a7b76c5ac9d85d4b8024ed7c9136a6e22" id="r_a7b76c5ac9d85d4b8024ed7c9136a6e22"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1BatchConverter.html#a7b76c5ac9d85d4b8024ed7c9136a6e22">m_exportFinished</a> {false}</td></tr>
+<tr class="separator:a7b76c5ac9d85d4b8024ed7c9136a6e22"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a853942d8d79cb73b7b42d74d6ae91aca" id="r_a853942d8d79cb73b7b42d74d6ae91aca"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1BatchConverter.html#a853942d8d79cb73b7b42d74d6ae91aca">m_exportSuccess</a> {false}</td></tr>
+<tr class="separator:a853942d8d79cb73b7b42d74d6ae91aca"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5b12730919ba3f9f855bc358fa26e6b3" id="r_a5b12730919ba3f9f855bc358fa26e6b3"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1BatchConverter.html#a5b12730919ba3f9f855bc358fa26e6b3">m_successCount</a> {0}</td></tr>
+<tr class="separator:a5b12730919ba3f9f855bc358fa26e6b3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aace29c0e1bcc4d521d2ceae293ba6834" id="r_aace29c0e1bcc4d521d2ceae293ba6834"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1BatchConverter.html#aace29c0e1bcc4d521d2ceae293ba6834">m_failedCount</a> {0}</td></tr>
+<tr class="separator:aace29c0e1bcc4d521d2ceae293ba6834"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="inherited" name="inherited"></a>
+额外继承的成员函数</h2></td></tr>
+<tr class="inherit_header pro_methods_classEasyKiConverter_1_1BaseConverter"><td colspan="2" onclick="javascript:toggleInherit('pro_methods_classEasyKiConverter_1_1BaseConverter')"><img src="closed.png" alt="-"/>&#160;Protected 成员函数 继承自 <a class="el" href="classEasyKiConverter_1_1BaseConverter.html">EasyKiConverter::BaseConverter</a></td></tr>
+<tr class="memitem:a559cb7fd17665c52b65f12272d510c4b inherit pro_methods_classEasyKiConverter_1_1BaseConverter" id="r_a559cb7fd17665c52b65f12272d510c4b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classEasyKiConverter_1_1CliContext.html">CliContext</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1BaseConverter.html#a559cb7fd17665c52b65f12272d510c4b">context</a> () const</td></tr>
+<tr class="memdesc:a559cb7fd17665c52b65f12272d510c4b inherit pro_methods_classEasyKiConverter_1_1BaseConverter"><td class="mdescLeft">&#160;</td><td class="mdescRight">获取 CLI 上下文  <br /></td></tr>
+<tr class="separator:a559cb7fd17665c52b65f12272d510c4b inherit pro_methods_classEasyKiConverter_1_1BaseConverter"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac4e4cb96f9007edc0d37e7e8fe9328af inherit pro_methods_classEasyKiConverter_1_1BaseConverter" id="r_ac4e4cb96f9007edc0d37e7e8fe9328af"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="classEasyKiConverter_1_1CliPrinter.html">CliPrinter</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1BaseConverter.html#ac4e4cb96f9007edc0d37e7e8fe9328af">printer</a> () const</td></tr>
+<tr class="memdesc:ac4e4cb96f9007edc0d37e7e8fe9328af inherit pro_methods_classEasyKiConverter_1_1BaseConverter"><td class="mdescLeft">&#160;</td><td class="mdescRight">获取打印机  <br /></td></tr>
+<tr class="separator:ac4e4cb96f9007edc0d37e7e8fe9328af inherit pro_methods_classEasyKiConverter_1_1BaseConverter"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a663245162eed89de1df25a2492ab2ea9 inherit pro_methods_classEasyKiConverter_1_1BaseConverter" id="r_a663245162eed89de1df25a2492ab2ea9"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1BaseConverter.html#a663245162eed89de1df25a2492ab2ea9">setError</a> (const QString &amp;message)</td></tr>
+<tr class="memdesc:a663245162eed89de1df25a2492ab2ea9 inherit pro_methods_classEasyKiConverter_1_1BaseConverter"><td class="mdescLeft">&#160;</td><td class="mdescRight">设置错误信息  <br /></td></tr>
+<tr class="separator:a663245162eed89de1df25a2492ab2ea9 inherit pro_methods_classEasyKiConverter_1_1BaseConverter"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a783fd66ca41172e288016bb1fa65eb5b inherit pro_methods_classEasyKiConverter_1_1BaseConverter" id="r_a783fd66ca41172e288016bb1fa65eb5b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1BaseConverter.html#a783fd66ca41172e288016bb1fa65eb5b">printMessage</a> (const QString &amp;message) const</td></tr>
+<tr class="memdesc:a783fd66ca41172e288016bb1fa65eb5b inherit pro_methods_classEasyKiConverter_1_1BaseConverter"><td class="mdescLeft">&#160;</td><td class="mdescRight">输出消息  <br /></td></tr>
+<tr class="separator:a783fd66ca41172e288016bb1fa65eb5b inherit pro_methods_classEasyKiConverter_1_1BaseConverter"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3b41f35e9d347a83fb64fc4c5ce64cba inherit pro_methods_classEasyKiConverter_1_1BaseConverter" id="r_a3b41f35e9d347a83fb64fc4c5ce64cba"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1BaseConverter.html#a3b41f35e9d347a83fb64fc4c5ce64cba">printProgressBar</a> (int progress) const</td></tr>
+<tr class="memdesc:a3b41f35e9d347a83fb64fc4c5ce64cba inherit pro_methods_classEasyKiConverter_1_1BaseConverter"><td class="mdescLeft">&#160;</td><td class="mdescRight">输出进度条  <br /></td></tr>
+<tr class="separator:a3b41f35e9d347a83fb64fc4c5ce64cba inherit pro_methods_classEasyKiConverter_1_1BaseConverter"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table>
+<a name="details" id="details"></a><h2 class="groupheader">详细描述</h2>
+<div class="textblock"><p>批量转换器 </p>
+<p>处理批量元器件的转换逻辑。 </p>
+
+<p class="definition">在文件 <a class="el" href="BatchConverter_8h_source.html">BatchConverter.h</a> 第 <a class="el" href="BatchConverter_8h_source.html#l00014">14</a> 行定义.</p>
+</div><h2 class="groupheader">构造及析构函数说明</h2>
+<a id="afddd0902863612fa457672edfa305ae5" name="afddd0902863612fa457672edfa305ae5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afddd0902863612fa457672edfa305ae5">&#9670;&#160;</a></span>BatchConverter()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">EasyKiConverter::BatchConverter::BatchConverter </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classEasyKiConverter_1_1CliContext.html">CliContext</a> *&#160;</td>
+          <td class="paramname"><em>context</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">QObject *&#160;</td>
+          <td class="paramname"><em>parent</em> = <code>nullptr</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">explicit</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>构造函数 </p>
+<dl class="params"><dt>参数</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">context</td><td>CLI 上下文 </td></tr>
+    <tr><td class="paramname">parent</td><td>父对象指针 </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p class="definition">在文件 <a class="el" href="BatchConverter_8cpp_source.html">BatchConverter.cpp</a> 第 <a class="el" href="BatchConverter_8cpp_source.html#l00013">13</a> 行定义.</p>
+
+</div>
+</div>
+<a id="aa96819dc807a523a0f6cbd4801c76a6b" name="aa96819dc807a523a0f6cbd4801c76a6b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa96819dc807a523a0f6cbd4801c76a6b">&#9670;&#160;</a></span>~BatchConverter()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">EasyKiConverter::BatchConverter::~BatchConverter </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">default</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>析构函数 </p>
+
+</div>
+</div>
+<h2 class="groupheader">成员函数说明</h2>
+<a id="afb46328f558c122cb694f79ab3bc6170" name="afb46328f558c122cb694f79ab3bc6170"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afb46328f558c122cb694f79ab3bc6170">&#9670;&#160;</a></span>execute()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool EasyKiConverter::BatchConverter::execute </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>执行批量转换 </p>
+<dl class="section return"><dt>返回</dt><dd>成功返回 true，失败返回 false </dd></dl>
+
+<p>实现了 <a class="el" href="classEasyKiConverter_1_1BaseConverter.html#a9ba190aed7493298fa0aca471fc89625">EasyKiConverter::BaseConverter</a>.</p>
+
+<p class="definition">在文件 <a class="el" href="BatchConverter_8cpp_source.html">BatchConverter.cpp</a> 第 <a class="el" href="BatchConverter_8cpp_source.html#l00015">15</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="classEasyKiConverter_1_1ParallelExportService.html#a0bb299a95eac5bdaf4fd957caeec0c32">EasyKiConverter::ParallelExportService::completed()</a>, <a class="el" href="BaseConverter_8h_source.html#l00067">EasyKiConverter::BaseConverter::context()</a>, <a class="el" href="CliContext_8cpp_source.html#l00036">EasyKiConverter::CliContext::createExportOptions()</a>, <a class="el" href="BaseConverter_8h_source.html#l00043">EasyKiConverter::BaseConverter::errorMessage()</a>, <a class="el" href="CliContext_8h_source.html#l00056">EasyKiConverter::CliContext::exportService()</a>, <a class="el" href="classEasyKiConverter_1_1ParallelExportService.html#a24616297ca69d3cc2aeefcd48837d97b">EasyKiConverter::ParallelExportService::failed()</a>, <a class="el" href="BatchConverter_8h_source.html#l00065">m_exportSuccess</a>, <a class="el" href="BatchConverter_8h_source.html#l00067">m_failedCount</a>, <a class="el" href="BatchConverter_8h_source.html#l00066">m_successCount</a>, <a class="el" href="BatchConverter_8cpp_source.html#l00094">onExportCompleted()</a>, <a class="el" href="BatchConverter_8cpp_source.html#l00101">onExportFailed()</a>, <a class="el" href="BatchConverter_8cpp_source.html#l00082">onPreloadCompleted()</a>, <a class="el" href="BatchConverter_8cpp_source.html#l00087">onProgressChanged()</a>, <a class="el" href="classEasyKiConverter_1_1ParallelExportService.html#a898c80d25eda21b1e09e38e0645816fa">EasyKiConverter::ParallelExportService::preloadCompleted()</a>, <a class="el" href="BaseConverter_8cpp_source.html#l00011">EasyKiConverter::BaseConverter::printMessage()</a>, <a class="el" href="classEasyKiConverter_1_1ParallelExportService.html#a86d4e05424e829e91e0976e3d90eee37">EasyKiConverter::ParallelExportService::progressChanged()</a>, <a class="el" href="FileReader_8cpp_source.html#l00037">EasyKiConverter::FileReader::readComponentListFile()</a>, <a class="el" href="BaseConverter_8h_source.html#l00083">EasyKiConverter::BaseConverter::setError()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00130">EasyKiConverter::ParallelExportService::setOptions()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00134">EasyKiConverter::ParallelExportService::setOutputPath()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00224">EasyKiConverter::ParallelExportService::startExport()</a> , 以及 <a class="el" href="ParallelExportService_8cpp_source.html#l00142">EasyKiConverter::ParallelExportService::startPreload()</a>.</p>
+
+</div>
+</div>
+<a id="a9f4abc3cddcbba45dc45b1fa86e0ec1d" name="a9f4abc3cddcbba45dc45b1fa86e0ec1d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9f4abc3cddcbba45dc45b1fa86e0ec1d">&#9670;&#160;</a></span>onExportCompleted()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::BatchConverter::onExportCompleted </td>
+          <td>(</td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>successCount</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>failedCount</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>处理导出完成 </p>
+<dl class="params"><dt>参数</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">successCount</td><td>成功数量 </td></tr>
+    <tr><td class="paramname">failedCount</td><td>失败数量 </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p class="definition">在文件 <a class="el" href="BatchConverter_8cpp_source.html">BatchConverter.cpp</a> 第 <a class="el" href="BatchConverter_8cpp_source.html#l00094">94</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="BatchConverter_8h_source.html#l00064">m_exportFinished</a>, <a class="el" href="BatchConverter_8h_source.html#l00065">m_exportSuccess</a>, <a class="el" href="BatchConverter_8h_source.html#l00067">m_failedCount</a> , 以及 <a class="el" href="BatchConverter_8h_source.html#l00066">m_successCount</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="BatchConverter_8cpp_source.html#l00015">execute()</a>.</p>
+
+</div>
+</div>
+<a id="a04e84ec45219be90a8133fdd59cab784" name="a04e84ec45219be90a8133fdd59cab784"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a04e84ec45219be90a8133fdd59cab784">&#9670;&#160;</a></span>onExportFailed()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::BatchConverter::onExportFailed </td>
+          <td>(</td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>error</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>处理导出失败 </p>
+<dl class="params"><dt>参数</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">error</td><td>错误信息 </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p class="definition">在文件 <a class="el" href="BatchConverter_8cpp_source.html">BatchConverter.cpp</a> 第 <a class="el" href="BatchConverter_8cpp_source.html#l00101">101</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="BatchConverter_8h_source.html#l00064">m_exportFinished</a>, <a class="el" href="BatchConverter_8h_source.html#l00065">m_exportSuccess</a> , 以及 <a class="el" href="BaseConverter_8h_source.html#l00083">EasyKiConverter::BaseConverter::setError()</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="BatchConverter_8cpp_source.html#l00015">execute()</a>.</p>
+
+</div>
+</div>
+<a id="a1f2abaac99aa558f1e0e6f72a9ae23b2" name="a1f2abaac99aa558f1e0e6f72a9ae23b2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1f2abaac99aa558f1e0e6f72a9ae23b2">&#9670;&#160;</a></span>onPreloadCompleted()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::BatchConverter::onPreloadCompleted </td>
+          <td>(</td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>successCount</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>failedCount</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>处理预加载完成 </p>
+<dl class="params"><dt>参数</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">successCount</td><td>成功数量 </td></tr>
+    <tr><td class="paramname">failedCount</td><td>失败数量 </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p class="definition">在文件 <a class="el" href="BatchConverter_8cpp_source.html">BatchConverter.cpp</a> 第 <a class="el" href="BatchConverter_8cpp_source.html#l00082">82</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="BaseConverter_8cpp_source.html#l00011">EasyKiConverter::BaseConverter::printMessage()</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="BatchConverter_8cpp_source.html#l00015">execute()</a>.</p>
+
+</div>
+</div>
+<a id="a2007fd3ed60609e21b312c04e54abe84" name="a2007fd3ed60609e21b312c04e54abe84"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2007fd3ed60609e21b312c04e54abe84">&#9670;&#160;</a></span>onProgressChanged()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::BatchConverter::onProgressChanged </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structEasyKiConverter_1_1ExportOverallProgress.html">ExportOverallProgress</a> &amp;&#160;</td>
+          <td class="paramname"><em>progress</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>处理导出进度更新 </p>
+<dl class="params"><dt>参数</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">progress</td><td>导出进度 </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p class="definition">在文件 <a class="el" href="BatchConverter_8cpp_source.html">BatchConverter.cpp</a> 第 <a class="el" href="BatchConverter_8cpp_source.html#l00087">87</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="BaseConverter_8h_source.html#l00067">EasyKiConverter::BaseConverter::context()</a>, <a class="el" href="ExportProgress_8h_source.html#l00284">EasyKiConverter::ExportOverallProgress::overallPercentage()</a> , 以及 <a class="el" href="BaseConverter_8cpp_source.html#l00017">EasyKiConverter::BaseConverter::printProgressBar()</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="BatchConverter_8cpp_source.html#l00015">execute()</a>.</p>
+
+</div>
+</div>
+<h2 class="groupheader">类成员变量说明</h2>
+<a id="a7b76c5ac9d85d4b8024ed7c9136a6e22" name="a7b76c5ac9d85d4b8024ed7c9136a6e22"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7b76c5ac9d85d4b8024ed7c9136a6e22">&#9670;&#160;</a></span>m_exportFinished</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool EasyKiConverter::BatchConverter::m_exportFinished {false}</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="BatchConverter_8h_source.html">BatchConverter.h</a> 第 <a class="el" href="BatchConverter_8h_source.html#l00064">64</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="BatchConverter_8cpp_source.html#l00094">onExportCompleted()</a> , 以及 <a class="el" href="BatchConverter_8cpp_source.html#l00101">onExportFailed()</a>.</p>
+
+</div>
+</div>
+<a id="a853942d8d79cb73b7b42d74d6ae91aca" name="a853942d8d79cb73b7b42d74d6ae91aca"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a853942d8d79cb73b7b42d74d6ae91aca">&#9670;&#160;</a></span>m_exportSuccess</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool EasyKiConverter::BatchConverter::m_exportSuccess {false}</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="BatchConverter_8h_source.html">BatchConverter.h</a> 第 <a class="el" href="BatchConverter_8h_source.html#l00065">65</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="BatchConverter_8cpp_source.html#l00015">execute()</a>, <a class="el" href="BatchConverter_8cpp_source.html#l00094">onExportCompleted()</a> , 以及 <a class="el" href="BatchConverter_8cpp_source.html#l00101">onExportFailed()</a>.</p>
+
+</div>
+</div>
+<a id="aace29c0e1bcc4d521d2ceae293ba6834" name="aace29c0e1bcc4d521d2ceae293ba6834"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aace29c0e1bcc4d521d2ceae293ba6834">&#9670;&#160;</a></span>m_failedCount</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">int EasyKiConverter::BatchConverter::m_failedCount {0}</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="BatchConverter_8h_source.html">BatchConverter.h</a> 第 <a class="el" href="BatchConverter_8h_source.html#l00067">67</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="BatchConverter_8cpp_source.html#l00015">execute()</a> , 以及 <a class="el" href="BatchConverter_8cpp_source.html#l00094">onExportCompleted()</a>.</p>
+
+</div>
+</div>
+<a id="a5b12730919ba3f9f855bc358fa26e6b3" name="a5b12730919ba3f9f855bc358fa26e6b3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5b12730919ba3f9f855bc358fa26e6b3">&#9670;&#160;</a></span>m_successCount</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">int EasyKiConverter::BatchConverter::m_successCount {0}</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="BatchConverter_8h_source.html">BatchConverter.h</a> 第 <a class="el" href="BatchConverter_8h_source.html#l00066">66</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="BatchConverter_8cpp_source.html#l00015">execute()</a> , 以及 <a class="el" href="BatchConverter_8cpp_source.html#l00094">onExportCompleted()</a>.</p>
+
+</div>
+</div>
+<hr/>该类的文档由以下文件生成:<ul>
+<li>utils/cli/<a class="el" href="BatchConverter_8h_source.html">BatchConverter.h</a></li>
+<li>utils/cli/<a class="el" href="BatchConverter_8cpp_source.html">BatchConverter.cpp</a></li>
+</ul>
+</div><!-- contents -->
+</div><!-- doc-content -->
+<!-- start footer part -->
+<div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
+  <ul>
+    <li class="navelem"><a class="el" href="namespaceEasyKiConverter.html">EasyKiConverter</a></li><li class="navelem"><a class="el" href="classEasyKiConverter_1_1BatchConverter.html">BatchConverter</a></li>
+    <li class="footer">制作者 <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8 </li>
+  </ul>
+</div>
+</body>
+</html>

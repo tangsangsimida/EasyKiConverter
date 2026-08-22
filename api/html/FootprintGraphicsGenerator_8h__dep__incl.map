@@ -1,0 +1,18 @@
+<map id="core/kicad/FootprintGraphicsGenerator.h" name="core/kicad/FootprintGraphicsGenerator.h">
+<area shape="rect" id="Node000001" title=" " alt="" coords="578,5,786,45"/>
+<area shape="rect" id="Node000002" href="$ExporterFootprint_8h.html" title=" " alt="" coords="454,101,673,126"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="646,56,581,103,578,98,643,51"/>
+<area shape="rect" id="Node000008" href="$FootprintGraphicsGenerator_8cpp.html" title=" " alt="" coords="697,93,905,133"/>
+<area shape="poly" id="edge8_Node000001_Node000008" title=" " alt="" coords="721,51,776,91,773,95,718,56"/>
+<area shape="rect" id="Node000003" href="$ExporterFootprint_8cpp.html" title=" " alt="" coords="5,189,239,214"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="491,131,181,191,180,186,490,126"/>
+<area shape="rect" id="Node000004" href="$FootprintExportStage_8cpp.html" title=" " alt="" coords="263,181,447,221"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="524,134,402,184,400,179,522,129"/>
+<area shape="rect" id="Node000005" href="$FootprintExportWorker_8cpp.html" title=" " alt="" coords="471,181,655,221"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="566,140,566,181,561,181,561,140"/>
+<area shape="rect" id="Node000006" href="$WriteWorker_8cpp.html" title=" " alt="" coords="661,269,844,295"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="598,130,633,152,669,179,715,227,747,268,743,271,711,230,666,183,630,157,595,135"/>
+<area shape="rect" id="Node000007" href="$WriteWorker_8h.html" title=" " alt="" coords="730,189,898,214"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="611,128,781,186,779,191,609,133"/>
+<area shape="poly" id="edge7_Node000007_Node000006" title=" " alt="" coords="799,226,764,271,760,267,795,223"/>
+</map>

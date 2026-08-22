@@ -1,0 +1,13 @@
+<map id="EasyKiConverter::Model3DExportWorker" name="EasyKiConverter::Model3DExportWorker">
+<area shape="rect" id="Node000001" title="3D模型导出Worker" alt="" coords="178,493,409,793"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="5,185,72,251"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="44,264,56,344,68,388,86,429,129,492,180,547,176,550,125,495,82,432,63,390,51,345,38,265"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="96,185,181,251"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="150,263,169,342,196,430,221,492,216,494,191,432,164,343,145,264"/>
+<area shape="rect" id="Node000004" href="$classEasyKiConverter_1_1IExportWorker.html" title="导出Worker接口" alt="" coords="205,138,381,298"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="296,312,296,493,291,493,291,312"/>
+<area shape="rect" id="Node000005" href="$structEasyKiConverter_1_1Model3DExportWorker_1_1OutputPaths.html" title=" " alt="" coords="406,168,637,268"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="497,269,384,480,379,477,493,267"/>
+<area shape="rect" id="Node000006" href="$structEasyKiConverter_1_1ExportOptions.html" title="导出选项配置" alt="" coords="661,5,883,431"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="662,421,651,433,599,479,541,521,482,557,425,587,422,583,479,552,538,516,595,475,647,429,658,417"/>
+</map>

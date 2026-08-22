@@ -1,0 +1,229 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "https://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="zh">
+<head>
+<meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=11"/>
+<meta name="generator" content="Doxygen 1.9.8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>EasyKiConverter: services/export/TempFileManager.cpp 文件参考</title>
+<link href="tabs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="jquery.js"></script>
+<script type="text/javascript" src="dynsections.js"></script>
+<link href="navtree.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="resize.js"></script>
+<script type="text/javascript" src="navtreedata.js"></script>
+<script type="text/javascript" src="navtree.js"></script>
+<link href="search/search.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="search/searchdata.js"></script>
+<script type="text/javascript" src="search/search.js"></script>
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  extensions: ["tex2jax.js"],
+  jax: ["input/TeX","output/HTML-CSS"],
+});
+</script>
+<script type="text/javascript" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/MathJax.js"></script>
+<link href="doxygen.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+<div id="top"><!-- do not remove this div, it is closed by doxygen! -->
+<div id="titlearea">
+<table cellspacing="0" cellpadding="0">
+ <tbody>
+ <tr id="projectrow">
+  <td id="projectalign">
+   <div id="projectname">EasyKiConverter<span id="projectnumber">&#160;3.0.5</span>
+   </div>
+   <div id="projectbrief">LCSC/EasyEDA 元件转 KiCad 库文件转换器</div>
+  </td>
+ </tr>
+ </tbody>
+</table>
+</div>
+<!-- end header part -->
+<!-- 制作者 Doxygen 1.9.8 -->
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+var searchBox = new SearchBox("searchBox", "search/",'.html');
+/* @license-end */
+</script>
+<script type="text/javascript" src="menudata.js"></script>
+<script type="text/javascript" src="menu.js"></script>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(function() {
+  initMenu('',true,false,'search.php','搜索');
+  $(document).ready(function() { init_search(); });
+});
+/* @license-end */
+</script>
+<div id="main-nav"></div>
+</div><!-- top -->
+<div id="side-nav" class="ui-resizable side-nav-resizable">
+  <div id="nav-tree">
+    <div id="nav-tree-contents">
+      <div id="nav-sync" class="sync"></div>
+    </div>
+  </div>
+  <div id="splitbar" style="-moz-user-select:none;" 
+       class="ui-resizable-handle">
+  </div>
+</div>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(document).ready(function(){initNavTree('TempFileManager_8cpp.html',''); initResizable(); });
+/* @license-end */
+</script>
+<div id="doc-content">
+<!-- window showing the filter options -->
+<div id="MSearchSelectWindow"
+     onmouseover="return searchBox.OnSearchSelectShow()"
+     onmouseout="return searchBox.OnSearchSelectHide()"
+     onkeydown="return searchBox.OnSearchSelectKey(event)">
+</div>
+
+<!-- iframe showing the search results (closed by default) -->
+<div id="MSearchResultsWindow">
+<div id="MSearchResults">
+<div class="SRPage">
+<div id="SRIndex">
+<div id="SRResults"></div>
+<div class="SRStatus" id="Loading">载入中...</div>
+<div class="SRStatus" id="Searching">搜索中...</div>
+<div class="SRStatus" id="NoMatches">未找到</div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="header">
+  <div class="summary">
+<a href="#namespaces">命名空间</a>  </div>
+  <div class="headertitle"><div class="title">TempFileManager.cpp 文件参考</div></div>
+</div><!--header-->
+<div class="contents">
+<div class="textblock"><code>#include &quot;<a class="el" href="TempFileManager_8h_source.html">TempFileManager.h</a>&quot;</code><br />
+<code>#include &lt;QCoreApplication&gt;</code><br />
+<code>#include &lt;QDateTime&gt;</code><br />
+<code>#include &lt;QDebug&gt;</code><br />
+<code>#include &lt;QDir&gt;</code><br />
+<code>#include &lt;QFile&gt;</code><br />
+<code>#include &lt;QJsonArray&gt;</code><br />
+<code>#include &lt;QJsonDocument&gt;</code><br />
+<code>#include &lt;QJsonObject&gt;</code><br />
+<code>#include &lt;QRandomGenerator&gt;</code><br />
+<code>#include &lt;QStandardPaths&gt;</code><br />
+<code>#include &lt;QThread&gt;</code><br />
+<code>#include &lt;chrono&gt;</code><br />
+<code>#include &lt;thread&gt;</code><br />
+</div><div class="textblock"><div id="dynsection-0" onclick="return toggleVisibility(this)" class="dynheader closed" style="cursor:pointer;">
+  <img id="dynsection-0-trigger" src="closed.png" alt="+"/> TempFileManager.cpp 的引用(Include)关系图:</div>
+<div id="dynsection-0-summary" class="dynsummary" style="display:block;">
+</div>
+<div id="dynsection-0-content" class="dyncontent" style="display:none;">
+<div class="center"><iframe scrolling="no" frameborder="0" src="TempFileManager_8cpp__incl.svg" width="1808" height="198"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe></div>
+</div>
+</div>
+<p><a href="TempFileManager_8cpp_source.html">浏览源代码.</a></p>
+<table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="namespaces" name="namespaces"></a>
+命名空间</h2></td></tr>
+<tr class="memitem:namespaceEasyKiConverter" id="r_namespaceEasyKiConverter"><td class="memItemLeft" align="right" valign="top">namespace &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceEasyKiConverter.html">EasyKiConverter</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table>
+<h2 class="groupheader">变量说明</h2>
+<a id="a2000dfd57c01297d52621a8ed6a8541a" name="a2000dfd57c01297d52621a8ed6a8541a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2000dfd57c01297d52621a8ed6a8541a">&#9670;&#160;</a></span>backupPath</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">QString backupPath</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="TempFileManager_8cpp_source.html">TempFileManager.cpp</a> 第 <a class="el" href="TempFileManager_8cpp_source.html#l00024">24</a> 行定义.</p>
+
+</div>
+</div>
+<a id="a92af446450f9c4741944c6d5f6897a0f" name="a92af446450f9c4741944c6d5f6897a0f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a92af446450f9c4741944c6d5f6897a0f">&#9670;&#160;</a></span>existedBefore</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool existedBefore = false</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="TempFileManager_8cpp_source.html">TempFileManager.cpp</a> 第 <a class="el" href="TempFileManager_8cpp_source.html#l00027">27</a> 行定义.</p>
+
+</div>
+</div>
+<a id="ae6179d96426dbf58e725cdfee47efb35" name="ae6179d96426dbf58e725cdfee47efb35"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae6179d96426dbf58e725cdfee47efb35">&#9670;&#160;</a></span>finalPath</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">QString finalPath</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="TempFileManager_8cpp_source.html">TempFileManager.cpp</a> 第 <a class="el" href="TempFileManager_8cpp_source.html#l00023">23</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="TempFileManager_8cpp_source.html#l00288">EasyKiConverter::TempFileManager::commit()</a>, <a class="el" href="TempFileManager_8cpp_source.html#l00359">EasyKiConverter::TempFileManager::commitWithBackup()</a>, <a class="el" href="AtomicFileWriter_8cpp_source.html#l00104">EasyKiConverter::AtomicFileWriter::copyAtomically()</a>, <a class="el" href="SymbolExportStage_8cpp_source.html#l00094">EasyKiConverter::SymbolExportStage::doLibraryExport()</a>, <a class="el" href="FootprintGraphicsGenerator_8cpp_source.html#l00481">EasyKiConverter::FootprintGraphicsGenerator::generateModel3D()</a>, <a class="el" href="DatasheetExportWorker_8cpp_source.html#l00029">EasyKiConverter::DatasheetExportWorker::run()</a>, <a class="el" href="PreviewImagesExportWorker_8cpp_source.html#l00032">EasyKiConverter::PreviewImagesExportWorker::run()</a>, <a class="el" href="DatasheetExportStage_8cpp_source.html#l00018">EasyKiConverter::DatasheetExportStage::start()</a>, <a class="el" href="TempFileManager_8cpp_source.html#l00238">EasyKiConverter::TempFileManager::tempFilePath()</a>, <a class="el" href="AtomicFileWriter_8cpp_source.html#l00081">EasyKiConverter::AtomicFileWriter::writeAtomically()</a> , 以及 <a class="el" href="AtomicFileWriter_8cpp_source.html#l00017">EasyKiConverter::AtomicFileWriter::writeAtomically()</a>.</p>
+
+</div>
+</div>
+<a id="a4fb5a44526bad5d96941731c08ff97dd" name="a4fb5a44526bad5d96941731c08ff97dd"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4fb5a44526bad5d96941731c08ff97dd">&#9670;&#160;</a></span>isDirectory</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool isDirectory = false</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="TempFileManager_8cpp_source.html">TempFileManager.cpp</a> 第 <a class="el" href="TempFileManager_8cpp_source.html#l00026">26</a> 行定义.</p>
+
+</div>
+</div>
+<a id="a6a67b482a412b8fa4b84b6fc227b2e9b" name="a6a67b482a412b8fa4b84b6fc227b2e9b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6a67b482a412b8fa4b84b6fc227b2e9b">&#9670;&#160;</a></span>tempPath</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">QString tempPath</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="TempFileManager_8cpp_source.html">TempFileManager.cpp</a> 第 <a class="el" href="TempFileManager_8cpp_source.html#l00025">25</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="TempFileManager_8cpp_source.html#l00288">EasyKiConverter::TempFileManager::commit()</a>, <a class="el" href="TempFileManager_8cpp_source.html#l00323">EasyKiConverter::TempFileManager::commitDirectory()</a>, <a class="el" href="TempFileManager_8cpp_source.html#l00359">EasyKiConverter::TempFileManager::commitWithBackup()</a>, <a class="el" href="AtomicFileWriter_8cpp_source.html#l00104">EasyKiConverter::AtomicFileWriter::copyAtomically()</a>, <a class="el" href="TempFileManager_8cpp_source.html#l00256">EasyKiConverter::TempFileManager::createSymbolTempPath()</a>, <a class="el" href="TempFileManager_8cpp_source.html#l00273">EasyKiConverter::TempFileManager::createTempDirectoryPath()</a>, <a class="el" href="TempFileManager_8cpp_source.html#l00222">EasyKiConverter::TempFileManager::createTempFilePath()</a>, <a class="el" href="PreviewImagesExportStage_8cpp_source.html#l00068">EasyKiConverter::PreviewImagesExportStage::createTempPathsForComponent()</a>, <a class="el" href="SymbolExportStage_8cpp_source.html#l00094">EasyKiConverter::SymbolExportStage::doLibraryExport()</a>, <a class="el" href="TempFileManager_8cpp_source.html#l00626">EasyKiConverter::TempFileManager::registerTempFile()</a>, <a class="el" href="TempFileManager_8cpp_source.html#l00553">EasyKiConverter::TempFileManager::rollbackAll()</a>, <a class="el" href="DatasheetExportWorker_8h_source.html#l00043">EasyKiConverter::DatasheetExportWorker::setTempPath()</a>, <a class="el" href="DatasheetExportStage_8cpp_source.html#l00018">EasyKiConverter::DatasheetExportStage::start()</a>, <a class="el" href="TempFileManager_8cpp_source.html#l00238">EasyKiConverter::TempFileManager::tempFilePath()</a>, <a class="el" href="WriteWorker_8cpp_source.html#l00413">EasyKiConverter::WriteWorker::write3DModelFile()</a>, <a class="el" href="AtomicFileWriter_8cpp_source.html#l00081">EasyKiConverter::AtomicFileWriter::writeAtomically()</a>, <a class="el" href="AtomicFileWriter_8cpp_source.html#l00017">EasyKiConverter::AtomicFileWriter::writeAtomically()</a>, <a class="el" href="WriteWorker_8cpp_source.html#l00348">EasyKiConverter::WriteWorker::writeFootprintFile()</a> , 以及 <a class="el" href="WriteWorker_8cpp_source.html#l00317">EasyKiConverter::WriteWorker::writeSymbolFile()</a>.</p>
+
+</div>
+</div>
+</div><!-- contents -->
+</div><!-- doc-content -->
+<!-- start footer part -->
+<div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
+  <ul>
+    <li class="navelem"><a class="el" href="dir_056ec8f0377ddc4293192cbc6b19c99c.html">services</a></li><li class="navelem"><a class="el" href="dir_a384dc2a66e9a2b9e112fff859fd4142.html">export</a></li><li class="navelem"><a class="el" href="TempFileManager_8cpp.html">TempFileManager.cpp</a></li>
+    <li class="footer">制作者 <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8 </li>
+  </ul>
+</div>
+</body>
+</html>

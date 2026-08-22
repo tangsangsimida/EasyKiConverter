@@ -1,0 +1,558 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "https://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="zh">
+<head>
+<meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=11"/>
+<meta name="generator" content="Doxygen 1.9.8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>EasyKiConverter: EasyKiConverter::FootprintExportWorker类 参考</title>
+<link href="tabs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="jquery.js"></script>
+<script type="text/javascript" src="dynsections.js"></script>
+<link href="navtree.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="resize.js"></script>
+<script type="text/javascript" src="navtreedata.js"></script>
+<script type="text/javascript" src="navtree.js"></script>
+<link href="search/search.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="search/searchdata.js"></script>
+<script type="text/javascript" src="search/search.js"></script>
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  extensions: ["tex2jax.js"],
+  jax: ["input/TeX","output/HTML-CSS"],
+});
+</script>
+<script type="text/javascript" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/MathJax.js"></script>
+<link href="doxygen.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+<div id="top"><!-- do not remove this div, it is closed by doxygen! -->
+<div id="titlearea">
+<table cellspacing="0" cellpadding="0">
+ <tbody>
+ <tr id="projectrow">
+  <td id="projectalign">
+   <div id="projectname">EasyKiConverter<span id="projectnumber">&#160;3.0.5</span>
+   </div>
+   <div id="projectbrief">LCSC/EasyEDA 元件转 KiCad 库文件转换器</div>
+  </td>
+ </tr>
+ </tbody>
+</table>
+</div>
+<!-- end header part -->
+<!-- 制作者 Doxygen 1.9.8 -->
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+var searchBox = new SearchBox("searchBox", "search/",'.html');
+/* @license-end */
+</script>
+<script type="text/javascript" src="menudata.js"></script>
+<script type="text/javascript" src="menu.js"></script>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(function() {
+  initMenu('',true,false,'search.php','搜索');
+  $(document).ready(function() { init_search(); });
+});
+/* @license-end */
+</script>
+<div id="main-nav"></div>
+</div><!-- top -->
+<div id="side-nav" class="ui-resizable side-nav-resizable">
+  <div id="nav-tree">
+    <div id="nav-tree-contents">
+      <div id="nav-sync" class="sync"></div>
+    </div>
+  </div>
+  <div id="splitbar" style="-moz-user-select:none;" 
+       class="ui-resizable-handle">
+  </div>
+</div>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(document).ready(function(){initNavTree('classEasyKiConverter_1_1FootprintExportWorker.html',''); initResizable(); });
+/* @license-end */
+</script>
+<div id="doc-content">
+<!-- window showing the filter options -->
+<div id="MSearchSelectWindow"
+     onmouseover="return searchBox.OnSearchSelectShow()"
+     onmouseout="return searchBox.OnSearchSelectHide()"
+     onkeydown="return searchBox.OnSearchSelectKey(event)">
+</div>
+
+<!-- iframe showing the search results (closed by default) -->
+<div id="MSearchResultsWindow">
+<div id="MSearchResults">
+<div class="SRPage">
+<div id="SRIndex">
+<div id="SRResults"></div>
+<div class="SRStatus" id="Loading">载入中...</div>
+<div class="SRStatus" id="Searching">搜索中...</div>
+<div class="SRStatus" id="NoMatches">未找到</div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="header">
+  <div class="summary">
+<a href="#pub-methods">Public 成员函数</a> &#124;
+<a href="#pri-attribs">Private 属性</a> &#124;
+<a href="classEasyKiConverter_1_1FootprintExportWorker-members.html">所有成员列表</a>  </div>
+  <div class="headertitle"><div class="title">EasyKiConverter::FootprintExportWorker类 参考</div></div>
+</div><!--header-->
+<div class="contents">
+
+<p>封装导出Worker  
+ <a href="classEasyKiConverter_1_1FootprintExportWorker.html#details">更多...</a></p>
+
+<p><code>#include &lt;<a class="el" href="FootprintExportWorker_8h_source.html">FootprintExportWorker.h</a>&gt;</code></p>
+<div id="dynsection-0" onclick="return toggleVisibility(this)" class="dynheader closed" style="cursor:pointer;">
+  <img id="dynsection-0-trigger" src="closed.png" alt="+"/> 类 EasyKiConverter::FootprintExportWorker 继承关系图:</div>
+<div id="dynsection-0-summary" class="dynsummary" style="display:block;">
+</div>
+<div id="dynsection-0-content" class="dyncontent" style="display:none;">
+<div class="center"><iframe scrolling="no" frameborder="0" src="classEasyKiConverter_1_1FootprintExportWorker__inherit__graph.svg" width="387" height="479"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe></div>
+</div>
+<div id="dynsection-1" onclick="return toggleVisibility(this)" class="dynheader closed" style="cursor:pointer;">
+  <img id="dynsection-1-trigger" src="closed.png" alt="+"/> EasyKiConverter::FootprintExportWorker 的协作图:</div>
+<div id="dynsection-1-summary" class="dynsummary" style="display:block;">
+</div>
+<div id="dynsection-1-content" class="dyncontent" style="display:none;">
+<div class="center"><iframe scrolling="no" frameborder="0" src="classEasyKiConverter_1_1FootprintExportWorker__coll__graph.svg" width="635" height="739"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe></div>
+</div>
+<table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
+Public 成员函数</h2></td></tr>
+<tr class="memitem:a6f1578f712390386a425b8b8ea1e29ae" id="r_a6f1578f712390386a425b8b8ea1e29ae"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1FootprintExportWorker.html#a6f1578f712390386a425b8b8ea1e29ae">FootprintExportWorker</a> ()</td></tr>
+<tr class="separator:a6f1578f712390386a425b8b8ea1e29ae"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a32de08835511c2732ba20c92e92683e2" id="r_a32de08835511c2732ba20c92e92683e2"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1FootprintExportWorker.html#a32de08835511c2732ba20c92e92683e2">setData</a> (const QString &amp;<a class="el" href="classEasyKiConverter_1_1FootprintExportWorker.html#aae80ccd9b1a16e9519660dbdea758963">componentId</a>, const QSharedPointer&lt; <a class="el" href="classEasyKiConverter_1_1ComponentData.html">ComponentData</a> &gt; &amp;data, const <a class="el" href="structEasyKiConverter_1_1ExportOptions.html">ExportOptions</a> &amp;options) override</td></tr>
+<tr class="memdesc:a32de08835511c2732ba20c92e92683e2"><td class="mdescLeft">&#160;</td><td class="mdescRight">设置导出所需的数据  <br /></td></tr>
+<tr class="separator:a32de08835511c2732ba20c92e92683e2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa8dd67eea28840ba6ed5fbc6d134fe66" id="r_aa8dd67eea28840ba6ed5fbc6d134fe66"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1FootprintExportWorker.html#aa8dd67eea28840ba6ed5fbc6d134fe66">run</a> () override</td></tr>
+<tr class="memdesc:aa8dd67eea28840ba6ed5fbc6d134fe66"><td class="mdescLeft">&#160;</td><td class="mdescRight">执行封装导出任务  <br /></td></tr>
+<tr class="separator:aa8dd67eea28840ba6ed5fbc6d134fe66"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aafb6db4dc1d6e9a58885488825b47164" id="r_aafb6db4dc1d6e9a58885488825b47164"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1FootprintExportWorker.html#aafb6db4dc1d6e9a58885488825b47164">cancel</a> () override</td></tr>
+<tr class="memdesc:aafb6db4dc1d6e9a58885488825b47164"><td class="mdescLeft">&#160;</td><td class="mdescRight">请求取消导出任务  <br /></td></tr>
+<tr class="separator:aafb6db4dc1d6e9a58885488825b47164"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aae80ccd9b1a16e9519660dbdea758963" id="r_aae80ccd9b1a16e9519660dbdea758963"><td class="memItemLeft" align="right" valign="top">QString&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1FootprintExportWorker.html#aae80ccd9b1a16e9519660dbdea758963">componentId</a> () const override</td></tr>
+<tr class="memdesc:aae80ccd9b1a16e9519660dbdea758963"><td class="mdescLeft">&#160;</td><td class="mdescRight">获取元器件ID  <br /></td></tr>
+<tr class="separator:aae80ccd9b1a16e9519660dbdea758963"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abeef8612d8ed6b7658e1a8bf11c28b96" id="r_abeef8612d8ed6b7658e1a8bf11c28b96"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1FootprintExportWorker.html#abeef8612d8ed6b7658e1a8bf11c28b96">setOptions</a> (const <a class="el" href="structEasyKiConverter_1_1ExportOptions.html">ExportOptions</a> &amp;options)</td></tr>
+<tr class="memdesc:abeef8612d8ed6b7658e1a8bf11c28b96"><td class="mdescLeft">&#160;</td><td class="mdescRight">设置导出选项  <br /></td></tr>
+<tr class="separator:abeef8612d8ed6b7658e1a8bf11c28b96"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7de4ae7ee01cc8f0e19f229182beef69" id="r_a7de4ae7ee01cc8f0e19f229182beef69"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1FootprintExportWorker.html#a7de4ae7ee01cc8f0e19f229182beef69">completed</a> (const QString &amp;<a class="el" href="classEasyKiConverter_1_1FootprintExportWorker.html#aae80ccd9b1a16e9519660dbdea758963">componentId</a>, bool success, const QString &amp;error)</td></tr>
+<tr class="memdesc:a7de4ae7ee01cc8f0e19f229182beef69"><td class="mdescLeft">&#160;</td><td class="mdescRight">导出完成信号  <br /></td></tr>
+<tr class="separator:a7de4ae7ee01cc8f0e19f229182beef69"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="inherit_header pub_methods_classEasyKiConverter_1_1IExportWorker"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classEasyKiConverter_1_1IExportWorker')"><img src="closed.png" alt="-"/>&#160;Public 成员函数 继承自 <a class="el" href="classEasyKiConverter_1_1IExportWorker.html">EasyKiConverter::IExportWorker</a></td></tr>
+<tr class="memitem:a851ab48bb3399dea99a9e73f10d16579 inherit pub_methods_classEasyKiConverter_1_1IExportWorker" id="r_a851ab48bb3399dea99a9e73f10d16579"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1IExportWorker.html#a851ab48bb3399dea99a9e73f10d16579">~IExportWorker</a> ()=default</td></tr>
+<tr class="separator:a851ab48bb3399dea99a9e73f10d16579 inherit pub_methods_classEasyKiConverter_1_1IExportWorker"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6a6bdb9edd900ed1c9904362d8d84f53 inherit pub_methods_classEasyKiConverter_1_1IExportWorker" id="r_a6a6bdb9edd900ed1c9904362d8d84f53"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1IExportWorker.html#a6a6bdb9edd900ed1c9904362d8d84f53">setData</a> (const QString &amp;<a class="el" href="classEasyKiConverter_1_1IExportWorker.html#aefa6ffda467599969dda9de4b6cfd19b">componentId</a>, const QSharedPointer&lt; <a class="el" href="classEasyKiConverter_1_1ComponentData.html">ComponentData</a> &gt; &amp;data, const struct <a class="el" href="structEasyKiConverter_1_1ExportOptions.html">ExportOptions</a> &amp;options)=0</td></tr>
+<tr class="memdesc:a6a6bdb9edd900ed1c9904362d8d84f53 inherit pub_methods_classEasyKiConverter_1_1IExportWorker"><td class="mdescLeft">&#160;</td><td class="mdescRight">设置导出所需的数据  <br /></td></tr>
+<tr class="separator:a6a6bdb9edd900ed1c9904362d8d84f53 inherit pub_methods_classEasyKiConverter_1_1IExportWorker"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-attribs" name="pri-attribs"></a>
+Private 属性</h2></td></tr>
+<tr class="memitem:aba59aa5a7fa569409a2a272532c63e63" id="r_aba59aa5a7fa569409a2a272532c63e63"><td class="memItemLeft" align="right" valign="top">QString&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1FootprintExportWorker.html#aba59aa5a7fa569409a2a272532c63e63">m_componentId</a></td></tr>
+<tr class="memdesc:aba59aa5a7fa569409a2a272532c63e63"><td class="mdescLeft">&#160;</td><td class="mdescRight">元器件ID  <br /></td></tr>
+<tr class="separator:aba59aa5a7fa569409a2a272532c63e63"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9dcf3800418c4d1481fe7431e6b5ab89" id="r_a9dcf3800418c4d1481fe7431e6b5ab89"><td class="memItemLeft" align="right" valign="top">QSharedPointer&lt; <a class="el" href="classEasyKiConverter_1_1ComponentData.html">ComponentData</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1FootprintExportWorker.html#a9dcf3800418c4d1481fe7431e6b5ab89">m_data</a></td></tr>
+<tr class="memdesc:a9dcf3800418c4d1481fe7431e6b5ab89"><td class="mdescLeft">&#160;</td><td class="mdescRight">预加载的元器件数据  <br /></td></tr>
+<tr class="separator:a9dcf3800418c4d1481fe7431e6b5ab89"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac80f2b6ce9b21791d8b6e357d496eb3f" id="r_ac80f2b6ce9b21791d8b6e357d496eb3f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structEasyKiConverter_1_1ExportOptions.html">ExportOptions</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1FootprintExportWorker.html#ac80f2b6ce9b21791d8b6e357d496eb3f">m_options</a></td></tr>
+<tr class="memdesc:ac80f2b6ce9b21791d8b6e357d496eb3f"><td class="mdescLeft">&#160;</td><td class="mdescRight">导出选项  <br /></td></tr>
+<tr class="separator:ac80f2b6ce9b21791d8b6e357d496eb3f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a580b23635db2025ef6f4af895a7a7299" id="r_a580b23635db2025ef6f4af895a7a7299"><td class="memItemLeft" align="right" valign="top">std::atomic&lt; bool &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1FootprintExportWorker.html#a580b23635db2025ef6f4af895a7a7299">m_cancelled</a> {false}</td></tr>
+<tr class="memdesc:a580b23635db2025ef6f4af895a7a7299"><td class="mdescLeft">&#160;</td><td class="mdescRight">取消标志  <br /></td></tr>
+<tr class="separator:a580b23635db2025ef6f4af895a7a7299"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table>
+<a name="details" id="details"></a><h2 class="groupheader">详细描述</h2>
+<div class="textblock"><p>封装导出Worker </p>
+<p>在线程池中执行单个元器件的封装导出任务。 负责将元器件的封装数据转换为KiCad封装格式(.kicad_mod)并写入磁盘。 </p>
+
+<p class="definition">在文件 <a class="el" href="FootprintExportWorker_8h_source.html">FootprintExportWorker.h</a> 第 <a class="el" href="FootprintExportWorker_8h_source.html#l00023">23</a> 行定义.</p>
+</div><h2 class="groupheader">构造及析构函数说明</h2>
+<a id="a6f1578f712390386a425b8b8ea1e29ae" name="a6f1578f712390386a425b8b8ea1e29ae"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6f1578f712390386a425b8b8ea1e29ae">&#9670;&#160;</a></span>FootprintExportWorker()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">EasyKiConverter::FootprintExportWorker::FootprintExportWorker </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="FootprintExportWorker_8cpp_source.html">FootprintExportWorker.cpp</a> 第 <a class="el" href="FootprintExportWorker_8cpp_source.html#l00014">14</a> 行定义.</p>
+
+</div>
+</div>
+<h2 class="groupheader">成员函数说明</h2>
+<a id="aafb6db4dc1d6e9a58885488825b47164" name="aafb6db4dc1d6e9a58885488825b47164"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aafb6db4dc1d6e9a58885488825b47164">&#9670;&#160;</a></span>cancel()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::FootprintExportWorker::cancel </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>请求取消导出任务 </p>
+
+<p>实现了 <a class="el" href="classEasyKiConverter_1_1IExportWorker.html#ad42bdb6f282e5b91b3c56a115337fac3">EasyKiConverter::IExportWorker</a>.</p>
+
+<p class="definition">在文件 <a class="el" href="FootprintExportWorker_8cpp_source.html">FootprintExportWorker.cpp</a> 第 <a class="el" href="FootprintExportWorker_8cpp_source.html#l00104">104</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="FootprintExportWorker_8h_source.html#l00077">m_cancelled</a>.</p>
+
+</div>
+</div>
+<a id="a7de4ae7ee01cc8f0e19f229182beef69" name="a7de4ae7ee01cc8f0e19f229182beef69"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7de4ae7ee01cc8f0e19f229182beef69">&#9670;&#160;</a></span>completed()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::FootprintExportWorker::completed </td>
+          <td>(</td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>componentId</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>success</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>error</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>导出完成信号 </p>
+<dl class="params"><dt>参数</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">componentId</td><td>元器件ID </td></tr>
+    <tr><td class="paramname">success</td><td>是否成功 </td></tr>
+    <tr><td class="paramname">error</td><td>错误信息（成功时为空） </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p class="reference">被这些函数引用 <a class="el" href="FootprintExportWorker_8cpp_source.html#l00028">run()</a>.</p>
+
+</div>
+</div>
+<a id="aae80ccd9b1a16e9519660dbdea758963" name="aae80ccd9b1a16e9519660dbdea758963"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aae80ccd9b1a16e9519660dbdea758963">&#9670;&#160;</a></span>componentId()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">QString EasyKiConverter::FootprintExportWorker::componentId </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>获取元器件ID </p>
+
+<p>实现了 <a class="el" href="classEasyKiConverter_1_1IExportWorker.html#aefa6ffda467599969dda9de4b6cfd19b">EasyKiConverter::IExportWorker</a>.</p>
+
+<p class="definition">在文件 <a class="el" href="FootprintExportWorker_8h_source.html">FootprintExportWorker.h</a> 第 <a class="el" href="FootprintExportWorker_8h_source.html#l00057">57</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="FootprintExportWorker_8h_source.html#l00074">m_componentId</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="FootprintExportWorker_8cpp_source.html#l00028">run()</a> , 以及 <a class="el" href="FootprintExportWorker_8cpp_source.html#l00016">setData()</a>.</p>
+
+</div>
+</div>
+<a id="aa8dd67eea28840ba6ed5fbc6d134fe66" name="aa8dd67eea28840ba6ed5fbc6d134fe66"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa8dd67eea28840ba6ed5fbc6d134fe66">&#9670;&#160;</a></span>run()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::FootprintExportWorker::run </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>执行封装导出任务 </p>
+<p>在线程池中被调用，执行实际的导出逻辑:</p><ol type="1">
+<li>检查封装数据是否可用</li>
+<li>创建输出目录</li>
+<li>检查是否需要覆盖已有文件</li>
+<li>执行导出并写入.kicad_mod文件</li>
+<li>发射completed信号 </li>
+</ol>
+
+<p>实现了 <a class="el" href="classEasyKiConverter_1_1IExportWorker.html#aa6084c398fabaf00dbf0261d407e6782">EasyKiConverter::IExportWorker</a>.</p>
+
+<p class="definition">在文件 <a class="el" href="FootprintExportWorker_8cpp_source.html">FootprintExportWorker.cpp</a> 第 <a class="el" href="FootprintExportWorker_8cpp_source.html#l00028">28</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="classEasyKiConverter_1_1FootprintExportWorker.html#a7de4ae7ee01cc8f0e19f229182beef69">completed()</a>, <a class="el" href="FootprintExportWorker_8h_source.html#l00057">componentId()</a>, <a class="el" href="ExportProgress_8h_source.html#l00057">EasyKiConverter::ExportOptions::debugMode</a>, <a class="el" href="ExporterFootprint_8cpp_source.html#l00020">EasyKiConverter::ExporterFootprint::exportFootprint()</a>, <a class="el" href="FootprintExportWorker_8h_source.html#l00077">m_cancelled</a>, <a class="el" href="FootprintExportWorker_8h_source.html#l00074">m_componentId</a>, <a class="el" href="FootprintExportWorker_8h_source.html#l00075">m_data</a>, <a class="el" href="FootprintExportWorker_8h_source.html#l00076">m_options</a>, <a class="el" href="ExportProgress_8h_source.html#l00044">EasyKiConverter::ExportOptions::outputPath</a> , 以及 <a class="el" href="ExportProgress_8h_source.html#l00053">EasyKiConverter::ExportOptions::overwriteExistingFiles</a>.</p>
+
+</div>
+</div>
+<a id="a32de08835511c2732ba20c92e92683e2" name="a32de08835511c2732ba20c92e92683e2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a32de08835511c2732ba20c92e92683e2">&#9670;&#160;</a></span>setData()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::FootprintExportWorker::setData </td>
+          <td>(</td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>componentId</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const QSharedPointer&lt; <a class="el" href="classEasyKiConverter_1_1ComponentData.html">ComponentData</a> &gt; &amp;&#160;</td>
+          <td class="paramname"><em>data</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="structEasyKiConverter_1_1ExportOptions.html">ExportOptions</a> &amp;&#160;</td>
+          <td class="paramname"><em>options</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">override</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>设置导出所需的数据 </p>
+<dl class="params"><dt>参数</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">componentId</td><td>元器件ID </td></tr>
+    <tr><td class="paramname">data</td><td>预加载的元器件数据 </td></tr>
+    <tr><td class="paramname">options</td><td>导出选项 </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p class="definition">在文件 <a class="el" href="FootprintExportWorker_8cpp_source.html">FootprintExportWorker.cpp</a> 第 <a class="el" href="FootprintExportWorker_8cpp_source.html#l00016">16</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="FootprintExportWorker_8h_source.html#l00057">componentId()</a>, <a class="el" href="FootprintExportWorker_8h_source.html#l00074">m_componentId</a>, <a class="el" href="FootprintExportWorker_8h_source.html#l00075">m_data</a> , 以及 <a class="el" href="FootprintExportWorker_8h_source.html#l00076">m_options</a>.</p>
+
+</div>
+</div>
+<a id="abeef8612d8ed6b7658e1a8bf11c28b96" name="abeef8612d8ed6b7658e1a8bf11c28b96"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abeef8612d8ed6b7658e1a8bf11c28b96">&#9670;&#160;</a></span>setOptions()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::FootprintExportWorker::setOptions </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structEasyKiConverter_1_1ExportOptions.html">ExportOptions</a> &amp;&#160;</td>
+          <td class="paramname"><em>options</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>设置导出选项 </p>
+
+<p class="definition">在文件 <a class="el" href="FootprintExportWorker_8cpp_source.html">FootprintExportWorker.cpp</a> 第 <a class="el" href="FootprintExportWorker_8cpp_source.html#l00024">24</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="FootprintExportWorker_8h_source.html#l00076">m_options</a>.</p>
+
+</div>
+</div>
+<h2 class="groupheader">类成员变量说明</h2>
+<a id="a580b23635db2025ef6f4af895a7a7299" name="a580b23635db2025ef6f4af895a7a7299"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a580b23635db2025ef6f4af895a7a7299">&#9670;&#160;</a></span>m_cancelled</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::atomic&lt;bool&gt; EasyKiConverter::FootprintExportWorker::m_cancelled {false}</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>取消标志 </p>
+
+<p class="definition">在文件 <a class="el" href="FootprintExportWorker_8h_source.html">FootprintExportWorker.h</a> 第 <a class="el" href="FootprintExportWorker_8h_source.html#l00077">77</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="FootprintExportWorker_8cpp_source.html#l00104">cancel()</a> , 以及 <a class="el" href="FootprintExportWorker_8cpp_source.html#l00028">run()</a>.</p>
+
+</div>
+</div>
+<a id="aba59aa5a7fa569409a2a272532c63e63" name="aba59aa5a7fa569409a2a272532c63e63"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aba59aa5a7fa569409a2a272532c63e63">&#9670;&#160;</a></span>m_componentId</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">QString EasyKiConverter::FootprintExportWorker::m_componentId</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>元器件ID </p>
+
+<p class="definition">在文件 <a class="el" href="FootprintExportWorker_8h_source.html">FootprintExportWorker.h</a> 第 <a class="el" href="FootprintExportWorker_8h_source.html#l00074">74</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="FootprintExportWorker_8h_source.html#l00057">componentId()</a>, <a class="el" href="FootprintExportWorker_8cpp_source.html#l00028">run()</a> , 以及 <a class="el" href="FootprintExportWorker_8cpp_source.html#l00016">setData()</a>.</p>
+
+</div>
+</div>
+<a id="a9dcf3800418c4d1481fe7431e6b5ab89" name="a9dcf3800418c4d1481fe7431e6b5ab89"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9dcf3800418c4d1481fe7431e6b5ab89">&#9670;&#160;</a></span>m_data</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">QSharedPointer&lt;<a class="el" href="classEasyKiConverter_1_1ComponentData.html">ComponentData</a>&gt; EasyKiConverter::FootprintExportWorker::m_data</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>预加载的元器件数据 </p>
+
+<p class="definition">在文件 <a class="el" href="FootprintExportWorker_8h_source.html">FootprintExportWorker.h</a> 第 <a class="el" href="FootprintExportWorker_8h_source.html#l00075">75</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="FootprintExportWorker_8cpp_source.html#l00028">run()</a> , 以及 <a class="el" href="FootprintExportWorker_8cpp_source.html#l00016">setData()</a>.</p>
+
+</div>
+</div>
+<a id="ac80f2b6ce9b21791d8b6e357d496eb3f" name="ac80f2b6ce9b21791d8b6e357d496eb3f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac80f2b6ce9b21791d8b6e357d496eb3f">&#9670;&#160;</a></span>m_options</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="structEasyKiConverter_1_1ExportOptions.html">ExportOptions</a> EasyKiConverter::FootprintExportWorker::m_options</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>导出选项 </p>
+
+<p class="definition">在文件 <a class="el" href="FootprintExportWorker_8h_source.html">FootprintExportWorker.h</a> 第 <a class="el" href="FootprintExportWorker_8h_source.html#l00076">76</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="FootprintExportWorker_8cpp_source.html#l00028">run()</a>, <a class="el" href="FootprintExportWorker_8cpp_source.html#l00016">setData()</a> , 以及 <a class="el" href="FootprintExportWorker_8cpp_source.html#l00024">setOptions()</a>.</p>
+
+</div>
+</div>
+<hr/>该类的文档由以下文件生成:<ul>
+<li>services/export/<a class="el" href="FootprintExportWorker_8h_source.html">FootprintExportWorker.h</a></li>
+<li>services/export/<a class="el" href="FootprintExportWorker_8cpp_source.html">FootprintExportWorker.cpp</a></li>
+</ul>
+</div><!-- contents -->
+</div><!-- doc-content -->
+<!-- start footer part -->
+<div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
+  <ul>
+    <li class="navelem"><a class="el" href="namespaceEasyKiConverter.html">EasyKiConverter</a></li><li class="navelem"><a class="el" href="classEasyKiConverter_1_1FootprintExportWorker.html">FootprintExportWorker</a></li>
+    <li class="footer">制作者 <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8 </li>
+  </ul>
+</div>
+</body>
+</html>

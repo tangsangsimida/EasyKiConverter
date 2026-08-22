@@ -1,0 +1,42 @@
+<map id="EasyKiConverter::CliConverter" name="EasyKiConverter::CliConverter">
+<area shape="rect" id="Node000001" title="CLI 转换器主协调器" alt="" coords="1295,3272,1505,3417"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="677,93,744,158"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="664,139,518,172,330,217,162,267,105,290,77,310,52,353,38,392,34,430,36,467,49,547,56,594,59,647,59,3078,61,3089,68,3099,98,3122,144,3143,206,3164,365,3204,557,3239,764,3270,968,3296,1295,3331,1294,3336,967,3301,763,3275,556,3244,364,3209,204,3169,142,3148,95,3126,64,3103,56,3091,53,3078,53,647,51,594,44,548,30,467,28,430,33,391,47,351,73,306,103,285,161,262,329,212,516,166,663,134"/>
+<area shape="rect" id="Node000005" href="$classEasyKiConverter_1_1ComponentService.html" title="元件服务类" alt="" coords="731,1051,968,1751"/>
+<area shape="poly" id="edge5_Node000005_Node000002" title=" " alt="" coords="664,139,551,165,410,204,341,228,280,254,231,281,201,310,145,398,107,482,86,562,81,641,91,721,115,804,152,892,201,987,250,1059,310,1124,377,1181,450,1231,525,1273,599,1309,731,1361,729,1366,597,1314,523,1278,448,1235,374,1185,306,1128,246,1063,196,989,147,894,110,806,86,722,76,641,81,561,102,480,140,396,197,306,228,277,277,249,339,223,408,199,550,160,663,134"/>
+<area shape="rect" id="Node000006" href="$classEasyKiConverter_1_1EasyedaApi.html" title=" " alt="" coords="211,335,456,961"/>
+<area shape="poly" id="edge7_Node000006_Node000002" title=" " alt="" coords="666,153,621,180,568,216,516,260,470,310,451,337,447,333,466,306,512,256,565,212,618,176,664,148"/>
+<area shape="rect" id="Node000008" href="$classEasyKiConverter_1_1LcscImageService.html" title="LCSC 图片服务类" alt="" coords="480,308,733,988"/>
+<area shape="poly" id="edge10_Node000008_Node000002" title=" " alt="" coords="704,172,677,308,672,307,699,171"/>
+<area shape="rect" id="Node000009" href="$classEasyKiConverter_1_1ParallelFetchContext.html" title=" " alt="" coords="757,468,941,828"/>
+<area shape="poly" id="edge12_Node000009_Node000002" title=" " alt="" coords="725,170,804,467,799,468,720,172"/>
+<area shape="rect" id="Node000010" href="$classEasyKiConverter_1_1ComponentQueueManager.html" title=" " alt="" coords="965,378,1189,918"/>
+<area shape="poly" id="edge14_Node000010_Node000002" title=" " alt="" coords="757,148,804,175,857,211,909,255,955,306,998,376,994,379,951,310,906,259,853,215,801,179,755,152"/>
+<area shape="rect" id="Node000011" href="$classEasyKiConverter_1_1ParallelExportService.html" title="并行导出服务" alt="" coords="1129,1813,1369,2573"/>
+<area shape="poly" id="edge16_Node000011_Node000002" title=" " alt="" coords="758,125,856,134,916,145,980,162,1044,185,1104,216,1159,256,1203,306,1232,352,1254,395,1270,436,1280,476,1286,515,1287,553,1278,629,1261,707,1239,790,1218,883,1204,988,1193,1051,1179,1247,1176,1400,1181,1554,1193,1750,1198,1813,1193,1813,1188,1751,1176,1554,1170,1401,1174,1247,1188,1050,1199,988,1213,882,1234,789,1255,705,1273,628,1281,553,1280,515,1275,477,1265,438,1250,397,1228,355,1199,310,1155,260,1101,220,1041,190,978,167,915,150,855,140,758,130"/>
+<area shape="rect" id="Node000015" href="$classEasyKiConverter_1_1BaseConverter.html" title="转换器基类" alt="" coords="1533,2944,1760,3209"/>
+<area shape="poly" id="edge22_Node000015_Node000002" title=" " alt="" coords="758,126,955,139,1087,151,1228,169,1366,192,1491,222,1546,240,1593,260,1633,282,1662,306,1694,347,1714,385,1723,423,1724,462,1716,545,1710,593,1708,647,1708,2760,1701,2854,1685,2944,1680,2943,1696,2853,1703,2760,1703,647,1705,593,1710,545,1719,462,1718,424,1709,387,1690,349,1658,310,1630,286,1591,265,1544,245,1490,228,1365,198,1227,174,1087,157,955,144,758,131"/>
+<area shape="rect" id="Node000003" href="$classEasyKiConverter_1_1CliContext.html" title="CLI 上下文" alt="" coords="1301,2636,1499,2881"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="1403,2882,1403,3255,1397,3255,1397,2882"/>
+<area shape="poly" id="edge23_Node000015_Node000003" title=" " alt="" coords="1497,2880,1536,2930,1532,2933,1493,2883"/>
+<area shape="rect" id="Node000004" href="$classEasyKiConverter_1_1CommandLineParser.html" title="命令行参数解析器" alt="" coords="1393,1933,1591,2453"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="1452,2454,1425,2620,1420,2619,1447,2453"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="799,1751,794,1849,793,1953,799,2060,812,2168,835,2276,867,2380,911,2480,938,2527,969,2572,1000,2607,1035,2637,1075,2663,1117,2685,1203,2718,1285,2739,1284,2744,1202,2723,1115,2690,1072,2668,1032,2642,996,2611,965,2575,934,2530,907,2482,862,2382,829,2277,807,2169,794,2060,788,1953,788,1849,794,1751"/>
+<area shape="poly" id="edge18_Node000011_Node000005" title=" " alt="" coords="967,1749,998,1787,1010,1796,1022,1799,1035,1802,1048,1811,1088,1854,1122,1901,1118,1904,1084,1857,1045,1815,1032,1807,1020,1804,1007,1801,994,1791,963,1752"/>
+<area shape="poly" id="edge6_Node000005_Node000006" title=" " alt="" coords="454,959,470,987,527,1068,591,1146,657,1218,721,1281,717,1285,654,1221,587,1149,523,1071,466,989,449,962"/>
+<area shape="rect" id="Node000007" href="$classEasyKiConverter_1_1INetworkClient.html" title="网络客户端接口" alt="" coords="5,5,195,245"/>
+<area shape="poly" id="edge8_Node000006_Node000007" title=" " alt="" coords="156,245,206,357,201,359,151,247"/>
+<area shape="poly" id="edge9_Node000005_Node000008" title=" " alt="" coords="716,987,728,1026,730,1034,725,1036,723,1027,710,989"/>
+<area shape="poly" id="edge11_Node000005_Node000009" title=" " alt="" coords="852,828,852,1034,847,1034,847,828"/>
+<area shape="poly" id="edge13_Node000005_Node000010" title=" " alt="" coords="1017,919,987,1027,976,1063,971,1061,981,1026,1012,918"/>
+<area shape="poly" id="edge15_Node000003_Node000011" title=" " alt="" coords="1288,2573,1301,2611,1305,2620,1300,2622,1296,2613,1283,2575"/>
+<area shape="rect" id="Node000012" href="$structEasyKiConverter_1_1ExportOptions.html" title="导出选项配置" alt="" coords="1202,1188,1425,1613"/>
+<area shape="poly" id="edge17_Node000011_Node000012" title=" " alt="" coords="1299,1614,1284,1797,1279,1797,1294,1613"/>
+<area shape="rect" id="Node000013" href="$structEasyKiConverter_1_1ExportOverallProgress.html" title="整体导出进度" alt="" coords="1449,1291,1668,1511"/>
+<area shape="poly" id="edge19_Node000011_Node000013" title=" " alt="" coords="1535,1512,1497,1630,1470,1693,1440,1752,1425,1771,1411,1784,1397,1796,1384,1815,1380,1821,1375,1819,1379,1812,1393,1793,1408,1780,1421,1768,1435,1749,1466,1690,1492,1628,1530,1510"/>
+<area shape="rect" id="Node000014" href="$structEasyKiConverter_1_1PreloadProgress.html" title="预加载阶段进度" alt="" coords="1469,538,1648,758"/>
+<area shape="poly" id="edge20_Node000013_Node000014" title=" " alt="" coords="1561,758,1561,1274,1556,1274,1556,758"/>
+<area shape="poly" id="edge21_Node000001_Node000015" title=" " alt="" coords="1535,3202,1480,3261,1476,3258,1531,3198"/>
+<area shape="rect" id="Node000016" href="$classEasyKiConverter_1_1CliPrinter.html" title="CLI 输出工具" alt="" coords="1743,2666,1934,2851"/>
+<area shape="poly" id="edge24_Node000015_Node000016" title=" " alt="" coords="1785,2853,1738,2931,1733,2928,1781,2850"/>
+</map>

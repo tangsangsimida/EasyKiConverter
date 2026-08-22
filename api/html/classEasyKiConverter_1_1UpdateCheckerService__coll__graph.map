@@ -1,0 +1,14 @@
+<map id="EasyKiConverter::UpdateCheckerService" name="EasyKiConverter::UpdateCheckerService">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,1513,235,2093"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="63,415,129,481"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="99,494,118,1513,112,1513,94,494"/>
+<area shape="rect" id="Node000003" href="$classEasyKiConverter_1_1AsyncNetworkRequest.html" title="异步网络请求，支持取消" alt="" coords="141,611,366,1451"/>
+<area shape="poly" id="edge3_Node000003_Node000002" title=" " alt="" coords="111,493,143,613,138,614,106,495"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="183,1451,175,1498,170,1497,178,1450"/>
+<area shape="rect" id="Node000004" href="$structEasyKiConverter_1_1RetryPolicy.html" title="网络请求重试策略" alt="" coords="154,375,358,521"/>
+<area shape="poly" id="edge4_Node000003_Node000004" title=" " alt="" coords="258,521,258,594,253,594,253,521"/>
+<area shape="rect" id="Node000005" href="$structEasyKiConverter_1_1NetworkResult.html" title="网络请求结果" alt="" coords="382,348,567,548"/>
+<area shape="poly" id="edge5_Node000003_Node000005" title=" " alt="" coords="439,549,374,720,369,718,434,547"/>
+<area shape="rect" id="Node000006" href="$structEasyKiConverter_1_1NetworkDiagnostic.html" title="网络请求的统一诊断信息" alt="" coords="382,5,567,285"/>
+<area shape="poly" id="edge6_Node000005_Node000006" title=" " alt="" coords="477,286,477,332,472,332,472,286"/>
+</map>

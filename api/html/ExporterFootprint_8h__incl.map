@@ -1,0 +1,30 @@
+<map id="core/kicad/ExporterFootprint.h" name="core/kicad/ExporterFootprint.h">
+<area shape="rect" id="Node000001" title=" " alt="" coords="339,5,557,31"/>
+<area shape="rect" id="Node000002" href="$FootprintGraphicsGenerator_8h.html" title=" " alt="" coords="413,79,627,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="462,29,500,67,497,71,458,33"/>
+<area shape="rect" id="Node000003" href="$FootprintData_8h.html" title=" " alt="" coords="301,152,475,177"/>
+<area shape="poly" id="edge13_Node000001_Node000003" title=" " alt="" coords="438,33,420,53,404,80,395,110,391,139,386,138,390,109,399,78,415,50,434,29"/>
+<area shape="rect" id="Node000004" href="$Model3DData_8h.html" title=" " alt="" coords="107,225,229,251"/>
+<area shape="poly" id="edge14_Node000001_Node000004" title=" " alt="" coords="435,33,195,219,192,215,432,29"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="5,299,107,324"/>
+<area shape="poly" id="edge15_Node000001_Node000006" title=" " alt="" coords="401,33,326,57,235,95,189,121,145,151,105,187,72,227,60,255,57,285,52,285,55,254,67,224,102,183,142,147,186,117,233,91,324,52,399,28"/>
+<area shape="rect" id="Node000007" title=" " alt="" coords="553,299,623,324"/>
+<area shape="poly" id="edge16_Node000001_Node000007" title=" " alt="" coords="559,27,604,45,624,59,641,77,654,103,660,132,659,161,652,191,630,246,606,288,602,286,626,244,647,189,653,161,655,132,649,105,636,80,621,63,601,50,557,32"/>
+<area shape="rect" id="Node000011" title=" " alt="" coords="701,79,808,104"/>
+<area shape="poly" id="edge17_Node000001_Node000011" title=" " alt="" coords="498,28,692,73,691,78,497,33"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="500,106,423,148,420,143,498,102"/>
+<area shape="poly" id="edge12_Node000002_Node000007" title=" " alt="" coords="527,103,568,225,584,285,579,286,563,226,522,105"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="353,180,217,224,216,219,352,175"/>
+<area shape="poly" id="edge8_Node000003_Node000006" title=" " alt="" coords="301,178,182,197,130,211,96,227,84,240,75,255,63,286,58,285,70,253,80,237,93,223,129,206,181,192,300,172"/>
+<area shape="poly" id="edge11_Node000003_Node000007" title=" " alt="" coords="440,175,490,193,516,207,539,223,564,253,581,284,576,287,560,256,536,227,513,211,488,198,438,180"/>
+<area shape="rect" id="Node000008" title=" " alt="" coords="254,225,349,251"/>
+<area shape="poly" id="edge7_Node000003_Node000008" title=" " alt="" coords="376,179,328,219,324,214,372,175"/>
+<area shape="rect" id="Node000009" title=" " alt="" coords="373,225,427,251"/>
+<area shape="poly" id="edge9_Node000003_Node000009" title=" " alt="" coords="393,177,398,211,393,212,387,178"/>
+<area shape="rect" id="Node000010" title=" " alt="" coords="451,225,525,251"/>
+<area shape="poly" id="edge10_Node000003_Node000010" title=" " alt="" coords="406,175,462,215,459,219,403,180"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="131,299,229,324"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="173,251,178,285,173,286,167,251"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="151,253,88,293,85,289,149,248"/>
+<area shape="poly" id="edge6_Node000004_Node000007" title=" " alt="" coords="230,247,539,299,538,304,229,252"/>
+</map>

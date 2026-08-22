@@ -1,0 +1,18 @@
+<map id="core/kicad/SymbolGraphicsGenerator.h" name="core/kicad/SymbolGraphicsGenerator.h">
+<area shape="rect" id="Node000001" title=" " alt="" coords="618,5,817,45"/>
+<area shape="rect" id="Node000002" href="$ExporterSymbol_8h.html" title=" " alt="" coords="499,101,709,126"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="683,56,621,102,618,98,680,52"/>
+<area shape="rect" id="Node000008" href="$SymbolGraphicsGenerator_8cpp.html" title=" " alt="" coords="733,93,931,133"/>
+<area shape="poly" id="edge8_Node000001_Node000008" title=" " alt="" coords="755,52,808,91,805,95,752,56"/>
+<area shape="rect" id="Node000003" href="$ExporterSymbol_8cpp.html" title=" " alt="" coords="5,189,229,214"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="526,131,183,191,182,186,525,126"/>
+<area shape="rect" id="Node000004" href="$SymbolExportStage_8cpp.html" title=" " alt="" coords="254,181,471,221"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="559,133,417,184,415,179,558,128"/>
+<area shape="rect" id="Node000005" href="$SymbolExportWorker_8cpp.html" title=" " alt="" coords="495,181,713,221"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="607,140,607,181,601,181,601,140"/>
+<area shape="rect" id="Node000006" href="$WriteWorker_8cpp.html" title=" " alt="" coords="719,269,902,295"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="645,130,686,151,727,179,773,226,805,267,801,271,769,230,724,183,683,156,642,134"/>
+<area shape="rect" id="Node000007" href="$WriteWorker_8h.html" title=" " alt="" coords="788,189,956,214"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="654,128,837,186,835,191,652,133"/>
+<area shape="poly" id="edge7_Node000007_Node000006" title=" " alt="" coords="857,226,822,271,818,267,853,223"/>
+</map>

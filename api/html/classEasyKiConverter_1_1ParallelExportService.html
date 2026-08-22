@@ -1,0 +1,1975 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "https://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="zh">
+<head>
+<meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=11"/>
+<meta name="generator" content="Doxygen 1.9.8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>EasyKiConverter: EasyKiConverter::ParallelExportService类 参考</title>
+<link href="tabs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="jquery.js"></script>
+<script type="text/javascript" src="dynsections.js"></script>
+<link href="navtree.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="resize.js"></script>
+<script type="text/javascript" src="navtreedata.js"></script>
+<script type="text/javascript" src="navtree.js"></script>
+<link href="search/search.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="search/searchdata.js"></script>
+<script type="text/javascript" src="search/search.js"></script>
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  extensions: ["tex2jax.js"],
+  jax: ["input/TeX","output/HTML-CSS"],
+});
+</script>
+<script type="text/javascript" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/MathJax.js"></script>
+<link href="doxygen.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+<div id="top"><!-- do not remove this div, it is closed by doxygen! -->
+<div id="titlearea">
+<table cellspacing="0" cellpadding="0">
+ <tbody>
+ <tr id="projectrow">
+  <td id="projectalign">
+   <div id="projectname">EasyKiConverter<span id="projectnumber">&#160;3.0.5</span>
+   </div>
+   <div id="projectbrief">LCSC/EasyEDA 元件转 KiCad 库文件转换器</div>
+  </td>
+ </tr>
+ </tbody>
+</table>
+</div>
+<!-- end header part -->
+<!-- 制作者 Doxygen 1.9.8 -->
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+var searchBox = new SearchBox("searchBox", "search/",'.html');
+/* @license-end */
+</script>
+<script type="text/javascript" src="menudata.js"></script>
+<script type="text/javascript" src="menu.js"></script>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(function() {
+  initMenu('',true,false,'search.php','搜索');
+  $(document).ready(function() { init_search(); });
+});
+/* @license-end */
+</script>
+<div id="main-nav"></div>
+</div><!-- top -->
+<div id="side-nav" class="ui-resizable side-nav-resizable">
+  <div id="nav-tree">
+    <div id="nav-tree-contents">
+      <div id="nav-sync" class="sync"></div>
+    </div>
+  </div>
+  <div id="splitbar" style="-moz-user-select:none;" 
+       class="ui-resizable-handle">
+  </div>
+</div>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(document).ready(function(){initNavTree('classEasyKiConverter_1_1ParallelExportService.html',''); initResizable(); });
+/* @license-end */
+</script>
+<div id="doc-content">
+<!-- window showing the filter options -->
+<div id="MSearchSelectWindow"
+     onmouseover="return searchBox.OnSearchSelectShow()"
+     onmouseout="return searchBox.OnSearchSelectHide()"
+     onkeydown="return searchBox.OnSearchSelectKey(event)">
+</div>
+
+<!-- iframe showing the search results (closed by default) -->
+<div id="MSearchResultsWindow">
+<div id="MSearchResults">
+<div class="SRPage">
+<div id="SRIndex">
+<div id="SRResults"></div>
+<div class="SRStatus" id="Loading">载入中...</div>
+<div class="SRStatus" id="Searching">搜索中...</div>
+<div class="SRStatus" id="NoMatches">未找到</div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="header">
+  <div class="summary">
+<a href="#pub-methods">Public 成员函数</a> &#124;
+<a href="#pri-methods">Private 成员函数</a> &#124;
+<a href="#pri-attribs">Private 属性</a> &#124;
+<a href="classEasyKiConverter_1_1ParallelExportService-members.html">所有成员列表</a>  </div>
+  <div class="headertitle"><div class="title">EasyKiConverter::ParallelExportService类 参考</div></div>
+</div><!--header-->
+<div class="contents">
+
+<p>并行导出服务  
+ <a href="classEasyKiConverter_1_1ParallelExportService.html#details">更多...</a></p>
+
+<p><code>#include &lt;<a class="el" href="ParallelExportService_8h_source.html">ParallelExportService.h</a>&gt;</code></p>
+<div id="dynsection-0" onclick="return toggleVisibility(this)" class="dynheader closed" style="cursor:pointer;">
+  <img id="dynsection-0-trigger" src="closed.png" alt="+"/> 类 EasyKiConverter::ParallelExportService 继承关系图:</div>
+<div id="dynsection-0-summary" class="dynsummary" style="display:block;">
+</div>
+<div id="dynsection-0-content" class="dyncontent" style="display:none;">
+<div class="center"><iframe scrolling="no" frameborder="0" src="classEasyKiConverter_1_1ParallelExportService__inherit__graph.svg" width="251" height="944"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe></div>
+</div>
+<div id="dynsection-1" onclick="return toggleVisibility(this)" class="dynheader closed" style="cursor:pointer;">
+  <img id="dynsection-1-trigger" src="closed.png" alt="+"/> EasyKiConverter::ParallelExportService 的协作图:</div>
+<div id="dynsection-1-summary" class="dynsummary" style="display:block;">
+</div>
+<div id="dynsection-1-content" class="dyncontent" style="display:none;">
+<div class="center"><iframe scrolling="no" frameborder="0" src="classEasyKiConverter_1_1ParallelExportService__coll__graph.svg" width="1346" height="2579"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe></div>
+</div>
+<table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
+Public 成员函数</h2></td></tr>
+<tr class="memitem:a3445b3458604b93e8fcf8ae4b5c3053f" id="r_a3445b3458604b93e8fcf8ae4b5c3053f"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ParallelExportService.html#a3445b3458604b93e8fcf8ae4b5c3053f">ParallelExportService</a> (QObject *parent=nullptr)</td></tr>
+<tr class="memdesc:a3445b3458604b93e8fcf8ae4b5c3053f"><td class="mdescLeft">&#160;</td><td class="mdescRight">构造函数  <br /></td></tr>
+<tr class="separator:a3445b3458604b93e8fcf8ae4b5c3053f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae4653398a80eb6d7c3313b186ac78c8f" id="r_ae4653398a80eb6d7c3313b186ac78c8f"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ParallelExportService.html#ae4653398a80eb6d7c3313b186ac78c8f">~ParallelExportService</a> () override</td></tr>
+<tr class="memdesc:ae4653398a80eb6d7c3313b186ac78c8f"><td class="mdescLeft">&#160;</td><td class="mdescRight">析构函数  <br /></td></tr>
+<tr class="separator:ae4653398a80eb6d7c3313b186ac78c8f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1740870ae1644105491ba6b92c164d95" id="r_a1740870ae1644105491ba6b92c164d95"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ParallelExportService.html#a1740870ae1644105491ba6b92c164d95">setOptions</a> (const <a class="el" href="structEasyKiConverter_1_1ExportOptions.html">ExportOptions</a> &amp;<a class="el" href="classEasyKiConverter_1_1ParallelExportService.html#af04e9cfd22b9eefacbef972c164e99b7">options</a>)</td></tr>
+<tr class="memdesc:a1740870ae1644105491ba6b92c164d95"><td class="mdescLeft">&#160;</td><td class="mdescRight">设置导出选项  <br /></td></tr>
+<tr class="separator:a1740870ae1644105491ba6b92c164d95"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af04e9cfd22b9eefacbef972c164e99b7" id="r_af04e9cfd22b9eefacbef972c164e99b7"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structEasyKiConverter_1_1ExportOptions.html">ExportOptions</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ParallelExportService.html#af04e9cfd22b9eefacbef972c164e99b7">options</a> () const</td></tr>
+<tr class="memdesc:af04e9cfd22b9eefacbef972c164e99b7"><td class="mdescLeft">&#160;</td><td class="mdescRight">获取当前导出选项  <br /></td></tr>
+<tr class="separator:af04e9cfd22b9eefacbef972c164e99b7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aad70c9091ab130d02998d1ffb6c7e393" id="r_aad70c9091ab130d02998d1ffb6c7e393"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ParallelExportService.html#aad70c9091ab130d02998d1ffb6c7e393">setOutputPath</a> (const QString &amp;path)</td></tr>
+<tr class="memdesc:aad70c9091ab130d02998d1ffb6c7e393"><td class="mdescLeft">&#160;</td><td class="mdescRight">设置输出目录  <br /></td></tr>
+<tr class="separator:aad70c9091ab130d02998d1ffb6c7e393"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2e054aefae5e8b18f1da0debb7429d49" id="r_a2e054aefae5e8b18f1da0debb7429d49"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ParallelExportService.html#a2e054aefae5e8b18f1da0debb7429d49">setComponentService</a> (<a class="el" href="classEasyKiConverter_1_1ComponentService.html">ComponentService</a> *componentService)</td></tr>
+<tr class="memdesc:a2e054aefae5e8b18f1da0debb7429d49"><td class="mdescLeft">&#160;</td><td class="mdescRight">设置元器件服务引用  <br /></td></tr>
+<tr class="separator:a2e054aefae5e8b18f1da0debb7429d49"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae38c16536ac4b350d0b6a15f423ae5d0" id="r_ae38c16536ac4b350d0b6a15f423ae5d0"><td class="memItemLeft" align="right" valign="top">QString&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ParallelExportService.html#ae38c16536ac4b350d0b6a15f423ae5d0">outputPath</a> () const</td></tr>
+<tr class="memdesc:ae38c16536ac4b350d0b6a15f423ae5d0"><td class="mdescLeft">&#160;</td><td class="mdescRight">获取输出目录  <br /></td></tr>
+<tr class="separator:ae38c16536ac4b350d0b6a15f423ae5d0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adc8bf87f7e85eb58363688f44d49e147" id="r_adc8bf87f7e85eb58363688f44d49e147"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ParallelExportService.html#adc8bf87f7e85eb58363688f44d49e147">startPreload</a> (const QStringList &amp;componentIds)</td></tr>
+<tr class="memdesc:adc8bf87f7e85eb58363688f44d49e147"><td class="mdescLeft">&#160;</td><td class="mdescRight">开始预加载元器件数据  <br /></td></tr>
+<tr class="separator:adc8bf87f7e85eb58363688f44d49e147"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a93d5fc18de4702139042b8744cb7505e" id="r_a93d5fc18de4702139042b8744cb7505e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ParallelExportService.html#a93d5fc18de4702139042b8744cb7505e">cancelPreload</a> ()</td></tr>
+<tr class="memdesc:a93d5fc18de4702139042b8744cb7505e"><td class="mdescLeft">&#160;</td><td class="mdescRight">取消预加载  <br /></td></tr>
+<tr class="separator:a93d5fc18de4702139042b8744cb7505e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6cb88a57834f475549ff2e79790bf5a0" id="r_a6cb88a57834f475549ff2e79790bf5a0"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ParallelExportService.html#a6cb88a57834f475549ff2e79790bf5a0">startExport</a> ()</td></tr>
+<tr class="memdesc:a6cb88a57834f475549ff2e79790bf5a0"><td class="mdescLeft">&#160;</td><td class="mdescRight">开始导出  <br /></td></tr>
+<tr class="separator:a6cb88a57834f475549ff2e79790bf5a0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab49b1805bf6dd37e179f50ba4d6c707b" id="r_ab49b1805bf6dd37e179f50ba4d6c707b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ParallelExportService.html#ab49b1805bf6dd37e179f50ba4d6c707b">cancelExport</a> ()</td></tr>
+<tr class="memdesc:ab49b1805bf6dd37e179f50ba4d6c707b"><td class="mdescLeft">&#160;</td><td class="mdescRight">取消导出  <br /></td></tr>
+<tr class="separator:ab49b1805bf6dd37e179f50ba4d6c707b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af0b99e36a7f7ce44f6dd89718e39ae21" id="r_af0b99e36a7f7ce44f6dd89718e39ae21"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structEasyKiConverter_1_1ExportOverallProgress.html">ExportOverallProgress</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ParallelExportService.html#af0b99e36a7f7ce44f6dd89718e39ae21">getProgress</a> () const</td></tr>
+<tr class="memdesc:af0b99e36a7f7ce44f6dd89718e39ae21"><td class="mdescLeft">&#160;</td><td class="mdescRight">获取整体进度  <br /></td></tr>
+<tr class="separator:af0b99e36a7f7ce44f6dd89718e39ae21"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a181ca30ec926cd497ae4fbd16d0637cb" id="r_a181ca30ec926cd497ae4fbd16d0637cb"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structEasyKiConverter_1_1ExportTypeProgress.html">ExportTypeProgress</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ParallelExportService.html#a181ca30ec926cd497ae4fbd16d0637cb">getTypeProgress</a> (const QString &amp;typeName) const</td></tr>
+<tr class="memdesc:a181ca30ec926cd497ae4fbd16d0637cb"><td class="mdescLeft">&#160;</td><td class="mdescRight">获取指定导出类型的进度  <br /></td></tr>
+<tr class="separator:a181ca30ec926cd497ae4fbd16d0637cb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a513a3733c2f63f04574a230b016f10b7" id="r_a513a3733c2f63f04574a230b016f10b7"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ParallelExportService.html#a513a3733c2f63f04574a230b016f10b7">isRunning</a> () const</td></tr>
+<tr class="memdesc:a513a3733c2f63f04574a230b016f10b7"><td class="mdescLeft">&#160;</td><td class="mdescRight">检查是否正在运行  <br /></td></tr>
+<tr class="separator:a513a3733c2f63f04574a230b016f10b7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a82eb3cff60152180f320db3c4e923b47" id="r_a82eb3cff60152180f320db3c4e923b47"><td class="memItemLeft" align="right" valign="top">QMap&lt; QString, QSharedPointer&lt; <a class="el" href="classEasyKiConverter_1_1ComponentData.html">ComponentData</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ParallelExportService.html#a82eb3cff60152180f320db3c4e923b47">cachedData</a> () const</td></tr>
+<tr class="memdesc:a82eb3cff60152180f320db3c4e923b47"><td class="mdescLeft">&#160;</td><td class="mdescRight">获取缓存的数据  <br /></td></tr>
+<tr class="separator:a82eb3cff60152180f320db3c4e923b47"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8b9a63bf79d43e9f3288cfcd9ad6f9bf" id="r_a8b9a63bf79d43e9f3288cfcd9ad6f9bf"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ParallelExportService.html#a8b9a63bf79d43e9f3288cfcd9ad6f9bf">preloadProgressChanged</a> (const <a class="el" href="structEasyKiConverter_1_1PreloadProgress.html">PreloadProgress</a> &amp;progress)</td></tr>
+<tr class="memdesc:a8b9a63bf79d43e9f3288cfcd9ad6f9bf"><td class="mdescLeft">&#160;</td><td class="mdescRight">预加载进度更新  <br /></td></tr>
+<tr class="separator:a8b9a63bf79d43e9f3288cfcd9ad6f9bf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a898c80d25eda21b1e09e38e0645816fa" id="r_a898c80d25eda21b1e09e38e0645816fa"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ParallelExportService.html#a898c80d25eda21b1e09e38e0645816fa">preloadCompleted</a> (int successCount, int failedCount)</td></tr>
+<tr class="memdesc:a898c80d25eda21b1e09e38e0645816fa"><td class="mdescLeft">&#160;</td><td class="mdescRight">预加载完成  <br /></td></tr>
+<tr class="separator:a898c80d25eda21b1e09e38e0645816fa"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a86d4e05424e829e91e0976e3d90eee37" id="r_a86d4e05424e829e91e0976e3d90eee37"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ParallelExportService.html#a86d4e05424e829e91e0976e3d90eee37">progressChanged</a> (const <a class="el" href="structEasyKiConverter_1_1ExportOverallProgress.html">ExportOverallProgress</a> &amp;progress)</td></tr>
+<tr class="memdesc:a86d4e05424e829e91e0976e3d90eee37"><td class="mdescLeft">&#160;</td><td class="mdescRight">导出进度更新  <br /></td></tr>
+<tr class="separator:a86d4e05424e829e91e0976e3d90eee37"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af7ed2afeb445b4fb0afdf6a873fd7216" id="r_af7ed2afeb445b4fb0afdf6a873fd7216"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ParallelExportService.html#af7ed2afeb445b4fb0afdf6a873fd7216">itemStatusChanged</a> (const QString &amp;componentId, const QString &amp;typeName, const <a class="el" href="structEasyKiConverter_1_1ExportItemStatus.html">ExportItemStatus</a> &amp;status)</td></tr>
+<tr class="memdesc:af7ed2afeb445b4fb0afdf6a873fd7216"><td class="mdescLeft">&#160;</td><td class="mdescRight">单个元器件状态更新  <br /></td></tr>
+<tr class="separator:af7ed2afeb445b4fb0afdf6a873fd7216"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a50970ded785a1c78eb6160a828173a2d" id="r_a50970ded785a1c78eb6160a828173a2d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ParallelExportService.html#a50970ded785a1c78eb6160a828173a2d">typeCompleted</a> (const QString &amp;typeName, int successCount, int failedCount, int skippedCount)</td></tr>
+<tr class="memdesc:a50970ded785a1c78eb6160a828173a2d"><td class="mdescLeft">&#160;</td><td class="mdescRight">导出类型完成  <br /></td></tr>
+<tr class="separator:a50970ded785a1c78eb6160a828173a2d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0bb299a95eac5bdaf4fd957caeec0c32" id="r_a0bb299a95eac5bdaf4fd957caeec0c32"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ParallelExportService.html#a0bb299a95eac5bdaf4fd957caeec0c32">completed</a> (int successCount, int failedCount)</td></tr>
+<tr class="memdesc:a0bb299a95eac5bdaf4fd957caeec0c32"><td class="mdescLeft">&#160;</td><td class="mdescRight">整体导出完成  <br /></td></tr>
+<tr class="separator:a0bb299a95eac5bdaf4fd957caeec0c32"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a37afb9496171c65be8dcb668ed8fe6ae" id="r_a37afb9496171c65be8dcb668ed8fe6ae"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ParallelExportService.html#a37afb9496171c65be8dcb668ed8fe6ae">cancelled</a> ()</td></tr>
+<tr class="memdesc:a37afb9496171c65be8dcb668ed8fe6ae"><td class="mdescLeft">&#160;</td><td class="mdescRight">导出被取消  <br /></td></tr>
+<tr class="separator:a37afb9496171c65be8dcb668ed8fe6ae"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a24616297ca69d3cc2aeefcd48837d97b" id="r_a24616297ca69d3cc2aeefcd48837d97b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ParallelExportService.html#a24616297ca69d3cc2aeefcd48837d97b">failed</a> (const QString &amp;error)</td></tr>
+<tr class="memdesc:a24616297ca69d3cc2aeefcd48837d97b"><td class="mdescLeft">&#160;</td><td class="mdescRight">导出失败  <br /></td></tr>
+<tr class="separator:a24616297ca69d3cc2aeefcd48837d97b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-methods" name="pri-methods"></a>
+Private 成员函数</h2></td></tr>
+<tr class="memitem:ad0d640bed0ef4fb1c030fd5d3092c6c8" id="r_ad0d640bed0ef4fb1c030fd5d3092c6c8"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ParallelExportService.html#ad0d640bed0ef4fb1c030fd5d3092c6c8">onPreloadItemCompleted</a> (const QString &amp;componentId, bool success, const QString &amp;error)</td></tr>
+<tr class="separator:ad0d640bed0ef4fb1c030fd5d3092c6c8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7ea056d5102bcb9551e0abd5d92a0c7d" id="r_a7ea056d5102bcb9551e0abd5d92a0c7d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ParallelExportService.html#a7ea056d5102bcb9551e0abd5d92a0c7d">onExportTypeProgressChanged</a> (const QString &amp;typeName, const <a class="el" href="structEasyKiConverter_1_1ExportTypeProgress.html">ExportTypeProgress</a> &amp;progress)</td></tr>
+<tr class="separator:a7ea056d5102bcb9551e0abd5d92a0c7d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a015eedd05f41a4da9446b4ec3c08a2ca" id="r_a015eedd05f41a4da9446b4ec3c08a2ca"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ParallelExportService.html#a015eedd05f41a4da9446b4ec3c08a2ca">onExportTypeCompleted</a> (const QString &amp;typeName, int successCount, int failedCount, int skippedCount)</td></tr>
+<tr class="separator:a015eedd05f41a4da9446b4ec3c08a2ca"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a859aef65ad95457e3773518a47169a62" id="r_a859aef65ad95457e3773518a47169a62"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ParallelExportService.html#a859aef65ad95457e3773518a47169a62">onExportItemStatusChanged</a> (const QString &amp;componentId, const QString &amp;typeName, const <a class="el" href="structEasyKiConverter_1_1ExportItemStatus.html">ExportItemStatus</a> &amp;status)</td></tr>
+<tr class="separator:a859aef65ad95457e3773518a47169a62"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae6dec9570615e588c9cdb8217d28f1da" id="r_ae6dec9570615e588c9cdb8217d28f1da"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ParallelExportService.html#ae6dec9570615e588c9cdb8217d28f1da">processNextPreloadBatch</a> ()</td></tr>
+<tr class="separator:ae6dec9570615e588c9cdb8217d28f1da"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa994453b9437ab3bb082a59aea497264" id="r_aa994453b9437ab3bb082a59aea497264"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ParallelExportService.html#aa994453b9437ab3bb082a59aea497264">onAllComponentDataCollected</a> (const QList&lt; <a class="el" href="classEasyKiConverter_1_1ComponentData.html">ComponentData</a> &gt; &amp;componentDataList)</td></tr>
+<tr class="memdesc:aa994453b9437ab3bb082a59aea497264"><td class="mdescLeft">&#160;</td><td class="mdescRight">处理并行获取完成的组件数据  <br /></td></tr>
+<tr class="separator:aa994453b9437ab3bb082a59aea497264"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a73cfb608b8996d26eb50194dd7a9feb6" id="r_a73cfb608b8996d26eb50194dd7a9feb6"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ParallelExportService.html#a73cfb608b8996d26eb50194dd7a9feb6">logNetworkRuntimeStats</a> (const QString &amp;context) const</td></tr>
+<tr class="separator:a73cfb608b8996d26eb50194dd7a9feb6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a49c9a4eb4391ab7ab68d1fd581306469" id="r_a49c9a4eb4391ab7ab68d1fd581306469"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ParallelExportService.html#a49c9a4eb4391ab7ab68d1fd581306469">writeExportDetailedReport</a> (const QString &amp;reason) const</td></tr>
+<tr class="separator:a49c9a4eb4391ab7ab68d1fd581306469"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0f0d932b73a2971bd8fc0090c8f1b33e" id="r_a0f0d932b73a2971bd8fc0090c8f1b33e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classEasyKiConverter_1_1ExportTypeStage.html">ExportTypeStage</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ParallelExportService.html#a0f0d932b73a2971bd8fc0090c8f1b33e">createExportStage</a> (const QString &amp;typeName)</td></tr>
+<tr class="memdesc:a0f0d932b73a2971bd8fc0090c8f1b33e"><td class="mdescLeft">&#160;</td><td class="mdescRight">创建导出Stage实例  <br /></td></tr>
+<tr class="separator:a0f0d932b73a2971bd8fc0090c8f1b33e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a414881afcde5a4680b325b011f4b4ccf" id="r_a414881afcde5a4680b325b011f4b4ccf"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ParallelExportService.html#a414881afcde5a4680b325b011f4b4ccf">updateOverallProgress</a> ()</td></tr>
+<tr class="memdesc:a414881afcde5a4680b325b011f4b4ccf"><td class="mdescLeft">&#160;</td><td class="mdescRight">更新整体进度  <br /></td></tr>
+<tr class="separator:a414881afcde5a4680b325b011f4b4ccf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a600404f305e535dafdaca59a501edbc2" id="r_a600404f305e535dafdaca59a501edbc2"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ParallelExportService.html#a600404f305e535dafdaca59a501edbc2">checkAllExportCompleted</a> ()</td></tr>
+<tr class="memdesc:a600404f305e535dafdaca59a501edbc2"><td class="mdescLeft">&#160;</td><td class="mdescRight">检查所有导出是否完成  <br /></td></tr>
+<tr class="separator:a600404f305e535dafdaca59a501edbc2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a640477e647839671fa22813d95afcba1" id="r_a640477e647839671fa22813d95afcba1"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ParallelExportService.html#a640477e647839671fa22813d95afcba1">cleanupExportStages</a> ()</td></tr>
+<tr class="memdesc:a640477e647839671fa22813d95afcba1"><td class="mdescLeft">&#160;</td><td class="mdescRight">清理已结束的Stage对象  <br /></td></tr>
+<tr class="separator:a640477e647839671fa22813d95afcba1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a65f91ce289e76349b54ecd15cff0a9bf" id="r_a65f91ce289e76349b54ecd15cff0a9bf"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ParallelExportService.html#a65f91ce289e76349b54ecd15cff0a9bf">discardExportStage</a> (const QString &amp;typeName, <a class="el" href="classEasyKiConverter_1_1ExportTypeStage.html">ExportTypeStage</a> *stage)</td></tr>
+<tr class="separator:a65f91ce289e76349b54ecd15cff0a9bf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aecb9064c8d1bc5a5394ea1440d5dc36d" id="r_aecb9064c8d1bc5a5394ea1440d5dc36d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ParallelExportService.html#aecb9064c8d1bc5a5394ea1440d5dc36d">retireExportStage</a> (<a class="el" href="classEasyKiConverter_1_1ExportTypeStage.html">ExportTypeStage</a> *stage)</td></tr>
+<tr class="separator:aecb9064c8d1bc5a5394ea1440d5dc36d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac42730f327d6177e9c11597c4cc01ce8" id="r_ac42730f327d6177e9c11597c4cc01ce8"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ParallelExportService.html#ac42730f327d6177e9c11597c4cc01ce8">cleanupRetiredExportStages</a> ()</td></tr>
+<tr class="separator:ac42730f327d6177e9c11597c4cc01ce8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-attribs" name="pri-attribs"></a>
+Private 属性</h2></td></tr>
+<tr class="memitem:a6284272ef1f55b343954c1998b10d535" id="r_a6284272ef1f55b343954c1998b10d535"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structEasyKiConverter_1_1ExportOptions.html">ExportOptions</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ParallelExportService.html#a6284272ef1f55b343954c1998b10d535">m_options</a></td></tr>
+<tr class="memdesc:a6284272ef1f55b343954c1998b10d535"><td class="mdescLeft">&#160;</td><td class="mdescRight">导出选项  <br /></td></tr>
+<tr class="separator:a6284272ef1f55b343954c1998b10d535"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0ea787839c6be139d890370162e0ef13" id="r_a0ea787839c6be139d890370162e0ef13"><td class="memItemLeft" align="right" valign="top">QStringList&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ParallelExportService.html#a0ea787839c6be139d890370162e0ef13">m_componentIds</a></td></tr>
+<tr class="memdesc:a0ea787839c6be139d890370162e0ef13"><td class="mdescLeft">&#160;</td><td class="mdescRight">待处理的元器件ID列表  <br /></td></tr>
+<tr class="separator:a0ea787839c6be139d890370162e0ef13"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a28b06144ea287204b69f3fba0cd42e1e" id="r_a28b06144ea287204b69f3fba0cd42e1e"><td class="memItemLeft" align="right" valign="top">QMap&lt; QString, QSharedPointer&lt; <a class="el" href="classEasyKiConverter_1_1ComponentData.html">ComponentData</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ParallelExportService.html#a28b06144ea287204b69f3fba0cd42e1e">m_cachedData</a></td></tr>
+<tr class="memdesc:a28b06144ea287204b69f3fba0cd42e1e"><td class="mdescLeft">&#160;</td><td class="mdescRight">缓存的元器件数据  <br /></td></tr>
+<tr class="separator:a28b06144ea287204b69f3fba0cd42e1e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab414652c268b466670ba7ec8a3aee305" id="r_ab414652c268b466670ba7ec8a3aee305"><td class="memItemLeft" align="right" valign="top">QMap&lt; QString, <a class="el" href="classEasyKiConverter_1_1ExportTypeStage.html">ExportTypeStage</a> * &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ParallelExportService.html#ab414652c268b466670ba7ec8a3aee305">m_exportStages</a></td></tr>
+<tr class="memdesc:ab414652c268b466670ba7ec8a3aee305"><td class="mdescLeft">&#160;</td><td class="mdescRight">各导出类型的Stage实例  <br /></td></tr>
+<tr class="separator:ab414652c268b466670ba7ec8a3aee305"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad987a01548c1e1539ff9e9079edd080f" id="r_ad987a01548c1e1539ff9e9079edd080f"><td class="memItemLeft" align="right" valign="top">QList&lt; QPointer&lt; <a class="el" href="classEasyKiConverter_1_1ExportTypeStage.html">ExportTypeStage</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ParallelExportService.html#ad987a01548c1e1539ff9e9079edd080f">m_retiredExportStages</a></td></tr>
+<tr class="memdesc:ad987a01548c1e1539ff9e9079edd080f"><td class="mdescLeft">&#160;</td><td class="mdescRight">取消后仍需等待自然结束的旧Stage  <br /></td></tr>
+<tr class="separator:ad987a01548c1e1539ff9e9079edd080f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7323b05155ca420b1712b10f344dd9cb" id="r_a7323b05155ca420b1712b10f344dd9cb"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classEasyKiConverter_1_1ComponentService.html">ComponentService</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ParallelExportService.html#a7323b05155ca420b1712b10f344dd9cb">m_componentService</a> {nullptr}</td></tr>
+<tr class="memdesc:a7323b05155ca420b1712b10f344dd9cb"><td class="mdescLeft">&#160;</td><td class="mdescRight">元器件服务引用（用于获取已验证的数据）  <br /></td></tr>
+<tr class="separator:a7323b05155ca420b1712b10f344dd9cb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a510cd43153aa041d64f2eddf3a375c15" id="r_a510cd43153aa041d64f2eddf3a375c15"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structEasyKiConverter_1_1ExportOverallProgress.html">ExportOverallProgress</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ParallelExportService.html#a510cd43153aa041d64f2eddf3a375c15">m_progress</a></td></tr>
+<tr class="memdesc:a510cd43153aa041d64f2eddf3a375c15"><td class="mdescLeft">&#160;</td><td class="mdescRight">整体进度  <br /></td></tr>
+<tr class="separator:a510cd43153aa041d64f2eddf3a375c15"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a701121dd55866ef53c3d47e757781968" id="r_a701121dd55866ef53c3d47e757781968"><td class="memItemLeft" align="right" valign="top">QMutex&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ParallelExportService.html#a701121dd55866ef53c3d47e757781968">m_progressMutex</a></td></tr>
+<tr class="memdesc:a701121dd55866ef53c3d47e757781968"><td class="mdescLeft">&#160;</td><td class="mdescRight">保护m_progress的互斥量  <br /></td></tr>
+<tr class="separator:a701121dd55866ef53c3d47e757781968"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0c4e481b5d07916f6b5acca8b0d420a3" id="r_a0c4e481b5d07916f6b5acca8b0d420a3"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ParallelExportService.html#a0c4e481b5d07916f6b5acca8b0d420a3">m_preloadCompleted</a> {false}</td></tr>
+<tr class="memdesc:a0c4e481b5d07916f6b5acca8b0d420a3"><td class="mdescLeft">&#160;</td><td class="mdescRight">预加载是否已完成  <br /></td></tr>
+<tr class="separator:a0c4e481b5d07916f6b5acca8b0d420a3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7a1337b7f8661a24b562d8780091f05f" id="r_a7a1337b7f8661a24b562d8780091f05f"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ParallelExportService.html#a7a1337b7f8661a24b562d8780091f05f">m_runningExportStages</a> {0}</td></tr>
+<tr class="memdesc:a7a1337b7f8661a24b562d8780091f05f"><td class="mdescLeft">&#160;</td><td class="mdescRight">正在运行的导出Stage数量  <br /></td></tr>
+<tr class="separator:a7a1337b7f8661a24b562d8780091f05f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a31039d23c83cde62f3981c85f640a90c" id="r_a31039d23c83cde62f3981c85f640a90c"><td class="memItemLeft" align="right" valign="top">std::atomic&lt; bool &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ParallelExportService.html#a31039d23c83cde62f3981c85f640a90c">m_cancelRequested</a> {false}</td></tr>
+<tr class="memdesc:a31039d23c83cde62f3981c85f640a90c"><td class="mdescLeft">&#160;</td><td class="mdescRight">当前导出是否已请求取消  <br /></td></tr>
+<tr class="separator:a31039d23c83cde62f3981c85f640a90c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab9b27f9b93d2c70da3c4eecb4b257889" id="r_ab9b27f9b93d2c70da3c4eecb4b257889"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ParallelExportService.html#ab9b27f9b93d2c70da3c4eecb4b257889">m_nextPreloadIndex</a> {0}</td></tr>
+<tr class="memdesc:ab9b27f9b93d2c70da3c4eecb4b257889"><td class="mdescLeft">&#160;</td><td class="mdescRight">下一批预加载索引  <br /></td></tr>
+<tr class="separator:ab9b27f9b93d2c70da3c4eecb4b257889"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5de76fa83a9dd1cfcb1a9123a7953fd3" id="r_a5de76fa83a9dd1cfcb1a9123a7953fd3"><td class="memItemLeft" align="right" valign="top">quint64&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEasyKiConverter_1_1ParallelExportService.html#a5de76fa83a9dd1cfcb1a9123a7953fd3">m_activeRunGeneration</a> {0}</td></tr>
+<tr class="memdesc:a5de76fa83a9dd1cfcb1a9123a7953fd3"><td class="mdescLeft">&#160;</td><td class="mdescRight">当前导出会话代数，用于屏蔽取消后的迟到回调  <br /></td></tr>
+<tr class="separator:a5de76fa83a9dd1cfcb1a9123a7953fd3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table>
+<a name="details" id="details"></a><h2 class="groupheader">详细描述</h2>
+<div class="textblock"><p>并行导出服务 </p>
+<p>协调管理所有导出类型的并行任务执行。</p>
+<p>工作流程:</p><ol type="1">
+<li>预加载阶段(Preloading): 从内存缓存加载已验证的元器件数据（网络获取在元器件验证时已完成）</li>
+<li>导出阶段(Exporting): 根据用户选项并行导出各类型文件</li>
+</ol>
+<p>使用示例: </p><div class="fragment"><div class="line"><a class="code hl_class" href="classEasyKiConverter_1_1ParallelExportService.html">ParallelExportService</a> service;</div>
+<div class="line">service.<a class="code hl_function" href="classEasyKiConverter_1_1ParallelExportService.html#aad70c9091ab130d02998d1ffb6c7e393">setOutputPath</a>(<span class="stringliteral">&quot;/path/to/output&quot;</span>);</div>
+<div class="line">service.<a class="code hl_function" href="classEasyKiConverter_1_1ParallelExportService.html#a1740870ae1644105491ba6b92c164d95">setOptions</a>(<a class="code hl_function" href="classEasyKiConverter_1_1ParallelExportService.html#af04e9cfd22b9eefacbef972c164e99b7">options</a>);</div>
+<div class="line"> </div>
+<div class="line"><span class="comment">// 连接信号</span></div>
+<div class="line">QObject::connect(&amp;service, &amp;<a class="code hl_function" href="classEasyKiConverter_1_1ParallelExportService.html#a86d4e05424e829e91e0976e3d90eee37">ParallelExportService::progressChanged</a>,</div>
+<div class="line">                 <span class="keyword">this</span>, &amp;MyClass::onProgressChanged);</div>
+<div class="line"> </div>
+<div class="line"><span class="comment">// 开始导出</span></div>
+<div class="line">QStringList componentIds = {<span class="stringliteral">&quot;C12345&quot;</span>, <span class="stringliteral">&quot;R12345&quot;</span>};</div>
+<div class="line">service.<a class="code hl_function" href="classEasyKiConverter_1_1ParallelExportService.html#adc8bf87f7e85eb58363688f44d49e147">startPreload</a>(componentIds);</div>
+<div class="line"><span class="comment">// ... 等待预加载完成</span></div>
+<div class="line">service.<a class="code hl_function" href="classEasyKiConverter_1_1ParallelExportService.html#a6cb88a57834f475549ff2e79790bf5a0">startExport</a>();</div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ParallelExportService_html"><div class="ttname"><a href="classEasyKiConverter_1_1ParallelExportService.html">EasyKiConverter::ParallelExportService</a></div><div class="ttdoc">并行导出服务</div><div class="ttdef"><b>Definition</b> <a href="ParallelExportService_8h_source.html#l00051">ParallelExportService.h:51</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ParallelExportService_html_a1740870ae1644105491ba6b92c164d95"><div class="ttname"><a href="classEasyKiConverter_1_1ParallelExportService.html#a1740870ae1644105491ba6b92c164d95">EasyKiConverter::ParallelExportService::setOptions</a></div><div class="ttdeci">void setOptions(const ExportOptions &amp;options)</div><div class="ttdoc">设置导出选项</div><div class="ttdef"><b>Definition</b> <a href="ParallelExportService_8cpp_source.html#l00130">ParallelExportService.cpp:130</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ParallelExportService_html_a6cb88a57834f475549ff2e79790bf5a0"><div class="ttname"><a href="classEasyKiConverter_1_1ParallelExportService.html#a6cb88a57834f475549ff2e79790bf5a0">EasyKiConverter::ParallelExportService::startExport</a></div><div class="ttdeci">void startExport()</div><div class="ttdoc">开始导出</div><div class="ttdef"><b>Definition</b> <a href="ParallelExportService_8cpp_source.html#l00224">ParallelExportService.cpp:224</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ParallelExportService_html_a86d4e05424e829e91e0976e3d90eee37"><div class="ttname"><a href="classEasyKiConverter_1_1ParallelExportService.html#a86d4e05424e829e91e0976e3d90eee37">EasyKiConverter::ParallelExportService::progressChanged</a></div><div class="ttdeci">void progressChanged(const ExportOverallProgress &amp;progress)</div><div class="ttdoc">导出进度更新</div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ParallelExportService_html_aad70c9091ab130d02998d1ffb6c7e393"><div class="ttname"><a href="classEasyKiConverter_1_1ParallelExportService.html#aad70c9091ab130d02998d1ffb6c7e393">EasyKiConverter::ParallelExportService::setOutputPath</a></div><div class="ttdeci">void setOutputPath(const QString &amp;path)</div><div class="ttdoc">设置输出目录</div><div class="ttdef"><b>Definition</b> <a href="ParallelExportService_8cpp_source.html#l00134">ParallelExportService.cpp:134</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ParallelExportService_html_adc8bf87f7e85eb58363688f44d49e147"><div class="ttname"><a href="classEasyKiConverter_1_1ParallelExportService.html#adc8bf87f7e85eb58363688f44d49e147">EasyKiConverter::ParallelExportService::startPreload</a></div><div class="ttdeci">void startPreload(const QStringList &amp;componentIds)</div><div class="ttdoc">开始预加载元器件数据</div><div class="ttdef"><b>Definition</b> <a href="ParallelExportService_8cpp_source.html#l00142">ParallelExportService.cpp:142</a></div></div>
+<div class="ttc" id="aclassEasyKiConverter_1_1ParallelExportService_html_af04e9cfd22b9eefacbef972c164e99b7"><div class="ttname"><a href="classEasyKiConverter_1_1ParallelExportService.html#af04e9cfd22b9eefacbef972c164e99b7">EasyKiConverter::ParallelExportService::options</a></div><div class="ttdeci">ExportOptions options() const</div><div class="ttdoc">获取当前导出选项</div><div class="ttdef"><b>Definition</b> <a href="ParallelExportService_8h_source.html#l00078">ParallelExportService.h:78</a></div></div>
+</div><!-- fragment --><p>信号线程安全性:</p><ul>
+<li>progressChanged 可能在子线程发射，需要用QueuedConnection或InvokeMethod更新UI </li>
+</ul>
+
+<p class="definition">在文件 <a class="el" href="ParallelExportService_8h_source.html">ParallelExportService.h</a> 第 <a class="el" href="ParallelExportService_8h_source.html#l00051">51</a> 行定义.</p>
+</div><h2 class="groupheader">构造及析构函数说明</h2>
+<a id="a3445b3458604b93e8fcf8ae4b5c3053f" name="a3445b3458604b93e8fcf8ae4b5c3053f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3445b3458604b93e8fcf8ae4b5c3053f">&#9670;&#160;</a></span>ParallelExportService()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">EasyKiConverter::ParallelExportService::ParallelExportService </td>
+          <td>(</td>
+          <td class="paramtype">QObject *&#160;</td>
+          <td class="paramname"><em>parent</em> = <code>nullptr</code></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">explicit</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>构造函数 </p>
+<dl class="params"><dt>参数</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">parent</td><td>父对象指针 </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p class="definition">在文件 <a class="el" href="ParallelExportService_8cpp_source.html">ParallelExportService.cpp</a> 第 <a class="el" href="ParallelExportService_8cpp_source.html#l00024">24</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="ExportProgress_8h_source.html#l00223">EasyKiConverter::ExportOverallProgress::currentStage</a>, <a class="el" href="structEasyKiConverter_1_1ExportOverallProgress.html#aee47a30e7e88c179521d7971bd248693ae599161956d626eda4cb0a5ffb85271c">EasyKiConverter::ExportOverallProgress::Idle</a> , 以及 <a class="el" href="ParallelExportService_8h_source.html#l00269">m_progress</a>.</p>
+
+</div>
+</div>
+<a id="ae4653398a80eb6d7c3313b186ac78c8f" name="ae4653398a80eb6d7c3313b186ac78c8f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae4653398a80eb6d7c3313b186ac78c8f">&#9670;&#160;</a></span>~ParallelExportService()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">EasyKiConverter::ParallelExportService::~ParallelExportService </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">override</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>析构函数 </p>
+
+<p class="definition">在文件 <a class="el" href="ParallelExportService_8cpp_source.html">ParallelExportService.cpp</a> 第 <a class="el" href="ParallelExportService_8cpp_source.html#l00028">28</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="NetworkClient_8cpp_source.html#l00387">EasyKiConverter::NetworkClient::cancelAllRequests()</a>, <a class="el" href="TestableSingleton_8h_source.html#l00028">EasyKiConverter::TestableSingleton&lt; NetworkClient &gt;::instance()</a>, <a class="el" href="ParallelExportService_8h_source.html#l00275">m_activeRunGeneration</a>, <a class="el" href="ParallelExportService_8h_source.html#l00273">m_cancelRequested</a>, <a class="el" href="ParallelExportService_8h_source.html#l00265">m_exportStages</a> , 以及 <a class="el" href="ParallelExportService_8h_source.html#l00266">m_retiredExportStages</a>.</p>
+
+</div>
+</div>
+<h2 class="groupheader">成员函数说明</h2>
+<a id="a82eb3cff60152180f320db3c4e923b47" name="a82eb3cff60152180f320db3c4e923b47"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a82eb3cff60152180f320db3c4e923b47">&#9670;&#160;</a></span>cachedData()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">QMap&lt; QString, QSharedPointer&lt; <a class="el" href="classEasyKiConverter_1_1ComponentData.html">ComponentData</a> &gt; &gt; EasyKiConverter::ParallelExportService::cachedData </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>获取缓存的数据 </p>
+<dl class="section return"><dt>返回</dt><dd>缓存的元器件数据映射 </dd></dl>
+
+<p class="definition">在文件 <a class="el" href="ParallelExportService_8h_source.html">ParallelExportService.h</a> 第 <a class="el" href="ParallelExportService_8h_source.html#l00163">163</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="ParallelExportService_8h_source.html#l00264">m_cachedData</a>.</p>
+
+</div>
+</div>
+<a id="ab49b1805bf6dd37e179f50ba4d6c707b" name="ab49b1805bf6dd37e179f50ba4d6c707b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab49b1805bf6dd37e179f50ba4d6c707b">&#9670;&#160;</a></span>cancelExport()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::ParallelExportService::cancelExport </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>取消导出 </p>
+<p>向所有导出Stage发送取消信号。 安全的多次调用。 </p>
+
+<p class="definition">在文件 <a class="el" href="ParallelExportService_8cpp_source.html">ParallelExportService.cpp</a> 第 <a class="el" href="ParallelExportService_8cpp_source.html#l00564">564</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="ComponentService_8cpp_source.html#l01161">EasyKiConverter::ComponentService::abortBatchFetch()</a>, <a class="el" href="NetworkClient_8cpp_source.html#l00387">EasyKiConverter::NetworkClient::cancelAllRequests()</a>, <a class="el" href="structEasyKiConverter_1_1ExportOverallProgress.html#aee47a30e7e88c179521d7971bd248693aa149e85a44aeec9140e92733d9ed694e">EasyKiConverter::ExportOverallProgress::Cancelled</a>, <a class="el" href="classEasyKiConverter_1_1ParallelExportService.html#a37afb9496171c65be8dcb668ed8fe6ae">cancelled()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00202">cancelPreload()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00115">cleanupRetiredExportStages()</a>, <a class="el" href="ExportProgress_8h_source.html#l00223">EasyKiConverter::ExportOverallProgress::currentStage</a>, <a class="el" href="ExportProgress_8h_source.html#l00228">EasyKiConverter::ExportOverallProgress::endTime</a>, <a class="el" href="TestableSingleton_8h_source.html#l00028">EasyKiConverter::TestableSingleton&lt; NetworkClient &gt;::instance()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00932">logNetworkRuntimeStats()</a>, <a class="el" href="ParallelExportService_8h_source.html#l00275">m_activeRunGeneration</a>, <a class="el" href="ParallelExportService_8h_source.html#l00273">m_cancelRequested</a>, <a class="el" href="ParallelExportService_8h_source.html#l00267">m_componentService</a>, <a class="el" href="ParallelExportService_8h_source.html#l00265">m_exportStages</a>, <a class="el" href="ParallelExportService_8h_source.html#l00269">m_progress</a>, <a class="el" href="ParallelExportService_8h_source.html#l00272">m_runningExportStages</a>, <a class="el" href="structEasyKiConverter_1_1ExportOverallProgress.html#aee47a30e7e88c179521d7971bd248693a483a342f570093eb964731c52f159293">EasyKiConverter::ExportOverallProgress::Preloading</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00092">retireExportStage()</a> , 以及 <a class="el" href="ParallelExportService_8cpp_source.html#l00936">writeExportDetailedReport()</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="CliContext_8cpp_source.html#l00026">EasyKiConverter::CliContext::~CliContext()</a>, <a class="el" href="ExportProgressViewModel_8cpp_source.html#l00230">EasyKiConverter::ExportProgressViewModel::cancelExport()</a>, <a class="el" href="ExportSettingsViewModel_8cpp_source.html#l00359">EasyKiConverter::ExportSettingsViewModel::cancelExport()</a> , 以及 <a class="el" href="main_8cpp_source.html#l00353">main()</a>.</p>
+
+</div>
+</div>
+<a id="a37afb9496171c65be8dcb668ed8fe6ae" name="a37afb9496171c65be8dcb668ed8fe6ae"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a37afb9496171c65be8dcb668ed8fe6ae">&#9670;&#160;</a></span>cancelled()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::ParallelExportService::cancelled </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>导出被取消 </p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ExportProgressViewModel_8cpp_source.html#l00031">EasyKiConverter::ExportProgressViewModel::ExportProgressViewModel()</a>, <a class="el" href="ExportSettingsViewModel_8cpp_source.html#l00022">EasyKiConverter::ExportSettingsViewModel::ExportSettingsViewModel()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00564">cancelExport()</a> , 以及 <a class="el" href="ParallelExportService_8cpp_source.html#l00202">cancelPreload()</a>.</p>
+
+</div>
+</div>
+<a id="a93d5fc18de4702139042b8744cb7505e" name="a93d5fc18de4702139042b8744cb7505e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a93d5fc18de4702139042b8744cb7505e">&#9670;&#160;</a></span>cancelPreload()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::ParallelExportService::cancelPreload </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>取消预加载 </p>
+
+<p class="definition">在文件 <a class="el" href="ParallelExportService_8cpp_source.html">ParallelExportService.cpp</a> 第 <a class="el" href="ParallelExportService_8cpp_source.html#l00202">202</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="ComponentService_8cpp_source.html#l01161">EasyKiConverter::ComponentService::abortBatchFetch()</a>, <a class="el" href="classEasyKiConverter_1_1ComponentService.html#aa2926e7a8318370ab7d80bb195c89ec7">EasyKiConverter::ComponentService::allComponentsDataCollected()</a>, <a class="el" href="structEasyKiConverter_1_1ExportOverallProgress.html#aee47a30e7e88c179521d7971bd248693aa149e85a44aeec9140e92733d9ed694e">EasyKiConverter::ExportOverallProgress::Cancelled</a>, <a class="el" href="classEasyKiConverter_1_1ParallelExportService.html#a37afb9496171c65be8dcb668ed8fe6ae">cancelled()</a>, <a class="el" href="ExportProgress_8h_source.html#l00181">EasyKiConverter::PreloadProgress::currentComponentId</a>, <a class="el" href="ExportProgress_8h_source.html#l00223">EasyKiConverter::ExportOverallProgress::currentStage</a>, <a class="el" href="ExportProgress_8h_source.html#l00228">EasyKiConverter::ExportOverallProgress::endTime</a>, <a class="el" href="ExportProgress_8h_source.html#l00180">EasyKiConverter::PreloadProgress::inProgressCount</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00932">logNetworkRuntimeStats()</a>, <a class="el" href="ParallelExportService_8h_source.html#l00275">m_activeRunGeneration</a>, <a class="el" href="ParallelExportService_8h_source.html#l00273">m_cancelRequested</a>, <a class="el" href="ParallelExportService_8h_source.html#l00263">m_componentIds</a>, <a class="el" href="ParallelExportService_8h_source.html#l00267">m_componentService</a>, <a class="el" href="ParallelExportService_8h_source.html#l00274">m_nextPreloadIndex</a>, <a class="el" href="ParallelExportService_8h_source.html#l00269">m_progress</a>, <a class="el" href="ParallelExportService_8h_source.html#l00270">m_progressMutex</a>, <a class="el" href="ExportProgress_8h_source.html#l00225">EasyKiConverter::ExportOverallProgress::preloadProgress</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00871">updateOverallProgress()</a> , 以及 <a class="el" href="ParallelExportService_8cpp_source.html#l00936">writeExportDetailedReport()</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ParallelExportService_8cpp_source.html#l00564">cancelExport()</a>.</p>
+
+</div>
+</div>
+<a id="a600404f305e535dafdaca59a501edbc2" name="a600404f305e535dafdaca59a501edbc2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a600404f305e535dafdaca59a501edbc2">&#9670;&#160;</a></span>checkAllExportCompleted()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::ParallelExportService::checkAllExportCompleted </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>检查所有导出是否完成 </p>
+
+<p class="definition">在文件 <a class="el" href="ParallelExportService_8cpp_source.html">ParallelExportService.cpp</a> 第 <a class="el" href="ParallelExportService_8cpp_source.html#l00881">881</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="structEasyKiConverter_1_1ExportOverallProgress.html#aee47a30e7e88c179521d7971bd248693aa149e85a44aeec9140e92733d9ed694e">EasyKiConverter::ExportOverallProgress::Cancelled</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00059">cleanupExportStages()</a>, <a class="el" href="structEasyKiConverter_1_1ExportOverallProgress.html#aee47a30e7e88c179521d7971bd248693a07ca5050e697392c9ed47e6453f1453f">EasyKiConverter::ExportOverallProgress::Completed</a>, <a class="el" href="classEasyKiConverter_1_1ParallelExportService.html#a0bb299a95eac5bdaf4fd957caeec0c32">completed()</a>, <a class="el" href="ExportProgress_8h_source.html#l00223">EasyKiConverter::ExportOverallProgress::currentStage</a>, <a class="el" href="ExportProgress_8h_source.html#l00228">EasyKiConverter::ExportOverallProgress::endTime</a>, <a class="el" href="ExportProgress_8h_source.html#l00226">EasyKiConverter::ExportOverallProgress::exportTypeProgress</a>, <a class="el" href="structEasyKiConverter_1_1ExportItemStatus.html#a760395f6f596146bd6582acf79ae16c8ad7c8c85bf79bbe1b7188497c32c3b0ca">EasyKiConverter::ExportItemStatus::Failed</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00932">logNetworkRuntimeStats()</a>, <a class="el" href="ParallelExportService_8h_source.html#l00273">m_cancelRequested</a>, <a class="el" href="ParallelExportService_8h_source.html#l00263">m_componentIds</a>, <a class="el" href="ParallelExportService_8h_source.html#l00269">m_progress</a>, <a class="el" href="ParallelExportService_8h_source.html#l00272">m_runningExportStages</a>, <a class="el" href="structEasyKiConverter_1_1ExportItemStatus.html#a760395f6f596146bd6582acf79ae16c8a2d13df6f8b5e4c5af9f87e0dc39df69d">EasyKiConverter::ExportItemStatus::Pending</a>, <a class="el" href="structEasyKiConverter_1_1ExportItemStatus.html#a760395f6f596146bd6582acf79ae16c8ad9c8f187972e6320a34e9c40b4cba605">EasyKiConverter::ExportItemStatus::Skipped</a>, <a class="el" href="ExportProgress_8h_source.html#l00088">EasyKiConverter::ExportItemStatus::status</a>, <a class="el" href="structEasyKiConverter_1_1ExportItemStatus.html#a760395f6f596146bd6582acf79ae16c8a505a83f220c02df2f85c3810cd9ceb38">EasyKiConverter::ExportItemStatus::Success</a> , 以及 <a class="el" href="ParallelExportService_8cpp_source.html#l00936">writeExportDetailedReport()</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ParallelExportService_8cpp_source.html#l00660">onExportTypeCompleted()</a>.</p>
+
+</div>
+</div>
+<a id="a640477e647839671fa22813d95afcba1" name="a640477e647839671fa22813d95afcba1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a640477e647839671fa22813d95afcba1">&#9670;&#160;</a></span>cleanupExportStages()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::ParallelExportService::cleanupExportStages </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>清理已结束的Stage对象 </p>
+
+<p class="definition">在文件 <a class="el" href="ParallelExportService_8cpp_source.html">ParallelExportService.cpp</a> 第 <a class="el" href="ParallelExportService_8cpp_source.html#l00059">59</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="ParallelExportService_8cpp_source.html#l00115">cleanupRetiredExportStages()</a>, <a class="el" href="ParallelExportService_8h_source.html#l00265">m_exportStages</a> , 以及 <a class="el" href="ParallelExportService_8cpp_source.html#l00092">retireExportStage()</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ParallelExportService_8cpp_source.html#l00881">checkAllExportCompleted()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00224">startExport()</a> , 以及 <a class="el" href="ParallelExportService_8cpp_source.html#l00142">startPreload()</a>.</p>
+
+</div>
+</div>
+<a id="ac42730f327d6177e9c11597c4cc01ce8" name="ac42730f327d6177e9c11597c4cc01ce8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac42730f327d6177e9c11597c4cc01ce8">&#9670;&#160;</a></span>cleanupRetiredExportStages()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::ParallelExportService::cleanupRetiredExportStages </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ParallelExportService_8cpp_source.html">ParallelExportService.cpp</a> 第 <a class="el" href="ParallelExportService_8cpp_source.html#l00115">115</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="ExportTypeStage_8cpp_source.html#l00205">EasyKiConverter::ExportTypeStage::hasActiveWorkers()</a>, <a class="el" href="ExportTypeStage_8cpp_source.html#l00201">EasyKiConverter::ExportTypeStage::isRunning()</a> , 以及 <a class="el" href="ParallelExportService_8h_source.html#l00266">m_retiredExportStages</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ParallelExportService_8cpp_source.html#l00564">cancelExport()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00059">cleanupExportStages()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00073">discardExportStage()</a> , 以及 <a class="el" href="ParallelExportService_8cpp_source.html#l00092">retireExportStage()</a>.</p>
+
+</div>
+</div>
+<a id="a0bb299a95eac5bdaf4fd957caeec0c32" name="a0bb299a95eac5bdaf4fd957caeec0c32"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0bb299a95eac5bdaf4fd957caeec0c32">&#9670;&#160;</a></span>completed()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::ParallelExportService::completed </td>
+          <td>(</td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>successCount</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>failedCount</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>整体导出完成 </p>
+<dl class="params"><dt>参数</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">successCount</td><td>总成功数量 </td></tr>
+    <tr><td class="paramname">failedCount</td><td>总失败数量 </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p class="reference">被这些函数引用 <a class="el" href="ExportProgressViewModel_8cpp_source.html#l00031">EasyKiConverter::ExportProgressViewModel::ExportProgressViewModel()</a>, <a class="el" href="ExportSettingsViewModel_8cpp_source.html#l00022">EasyKiConverter::ExportSettingsViewModel::ExportSettingsViewModel()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00881">checkAllExportCompleted()</a>, <a class="el" href="BatchConverter_8cpp_source.html#l00015">EasyKiConverter::BatchConverter::execute()</a>, <a class="el" href="BomConverter_8cpp_source.html#l00016">EasyKiConverter::BomConverter::execute()</a>, <a class="el" href="ComponentConverter_8cpp_source.html#l00015">EasyKiConverter::ComponentConverter::execute()</a> , 以及 <a class="el" href="ParallelExportService_8cpp_source.html#l00224">startExport()</a>.</p>
+
+</div>
+</div>
+<a id="a0f0d932b73a2971bd8fc0090c8f1b33e" name="a0f0d932b73a2971bd8fc0090c8f1b33e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0f0d932b73a2971bd8fc0090c8f1b33e">&#9670;&#160;</a></span>createExportStage()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classEasyKiConverter_1_1ExportTypeStage.html">ExportTypeStage</a> * EasyKiConverter::ParallelExportService::createExportStage </td>
+          <td>(</td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>typeName</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>创建导出Stage实例 </p>
+<dl class="params"><dt>参数</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">typeName</td><td>导出类型名称 </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>返回</dt><dd>创建的Stage实例 </dd></dl>
+
+</div>
+</div>
+<a id="a65f91ce289e76349b54ecd15cff0a9bf" name="a65f91ce289e76349b54ecd15cff0a9bf"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a65f91ce289e76349b54ecd15cff0a9bf">&#9670;&#160;</a></span>discardExportStage()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::ParallelExportService::discardExportStage </td>
+          <td>(</td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>typeName</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classEasyKiConverter_1_1ExportTypeStage.html">ExportTypeStage</a> *&#160;</td>
+          <td class="paramname"><em>stage</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ParallelExportService_8cpp_source.html">ParallelExportService.cpp</a> 第 <a class="el" href="ParallelExportService_8cpp_source.html#l00073">73</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="ParallelExportService_8cpp_source.html#l00115">cleanupRetiredExportStages()</a>, <a class="el" href="ExportTypeStage_8cpp_source.html#l00205">EasyKiConverter::ExportTypeStage::hasActiveWorkers()</a>, <a class="el" href="ExportTypeStage_8cpp_source.html#l00201">EasyKiConverter::ExportTypeStage::isRunning()</a>, <a class="el" href="ParallelExportService_8h_source.html#l00265">m_exportStages</a>, <a class="el" href="ParallelExportService_8h_source.html#l00266">m_retiredExportStages</a> , 以及 <a class="el" href="ParallelExportService_8cpp_source.html#l00092">retireExportStage()</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ParallelExportService_8cpp_source.html#l00660">onExportTypeCompleted()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00092">retireExportStage()</a> , 以及 <a class="el" href="ParallelExportService_8cpp_source.html#l00224">startExport()</a>.</p>
+
+</div>
+</div>
+<a id="a24616297ca69d3cc2aeefcd48837d97b" name="a24616297ca69d3cc2aeefcd48837d97b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a24616297ca69d3cc2aeefcd48837d97b">&#9670;&#160;</a></span>failed()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::ParallelExportService::failed </td>
+          <td>(</td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>error</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>导出失败 </p>
+<dl class="params"><dt>参数</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">error</td><td>错误信息 </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p class="reference">被这些函数引用 <a class="el" href="ExportProgressViewModel_8cpp_source.html#l00031">EasyKiConverter::ExportProgressViewModel::ExportProgressViewModel()</a>, <a class="el" href="ExportSettingsViewModel_8cpp_source.html#l00022">EasyKiConverter::ExportSettingsViewModel::ExportSettingsViewModel()</a>, <a class="el" href="BatchConverter_8cpp_source.html#l00015">EasyKiConverter::BatchConverter::execute()</a>, <a class="el" href="BomConverter_8cpp_source.html#l00016">EasyKiConverter::BomConverter::execute()</a>, <a class="el" href="ComponentConverter_8cpp_source.html#l00015">EasyKiConverter::ComponentConverter::execute()</a> , 以及 <a class="el" href="ParallelExportService_8cpp_source.html#l00224">startExport()</a>.</p>
+
+</div>
+</div>
+<a id="af0b99e36a7f7ce44f6dd89718e39ae21" name="af0b99e36a7f7ce44f6dd89718e39ae21"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af0b99e36a7f7ce44f6dd89718e39ae21">&#9670;&#160;</a></span>getProgress()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="structEasyKiConverter_1_1ExportOverallProgress.html">ExportOverallProgress</a> EasyKiConverter::ParallelExportService::getProgress </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>获取整体进度 </p>
+<dl class="section return"><dt>返回</dt><dd>当前导出任务的整体进度 </dd></dl>
+
+<p class="definition">在文件 <a class="el" href="ParallelExportService_8cpp_source.html">ParallelExportService.cpp</a> 第 <a class="el" href="ParallelExportService_8cpp_source.html#l00608">608</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="ParallelExportService_8h_source.html#l00269">m_progress</a> , 以及 <a class="el" href="ParallelExportService_8h_source.html#l00270">m_progressMutex</a>.</p>
+
+</div>
+</div>
+<a id="a181ca30ec926cd497ae4fbd16d0637cb" name="a181ca30ec926cd497ae4fbd16d0637cb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a181ca30ec926cd497ae4fbd16d0637cb">&#9670;&#160;</a></span>getTypeProgress()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="structEasyKiConverter_1_1ExportTypeProgress.html">ExportTypeProgress</a> EasyKiConverter::ParallelExportService::getTypeProgress </td>
+          <td>(</td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>typeName</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>获取指定导出类型的进度 </p>
+<dl class="params"><dt>参数</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">typeName</td><td>导出类型名称 </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>返回</dt><dd>该类型的进度信息 </dd></dl>
+
+<p class="definition">在文件 <a class="el" href="ParallelExportService_8cpp_source.html">ParallelExportService.cpp</a> 第 <a class="el" href="ParallelExportService_8cpp_source.html#l00613">613</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="ExportProgress_8h_source.html#l00226">EasyKiConverter::ExportOverallProgress::exportTypeProgress</a>, <a class="el" href="ParallelExportService_8h_source.html#l00269">m_progress</a> , 以及 <a class="el" href="ParallelExportService_8h_source.html#l00270">m_progressMutex</a>.</p>
+
+</div>
+</div>
+<a id="a513a3733c2f63f04574a230b016f10b7" name="a513a3733c2f63f04574a230b016f10b7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a513a3733c2f63f04574a230b016f10b7">&#9670;&#160;</a></span>isRunning()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool EasyKiConverter::ParallelExportService::isRunning </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>检查是否正在运行 </p>
+<dl class="section return"><dt>返回</dt><dd>true 表示预加载或导出正在进行 </dd></dl>
+
+<p class="definition">在文件 <a class="el" href="ParallelExportService_8cpp_source.html">ParallelExportService.cpp</a> 第 <a class="el" href="ParallelExportService_8cpp_source.html#l00618">618</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="ExportProgress_8h_source.html#l00223">EasyKiConverter::ExportOverallProgress::currentStage</a>, <a class="el" href="structEasyKiConverter_1_1ExportOverallProgress.html#aee47a30e7e88c179521d7971bd248693a58946eb6fa72f0bdfcd0ebdb20b34597">EasyKiConverter::ExportOverallProgress::Exporting</a>, <a class="el" href="ParallelExportService_8h_source.html#l00269">m_progress</a> , 以及 <a class="el" href="structEasyKiConverter_1_1ExportOverallProgress.html#aee47a30e7e88c179521d7971bd248693a483a342f570093eb964731c52f159293">EasyKiConverter::ExportOverallProgress::Preloading</a>.</p>
+
+</div>
+</div>
+<a id="af7ed2afeb445b4fb0afdf6a873fd7216" name="af7ed2afeb445b4fb0afdf6a873fd7216"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af7ed2afeb445b4fb0afdf6a873fd7216">&#9670;&#160;</a></span>itemStatusChanged()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::ParallelExportService::itemStatusChanged </td>
+          <td>(</td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>componentId</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>typeName</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="structEasyKiConverter_1_1ExportItemStatus.html">ExportItemStatus</a> &amp;&#160;</td>
+          <td class="paramname"><em>status</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>单个元器件状态更新 </p>
+<dl class="params"><dt>参数</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">componentId</td><td>元器件ID </td></tr>
+    <tr><td class="paramname">typeName</td><td>导出类型 </td></tr>
+    <tr><td class="paramname">status</td><td>状态信息 </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p class="reference">被这些函数引用 <a class="el" href="ExportProgressViewModel_8cpp_source.html#l00031">EasyKiConverter::ExportProgressViewModel::ExportProgressViewModel()</a> , 以及 <a class="el" href="ParallelExportService_8cpp_source.html#l00692">onExportItemStatusChanged()</a>.</p>
+
+</div>
+</div>
+<a id="a73cfb608b8996d26eb50194dd7a9feb6" name="a73cfb608b8996d26eb50194dd7a9feb6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a73cfb608b8996d26eb50194dd7a9feb6">&#9670;&#160;</a></span>logNetworkRuntimeStats()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::ParallelExportService::logNetworkRuntimeStats </td>
+          <td>(</td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>context</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ParallelExportService_8cpp_source.html">ParallelExportService.cpp</a> 第 <a class="el" href="ParallelExportService_8cpp_source.html#l00932">932</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="ExportReportGenerator_8cpp_source.html#l00015">EasyKiConverter::ExportReportGenerator::logNetworkStats()</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ParallelExportService_8cpp_source.html#l00564">cancelExport()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00202">cancelPreload()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00881">checkAllExportCompleted()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00804">onAllComponentDataCollected()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00718">processNextPreloadBatch()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00224">startExport()</a> , 以及 <a class="el" href="ParallelExportService_8cpp_source.html#l00142">startPreload()</a>.</p>
+
+</div>
+</div>
+<a id="aa994453b9437ab3bb082a59aea497264" name="aa994453b9437ab3bb082a59aea497264"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa994453b9437ab3bb082a59aea497264">&#9670;&#160;</a></span>onAllComponentDataCollected()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::ParallelExportService::onAllComponentDataCollected </td>
+          <td>(</td>
+          <td class="paramtype">const QList&lt; <a class="el" href="classEasyKiConverter_1_1ComponentData.html">ComponentData</a> &gt; &amp;&#160;</td>
+          <td class="paramname"><em>componentDataList</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>处理并行获取完成的组件数据 </p>
+<dl class="params"><dt>参数</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">componentDataList</td><td>获取到的组件数据列表 </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p class="definition">在文件 <a class="el" href="ParallelExportService_8cpp_source.html">ParallelExportService.cpp</a> 第 <a class="el" href="ParallelExportService_8cpp_source.html#l00804">804</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="classEasyKiConverter_1_1ComponentService.html#aa2926e7a8318370ab7d80bb195c89ec7">EasyKiConverter::ComponentService::allComponentsDataCollected()</a>, <a class="el" href="ExportProgress_8h_source.html#l00177">EasyKiConverter::PreloadProgress::completedCount</a>, <a class="el" href="ExportProgress_8h_source.html#l00181">EasyKiConverter::PreloadProgress::currentComponentId</a>, <a class="el" href="ExportProgress_8h_source.html#l00223">EasyKiConverter::ExportOverallProgress::currentStage</a>, <a class="el" href="ExportProgress_8h_source.html#l00228">EasyKiConverter::ExportOverallProgress::endTime</a>, <a class="el" href="ExportProgress_8h_source.html#l00182">EasyKiConverter::PreloadProgress::failedComponents</a>, <a class="el" href="ExportProgress_8h_source.html#l00179">EasyKiConverter::PreloadProgress::failedCount</a>, <a class="el" href="structEasyKiConverter_1_1ExportOverallProgress.html#aee47a30e7e88c179521d7971bd248693ae599161956d626eda4cb0a5ffb85271c">EasyKiConverter::ExportOverallProgress::Idle</a>, <a class="el" href="ExportProgress_8h_source.html#l00180">EasyKiConverter::PreloadProgress::inProgressCount</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00932">logNetworkRuntimeStats()</a>, <a class="el" href="ParallelExportService_8h_source.html#l00264">m_cachedData</a>, <a class="el" href="ParallelExportService_8h_source.html#l00273">m_cancelRequested</a>, <a class="el" href="ParallelExportService_8h_source.html#l00267">m_componentService</a>, <a class="el" href="ParallelExportService_8h_source.html#l00271">m_preloadCompleted</a>, <a class="el" href="ParallelExportService_8h_source.html#l00269">m_progress</a>, <a class="el" href="ParallelExportService_8h_source.html#l00270">m_progressMutex</a>, <a class="el" href="classEasyKiConverter_1_1ParallelExportService.html#a898c80d25eda21b1e09e38e0645816fa">preloadCompleted()</a>, <a class="el" href="ExportProgress_8h_source.html#l00225">EasyKiConverter::ExportOverallProgress::preloadProgress</a>, <a class="el" href="classEasyKiConverter_1_1ParallelExportService.html#a8b9a63bf79d43e9f3288cfcd9ad6f9bf">preloadProgressChanged()</a>, <a class="el" href="ExportProgress_8h_source.html#l00178">EasyKiConverter::PreloadProgress::successCount</a> , 以及 <a class="el" href="ParallelExportService_8cpp_source.html#l00936">writeExportDetailedReport()</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ParallelExportService_8cpp_source.html#l00142">startPreload()</a>.</p>
+
+</div>
+</div>
+<a id="a859aef65ad95457e3773518a47169a62" name="a859aef65ad95457e3773518a47169a62"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a859aef65ad95457e3773518a47169a62">&#9670;&#160;</a></span>onExportItemStatusChanged()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::ParallelExportService::onExportItemStatusChanged </td>
+          <td>(</td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>componentId</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>typeName</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="structEasyKiConverter_1_1ExportItemStatus.html">ExportItemStatus</a> &amp;&#160;</td>
+          <td class="paramname"><em>status</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ParallelExportService_8cpp_source.html">ParallelExportService.cpp</a> 第 <a class="el" href="ParallelExportService_8cpp_source.html#l00692">692</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="structEasyKiConverter_1_1ExportOverallProgress.html#aee47a30e7e88c179521d7971bd248693aa149e85a44aeec9140e92733d9ed694e">EasyKiConverter::ExportOverallProgress::Cancelled</a>, <a class="el" href="ExportProgress_8h_source.html#l00223">EasyKiConverter::ExportOverallProgress::currentStage</a>, <a class="el" href="ExportProgress_8h_source.html#l00226">EasyKiConverter::ExportOverallProgress::exportTypeProgress</a>, <a class="el" href="ExportProgress_8h_source.html#l00147">EasyKiConverter::ExportTypeProgress::itemStatus</a>, <a class="el" href="classEasyKiConverter_1_1ParallelExportService.html#af7ed2afeb445b4fb0afdf6a873fd7216">itemStatusChanged()</a>, <a class="el" href="ParallelExportService_8h_source.html#l00273">m_cancelRequested</a>, <a class="el" href="ParallelExportService_8h_source.html#l00263">m_componentIds</a>, <a class="el" href="ParallelExportService_8h_source.html#l00269">m_progress</a>, <a class="el" href="ParallelExportService_8h_source.html#l00270">m_progressMutex</a>, <a class="el" href="ExportWorkerHelpers_8cpp_source.html#l00145">EasyKiConverter::ExportWorkerHelpers::recomputeTypeProgressCounts()</a> , 以及 <a class="el" href="ParallelExportService_8cpp_source.html#l00871">updateOverallProgress()</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ParallelExportService_8cpp_source.html#l00224">startExport()</a>.</p>
+
+</div>
+</div>
+<a id="a015eedd05f41a4da9446b4ec3c08a2ca" name="a015eedd05f41a4da9446b4ec3c08a2ca"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a015eedd05f41a4da9446b4ec3c08a2ca">&#9670;&#160;</a></span>onExportTypeCompleted()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::ParallelExportService::onExportTypeCompleted </td>
+          <td>(</td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>typeName</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>successCount</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>failedCount</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>skippedCount</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ParallelExportService_8cpp_source.html">ParallelExportService.cpp</a> 第 <a class="el" href="ParallelExportService_8cpp_source.html#l00660">660</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="ParallelExportService_8cpp_source.html#l00881">checkAllExportCompleted()</a>, <a class="el" href="ExportProgress_8h_source.html#l00142">EasyKiConverter::ExportTypeProgress::completedCount</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00073">discardExportStage()</a>, <a class="el" href="ExportProgress_8h_source.html#l00226">EasyKiConverter::ExportOverallProgress::exportTypeProgress</a>, <a class="el" href="ExportProgress_8h_source.html#l00144">EasyKiConverter::ExportTypeProgress::failedCount</a>, <a class="el" href="ExportProgress_8h_source.html#l00146">EasyKiConverter::ExportTypeProgress::inProgressCount</a>, <a class="el" href="ParallelExportService_8h_source.html#l00263">m_componentIds</a>, <a class="el" href="ParallelExportService_8h_source.html#l00265">m_exportStages</a>, <a class="el" href="ParallelExportService_8h_source.html#l00269">m_progress</a>, <a class="el" href="ParallelExportService_8h_source.html#l00270">m_progressMutex</a>, <a class="el" href="ParallelExportService_8h_source.html#l00272">m_runningExportStages</a>, <a class="el" href="ExportProgress_8h_source.html#l00145">EasyKiConverter::ExportTypeProgress::skippedCount</a>, <a class="el" href="ExportProgress_8h_source.html#l00143">EasyKiConverter::ExportTypeProgress::successCount</a>, <a class="el" href="ExportProgress_8h_source.html#l00141">EasyKiConverter::ExportTypeProgress::totalCount</a>, <a class="el" href="classEasyKiConverter_1_1ParallelExportService.html#a50970ded785a1c78eb6160a828173a2d">typeCompleted()</a> , 以及 <a class="el" href="ExportProgress_8h_source.html#l00140">EasyKiConverter::ExportTypeProgress::typeName</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ParallelExportService_8cpp_source.html#l00224">startExport()</a>.</p>
+
+</div>
+</div>
+<a id="a7ea056d5102bcb9551e0abd5d92a0c7d" name="a7ea056d5102bcb9551e0abd5d92a0c7d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7ea056d5102bcb9551e0abd5d92a0c7d">&#9670;&#160;</a></span>onExportTypeProgressChanged()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::ParallelExportService::onExportTypeProgressChanged </td>
+          <td>(</td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>typeName</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="structEasyKiConverter_1_1ExportTypeProgress.html">ExportTypeProgress</a> &amp;&#160;</td>
+          <td class="paramname"><em>progress</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ParallelExportService_8cpp_source.html">ParallelExportService.cpp</a> 第 <a class="el" href="ParallelExportService_8cpp_source.html#l00647">647</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="structEasyKiConverter_1_1ExportOverallProgress.html#aee47a30e7e88c179521d7971bd248693aa149e85a44aeec9140e92733d9ed694e">EasyKiConverter::ExportOverallProgress::Cancelled</a>, <a class="el" href="ExportProgress_8h_source.html#l00223">EasyKiConverter::ExportOverallProgress::currentStage</a>, <a class="el" href="ExportProgress_8h_source.html#l00226">EasyKiConverter::ExportOverallProgress::exportTypeProgress</a>, <a class="el" href="ParallelExportService_8h_source.html#l00273">m_cancelRequested</a>, <a class="el" href="ParallelExportService_8h_source.html#l00269">m_progress</a>, <a class="el" href="ParallelExportService_8h_source.html#l00270">m_progressMutex</a> , 以及 <a class="el" href="ParallelExportService_8cpp_source.html#l00871">updateOverallProgress()</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ParallelExportService_8cpp_source.html#l00224">startExport()</a>.</p>
+
+</div>
+</div>
+<a id="ad0d640bed0ef4fb1c030fd5d3092c6c8" name="ad0d640bed0ef4fb1c030fd5d3092c6c8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad0d640bed0ef4fb1c030fd5d3092c6c8">&#9670;&#160;</a></span>onPreloadItemCompleted()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::ParallelExportService::onPreloadItemCompleted </td>
+          <td>(</td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>componentId</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>success</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>error</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ParallelExportService_8cpp_source.html">ParallelExportService.cpp</a> 第 <a class="el" href="ParallelExportService_8cpp_source.html#l00623">623</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="ExportProgress_8h_source.html#l00177">EasyKiConverter::PreloadProgress::completedCount</a>, <a class="el" href="ExportProgress_8h_source.html#l00223">EasyKiConverter::ExportOverallProgress::currentStage</a>, <a class="el" href="ExportProgress_8h_source.html#l00182">EasyKiConverter::PreloadProgress::failedComponents</a>, <a class="el" href="ExportProgress_8h_source.html#l00179">EasyKiConverter::PreloadProgress::failedCount</a>, <a class="el" href="structEasyKiConverter_1_1ExportOverallProgress.html#aee47a30e7e88c179521d7971bd248693ae599161956d626eda4cb0a5ffb85271c">EasyKiConverter::ExportOverallProgress::Idle</a>, <a class="el" href="ExportProgress_8h_source.html#l00180">EasyKiConverter::PreloadProgress::inProgressCount</a>, <a class="el" href="ParallelExportService_8h_source.html#l00271">m_preloadCompleted</a>, <a class="el" href="ParallelExportService_8h_source.html#l00269">m_progress</a>, <a class="el" href="ParallelExportService_8h_source.html#l00270">m_progressMutex</a>, <a class="el" href="classEasyKiConverter_1_1ParallelExportService.html#a898c80d25eda21b1e09e38e0645816fa">preloadCompleted()</a>, <a class="el" href="ExportProgress_8h_source.html#l00225">EasyKiConverter::ExportOverallProgress::preloadProgress</a>, <a class="el" href="classEasyKiConverter_1_1ParallelExportService.html#a8b9a63bf79d43e9f3288cfcd9ad6f9bf">preloadProgressChanged()</a>, <a class="el" href="ExportProgress_8h_source.html#l00178">EasyKiConverter::PreloadProgress::successCount</a> , 以及 <a class="el" href="ExportProgress_8h_source.html#l00176">EasyKiConverter::PreloadProgress::totalCount</a>.</p>
+
+</div>
+</div>
+<a id="af04e9cfd22b9eefacbef972c164e99b7" name="af04e9cfd22b9eefacbef972c164e99b7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af04e9cfd22b9eefacbef972c164e99b7">&#9670;&#160;</a></span>options()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="structEasyKiConverter_1_1ExportOptions.html">ExportOptions</a> EasyKiConverter::ParallelExportService::options </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>获取当前导出选项 </p>
+<dl class="section return"><dt>返回</dt><dd>当前配置的导出选项 </dd></dl>
+
+<p class="definition">在文件 <a class="el" href="ParallelExportService_8h_source.html">ParallelExportService.h</a> 第 <a class="el" href="ParallelExportService_8h_source.html#l00078">78</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="ParallelExportService_8h_source.html#l00262">m_options</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ExportProgressViewModel_8cpp_source.html#l00678">EasyKiConverter::ExportProgressViewModel::retryComponent()</a>, <a class="el" href="ExportProgressViewModel_8cpp_source.html#l00707">EasyKiConverter::ExportProgressViewModel::retryFailedComponents()</a> , 以及 <a class="el" href="ParallelExportService_8cpp_source.html#l00130">setOptions()</a>.</p>
+
+</div>
+</div>
+<a id="ae38c16536ac4b350d0b6a15f423ae5d0" name="ae38c16536ac4b350d0b6a15f423ae5d0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae38c16536ac4b350d0b6a15f423ae5d0">&#9670;&#160;</a></span>outputPath()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">QString EasyKiConverter::ParallelExportService::outputPath </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>获取输出目录 </p>
+<dl class="section return"><dt>返回</dt><dd>当前设置的输出目录 </dd></dl>
+
+<p class="definition">在文件 <a class="el" href="ParallelExportService_8h_source.html">ParallelExportService.h</a> 第 <a class="el" href="ParallelExportService_8h_source.html#l00100">100</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="ParallelExportService_8h_source.html#l00262">m_options</a> , 以及 <a class="el" href="ExportProgress_8h_source.html#l00044">EasyKiConverter::ExportOptions::outputPath</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ExportProgressViewModel_8cpp_source.html#l00614">EasyKiConverter::ExportProgressViewModel::getLastExportedPath()</a>.</p>
+
+</div>
+</div>
+<a id="a898c80d25eda21b1e09e38e0645816fa" name="a898c80d25eda21b1e09e38e0645816fa"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a898c80d25eda21b1e09e38e0645816fa">&#9670;&#160;</a></span>preloadCompleted()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::ParallelExportService::preloadCompleted </td>
+          <td>(</td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>successCount</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>failedCount</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>预加载完成 </p>
+<dl class="params"><dt>参数</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">successCount</td><td>成功数量 </td></tr>
+    <tr><td class="paramname">failedCount</td><td>失败数量 </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p class="reference">被这些函数引用 <a class="el" href="ExportProgressViewModel_8cpp_source.html#l00031">EasyKiConverter::ExportProgressViewModel::ExportProgressViewModel()</a>, <a class="el" href="ExportSettingsViewModel_8cpp_source.html#l00022">EasyKiConverter::ExportSettingsViewModel::ExportSettingsViewModel()</a>, <a class="el" href="BatchConverter_8cpp_source.html#l00015">EasyKiConverter::BatchConverter::execute()</a>, <a class="el" href="BomConverter_8cpp_source.html#l00016">EasyKiConverter::BomConverter::execute()</a>, <a class="el" href="ComponentConverter_8cpp_source.html#l00015">EasyKiConverter::ComponentConverter::execute()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00804">onAllComponentDataCollected()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00623">onPreloadItemCompleted()</a> , 以及 <a class="el" href="ParallelExportService_8cpp_source.html#l00718">processNextPreloadBatch()</a>.</p>
+
+</div>
+</div>
+<a id="a8b9a63bf79d43e9f3288cfcd9ad6f9bf" name="a8b9a63bf79d43e9f3288cfcd9ad6f9bf"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8b9a63bf79d43e9f3288cfcd9ad6f9bf">&#9670;&#160;</a></span>preloadProgressChanged()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::ParallelExportService::preloadProgressChanged </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structEasyKiConverter_1_1PreloadProgress.html">PreloadProgress</a> &amp;&#160;</td>
+          <td class="paramname"><em>progress</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>预加载进度更新 </p>
+<dl class="params"><dt>参数</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">progress</td><td>预加载进度 </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p class="reference">被这些函数引用 <a class="el" href="ExportProgressViewModel_8cpp_source.html#l00031">EasyKiConverter::ExportProgressViewModel::ExportProgressViewModel()</a>, <a class="el" href="ExportSettingsViewModel_8cpp_source.html#l00022">EasyKiConverter::ExportSettingsViewModel::ExportSettingsViewModel()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00804">onAllComponentDataCollected()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00623">onPreloadItemCompleted()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00718">processNextPreloadBatch()</a> , 以及 <a class="el" href="ParallelExportService_8cpp_source.html#l00142">startPreload()</a>.</p>
+
+</div>
+</div>
+<a id="ae6dec9570615e588c9cdb8217d28f1da" name="ae6dec9570615e588c9cdb8217d28f1da"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae6dec9570615e588c9cdb8217d28f1da">&#9670;&#160;</a></span>processNextPreloadBatch()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::ParallelExportService::processNextPreloadBatch </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ParallelExportService_8cpp_source.html">ParallelExportService.cpp</a> 第 <a class="el" href="ParallelExportService_8cpp_source.html#l00718">718</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="ExportProgress_8h_source.html#l00177">EasyKiConverter::PreloadProgress::completedCount</a>, <a class="el" href="ExportProgress_8h_source.html#l00181">EasyKiConverter::PreloadProgress::currentComponentId</a>, <a class="el" href="ExportProgress_8h_source.html#l00223">EasyKiConverter::ExportOverallProgress::currentStage</a>, <a class="el" href="ExportProgress_8h_source.html#l00228">EasyKiConverter::ExportOverallProgress::endTime</a>, <a class="el" href="ExportProgress_8h_source.html#l00182">EasyKiConverter::PreloadProgress::failedComponents</a>, <a class="el" href="ExportProgress_8h_source.html#l00179">EasyKiConverter::PreloadProgress::failedCount</a>, <a class="el" href="NetworkClient_8cpp_source.html#l00048">finished</a>, <a class="el" href="ComponentData_8h_source.html#l00157">EasyKiConverter::ComponentData::footprintData()</a>, <a class="el" href="ComponentService_8cpp_source.html#l01025">EasyKiConverter::ComponentService::getComponentData()</a>, <a class="el" href="structEasyKiConverter_1_1ExportOverallProgress.html#aee47a30e7e88c179521d7971bd248693ae599161956d626eda4cb0a5ffb85271c">EasyKiConverter::ExportOverallProgress::Idle</a>, <a class="el" href="ExportProgress_8h_source.html#l00180">EasyKiConverter::PreloadProgress::inProgressCount</a>, <a class="el" href="ComponentData_8cpp_source.html#l00116">EasyKiConverter::ComponentData::isValid()</a>, <a class="el" href="ComponentData_8h_source.html#l00026">EasyKiConverter::ComponentData::lcscId()</a>, <a class="el" href="ExportWorkerHelpers_8cpp_source.html#l00044">EasyKiConverter::ExportWorkerHelpers::loadDiskCachedComponentData()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00932">logNetworkRuntimeStats()</a>, <a class="el" href="ParallelExportService_8h_source.html#l00264">m_cachedData</a>, <a class="el" href="ParallelExportService_8h_source.html#l00273">m_cancelRequested</a>, <a class="el" href="ParallelExportService_8h_source.html#l00263">m_componentIds</a>, <a class="el" href="ParallelExportService_8h_source.html#l00267">m_componentService</a>, <a class="el" href="ParallelExportService_8h_source.html#l00274">m_nextPreloadIndex</a>, <a class="el" href="ParallelExportService_8h_source.html#l00271">m_preloadCompleted</a>, <a class="el" href="ParallelExportService_8h_source.html#l00269">m_progress</a>, <a class="el" href="ParallelExportService_8h_source.html#l00270">m_progressMutex</a>, <a class="el" href="ExportWorkerHelpers_8cpp_source.html#l00082">EasyKiConverter::ExportWorkerHelpers::mergeComponentData()</a>, <a class="el" href="classEasyKiConverter_1_1ParallelExportService.html#a898c80d25eda21b1e09e38e0645816fa">preloadCompleted()</a>, <a class="el" href="structEasyKiConverter_1_1ExportOverallProgress.html#aee47a30e7e88c179521d7971bd248693a483a342f570093eb964731c52f159293">EasyKiConverter::ExportOverallProgress::Preloading</a>, <a class="el" href="ExportProgress_8h_source.html#l00225">EasyKiConverter::ExportOverallProgress::preloadProgress</a>, <a class="el" href="classEasyKiConverter_1_1ParallelExportService.html#a8b9a63bf79d43e9f3288cfcd9ad6f9bf">preloadProgressChanged()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00718">processNextPreloadBatch()</a>, <a class="el" href="ExportProgress_8h_source.html#l00178">EasyKiConverter::PreloadProgress::successCount</a>, <a class="el" href="ComponentData_8h_source.html#l00149">EasyKiConverter::ComponentData::symbolData()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00871">updateOverallProgress()</a> , 以及 <a class="el" href="ParallelExportService_8cpp_source.html#l00936">writeExportDetailedReport()</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ParallelExportService_8cpp_source.html#l00718">processNextPreloadBatch()</a> , 以及 <a class="el" href="ParallelExportService_8cpp_source.html#l00142">startPreload()</a>.</p>
+
+</div>
+</div>
+<a id="a86d4e05424e829e91e0976e3d90eee37" name="a86d4e05424e829e91e0976e3d90eee37"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a86d4e05424e829e91e0976e3d90eee37">&#9670;&#160;</a></span>progressChanged()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::ParallelExportService::progressChanged </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structEasyKiConverter_1_1ExportOverallProgress.html">ExportOverallProgress</a> &amp;&#160;</td>
+          <td class="paramname"><em>progress</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>导出进度更新 </p>
+<dl class="params"><dt>参数</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">progress</td><td>整体导出进度 </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p class="reference">被这些函数引用 <a class="el" href="ExportProgressViewModel_8cpp_source.html#l00031">EasyKiConverter::ExportProgressViewModel::ExportProgressViewModel()</a>, <a class="el" href="ExportSettingsViewModel_8cpp_source.html#l00022">EasyKiConverter::ExportSettingsViewModel::ExportSettingsViewModel()</a>, <a class="el" href="BatchConverter_8cpp_source.html#l00015">EasyKiConverter::BatchConverter::execute()</a>, <a class="el" href="BomConverter_8cpp_source.html#l00016">EasyKiConverter::BomConverter::execute()</a> , 以及 <a class="el" href="ParallelExportService_8cpp_source.html#l00871">updateOverallProgress()</a>.</p>
+
+</div>
+</div>
+<a id="aecb9064c8d1bc5a5394ea1440d5dc36d" name="aecb9064c8d1bc5a5394ea1440d5dc36d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aecb9064c8d1bc5a5394ea1440d5dc36d">&#9670;&#160;</a></span>retireExportStage()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::ParallelExportService::retireExportStage </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classEasyKiConverter_1_1ExportTypeStage.html">ExportTypeStage</a> *&#160;</td>
+          <td class="paramname"><em>stage</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ParallelExportService_8cpp_source.html">ParallelExportService.cpp</a> 第 <a class="el" href="ParallelExportService_8cpp_source.html#l00092">92</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="ParallelExportService_8cpp_source.html#l00115">cleanupRetiredExportStages()</a>, <a class="el" href="classEasyKiConverter_1_1ExportTypeStage.html#ae05ea51e278743c40ccaaeecd8e4c181">EasyKiConverter::ExportTypeStage::completed()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00073">discardExportStage()</a> , 以及 <a class="el" href="ParallelExportService_8h_source.html#l00266">m_retiredExportStages</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ParallelExportService_8cpp_source.html#l00564">cancelExport()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00059">cleanupExportStages()</a> , 以及 <a class="el" href="ParallelExportService_8cpp_source.html#l00073">discardExportStage()</a>.</p>
+
+</div>
+</div>
+<a id="a2e054aefae5e8b18f1da0debb7429d49" name="a2e054aefae5e8b18f1da0debb7429d49"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2e054aefae5e8b18f1da0debb7429d49">&#9670;&#160;</a></span>setComponentService()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::ParallelExportService::setComponentService </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classEasyKiConverter_1_1ComponentService.html">ComponentService</a> *&#160;</td>
+          <td class="paramname"><em>componentService</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>设置元器件服务引用 </p>
+<dl class="params"><dt>参数</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">componentService</td><td>元器件服务指针</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>用于在预加载阶段从ComponentService的内存缓存获取已验证的元器件数据 </p>
+
+<p class="definition">在文件 <a class="el" href="ParallelExportService_8cpp_source.html">ParallelExportService.cpp</a> 第 <a class="el" href="ParallelExportService_8cpp_source.html#l00138">138</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="ParallelExportService_8h_source.html#l00267">m_componentService</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="CliContext_8cpp_source.html#l00019">EasyKiConverter::CliContext::CliContext()</a> , 以及 <a class="el" href="main_8cpp_source.html#l00353">main()</a>.</p>
+
+</div>
+</div>
+<a id="a1740870ae1644105491ba6b92c164d95" name="a1740870ae1644105491ba6b92c164d95"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1740870ae1644105491ba6b92c164d95">&#9670;&#160;</a></span>setOptions()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::ParallelExportService::setOptions </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structEasyKiConverter_1_1ExportOptions.html">ExportOptions</a> &amp;&#160;</td>
+          <td class="paramname"><em>options</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>设置导出选项 </p>
+<dl class="params"><dt>参数</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">options</td><td>导出选项配置</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section see"><dt>参见</dt><dd><a class="el" href="structEasyKiConverter_1_1ExportOptions.html" title="导出选项配置">ExportOptions</a> </dd></dl>
+
+<p class="definition">在文件 <a class="el" href="ParallelExportService_8cpp_source.html">ParallelExportService.cpp</a> 第 <a class="el" href="ParallelExportService_8cpp_source.html#l00130">130</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="ParallelExportService_8h_source.html#l00262">m_options</a> , 以及 <a class="el" href="ParallelExportService_8h_source.html#l00078">options()</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ExportSettingsViewModel_8cpp_source.html#l00290">EasyKiConverter::ExportSettingsViewModel::buildExportOptions()</a>, <a class="el" href="BatchConverter_8cpp_source.html#l00015">EasyKiConverter::BatchConverter::execute()</a>, <a class="el" href="BomConverter_8cpp_source.html#l00016">EasyKiConverter::BomConverter::execute()</a>, <a class="el" href="ComponentConverter_8cpp_source.html#l00015">EasyKiConverter::ComponentConverter::execute()</a>, <a class="el" href="ExportProgressViewModel_8cpp_source.html#l00678">EasyKiConverter::ExportProgressViewModel::retryComponent()</a>, <a class="el" href="ExportProgressViewModel_8cpp_source.html#l00707">EasyKiConverter::ExportProgressViewModel::retryFailedComponents()</a> , 以及 <a class="el" href="ExportProgressViewModel_8cpp_source.html#l00128">EasyKiConverter::ExportProgressViewModel::startExport()</a>.</p>
+
+</div>
+</div>
+<a id="aad70c9091ab130d02998d1ffb6c7e393" name="aad70c9091ab130d02998d1ffb6c7e393"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aad70c9091ab130d02998d1ffb6c7e393">&#9670;&#160;</a></span>setOutputPath()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::ParallelExportService::setOutputPath </td>
+          <td>(</td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>path</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>设置输出目录 </p>
+<dl class="params"><dt>参数</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">path</td><td>输出目录路径 </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p class="definition">在文件 <a class="el" href="ParallelExportService_8cpp_source.html">ParallelExportService.cpp</a> 第 <a class="el" href="ParallelExportService_8cpp_source.html#l00134">134</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="ParallelExportService_8h_source.html#l00262">m_options</a> , 以及 <a class="el" href="ExportProgress_8h_source.html#l00044">EasyKiConverter::ExportOptions::outputPath</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ExportSettingsViewModel_8cpp_source.html#l00290">EasyKiConverter::ExportSettingsViewModel::buildExportOptions()</a>, <a class="el" href="BatchConverter_8cpp_source.html#l00015">EasyKiConverter::BatchConverter::execute()</a>, <a class="el" href="BomConverter_8cpp_source.html#l00016">EasyKiConverter::BomConverter::execute()</a>, <a class="el" href="ComponentConverter_8cpp_source.html#l00015">EasyKiConverter::ComponentConverter::execute()</a> , 以及 <a class="el" href="ExportProgressViewModel_8cpp_source.html#l00128">EasyKiConverter::ExportProgressViewModel::startExport()</a>.</p>
+
+</div>
+</div>
+<a id="a6cb88a57834f475549ff2e79790bf5a0" name="a6cb88a57834f475549ff2e79790bf5a0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6cb88a57834f475549ff2e79790bf5a0">&#9670;&#160;</a></span>startExport()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::ParallelExportService::startExport </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>开始导出 </p>
+<p>根据已设置的选项，开始并行导出各类型文件。 调用前应确保 <a class="el" href="classEasyKiConverter_1_1ParallelExportService.html#adc8bf87f7e85eb58363688f44d49e147" title="开始预加载元器件数据">startPreload()</a> 已完成（即使它是同步的）。</p>
+<dl class="section see"><dt>参见</dt><dd><a class="el" href="classEasyKiConverter_1_1ParallelExportService.html#adc8bf87f7e85eb58363688f44d49e147" title="开始预加载元器件数据">startPreload()</a> </dd>
+<dd>
+<a class="el" href="classEasyKiConverter_1_1ParallelExportService.html#a1740870ae1644105491ba6b92c164d95" title="设置导出选项">setOptions()</a> </dd></dl>
+
+<p class="definition">在文件 <a class="el" href="ParallelExportService_8cpp_source.html">ParallelExportService.cpp</a> 第 <a class="el" href="ParallelExportService_8cpp_source.html#l00224">224</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="ParallelExportService_8cpp_source.html#l00059">cleanupExportStages()</a>, <a class="el" href="ComponentCacheService_8cpp_source.html#l01143">EasyKiConverter::ComponentCacheService::clearGlobalTombstone()</a>, <a class="el" href="structEasyKiConverter_1_1ExportOverallProgress.html#aee47a30e7e88c179521d7971bd248693a07ca5050e697392c9ed47e6453f1453f">EasyKiConverter::ExportOverallProgress::Completed</a>, <a class="el" href="classEasyKiConverter_1_1ParallelExportService.html#a0bb299a95eac5bdaf4fd957caeec0c32">completed()</a>, <a class="el" href="classEasyKiConverter_1_1ExportTypeStage.html#ae05ea51e278743c40ccaaeecd8e4c181">EasyKiConverter::ExportTypeStage::completed()</a>, <a class="el" href="ExportProgress_8h_source.html#l00223">EasyKiConverter::ExportOverallProgress::currentStage</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00073">discardExportStage()</a>, <a class="el" href="ExportProgress_8h_source.html#l00228">EasyKiConverter::ExportOverallProgress::endTime</a>, <a class="el" href="ExportProgress_8h_source.html#l00089">EasyKiConverter::ExportItemStatus::errorMessage</a>, <a class="el" href="ExportProgress_8h_source.html#l00052">EasyKiConverter::ExportOptions::exportDatasheet</a>, <a class="el" href="ExportProgress_8h_source.html#l00047">EasyKiConverter::ExportOptions::exportFootprint</a>, <a class="el" href="structEasyKiConverter_1_1ExportOverallProgress.html#aee47a30e7e88c179521d7971bd248693a58946eb6fa72f0bdfcd0ebdb20b34597">EasyKiConverter::ExportOverallProgress::Exporting</a>, <a class="el" href="ExportProgress_8h_source.html#l00048">EasyKiConverter::ExportOptions::exportModel3D</a>, <a class="el" href="ExportProgress_8h_source.html#l00051">EasyKiConverter::ExportOptions::exportPreviewImages</a>, <a class="el" href="ExportProgress_8h_source.html#l00046">EasyKiConverter::ExportOptions::exportSymbol</a>, <a class="el" href="ExportProgress_8h_source.html#l00226">EasyKiConverter::ExportOverallProgress::exportTypeProgress</a>, <a class="el" href="structEasyKiConverter_1_1ExportItemStatus.html#a760395f6f596146bd6582acf79ae16c8ad7c8c85bf79bbe1b7188497c32c3b0ca">EasyKiConverter::ExportItemStatus::Failed</a>, <a class="el" href="structEasyKiConverter_1_1ExportOverallProgress.html#aee47a30e7e88c179521d7971bd248693ad7c8c85bf79bbe1b7188497c32c3b0ca">EasyKiConverter::ExportOverallProgress::Failed</a>, <a class="el" href="classEasyKiConverter_1_1ParallelExportService.html#a24616297ca69d3cc2aeefcd48837d97b">failed()</a>, <a class="el" href="ComponentData_8h_source.html#l00157">EasyKiConverter::ComponentData::footprintData()</a>, <a class="el" href="ComponentService_8cpp_source.html#l01025">EasyKiConverter::ComponentService::getComponentData()</a>, <a class="el" href="ComponentCacheService_8cpp_source.html#l00044">EasyKiConverter::ComponentCacheService::instance()</a>, <a class="el" href="classEasyKiConverter_1_1ExportTypeStage.html#aaa3c31e03e947336ee6402abaeba5529">EasyKiConverter::ExportTypeStage::itemStatusChanged()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00932">logNetworkRuntimeStats()</a>, <a class="el" href="ParallelExportService_8h_source.html#l00275">m_activeRunGeneration</a>, <a class="el" href="ParallelExportService_8h_source.html#l00264">m_cachedData</a>, <a class="el" href="ParallelExportService_8h_source.html#l00273">m_cancelRequested</a>, <a class="el" href="ParallelExportService_8h_source.html#l00263">m_componentIds</a>, <a class="el" href="ParallelExportService_8h_source.html#l00267">m_componentService</a>, <a class="el" href="ParallelExportService_8h_source.html#l00265">m_exportStages</a>, <a class="el" href="ParallelExportService_8h_source.html#l00262">m_options</a>, <a class="el" href="ParallelExportService_8h_source.html#l00271">m_preloadCompleted</a>, <a class="el" href="ParallelExportService_8h_source.html#l00269">m_progress</a>, <a class="el" href="ParallelExportService_8h_source.html#l00272">m_runningExportStages</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00692">onExportItemStatusChanged()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00660">onExportTypeCompleted()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00647">onExportTypeProgressChanged()</a>, <a class="el" href="classEasyKiConverter_1_1ExportTypeStage.html#af9b29758526f41ef2ebe034e0db1e172">EasyKiConverter::ExportTypeStage::progressChanged()</a>, <a class="el" href="ExportProgress_8h_source.html#l00054">EasyKiConverter::ExportOptions::retryMode</a>, <a class="el" href="ExportProgress_8h_source.html#l00227">EasyKiConverter::ExportOverallProgress::startTime</a>, <a class="el" href="ExportProgress_8h_source.html#l00088">EasyKiConverter::ExportItemStatus::status</a>, <a class="el" href="ComponentData_8h_source.html#l00149">EasyKiConverter::ComponentData::symbolData()</a>, <a class="el" href="ExportProgress_8h_source.html#l00141">EasyKiConverter::ExportTypeProgress::totalCount</a>, <a class="el" href="ExportProgress_8h_source.html#l00140">EasyKiConverter::ExportTypeProgress::typeName</a> , 以及 <a class="el" href="ParallelExportService_8cpp_source.html#l00936">writeExportDetailedReport()</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="BatchConverter_8cpp_source.html#l00015">EasyKiConverter::BatchConverter::execute()</a>, <a class="el" href="BomConverter_8cpp_source.html#l00016">EasyKiConverter::BomConverter::execute()</a>, <a class="el" href="ComponentConverter_8cpp_source.html#l00015">EasyKiConverter::ComponentConverter::execute()</a>, <a class="el" href="ExportProgressViewModel_8cpp_source.html#l00288">EasyKiConverter::ExportProgressViewModel::handlePreloadCompleted()</a> , 以及 <a class="el" href="ExportSettingsViewModel_8cpp_source.html#l00390">EasyKiConverter::ExportSettingsViewModel::handlePreloadCompleted()</a>.</p>
+
+</div>
+</div>
+<a id="adc8bf87f7e85eb58363688f44d49e147" name="adc8bf87f7e85eb58363688f44d49e147"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#adc8bf87f7e85eb58363688f44d49e147">&#9670;&#160;</a></span>startPreload()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::ParallelExportService::startPreload </td>
+          <td>(</td>
+          <td class="paramtype">const QStringList &amp;&#160;</td>
+          <td class="paramname"><em>componentIds</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>开始预加载元器件数据 </p>
+<dl class="params"><dt>参数</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">componentIds</td><td>需要预加载的元器件ID列表</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>从ComponentService的内存缓存中加载已验证的元器件数据。 注意：实际的网络获取已在元器件验证阶段完成（用户添加元器件时）， 此处仅做数据拷贝，不涉及网络请求。</p>
+<p>预加载完成后发射preloadCompleted()信号。 </p>
+
+<p class="definition">在文件 <a class="el" href="ParallelExportService_8cpp_source.html">ParallelExportService.cpp</a> 第 <a class="el" href="ParallelExportService_8cpp_source.html#l00142">142</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="classEasyKiConverter_1_1ComponentService.html#aa2926e7a8318370ab7d80bb195c89ec7">EasyKiConverter::ComponentService::allComponentsDataCollected()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00059">cleanupExportStages()</a>, <a class="el" href="ComponentCacheService_8cpp_source.html#l01143">EasyKiConverter::ComponentCacheService::clearGlobalTombstone()</a>, <a class="el" href="ExportProgress_8h_source.html#l00181">EasyKiConverter::PreloadProgress::currentComponentId</a>, <a class="el" href="ExportProgress_8h_source.html#l00223">EasyKiConverter::ExportOverallProgress::currentStage</a>, <a class="el" href="ExportProgress_8h_source.html#l00048">EasyKiConverter::ExportOptions::exportModel3D</a>, <a class="el" href="ComponentService_8cpp_source.html#l00925">EasyKiConverter::ComponentService::fetchMultipleComponentsData()</a>, <a class="el" href="ExportProgress_8h_source.html#l00180">EasyKiConverter::PreloadProgress::inProgressCount</a>, <a class="el" href="ComponentCacheService_8cpp_source.html#l00044">EasyKiConverter::ComponentCacheService::instance()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00932">logNetworkRuntimeStats()</a>, <a class="el" href="ParallelExportService_8h_source.html#l00275">m_activeRunGeneration</a>, <a class="el" href="ParallelExportService_8h_source.html#l00264">m_cachedData</a>, <a class="el" href="ParallelExportService_8h_source.html#l00273">m_cancelRequested</a>, <a class="el" href="ParallelExportService_8h_source.html#l00263">m_componentIds</a>, <a class="el" href="ParallelExportService_8h_source.html#l00267">m_componentService</a>, <a class="el" href="ParallelExportService_8h_source.html#l00274">m_nextPreloadIndex</a>, <a class="el" href="ParallelExportService_8h_source.html#l00262">m_options</a>, <a class="el" href="ParallelExportService_8h_source.html#l00271">m_preloadCompleted</a>, <a class="el" href="ParallelExportService_8h_source.html#l00269">m_progress</a>, <a class="el" href="ParallelExportService_8h_source.html#l00270">m_progressMutex</a>, <a class="el" href="ParallelExportService_8h_source.html#l00272">m_runningExportStages</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00804">onAllComponentDataCollected()</a>, <a class="el" href="structEasyKiConverter_1_1ExportOverallProgress.html#aee47a30e7e88c179521d7971bd248693a483a342f570093eb964731c52f159293">EasyKiConverter::ExportOverallProgress::Preloading</a>, <a class="el" href="ExportProgress_8h_source.html#l00225">EasyKiConverter::ExportOverallProgress::preloadProgress</a>, <a class="el" href="classEasyKiConverter_1_1ParallelExportService.html#a8b9a63bf79d43e9f3288cfcd9ad6f9bf">preloadProgressChanged()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00718">processNextPreloadBatch()</a>, <a class="el" href="ExportProgress_8h_source.html#l00227">EasyKiConverter::ExportOverallProgress::startTime</a>, <a class="el" href="ExportProgress_8h_source.html#l00224">EasyKiConverter::ExportOverallProgress::totalComponents</a>, <a class="el" href="ExportProgress_8h_source.html#l00176">EasyKiConverter::PreloadProgress::totalCount</a> , 以及 <a class="el" href="ParallelExportService_8cpp_source.html#l00871">updateOverallProgress()</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="BatchConverter_8cpp_source.html#l00015">EasyKiConverter::BatchConverter::execute()</a>, <a class="el" href="BomConverter_8cpp_source.html#l00016">EasyKiConverter::BomConverter::execute()</a>, <a class="el" href="ComponentConverter_8cpp_source.html#l00015">EasyKiConverter::ComponentConverter::execute()</a>, <a class="el" href="ExportProgressViewModel_8cpp_source.html#l00678">EasyKiConverter::ExportProgressViewModel::retryComponent()</a>, <a class="el" href="ExportProgressViewModel_8cpp_source.html#l00707">EasyKiConverter::ExportProgressViewModel::retryFailedComponents()</a>, <a class="el" href="ExportSettingsViewModel_8cpp_source.html#l00257">EasyKiConverter::ExportSettingsViewModel::startExport()</a> , 以及 <a class="el" href="ExportProgressViewModel_8cpp_source.html#l00128">EasyKiConverter::ExportProgressViewModel::startExport()</a>.</p>
+
+</div>
+</div>
+<a id="a50970ded785a1c78eb6160a828173a2d" name="a50970ded785a1c78eb6160a828173a2d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a50970ded785a1c78eb6160a828173a2d">&#9670;&#160;</a></span>typeCompleted()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::ParallelExportService::typeCompleted </td>
+          <td>(</td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>typeName</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>successCount</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>failedCount</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>skippedCount</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>导出类型完成 </p>
+<dl class="params"><dt>参数</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">typeName</td><td>导出类型名称 </td></tr>
+    <tr><td class="paramname">successCount</td><td>成功数量 </td></tr>
+    <tr><td class="paramname">failedCount</td><td>失败数量 </td></tr>
+    <tr><td class="paramname">skippedCount</td><td>跳过数量 </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p class="reference">被这些函数引用 <a class="el" href="ExportProgressViewModel_8cpp_source.html#l00031">EasyKiConverter::ExportProgressViewModel::ExportProgressViewModel()</a>, <a class="el" href="ExportSettingsViewModel_8cpp_source.html#l00022">EasyKiConverter::ExportSettingsViewModel::ExportSettingsViewModel()</a> , 以及 <a class="el" href="ParallelExportService_8cpp_source.html#l00660">onExportTypeCompleted()</a>.</p>
+
+</div>
+</div>
+<a id="a414881afcde5a4680b325b011f4b4ccf" name="a414881afcde5a4680b325b011f4b4ccf"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a414881afcde5a4680b325b011f4b4ccf">&#9670;&#160;</a></span>updateOverallProgress()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::ParallelExportService::updateOverallProgress </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>更新整体进度 </p>
+
+<p class="definition">在文件 <a class="el" href="ParallelExportService_8cpp_source.html">ParallelExportService.cpp</a> 第 <a class="el" href="ParallelExportService_8cpp_source.html#l00871">871</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="ParallelExportService_8h_source.html#l00269">m_progress</a>, <a class="el" href="ParallelExportService_8h_source.html#l00270">m_progressMutex</a> , 以及 <a class="el" href="classEasyKiConverter_1_1ParallelExportService.html#a86d4e05424e829e91e0976e3d90eee37">progressChanged()</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ParallelExportService_8cpp_source.html#l00202">cancelPreload()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00692">onExportItemStatusChanged()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00647">onExportTypeProgressChanged()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00718">processNextPreloadBatch()</a> , 以及 <a class="el" href="ParallelExportService_8cpp_source.html#l00142">startPreload()</a>.</p>
+
+</div>
+</div>
+<a id="a49c9a4eb4391ab7ab68d1fd581306469" name="a49c9a4eb4391ab7ab68d1fd581306469"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a49c9a4eb4391ab7ab68d1fd581306469">&#9670;&#160;</a></span>writeExportDetailedReport()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EasyKiConverter::ParallelExportService::writeExportDetailedReport </td>
+          <td>(</td>
+          <td class="paramtype">const QString &amp;&#160;</td>
+          <td class="paramname"><em>reason</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">在文件 <a class="el" href="ParallelExportService_8cpp_source.html">ParallelExportService.cpp</a> 第 <a class="el" href="ParallelExportService_8cpp_source.html#l00936">936</a> 行定义.</p>
+
+<p class="reference">引用了 <a class="el" href="ParallelExportService_8h_source.html#l00262">m_options</a>, <a class="el" href="ParallelExportService_8h_source.html#l00269">m_progress</a>, <a class="el" href="ParallelExportService_8h_source.html#l00270">m_progressMutex</a> , 以及 <a class="el" href="ExportReportGenerator_8cpp_source.html#l00020">EasyKiConverter::ExportReportGenerator::writeDetailedReport()</a>.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ParallelExportService_8cpp_source.html#l00564">cancelExport()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00202">cancelPreload()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00881">checkAllExportCompleted()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00804">onAllComponentDataCollected()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00718">processNextPreloadBatch()</a> , 以及 <a class="el" href="ParallelExportService_8cpp_source.html#l00224">startExport()</a>.</p>
+
+</div>
+</div>
+<h2 class="groupheader">类成员变量说明</h2>
+<a id="a5de76fa83a9dd1cfcb1a9123a7953fd3" name="a5de76fa83a9dd1cfcb1a9123a7953fd3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5de76fa83a9dd1cfcb1a9123a7953fd3">&#9670;&#160;</a></span>m_activeRunGeneration</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">quint64 EasyKiConverter::ParallelExportService::m_activeRunGeneration {0}</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>当前导出会话代数，用于屏蔽取消后的迟到回调 </p>
+
+<p class="definition">在文件 <a class="el" href="ParallelExportService_8h_source.html">ParallelExportService.h</a> 第 <a class="el" href="ParallelExportService_8h_source.html#l00275">275</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ParallelExportService_8cpp_source.html#l00028">~ParallelExportService()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00564">cancelExport()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00202">cancelPreload()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00224">startExport()</a> , 以及 <a class="el" href="ParallelExportService_8cpp_source.html#l00142">startPreload()</a>.</p>
+
+</div>
+</div>
+<a id="a28b06144ea287204b69f3fba0cd42e1e" name="a28b06144ea287204b69f3fba0cd42e1e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a28b06144ea287204b69f3fba0cd42e1e">&#9670;&#160;</a></span>m_cachedData</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">QMap&lt;QString, QSharedPointer&lt;<a class="el" href="classEasyKiConverter_1_1ComponentData.html">ComponentData</a>&gt; &gt; EasyKiConverter::ParallelExportService::m_cachedData</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>缓存的元器件数据 </p>
+
+<p class="definition">在文件 <a class="el" href="ParallelExportService_8h_source.html">ParallelExportService.h</a> 第 <a class="el" href="ParallelExportService_8h_source.html#l00264">264</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ParallelExportService_8h_source.html#l00163">cachedData()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00804">onAllComponentDataCollected()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00718">processNextPreloadBatch()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00224">startExport()</a> , 以及 <a class="el" href="ParallelExportService_8cpp_source.html#l00142">startPreload()</a>.</p>
+
+</div>
+</div>
+<a id="a31039d23c83cde62f3981c85f640a90c" name="a31039d23c83cde62f3981c85f640a90c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a31039d23c83cde62f3981c85f640a90c">&#9670;&#160;</a></span>m_cancelRequested</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::atomic&lt;bool&gt; EasyKiConverter::ParallelExportService::m_cancelRequested {false}</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>当前导出是否已请求取消 </p>
+
+<p class="definition">在文件 <a class="el" href="ParallelExportService_8h_source.html">ParallelExportService.h</a> 第 <a class="el" href="ParallelExportService_8h_source.html#l00273">273</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ParallelExportService_8cpp_source.html#l00028">~ParallelExportService()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00564">cancelExport()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00202">cancelPreload()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00881">checkAllExportCompleted()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00804">onAllComponentDataCollected()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00692">onExportItemStatusChanged()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00647">onExportTypeProgressChanged()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00718">processNextPreloadBatch()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00224">startExport()</a> , 以及 <a class="el" href="ParallelExportService_8cpp_source.html#l00142">startPreload()</a>.</p>
+
+</div>
+</div>
+<a id="a0ea787839c6be139d890370162e0ef13" name="a0ea787839c6be139d890370162e0ef13"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0ea787839c6be139d890370162e0ef13">&#9670;&#160;</a></span>m_componentIds</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">QStringList EasyKiConverter::ParallelExportService::m_componentIds</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>待处理的元器件ID列表 </p>
+
+<p class="definition">在文件 <a class="el" href="ParallelExportService_8h_source.html">ParallelExportService.h</a> 第 <a class="el" href="ParallelExportService_8h_source.html#l00263">263</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ParallelExportService_8cpp_source.html#l00202">cancelPreload()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00881">checkAllExportCompleted()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00692">onExportItemStatusChanged()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00660">onExportTypeCompleted()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00718">processNextPreloadBatch()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00224">startExport()</a> , 以及 <a class="el" href="ParallelExportService_8cpp_source.html#l00142">startPreload()</a>.</p>
+
+</div>
+</div>
+<a id="a7323b05155ca420b1712b10f344dd9cb" name="a7323b05155ca420b1712b10f344dd9cb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7323b05155ca420b1712b10f344dd9cb">&#9670;&#160;</a></span>m_componentService</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classEasyKiConverter_1_1ComponentService.html">ComponentService</a>* EasyKiConverter::ParallelExportService::m_componentService {nullptr}</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>元器件服务引用（用于获取已验证的数据） </p>
+
+<p class="definition">在文件 <a class="el" href="ParallelExportService_8h_source.html">ParallelExportService.h</a> 第 <a class="el" href="ParallelExportService_8h_source.html#l00267">267</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ParallelExportService_8cpp_source.html#l00564">cancelExport()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00202">cancelPreload()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00804">onAllComponentDataCollected()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00718">processNextPreloadBatch()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00138">setComponentService()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00224">startExport()</a> , 以及 <a class="el" href="ParallelExportService_8cpp_source.html#l00142">startPreload()</a>.</p>
+
+</div>
+</div>
+<a id="ab414652c268b466670ba7ec8a3aee305" name="ab414652c268b466670ba7ec8a3aee305"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab414652c268b466670ba7ec8a3aee305">&#9670;&#160;</a></span>m_exportStages</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">QMap&lt;QString, <a class="el" href="classEasyKiConverter_1_1ExportTypeStage.html">ExportTypeStage</a>*&gt; EasyKiConverter::ParallelExportService::m_exportStages</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>各导出类型的Stage实例 </p>
+
+<p class="definition">在文件 <a class="el" href="ParallelExportService_8h_source.html">ParallelExportService.h</a> 第 <a class="el" href="ParallelExportService_8h_source.html#l00265">265</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ParallelExportService_8cpp_source.html#l00028">~ParallelExportService()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00564">cancelExport()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00059">cleanupExportStages()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00073">discardExportStage()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00660">onExportTypeCompleted()</a> , 以及 <a class="el" href="ParallelExportService_8cpp_source.html#l00224">startExport()</a>.</p>
+
+</div>
+</div>
+<a id="ab9b27f9b93d2c70da3c4eecb4b257889" name="ab9b27f9b93d2c70da3c4eecb4b257889"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab9b27f9b93d2c70da3c4eecb4b257889">&#9670;&#160;</a></span>m_nextPreloadIndex</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">int EasyKiConverter::ParallelExportService::m_nextPreloadIndex {0}</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>下一批预加载索引 </p>
+
+<p class="definition">在文件 <a class="el" href="ParallelExportService_8h_source.html">ParallelExportService.h</a> 第 <a class="el" href="ParallelExportService_8h_source.html#l00274">274</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ParallelExportService_8cpp_source.html#l00202">cancelPreload()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00718">processNextPreloadBatch()</a> , 以及 <a class="el" href="ParallelExportService_8cpp_source.html#l00142">startPreload()</a>.</p>
+
+</div>
+</div>
+<a id="a6284272ef1f55b343954c1998b10d535" name="a6284272ef1f55b343954c1998b10d535"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6284272ef1f55b343954c1998b10d535">&#9670;&#160;</a></span>m_options</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="structEasyKiConverter_1_1ExportOptions.html">ExportOptions</a> EasyKiConverter::ParallelExportService::m_options</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>导出选项 </p>
+
+<p class="definition">在文件 <a class="el" href="ParallelExportService_8h_source.html">ParallelExportService.h</a> 第 <a class="el" href="ParallelExportService_8h_source.html#l00262">262</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ParallelExportService_8h_source.html#l00078">options()</a>, <a class="el" href="ParallelExportService_8h_source.html#l00100">outputPath()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00130">setOptions()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00134">setOutputPath()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00224">startExport()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00142">startPreload()</a> , 以及 <a class="el" href="ParallelExportService_8cpp_source.html#l00936">writeExportDetailedReport()</a>.</p>
+
+</div>
+</div>
+<a id="a0c4e481b5d07916f6b5acca8b0d420a3" name="a0c4e481b5d07916f6b5acca8b0d420a3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0c4e481b5d07916f6b5acca8b0d420a3">&#9670;&#160;</a></span>m_preloadCompleted</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool EasyKiConverter::ParallelExportService::m_preloadCompleted {false}</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>预加载是否已完成 </p>
+
+<p class="definition">在文件 <a class="el" href="ParallelExportService_8h_source.html">ParallelExportService.h</a> 第 <a class="el" href="ParallelExportService_8h_source.html#l00271">271</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ParallelExportService_8cpp_source.html#l00804">onAllComponentDataCollected()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00623">onPreloadItemCompleted()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00718">processNextPreloadBatch()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00224">startExport()</a> , 以及 <a class="el" href="ParallelExportService_8cpp_source.html#l00142">startPreload()</a>.</p>
+
+</div>
+</div>
+<a id="a510cd43153aa041d64f2eddf3a375c15" name="a510cd43153aa041d64f2eddf3a375c15"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a510cd43153aa041d64f2eddf3a375c15">&#9670;&#160;</a></span>m_progress</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="structEasyKiConverter_1_1ExportOverallProgress.html">ExportOverallProgress</a> EasyKiConverter::ParallelExportService::m_progress</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>整体进度 </p>
+
+<p class="definition">在文件 <a class="el" href="ParallelExportService_8h_source.html">ParallelExportService.h</a> 第 <a class="el" href="ParallelExportService_8h_source.html#l00269">269</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ParallelExportService_8cpp_source.html#l00024">ParallelExportService()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00564">cancelExport()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00202">cancelPreload()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00881">checkAllExportCompleted()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00608">getProgress()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00613">getTypeProgress()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00618">isRunning()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00804">onAllComponentDataCollected()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00692">onExportItemStatusChanged()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00660">onExportTypeCompleted()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00647">onExportTypeProgressChanged()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00623">onPreloadItemCompleted()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00718">processNextPreloadBatch()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00224">startExport()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00142">startPreload()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00871">updateOverallProgress()</a> , 以及 <a class="el" href="ParallelExportService_8cpp_source.html#l00936">writeExportDetailedReport()</a>.</p>
+
+</div>
+</div>
+<a id="a701121dd55866ef53c3d47e757781968" name="a701121dd55866ef53c3d47e757781968"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a701121dd55866ef53c3d47e757781968">&#9670;&#160;</a></span>m_progressMutex</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">QMutex EasyKiConverter::ParallelExportService::m_progressMutex</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">mutable</span><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>保护m_progress的互斥量 </p>
+
+<p class="definition">在文件 <a class="el" href="ParallelExportService_8h_source.html">ParallelExportService.h</a> 第 <a class="el" href="ParallelExportService_8h_source.html#l00270">270</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ParallelExportService_8cpp_source.html#l00202">cancelPreload()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00608">getProgress()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00613">getTypeProgress()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00804">onAllComponentDataCollected()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00692">onExportItemStatusChanged()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00660">onExportTypeCompleted()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00647">onExportTypeProgressChanged()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00623">onPreloadItemCompleted()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00718">processNextPreloadBatch()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00142">startPreload()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00871">updateOverallProgress()</a> , 以及 <a class="el" href="ParallelExportService_8cpp_source.html#l00936">writeExportDetailedReport()</a>.</p>
+
+</div>
+</div>
+<a id="ad987a01548c1e1539ff9e9079edd080f" name="ad987a01548c1e1539ff9e9079edd080f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad987a01548c1e1539ff9e9079edd080f">&#9670;&#160;</a></span>m_retiredExportStages</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">QList&lt;QPointer&lt;<a class="el" href="classEasyKiConverter_1_1ExportTypeStage.html">ExportTypeStage</a>&gt; &gt; EasyKiConverter::ParallelExportService::m_retiredExportStages</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>取消后仍需等待自然结束的旧Stage </p>
+
+<p class="definition">在文件 <a class="el" href="ParallelExportService_8h_source.html">ParallelExportService.h</a> 第 <a class="el" href="ParallelExportService_8h_source.html#l00266">266</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ParallelExportService_8cpp_source.html#l00028">~ParallelExportService()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00115">cleanupRetiredExportStages()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00073">discardExportStage()</a> , 以及 <a class="el" href="ParallelExportService_8cpp_source.html#l00092">retireExportStage()</a>.</p>
+
+</div>
+</div>
+<a id="a7a1337b7f8661a24b562d8780091f05f" name="a7a1337b7f8661a24b562d8780091f05f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7a1337b7f8661a24b562d8780091f05f">&#9670;&#160;</a></span>m_runningExportStages</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">int EasyKiConverter::ParallelExportService::m_runningExportStages {0}</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>正在运行的导出Stage数量 </p>
+
+<p class="definition">在文件 <a class="el" href="ParallelExportService_8h_source.html">ParallelExportService.h</a> 第 <a class="el" href="ParallelExportService_8h_source.html#l00272">272</a> 行定义.</p>
+
+<p class="reference">被这些函数引用 <a class="el" href="ParallelExportService_8cpp_source.html#l00564">cancelExport()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00881">checkAllExportCompleted()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00660">onExportTypeCompleted()</a>, <a class="el" href="ParallelExportService_8cpp_source.html#l00224">startExport()</a> , 以及 <a class="el" href="ParallelExportService_8cpp_source.html#l00142">startPreload()</a>.</p>
+
+</div>
+</div>
+<hr/>该类的文档由以下文件生成:<ul>
+<li>services/export/<a class="el" href="ParallelExportService_8h_source.html">ParallelExportService.h</a></li>
+<li>services/export/<a class="el" href="ParallelExportService_8cpp_source.html">ParallelExportService.cpp</a></li>
+</ul>
+</div><!-- contents -->
+</div><!-- doc-content -->
+<!-- start footer part -->
+<div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
+  <ul>
+    <li class="navelem"><a class="el" href="namespaceEasyKiConverter.html">EasyKiConverter</a></li><li class="navelem"><a class="el" href="classEasyKiConverter_1_1ParallelExportService.html">ParallelExportService</a></li>
+    <li class="footer">制作者 <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8 </li>
+  </ul>
+</div>
+</body>
+</html>
