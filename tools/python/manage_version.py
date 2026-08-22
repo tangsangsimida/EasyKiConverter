@@ -11,24 +11,31 @@ EasyKiConverter 版本管理工具
        - CMakeLists.txt: 更新 VERSION_FROM_CI 及 qt_add_qml_module 的版本。
          (版本通过 configure_file 自动生成 src/core/Version.h，main.cpp 读取该头文件)
        - deploy/metainfo/io.github.tangsangsimida.easykiconverter.metainfo.xml: 更新截图 URL 和 release 描述。
+       - deploy/archlinux/PKGBUILD 及 .SRCINFO: 更新 AUR 打包版本。
     3. 智能检查: 在更新前检查每个文件中的版本是否已经是目标版本，避免不必要的修改。
     4. 自动生成 release 描述: 从 Git 提交历史自动提取从上个版本到新版本的所有提交内容。
     5. 校验: 强制要求版本号符合 X.Y.Z (语义化版本) 格式。
+    6. AUR 发布: 自动将 PKGBUILD 等文件推送到 AUR 仓库。
 
 环境要求:
     - Python: 3.6+
     - 依赖: 标准库 (argparse, json, re, os, sys, datetime, subprocess)
     - 运行位置: 建议在项目根目录运行，或确保脚本相对于项目的路径结构不发生变化。
+    - AUR 推送需要 SSH 密钥已配置（~/.ssh/config 中有 aur.archlinux.org 条目）。
 
 用法示例:
     1. 检查当前版本:
        python tools/python/manage_version.py --check
     2. 更新所有文件到新版本（仅添加默认 release 条目）:
        python tools/python/manage_version.py 3.1.0
-     3. 更新所有文件并自动生成详细 release 描述:
-        python tools/python/manage_version.py 3.1.0 --generate-release-notes
-     4. 仅更新 metainfo.xml:
-        python tools/python/manage_version.py 3.1.0 --metainfo-only
+    3. 更新所有文件并自动生成详细 release 描述:
+       python tools/python/manage_version.py 3.1.0 --generate-release-notes
+    4. 仅更新 metainfo.xml:
+       python tools/python/manage_version.py 3.1.0 --metainfo-only
+    5. 更新版本并推送到 AUR:
+       python tools/python/manage_version.py 3.2.0 --push-aur
+    6. 仅推送当前版本到 AUR:
+       python tools/python/manage_version.py --push-aur
 
 注意事项:
     - 脚本会直接修改文件，建议在 Git 工作区干净的状态下运行以便回滚。
@@ -41,7 +48,9 @@ import json
 import re
 import os
 import sys
+import shutil
 import subprocess
+import tempfile
 from datetime import datetime
 
 # 文件路径配置 (相对于项目根目录)
@@ -735,21 +744,41 @@ def update_pkgbuild(new_version, force=False):
             with open(SRCINFO_PATH, "r", encoding="utf-8") as f:
                 srcinfo_content = f.read()
 
-            # pkgver = 3.1.11
-            pattern = r"(pkgver\s*=\s*)([^\s\n]+)"
-            match = re.search(pattern, srcinfo_content)
+            original_srcinfo = srcinfo_content
+
+            # 1. 更新 pkgver = 3.1.11
+            pkgver_pattern = r"(pkgver\s*=\s*)([^\s\n]+)"
+            match = re.search(pkgver_pattern, srcinfo_content)
             if match:
                 current_version = match.group(2)
                 if current_version == new_version and not force:
-                    print(f"  ✓ {SRCINFO_PATH} 版本已经是 {new_version}，跳过更新")
+                    print(f"  ✓ {SRCINFO_PATH} pkgver 已经是 {new_version}，跳过更新")
                 else:
-                    new_content = re.sub(pattern, f"\\g<1>{new_version}", srcinfo_content)
-                    with open(SRCINFO_PATH, "w", encoding="utf-8") as f:
-                        f.write(new_content)
-                    print(f"  ✓ 成功更新 {SRCINFO_PATH}")
+                    srcinfo_content = re.sub(pkgver_pattern, f"\\g<1>{new_version}", srcinfo_content)
             else:
                 print(f"  ⚠  未找到 pkgver 字段")
                 return False
+
+            # 2. 更新 source URL 中的版本号
+            # source = easykiconverter-3.1.11.tar.gz::https://...v3.1.11.tar.gz
+            source_pattern = r"(source\s*=\s*[\w-]+-)(\d+\.\d+\.\d+)(\.tar\.gz::https://[^\s]*?/v)(\d+\.\d+\.\d+)(\.tar\.gz)"
+            match = re.search(source_pattern, srcinfo_content)
+            if match:
+                srcinfo_content = re.sub(
+                    source_pattern,
+                    f"\\g<1>{new_version}\\g<3>{new_version}\\g<5>",
+                    srcinfo_content,
+                )
+
+            if original_srcinfo == srcinfo_content:
+                if force:
+                    print(f"  ✓ {SRCINFO_PATH} 已经是 {new_version}")
+                else:
+                    print(f"  ✗ {SRCINFO_PATH} 未发生变化")
+            else:
+                with open(SRCINFO_PATH, "w", encoding="utf-8") as f:
+                    f.write(srcinfo_content)
+                print(f"  ✓ 成功更新 {SRCINFO_PATH}")
 
         return True
     except Exception as e:
@@ -899,6 +928,150 @@ def check_flatpak_version(version):
     return False
 
 
+def push_aur():
+    """
+    将本地 PKGBUILD、.SRCINFO、easykiconverter.install 推送到 AUR 仓库
+
+    流程:
+    1. 克隆 AUR 仓库到临时目录
+    2. 复制本地文件到 AUR 仓库
+    3. 提交并推送
+    4. 清理临时目录
+
+    前提条件:
+    - SSH 密钥已配置（~/.ssh/config 中有 aur.archlinux.org 条目）
+    - AUR 账户已注册并添加了公钥
+    """
+    print("正在推送到 AUR 仓库...")
+
+    # 检查本地文件是否存在
+    files_to_push = ["PKGBUILD", ".SRCINFO", "easykiconverter.install"]
+    for filename in files_to_push:
+        filepath = os.path.join(
+            PROJECT_ROOT, "deploy", "archlinux", filename
+        )
+        if not os.path.exists(filepath):
+            print(f"  ✗ 找不到文件 {filepath}")
+            return False
+
+    # 读取 PKGBUILD 中的维护者信息用于 git commit
+    maintainer_name = "dennisreyoonjiho"
+    maintainer_email = "dennisreyoonjiho@gmail.com"
+    try:
+        with open(PKGBUILD_PATH, "r", encoding="utf-8") as f:
+            content = f.read()
+            match = re.search(r"# Maintainer:\s*(\S+)\s*<([^>]+)>", content)
+            if match:
+                maintainer_name = match.group(1)
+                maintainer_email = match.group(2)
+    except Exception:
+        pass
+
+    # 获取当前版本号用于 commit message
+    version = None
+    try:
+        with open(PKGBUILD_PATH, "r", encoding="utf-8") as f:
+            content = f.read()
+            match = re.search(r"pkgver=([^\s\n]+)", content)
+            if match:
+                version = match.group(1)
+    except Exception:
+        pass
+
+    tmp_dir = None
+    try:
+        # 克隆 AUR 仓库到临时目录
+        tmp_dir = tempfile.mkdtemp(prefix="aur_push_")
+        print(f"  正在克隆 AUR 仓库到 {tmp_dir}...")
+
+        result = subprocess.run(
+            [
+                "git",
+                "clone",
+                "ssh://aur@aur.archlinux.org/easykiconverter.git",
+                tmp_dir,
+            ],
+            capture_output=True,
+            text=True,
+        )
+        if result.returncode != 0:
+            print(f"  ✗ 克隆 AUR 仓库失败: {result.stderr.strip()}")
+            return False
+
+        # 配置 git 用户信息
+        subprocess.run(
+            ["git", "config", "user.name", maintainer_name],
+            cwd=tmp_dir,
+            capture_output=True,
+            text=True,
+        )
+        subprocess.run(
+            ["git", "config", "user.email", maintainer_email],
+            cwd=tmp_dir,
+            capture_output=True,
+            text=True,
+        )
+
+        # 复制文件到 AUR 仓库
+        for filename in files_to_push:
+            src = os.path.join(PROJECT_ROOT, "deploy", "archlinux", filename)
+            dst = os.path.join(tmp_dir, filename)
+            shutil.copy2(src, dst)
+            print(f"  ✓ 复制 {filename}")
+
+        # 检查是否有变更
+        result = subprocess.run(
+            ["git", "status", "--porcelain"],
+            cwd=tmp_dir,
+            capture_output=True,
+            text=True,
+        )
+        if not result.stdout.strip():
+            print("  ✓ AUR 仓库已是最新，无需推送")
+            return True
+
+        # 提交
+        commit_msg = f"Update to version {version}" if version else "Update package files"
+        subprocess.run(
+            ["git", "add", "PKGBUILD", ".SRCINFO", "easykiconverter.install"],
+            cwd=tmp_dir,
+            capture_output=True,
+            text=True,
+        )
+        result = subprocess.run(
+            ["git", "commit", "-m", commit_msg],
+            cwd=tmp_dir,
+            capture_output=True,
+            text=True,
+        )
+        if result.returncode != 0:
+            print(f"  ✗ 提交失败: {result.stderr.strip()}")
+            return False
+        print(f"  ✓ 已提交: {commit_msg}")
+
+        # 推送
+        result = subprocess.run(
+            ["git", "push", "origin", "master"],
+            cwd=tmp_dir,
+            capture_output=True,
+            text=True,
+        )
+        if result.returncode != 0:
+            print(f"  ✗ 推送失败: {result.stderr.strip()}")
+            return False
+
+        print(f"  ✓ 已推送到 AUR (版本 {version})")
+        return True
+
+    except Exception as e:
+        print(f"  ✗ 推送到 AUR 失败: {e}")
+        return False
+    finally:
+        # 清理临时目录
+        if tmp_dir and os.path.exists(tmp_dir):
+            shutil.rmtree(tmp_dir, ignore_errors=True)
+
+
 def main():
     parser = argparse.ArgumentParser(description="EasyKiConverter 版本管理工具")
     parser.add_argument("version", nargs="?", help="新的版本号 (例如 3.0.6)")
@@ -912,6 +1085,9 @@ def main():
     parser.add_argument(
         "--force", action="store_true", help="强制更新所有文件，即使版本相同"
     )
+    parser.add_argument(
+        "--push-aur", action="store_true", help="更新版本后自动推送到 AUR 仓库"
+    )
 
     args = parser.parse_args()
 
@@ -923,13 +1099,22 @@ def main():
             check_all_versions(current_version)
         return
 
+    # 仅推送到 AUR（不更新版本号）
+    if args.push_aur and not args.version:
+        if push_aur():
+            print("\n✓ 已推送到 AUR！")
+        else:
+            print("\n✗ 推送到 AUR 失败。")
+        return
+
     if not args.version:
         print("请输入新的版本号，例如: python manage_version.py 3.0.6")
         print("\n可用选项:")
         print("  --check              仅检查当前版本")
         print("  --force              强制更新所有文件，即使版本相同")
         print("  --metainfo-only      仅更新 metainfo.xml")
-        print("  --no-release-notes   跳过自动生成 release 描述")
+        print("  --push-aur           推送当前/新版本到 AUR 仓库")
+        print("  --generate-release-notes  自动生成详细 release 描述")
         return
 
     new_version = args.version
@@ -989,6 +1174,14 @@ def main():
             print("\n✓ 所有文件版本验证通过！")
         else:
             print("\n⚠ 部分文件版本验证失败，请检查上述信息")
+
+        # 推送到 AUR
+        if args.push_aur:
+            print("\n正在推送到 AUR...")
+            if push_aur():
+                print("\n✓ 版本更新并推送到 AUR 完成！")
+            else:
+                print("\n⚠ 版本更新成功，但推送到 AUR 失败，请手动推送")
     else:
         print("\n✗ 更新过程中出现错误，请检查上述信息。")
 
