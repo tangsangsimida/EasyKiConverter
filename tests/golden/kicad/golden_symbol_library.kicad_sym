@@ -9,28 +9,28 @@
       "Reference"
       "U"
       (id 0)
-      (at 0.00 7.62 0)
+      (at 0.00 -6.35 0)
       (effects (font (size 1.27 1.27) (thickness 0) ) )
     )
     (property
       "Value"
       "GOLDEN_SYMBOL"
       (id 1)
-      (at 0.00 -7.62 0)
-      (effects (font (size 1.27 1.27) (thickness 0) ) )
+      (at 0.00 -6.35 0)
+      (effects (font (size 1.27 1.27) (thickness 0) ) hide)
     )
     (property
       "Footprint"
       "GoldenLib:GOLDEN_FOOTPRINT"
       (id 2)
-      (at 0.00 -10.16 0)
+      (at 0.00 -6.35 0)
       (effects (font (size 1.27 1.27) (thickness 0) ) hide)
     )
     (property
       "LCSC Part"
       "C12345"
       (id 5)
-      (at 0.00 -12.70 0)
+      (at 0.00 -6.35 0)
       (effects (font (size 1.27 1.27) (thickness 0) ) hide)
     )
   )

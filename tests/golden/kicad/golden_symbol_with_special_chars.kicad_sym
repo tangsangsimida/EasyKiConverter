@@ -9,35 +9,35 @@
       "Reference"
       "R"
       (id 0)
-      (at 0.00 7.62 0)
+      (at 0.00 -19.05 0)
       (effects (font (size 1.27 1.27) (thickness 0) ) )
     )
     (property
       "Value"
       "RESISTOR_0402"
       (id 1)
-      (at 0.00 -20.32 0)
-      (effects (font (size 1.27 1.27) (thickness 0) ) )
+      (at 0.00 -19.05 0)
+      (effects (font (size 1.27 1.27) (thickness 0) ) hide)
     )
     (property
       "Footprint"
       "SpecialLib:0603_R"
       (id 2)
-      (at 0.00 -22.86 0)
+      (at 0.00 -19.05 0)
       (effects (font (size 1.27 1.27) (thickness 0) ) hide)
     )
     (property
       "LCSC Part"
       "C12345"
       (id 5)
-      (at 0.00 -25.40 0)
+      (at 0.00 -19.05 0)
       (effects (font (size 1.27 1.27) (thickness 0) ) hide)
     )
     (property
       "ki_description"
       "10K \"thin film\" ±1%"
       (id 6)
-      (at 0.00 -27.94 0)
+      (at 0.00 -19.05 0)
       (effects (font (size 1.27 1.27) (thickness 0) ) hide)
     )
     (rectangle

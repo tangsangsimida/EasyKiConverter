@@ -336,10 +336,6 @@ void ExporterFootprint::generateFootprintBaseContent(const IR::FootprintComponen
     content += "    (effects (font (size 1 1) (thickness 0.15)))\n";
     content += "  )\n";
 
-    content += "  (fp_text user %R (at 0 0) (layer F.Fab)\n";
-    content += "    (effects (font (size 1 1) (thickness 0.15)))\n";
-    content += "  )\n";
-
     for (const IR::FootprintTrackIR& track : footprint.tracks) {
         content += m_graphicsGenerator.generateTrack(track, originX, originY);
     }

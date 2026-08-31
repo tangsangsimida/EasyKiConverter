@@ -9,28 +9,28 @@
       "Reference"
       "C"
       (id 0)
-      (at 0.00 7.62 0)
+      (at 0.00 -13.97 0)
       (effects (font (size 1.27 1.27) (thickness 0) ) )
     )
     (property
       "Value"
       "CAPACITOR_0402"
       (id 1)
-      (at 0.00 -15.24 0)
-      (effects (font (size 1.27 1.27) (thickness 0) ) )
+      (at 0.00 -13.97 0)
+      (effects (font (size 1.27 1.27) (thickness 0) ) hide)
     )
     (property
       "Footprint"
       "MultiLib:0402_C"
       (id 2)
-      (at 0.00 -17.78 0)
+      (at 0.00 -13.97 0)
       (effects (font (size 1.27 1.27) (thickness 0) ) hide)
     )
     (property
       "LCSC Part"
       "C23186"
       (id 5)
-      (at 0.00 -20.32 0)
+      (at 0.00 -13.97 0)
       (effects (font (size 1.27 1.27) (thickness 0) ) hide)
     )
     (polyline
@@ -63,28 +63,28 @@
       "Reference"
       "L"
       (id 0)
-      (at 5.08 7.62 0)
+      (at 5.08 -6.35 0)
       (effects (font (size 1.27 1.27) (thickness 0) ) )
     )
     (property
       "Value"
       "INDUCTOR_0603"
       (id 1)
-      (at 5.08 -7.62 0)
-      (effects (font (size 1.27 1.27) (thickness 0) ) )
+      (at 5.08 -6.35 0)
+      (effects (font (size 1.27 1.27) (thickness 0) ) hide)
     )
     (property
       "Footprint"
       "MultiLib:0603_L"
       (id 2)
-      (at 5.08 -10.16 0)
+      (at 5.08 -6.35 0)
       (effects (font (size 1.27 1.27) (thickness 0) ) hide)
     )
     (property
       "LCSC Part"
       "C34567"
       (id 5)
-      (at 5.08 -12.70 0)
+      (at 5.08 -6.35 0)
       (effects (font (size 1.27 1.27) (thickness 0) ) hide)
     )
     (arc
