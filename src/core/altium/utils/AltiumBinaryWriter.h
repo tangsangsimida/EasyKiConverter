@@ -70,6 +70,14 @@ public:
     void writeCStringParameterBlock(const QMap<QString, QString>& params);
 
     /**
+     * @brief 写入 C 字符串参数块（自动处理非 ASCII 字符）
+     * @param params 参数键值对
+     * @details 对包含非 ASCII 字符的值，额外追加 %UTF8%KEY=VALUE 参数，
+     *          确保 Altium 打开时能正确还原 Unicode 文本。
+     */
+    void writeCStringParameterBlockUtf8(const QMap<QString, QString>& params);
+
+    /**
      * @brief 写入原始 C 字符串参数块（保留键的顺序）
      * @param paramString 已格式化的参数字符串（含管道分隔符）
      */

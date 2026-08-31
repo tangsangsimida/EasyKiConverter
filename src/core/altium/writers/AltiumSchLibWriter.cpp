@@ -276,7 +276,7 @@ void AltiumSchLibWriter::writeComponentRecord(AltiumBinaryWriter& writer, const 
     params["ALLPINCOUNT"] = QString::number(component.pins.size());
 
     addUniqueID(params);
-    writer.writeCStringParameterBlock(params);
+    writer.writeCStringParameterBlockUtf8(params);
 }
 
 /**
@@ -496,7 +496,7 @@ void AltiumSchLibWriter::writeTextRecord(AltiumBinaryWriter& writer, const Altiu
         params["IsHidden"] = "T";
 
     addUniqueID(params);
-    writer.writeCStringParameterBlock(params);
+    writer.writeCStringParameterBlockUtf8(params);
 }
 
 /**

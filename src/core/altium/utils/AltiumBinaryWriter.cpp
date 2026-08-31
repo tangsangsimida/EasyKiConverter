@@ -127,6 +127,30 @@ void AltiumBinaryWriter::writeCStringParameterBlock(const QMap<QString, QString>
 }
 
 /**
+ * @brief 写入 C 字符串参数块（自动处理非 ASCII 字符）
+ */
+void AltiumBinaryWriter::writeCStringParameterBlockUtf8(const QMap<QString, QString>& params) {
+    QString paramStr;
+    for (auto it = params.constBegin(); it != params.constEnd(); ++it) {
+        paramStr += "|" + it.key() + "=" + it.value();
+
+        // 对包含非 ASCII 字符的值，追加 %UTF8% 变体
+        bool hasNonAscii = false;
+        for (const QChar& ch : it.value()) {
+            if (ch.unicode() > 127) {
+                hasNonAscii = true;
+                break;
+            }
+        }
+        if (hasNonAscii) {
+            paramStr += "|%UTF8%" + it.key() + "=" + it.value();
+        }
+    }
+    paramStr += "|";
+    writeCStringParameterBlockRaw(paramStr);
+}
+
+/**
  * @brief 写入原始 C 字符串参数块
  */
 void AltiumBinaryWriter::writeCStringParameterBlockRaw(const QString& paramString) {
