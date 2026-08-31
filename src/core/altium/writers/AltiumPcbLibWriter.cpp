@@ -389,6 +389,19 @@ void AltiumPcbLibWriter::writeFootprintStorage(OLECompoundWriter& ole, const Alt
     QByteArray uidData;
     writeUniqueIdPrimitiveInformation(uidData, component);
     ole.writeStream(basePath + "/UniqueIdPrimitiveInformation", "Data", uidData);
+
+    // ExtendedPrimitiveInformation 流（仅当有扩展信息时写入）
+    if (!component.extendedPrimitives.isEmpty()) {
+        ole.addStorage(basePath, "ExtendedPrimitiveInformation");
+        QByteArray extHdrData;
+        AltiumBinaryWriter extHdr(extHdrData);
+        extHdr.writeUInt32(static_cast<uint32_t>(component.extendedPrimitives.size()));
+        ole.writeStream(basePath + "/ExtendedPrimitiveInformation", "Header", extHdrData);
+
+        QByteArray extData;
+        writeExtendedPrimitiveInformation(extData, component);
+        ole.writeStream(basePath + "/ExtendedPrimitiveInformation", "Data", extData);
+    }
 }
 
 /**
@@ -480,7 +493,7 @@ void AltiumPcbLibWriter::writeCommonPrimitiveHeader(AltiumBinaryWriter& writer,
     writer.writeUInt8(layer);
     writer.writeUInt16(flags);
     writer.writeUInt16(netIndex);
-    writer.writeUInt16(0xFFFF);  // polygon index
+    writer.writeUInt16(AltiumConstants::PCB_POLYGON_NONE);
     writer.writeUInt16(componentIndex);
     writer.writeUInt32(0xFFFFFFFF);  // reserved
 }
@@ -601,8 +614,11 @@ void AltiumPcbLibWriter::writePad(AltiumBinaryWriter& writer, const AltiumPcbPad
 }
 
 /**
- * @brief 写入焊盘扩展块（596 字节）
- * @details 包含 29 层的尺寸/形状覆盖、孔形状/槽孔/旋转、圆角半径等。
+ * @brief 写入焊盘扩展块
+ * @details 包含各层尺寸/形状覆盖、孔形状/槽孔/旋转、圆角半径等。
+ *          布局：29层尺寸X(116) + 29层尺寸Y(116) + 32层形状(32) +
+ *                孔元数据(15) + 32*4保留(128) + 32*4保留(128) +
+ *                圆角标记(1) + 32层形状(32) + 32层圆角(32) = 684
  */
 void AltiumPcbLibWriter::writePadExtendedBlock(AltiumBinaryWriter& writer, const AltiumPcbPad& pad) {
     // 尺寸 X 覆盖：29 层 × 4 字节 = 116 字节
@@ -613,18 +629,17 @@ void AltiumPcbLibWriter::writePadExtendedBlock(AltiumBinaryWriter& writer, const
     for (int i = 0; i < AltiumConstants::PCB_PAD_LAYER_COUNT; ++i) {
         writer.writeInt32(pad.sizeMidY);
     }
-    // 形状覆盖：29 层 × 1 字节 = 29 字节
-    for (int i = 0; i < AltiumConstants::PCB_PAD_LAYER_COUNT; ++i) {
+    // 形状覆盖：32 层 × 1 字节 = 32 字节
+    for (int i = 0; i < 32; ++i) {
         writer.writeUInt8(pad.shapeMid);
     }
 
-    // 孔形状标志
-    writer.writeUInt8(0);  // 主孔形状偏移占位
+    // 孔元数据
     writer.writeUInt8(pad.holeType);
     writer.writeInt32(pad.holeSlotLengthRaw);
     writer.writeDouble(pad.holeRotation);
 
-    // 保留区域：32 × 4 + 32 × 4 = 256 字节
+    // 保留区域
     writer.writeBytes(QByteArray(32 * 4, 0));
     writer.writeBytes(QByteArray(32 * 4, 0));
 
@@ -634,7 +649,7 @@ void AltiumPcbLibWriter::writePadExtendedBlock(AltiumBinaryWriter& writer, const
                           (pad.shapeBot == AltiumConstants::PCB_PAD_SHAPE_ROUNDED_RECT);
     writer.writeUInt8(hasRoundedRect ? 1 : 0);
 
-    // 各层形状列表（32 字节）
+    // 各层形状列表（32 字节：top + 30*mid + bot）
     writer.writeUInt8(pad.shapeTop);
     for (int i = 0; i < 30; ++i) {
         writer.writeUInt8(pad.shapeMid);
@@ -915,6 +930,24 @@ void AltiumPcbLibWriter::writeUniqueIdPrimitiveInformation(QByteArray& buffer, c
         writeEntry("Region", idx);
     for (int i = 0; i < component.bodies.size(); ++i, ++idx)
         writeEntry("ComponentBody", idx);
+}
+
+/**
+ * @brief 写入图元扩展信息
+ * @details 为需要额外属性的图元（如自定义焊盘遮罩扩展）写入参数块。
+ */
+void AltiumPcbLibWriter::writeExtendedPrimitiveInformation(QByteArray& buffer, const AltiumPcbComponent& component) {
+    AltiumBinaryWriter writer(buffer);
+
+    for (const AltiumPcbExtendedPrimitiveInfo& info : component.extendedPrimitives) {
+        QMap<QString, QString> params;
+        params["PRIMITIVEINDEX"] = QString::number(info.primitiveIndex);
+        params["PRIMITIVEOBJECTID"] = info.objectName;
+        for (auto it = info.params.constBegin(); it != info.params.constEnd(); ++it) {
+            params[it.key()] = it.value();
+        }
+        writer.writeCStringParameterBlock(params);
+    }
 }
 
 }  // namespace EasyKiConverter

@@ -64,6 +64,7 @@ private:
     static uint16_t encodePrimitiveFlags(bool isLocked, bool isTentingTop, bool isTentingBottom, bool isKeepout);
     void writePadExtendedBlock(AltiumBinaryWriter& writer, const AltiumPcbPad& pad);
     void writeUniqueIdPrimitiveInformation(QByteArray& buffer, const AltiumPcbComponent& component);
+    void writeExtendedPrimitiveInformation(QByteArray& buffer, const AltiumPcbComponent& component);
     uint32_t toV7LayerId(uint8_t layer) const;
     int countPrimitives(const AltiumPcbComponent& component) const;
     QString getSectionKey(const QString& name) const;

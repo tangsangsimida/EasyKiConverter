@@ -2,7 +2,9 @@
 
 #include "AltiumCommon.h"
 
+#include <QByteArray>
 #include <QList>
+#include <QMap>
 #include <QPointF>
 #include <QString>
 
@@ -112,6 +114,17 @@ struct AltiumPcbRegion {
 };
 
 /**
+ * @brief Altium PCB 图元扩展信息
+ * @details 用于记录自定义焊盘遮罩扩展等额外属性，
+ *          写入 ExtendedPrimitiveInformation 流。
+ */
+struct AltiumPcbExtendedPrimitiveInfo {
+    int primitiveIndex = 0;  ///< 图元在 Data 流中的序号
+    QString objectName;  ///< 图元类型名（如 "Pad", "Region"）
+    QMap<QString, QString> params;  ///< 扩展参数
+};
+
+/**
  * @brief Altium PCB 3D 元件体 (Object ID = 12)
  * @details 描述元件的 3D 外形体，关联 STEP/WRL 模型。
  *          每个元件体对应一个 MECHANICAL 层的闭合轮廓。
@@ -159,6 +172,7 @@ struct AltiumPcbComponent {
     QList<AltiumPcbFill> fills;
     QList<AltiumPcbRegion> regions;
     QList<AltiumPcbComponentBody> bodies;  ///< 3D 元件体列表
+    QList<AltiumPcbExtendedPrimitiveInfo> extendedPrimitives;  ///< 图元扩展信息
 
     /** @brief 3D 模型信息 */
     struct Model3D {
