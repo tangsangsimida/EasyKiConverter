@@ -145,8 +145,13 @@ CLAUDE.md
 GEMINI.md
 .codex
 .codegraph/daemon.pid
-
-# Altium Designer 测试用导出库（本地测试，不入库）
+.codegraph/
+tests/fixtures/altium/常用AD元件库、封装库、3D封装库.rar
+opencode.json
 tests/fixtures/altium/
-Testing/Temporary/CTestCostData.txt
-Testing/Temporary/LastTest.log
+PROJECT_INSTRUCTIONS.md
+
+# Large media files (use external hosting instead)
+*.mp4
+*.rar
+docs/submissions/北京开元工业软件研究/05-video.rar
