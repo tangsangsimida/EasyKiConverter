@@ -53,6 +53,7 @@ private:
     void writeText(AltiumBinaryWriter& writer, const AltiumPcbText& text, int componentIndex);
     void writeFill(AltiumBinaryWriter& writer, const AltiumPcbFill& fill, int componentIndex);
     void writeRegion(AltiumBinaryWriter& writer, const AltiumPcbRegion& region, int componentIndex);
+    void writeComponentBody(AltiumBinaryWriter& writer, const AltiumPcbComponentBody& body, int componentIndex);
 
     // ---- 辅助 ----
     void writeCommonPrimitiveHeader(AltiumBinaryWriter& writer,
@@ -60,6 +61,9 @@ private:
                                     uint16_t flags,
                                     uint16_t netIndex,
                                     uint16_t componentIndex);
+    static uint16_t encodePrimitiveFlags(bool isLocked, bool isTentingTop, bool isTentingBottom, bool isKeepout);
+    void writePadExtendedBlock(AltiumBinaryWriter& writer, const AltiumPcbPad& pad);
+    void writeUniqueIdPrimitiveInformation(QByteArray& buffer, const AltiumPcbComponent& component);
     uint32_t toV7LayerId(uint8_t layer) const;
     int countPrimitives(const AltiumPcbComponent& component) const;
     QString getSectionKey(const QString& name) const;

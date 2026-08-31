@@ -99,14 +99,11 @@ AltiumPcbComponent ExporterAltiumFootprint::convertFootprint(const IR::Footprint
     centerComponent(component);
 
     // 加载 3D 模型
+    QByteArray stepData;
+    QString modelName;
     if (!model3DPath.isEmpty()) {
-        QByteArray stepData = loadStepData(model3DPath);
-        if (!stepData.isEmpty()) {
-            AltiumPcbComponent::Model3D model;
-            model.name = QFileInfo(model3DPath).fileName();
-            model.stepData = stepData;
-            component.models.append(model);
-        }
+        stepData = loadStepData(model3DPath);
+        modelName = QFileInfo(model3DPath).fileName();
     } else if (!data.models3d.isEmpty()) {
         // 从 IR 的 3D 模型中加载 STEP 数据
         for (const IR::Model3DIR& model3d : data.models3d) {
@@ -121,6 +118,23 @@ AltiumPcbComponent ExporterAltiumFootprint::convertFootprint(const IR::Footprint
                 component.models.append(model);
             }
         }
+        if (!component.models.isEmpty()) {
+            stepData = component.models.first().stepData;
+            modelName = component.models.first().name;
+        }
+    }
+
+    // 如果有 3D 模型数据但 models 列表为空，补全
+    if (!stepData.isEmpty() && component.models.isEmpty()) {
+        AltiumPcbComponent::Model3D model;
+        model.name = modelName;
+        model.stepData = stepData;
+        component.models.append(model);
+    }
+
+    // 为 3D 模型生成 ComponentBody（基于封装包围盒）
+    if (!component.models.isEmpty()) {
+        generateComponentBody(component);
     }
 
     return component;
@@ -142,11 +156,20 @@ AltiumPcbPad ExporterAltiumFootprint::convertPad(const IR::FootprintPadIR& pad) 
     // 确定焊盘类型
     altiumPad.isSMD = pad.isSmd();
     altiumPad.isPlated = pad.isPlated;
+    altiumPad.isLocked = pad.isLocked;
 
     if (pad.isThroughHole()) {
         // 通孔焊盘
         altiumPad.layer = AltiumConstants::PCB_LAYER_MULTI;
         altiumPad.holeSize = AltiumCoord::mmToRaw(pad.holeSize);
+
+        // 槽孔检测：holeLength > holeSize 时为槽孔
+        if (pad.holeLength > pad.holeSize + 0.001) {
+            altiumPad.holeType = 2;  // Slot
+            altiumPad.holeSlotLengthRaw = AltiumCoord::mmToRaw(pad.holeLength);
+            // 槽孔旋转：长轴方向
+            altiumPad.holeRotation = (pad.size.height() > pad.size.width()) ? 90.0 : 0.0;
+        }
     } else {
         // 表贴焊盘：从 IR LayerType 映射到 Altium 层字节
         altiumPad.layer = static_cast<uint8_t>(AltiumLayerMap::fromLayerTypeToAltium(pad.layer));
@@ -157,6 +180,11 @@ AltiumPcbPad ExporterAltiumFootprint::convertPad(const IR::FootprintPadIR& pad) 
     altiumPad.shapeTop = shape;
     altiumPad.shapeMid = shape;
     altiumPad.shapeBot = shape;
+
+    // 圆角矩形的默认圆角百分比
+    if (shape == AltiumConstants::PCB_PAD_SHAPE_ROUNDED_RECT) {
+        altiumPad.cornerRadiusPercentage = 50;
+    }
 
     // 尺寸
     altiumPad.sizeTopX = width;
@@ -256,6 +284,7 @@ AltiumPcbRegion ExporterAltiumFootprint::convertSolidRegion(const IR::FootprintR
     AltiumPcbRegion altiumRegion;
     altiumRegion.layer = static_cast<uint8_t>(AltiumLayerMap::fromLayerTypeToAltium(region.layer));
     altiumRegion.isBoardCutout = region.isKeepOut;
+    altiumRegion.v7LayerName = AltiumLayerMap::toLayerName(altiumRegion.layer);
 
     // IR vertices 已经是解析后的 QList<QPointF>，单位 mm
     for (const QPointF& point : region.vertices) {
@@ -327,7 +356,8 @@ void ExporterAltiumFootprint::centerComponent(AltiumPcbComponent& component) {
         }
     }
 
-    if (minX == INT_MAX) return;  // 无图元
+    if (minX == INT_MAX)
+        return;  // 无图元
 
     // 计算中心偏移
     int offsetX = (minX + maxX) / 2;
@@ -363,6 +393,81 @@ void ExporterAltiumFootprint::centerComponent(AltiumPcbComponent& component) {
         text.locationX -= offsetX;
         text.locationY -= offsetY;
     }
+}
+
+/**
+ * @brief 从封装包围盒和 3D 模型生成 ComponentBody
+ * @details 在 MECHANICAL1 层创建矩形轮廓，关联嵌入的 STEP 模型。
+ *          轮廓基于所有图元的包围盒生成。
+ */
+void ExporterAltiumFootprint::generateComponentBody(AltiumPcbComponent& component) {
+    if (component.models.isEmpty())
+        return;
+
+    // 计算包围盒（复用 centerComponent 的逻辑）
+    int minX = INT_MAX, minY = INT_MAX, maxX = INT_MIN, maxY = INT_MIN;
+
+    for (const auto& pad : component.pads) {
+        minX = qMin(minX, pad.locationX);
+        minY = qMin(minY, pad.locationY);
+        maxX = qMax(maxX, pad.locationX);
+        maxY = qMax(maxY, pad.locationY);
+    }
+    for (const auto& track : component.tracks) {
+        minX = qMin(minX, qMin(track.startX, track.endX));
+        minY = qMin(minY, qMin(track.startY, track.endY));
+        maxX = qMax(maxX, qMax(track.startX, track.endX));
+        maxY = qMax(maxY, qMax(track.startY, track.endY));
+    }
+    for (const auto& arc : component.arcs) {
+        minX = qMin(minX, arc.centerX - arc.radius);
+        minY = qMin(minY, arc.centerY - arc.radius);
+        maxX = qMax(maxX, arc.centerX + arc.radius);
+        maxY = qMax(maxY, arc.centerY + arc.radius);
+    }
+    for (const auto& fill : component.fills) {
+        minX = qMin(minX, qMin(fill.corner1X, fill.corner2X));
+        minY = qMin(minY, qMin(fill.corner1Y, fill.corner2Y));
+        maxX = qMax(maxX, qMax(fill.corner1X, fill.corner2X));
+        maxY = qMax(maxY, qMax(fill.corner1Y, fill.corner2Y));
+    }
+    for (const auto& region : component.regions) {
+        for (const QPointF& v : region.vertices) {
+            minX = qMin(minX, static_cast<int>(v.x()));
+            minY = qMin(minY, static_cast<int>(v.y()));
+            maxX = qMax(maxX, static_cast<int>(v.x()));
+            maxY = qMax(maxY, static_cast<int>(v.y()));
+        }
+    }
+
+    if (minX == INT_MAX)
+        return;  // 无图元，无法生成轮廓
+
+    // 生成稳定的模型 ID（基于封装名称）
+    QString seed = component.name + "|body";
+    QByteArray seedBytes = seed.toUtf8();
+    uint64_t hash = 0xCBF29CE484222325ULL;
+    for (char byte : seedBytes) {
+        hash ^= static_cast<uint8_t>(byte);
+        hash *= 0x100000001B3ULL;
+    }
+    QString modelId = QString("{%1-%2-%3-%4-%5}")
+                          .arg((hash >> 32) & 0xFFFFFFFF, 8, 16, QChar('0'))
+                          .arg((hash >> 16) & 0xFFFF, 4, 16, QChar('0'))
+                          .arg(hash & 0xFFFF, 4, 16, QChar('0'))
+                          .arg(((~hash) >> 48) & 0xFFFF, 4, 16, QChar('0'))
+                          .arg((~hash) & 0xFFFFFFFFFFFFLL, 12, 16, QChar('0'))
+                          .toUpper();
+
+    AltiumPcbComponentBody body;
+    body.modelId = modelId;
+    body.modelName = component.models.first().name;
+    body.overallHeightRaw = AltiumCoord::mmToRaw(qMax(component.height, 0.2));
+
+    // 矩形轮廓
+    body.outline = {QPointF(minX, minY), QPointF(maxX, minY), QPointF(maxX, maxY), QPointF(minX, maxY)};
+
+    component.bodies.append(body);
 }
 
 }  // namespace EasyKiConverter

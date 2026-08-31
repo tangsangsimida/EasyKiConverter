@@ -100,6 +100,11 @@ private:
      */
     void centerComponent(AltiumPcbComponent& component);
 
+    /**
+     * @brief 从封装包围盒和 3D 模型生成 ComponentBody
+     */
+    void generateComponentBody(AltiumPcbComponent& component);
+
     AltiumPcbLibWriter m_writer;
 };
 

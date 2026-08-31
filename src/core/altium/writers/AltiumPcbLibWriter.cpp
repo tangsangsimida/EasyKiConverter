@@ -24,7 +24,7 @@ QString AltiumPcbLibWriter::getSectionKey(const QString& name) const {
  */
 int AltiumPcbLibWriter::countPrimitives(const AltiumPcbComponent& component) const {
     return component.pads.size() + component.tracks.size() + component.arcs.size() + component.texts.size() +
-           component.fills.size() + component.regions.size();
+           component.fills.size() + component.regions.size() + component.bodies.size();
 }
 
 /**
@@ -378,6 +378,17 @@ void AltiumPcbLibWriter::writeFootprintStorage(OLECompoundWriter& ole, const Alt
     QByteArray dataData;
     writeFootprintData(dataData, component);
     ole.writeStream(basePath, "Data", dataData);
+
+    // UniqueIdPrimitiveInformation 流
+    ole.addStorage(basePath, "UniqueIdPrimitiveInformation");
+    QByteArray uidHdrData;
+    AltiumBinaryWriter uidHdr(uidHdrData);
+    uidHdr.writeUInt32(static_cast<uint32_t>(countPrimitives(component)));
+    ole.writeStream(basePath + "/UniqueIdPrimitiveInformation", "Header", uidHdrData);
+
+    QByteArray uidData;
+    writeUniqueIdPrimitiveInformation(uidData, component);
+    ole.writeStream(basePath + "/UniqueIdPrimitiveInformation", "Data", uidData);
 }
 
 /**
@@ -426,6 +437,9 @@ void AltiumPcbLibWriter::writeFootprintData(QByteArray& buffer, const AltiumPcbC
     for (const AltiumPcbRegion& region : component.regions) {
         writeRegion(writer, region, 0);
     }
+    for (const AltiumPcbComponentBody& body : component.bodies) {
+        writeComponentBody(writer, body, 0);
+    }
 }
 
 /**
@@ -472,13 +486,38 @@ void AltiumPcbLibWriter::writeCommonPrimitiveHeader(AltiumBinaryWriter& writer,
 }
 
 /**
+ * @brief 编码图元标志位
+ * @details 根据图元属性生成 Altium 标志字：
+ *   Bit 2 = Unlocked, Bit 3 = Saved, Bit 5 = TentingTop, Bit 6 = TentingBottom, Bit 9 = Keepout
+ */
+uint16_t AltiumPcbLibWriter::encodePrimitiveFlags(bool isLocked,
+                                                  bool isTentingTop,
+                                                  bool isTentingBottom,
+                                                  bool isKeepout) {
+    uint16_t flags = AltiumConstants::PCB_FLAG_SAVED;
+    if (!isLocked) {
+        flags |= 0x04;  // Unlocked
+    }
+    if (isTentingTop) {
+        flags |= AltiumConstants::PCB_FLAG_TENTING_TOP;
+    }
+    if (isTentingBottom) {
+        flags |= AltiumConstants::PCB_FLAG_TENTING_BOTTOM;
+    }
+    if (isKeepout) {
+        flags |= AltiumConstants::PCB_FLAG_KEEPOUT;
+    }
+    return flags;
+}
+
+/**
  * @brief 写入焊盘记录 (Object ID = 2)
+ * @details 完整写入焊盘的主记录和扩展块，包含孔类型、槽孔、圆角等全部属性。
  */
 void AltiumPcbLibWriter::writePad(AltiumBinaryWriter& writer, const AltiumPcbPad& pad, int componentIndex) {
-    // Object ID
-    writer.writeUInt8(2);
+    writer.writeUInt8(AltiumConstants::PCB_OBJECT_PAD);
 
-    // 子记录 1: Designator 字符串块
+    // 子记录 1: Designator
     writer.writeStringBlock(pad.designator);
 
     // 子记录 2: PadSubrecord2（空）
@@ -492,98 +531,131 @@ void AltiumPcbLibWriter::writePad(AltiumBinaryWriter& writer, const AltiumPcbPad
     writer.writeUInt8(0);
     writer.endBlock();
 
-    // 子记录 5: 主焊盘数据（202 字节）
+    // 子记录 5: 主焊盘数据
     writer.beginBlock();
     {
-        // 通用头部（13 字节）
         uint8_t layer = pad.isSMD ? pad.layer : AltiumConstants::PCB_LAYER_MULTI;
-        uint16_t flags = AltiumConstants::PCB_FLAG_SAVED;
+        uint16_t flags = encodePrimitiveFlags(pad.isLocked, pad.isTentingTop, pad.isTentingBottom, pad.isKeepout);
         writeCommonPrimitiveHeader(writer, layer, flags, pad.netIndex, static_cast<uint16_t>(componentIndex));
 
         // 位置
         writer.writeInt32(pad.locationX);
         writer.writeInt32(pad.locationY);
 
-        // 顶层尺寸
+        // 三层尺寸
         writer.writeInt32(pad.sizeTopX);
         writer.writeInt32(pad.sizeTopY);
-
-        // 中间层尺寸
         writer.writeInt32(pad.sizeMidX);
         writer.writeInt32(pad.sizeMidY);
-
-        // 底层尺寸
         writer.writeInt32(pad.sizeBotX);
         writer.writeInt32(pad.sizeBotY);
 
         // 孔径
         writer.writeInt32(pad.holeSize);
 
-        // 形状
+        // 三层形状
         writer.writeUInt8(pad.shapeTop);
         writer.writeUInt8(pad.shapeMid);
         writer.writeUInt8(pad.shapeBot);
 
-        // 旋转
+        // 旋转 + 电镀
         writer.writeDouble(pad.rotation);
-
-        // 是否电镀
         writer.writeUInt8(pad.isPlated ? 1 : 0);
 
-        // 剩余字节填充到主记录总大小
-        // 当前位置应该是 13 + 4*2 + 4*6 + 4 + 3 + 8 + 1 = 61
-        // 需要填充 PCB_PAD_MAIN_RECORD_SIZE - 61 = PCB_PAD_MAIN_PADDING_SIZE 字节
-        QByteArray padding(AltiumConstants::PCB_PAD_MAIN_PADDING_SIZE, 0);
-        padding[1] = 0;  // stack mode = Simple
-        padding[40] = 1;  // paste mask expansion mode = Rule
-        padding[41] = 1;  // solder mask expansion mode = Rule
-        writer.writeBytes(padding);
+        // 补齐主记录固定布局（61 字节之后的字段）
+        writer.writeUInt8(0);  // stack mode = Simple
+        writer.writeUInt8(pad.mode);
+        writer.writeUInt8(pad.powerPlaneConnectStyle);
+        writer.writeInt32(pad.reliefAirGapRaw);
+        writer.writeInt32(pad.reliefConductorWidthRaw);
+        writer.writeInt16(pad.reliefEntries);
+        writer.writeInt32(pad.powerPlaneClearanceRaw);
+        writer.writeInt32(pad.powerPlaneReliefExpansionRaw);
+        writer.writeInt32(0);  // reserved
+        writer.writeInt32(pad.pasteMaskExpansionRaw);
+        writer.writeInt32(pad.solderMaskExpansionRaw);
+        writer.writeBytes(QByteArray(7, 0));  // reserved
+        writer.writeUInt8(pad.pasteMaskExpansionRaw != 0 ? 2 : 0);  // paste mask expansion mode
+        writer.writeUInt8(pad.solderMaskExpansionRaw != 0 ? 2 : 1);  // solder mask expansion mode
+        writer.writeUInt8(pad.drillType);
+        writer.writeInt16(0);  // reserved
+        writer.writeInt32(0);  // reserved
+        writer.writeInt16(0);  // jumper ID
+        writer.writeInt16(0);  // reserved
+
+        // 填充到 202 字节总大小
+        constexpr int WRITTEN_SO_FAR =
+            13 + 8 + 24 + 4 + 3 + 8 + 1 + 1 + 1 + 1 + 4 + 4 + 2 + 4 + 4 + 4 + 4 + 4 + 7 + 1 + 1 + 1 + 2 + 4 + 2 + 2;
+        constexpr int REMAINING = AltiumConstants::PCB_PAD_MAIN_RECORD_SIZE - WRITTEN_SO_FAR;
+        static_assert(REMAINING >= 0, "Pad main record overflow");
+        if (REMAINING > 0) {
+            writer.writeBytes(QByteArray(REMAINING, 0));
+        }
     }
     writer.endBlock();
 
-    // 子记录 6: 尺寸/形状覆盖数据
+    // 子记录 6: 扩展块（各层尺寸/形状覆盖 + 孔元数据）
     writer.beginBlock();
-    {
-        QByteArray sizeData(AltiumConstants::PCB_PAD_SIZE_OVERRIDE_SIZE, 0);
-
-        // 填充顶层尺寸到所有层
-        for (int i = 0; i < AltiumConstants::PCB_PAD_LAYER_COUNT; ++i) {
-            int offset = i * 4;
-            sizeData[offset] = static_cast<char>(pad.sizeTopX & 0xFF);
-            sizeData[offset + 1] = static_cast<char>((pad.sizeTopX >> 8) & 0xFF);
-            sizeData[offset + 2] = static_cast<char>((pad.sizeTopX >> 16) & 0xFF);
-            sizeData[offset + 3] = static_cast<char>((pad.sizeTopX >> 24) & 0xFF);
-        }
-        for (int i = 0; i < AltiumConstants::PCB_PAD_LAYER_COUNT; ++i) {
-            int offset = AltiumConstants::PCB_PAD_SIZE_Y_OFFSET + i * 4;
-            sizeData[offset] = static_cast<char>(pad.sizeTopY & 0xFF);
-            sizeData[offset + 1] = static_cast<char>((pad.sizeTopY >> 8) & 0xFF);
-            sizeData[offset + 2] = static_cast<char>((pad.sizeTopY >> 16) & 0xFF);
-            sizeData[offset + 3] = static_cast<char>((pad.sizeTopY >> 24) & 0xFF);
-        }
-
-        // 形状
-        for (int i = 0; i < AltiumConstants::PCB_PAD_LAYER_COUNT; ++i) {
-            sizeData[AltiumConstants::PCB_PAD_SHAPE_OFFSET + i] = static_cast<char>(pad.shapeTop);
-        }
-
-        // 孔形状
-        sizeData[AltiumConstants::PCB_PAD_HOLE_SHAPE_OFFSET] = 0;  // Round
-
-        writer.writeBytes(sizeData);
-    }
+    writePadExtendedBlock(writer, pad);
     writer.endBlock();
 }
 
 /**
- * @brief 写入走线记录 (Object ID = 4, 49 字节)
+ * @brief 写入焊盘扩展块（596 字节）
+ * @details 包含 29 层的尺寸/形状覆盖、孔形状/槽孔/旋转、圆角半径等。
+ */
+void AltiumPcbLibWriter::writePadExtendedBlock(AltiumBinaryWriter& writer, const AltiumPcbPad& pad) {
+    // 尺寸 X 覆盖：29 层 × 4 字节 = 116 字节
+    for (int i = 0; i < AltiumConstants::PCB_PAD_LAYER_COUNT; ++i) {
+        writer.writeInt32(pad.sizeMidX);
+    }
+    // 尺寸 Y 覆盖：29 层 × 4 字节 = 116 字节
+    for (int i = 0; i < AltiumConstants::PCB_PAD_LAYER_COUNT; ++i) {
+        writer.writeInt32(pad.sizeMidY);
+    }
+    // 形状覆盖：29 层 × 1 字节 = 29 字节
+    for (int i = 0; i < AltiumConstants::PCB_PAD_LAYER_COUNT; ++i) {
+        writer.writeUInt8(pad.shapeMid);
+    }
+
+    // 孔形状标志
+    writer.writeUInt8(0);  // 主孔形状偏移占位
+    writer.writeUInt8(pad.holeType);
+    writer.writeInt32(pad.holeSlotLengthRaw);
+    writer.writeDouble(pad.holeRotation);
+
+    // 保留区域：32 × 4 + 32 × 4 = 256 字节
+    writer.writeBytes(QByteArray(32 * 4, 0));
+    writer.writeBytes(QByteArray(32 * 4, 0));
+
+    // 圆角矩形标记
+    bool hasRoundedRect = (pad.shapeTop == AltiumConstants::PCB_PAD_SHAPE_ROUNDED_RECT) ||
+                          (pad.shapeMid == AltiumConstants::PCB_PAD_SHAPE_ROUNDED_RECT) ||
+                          (pad.shapeBot == AltiumConstants::PCB_PAD_SHAPE_ROUNDED_RECT);
+    writer.writeUInt8(hasRoundedRect ? 1 : 0);
+
+    // 各层形状列表（32 字节）
+    writer.writeUInt8(pad.shapeTop);
+    for (int i = 0; i < 30; ++i) {
+        writer.writeUInt8(pad.shapeMid);
+    }
+    writer.writeUInt8(pad.shapeBot);
+
+    // 各层圆角半径百分比（32 字节）
+    for (int i = 0; i < 32; ++i) {
+        writer.writeUInt8(pad.cornerRadiusPercentage);
+    }
+}
+
+/**
+ * @brief 写入走线记录 (Object ID = 4)
  */
 void AltiumPcbLibWriter::writeTrack(AltiumBinaryWriter& writer, const AltiumPcbTrack& track, int componentIndex) {
-    writer.writeUInt8(4);  // Object ID
+    writer.writeUInt8(AltiumConstants::PCB_OBJECT_TRACK);
 
     writer.beginBlock();
     {
-        uint16_t flags = 0x08;  // FlagSaved
+        uint16_t flags = encodePrimitiveFlags(false, false, false, false);
         writeCommonPrimitiveHeader(writer, track.layer, flags, track.netIndex, static_cast<uint16_t>(componentIndex));
 
         writer.writeInt32(track.startX);
@@ -603,14 +675,14 @@ void AltiumPcbLibWriter::writeTrack(AltiumBinaryWriter& writer, const AltiumPcbT
 }
 
 /**
- * @brief 写入弧线记录 (Object ID = 1, 60 字节)
+ * @brief 写入弧线记录 (Object ID = 1)
  */
 void AltiumPcbLibWriter::writeArc(AltiumBinaryWriter& writer, const AltiumPcbArc& arc, int componentIndex) {
-    writer.writeUInt8(1);  // Object ID
+    writer.writeUInt8(AltiumConstants::PCB_OBJECT_ARC);
 
     writer.beginBlock();
     {
-        uint16_t flags = 0x08;
+        uint16_t flags = encodePrimitiveFlags(false, false, false, false);
         writeCommonPrimitiveHeader(writer, arc.layer, flags, arc.netIndex, static_cast<uint16_t>(componentIndex));
 
         writer.writeInt32(arc.centerX);
@@ -709,11 +781,11 @@ void AltiumPcbLibWriter::writeFill(AltiumBinaryWriter& writer, const AltiumPcbFi
  * @brief 写入区域记录 (Object ID = 11)
  */
 void AltiumPcbLibWriter::writeRegion(AltiumBinaryWriter& writer, const AltiumPcbRegion& region, int componentIndex) {
-    writer.writeUInt8(11);  // Object ID
+    writer.writeUInt8(AltiumConstants::PCB_OBJECT_REGION);
 
     writer.beginBlock();
     {
-        uint16_t flags = 0x08;
+        uint16_t flags = encodePrimitiveFlags(false, false, false, false);
         writeCommonPrimitiveHeader(writer, region.layer, flags, 0xFFFF, static_cast<uint16_t>(componentIndex));
 
         writer.writeUInt8(0);  // reserved
@@ -722,15 +794,20 @@ void AltiumPcbLibWriter::writeRegion(AltiumBinaryWriter& writer, const AltiumPcb
 
         // 嵌套参数块
         QMap<QString, QString> params;
-        params["V7_LAYER"] = AltiumLayerMap::toLayerName(region.layer);
+        QString v7Name = region.v7LayerName.isEmpty() ? AltiumLayerMap::toLayerName(region.layer) : region.v7LayerName;
+        params["V7_LAYER"] = v7Name;
         params["KIND"] = QString::number(region.kind);
         params["SUBPOLYINDEX"] = "0";
         params["UNIONINDEX"] = "0";
         params["ARCRESOLUTION"] = "0mil";
-        params["ISSHAPEBASED"] = "TRUE";
-        params["CAVITYHEIGHT"] = "0mil";
         if (region.isBoardCutout)
             params["ISBOARDCUTOUT"] = "TRUE";
+        if (!region.net.isEmpty())
+            params["NET"] = region.net;
+        if (!region.uniqueId.isEmpty())
+            params["UNIQUEID"] = region.uniqueId;
+        if (!region.name.isEmpty())
+            params["NAME"] = region.name;
         writer.writeCStringParameterBlock(params);
 
         // 轮廓顶点
@@ -750,6 +827,94 @@ void AltiumPcbLibWriter::writeRegion(AltiumBinaryWriter& writer, const AltiumPcb
         }
     }
     writer.endBlock();
+}
+
+/**
+ * @brief 写入 3D 元件体记录 (Object ID = 12)
+ */
+void AltiumPcbLibWriter::writeComponentBody(AltiumBinaryWriter& writer,
+                                            const AltiumPcbComponentBody& body,
+                                            int componentIndex) {
+    writer.writeUInt8(AltiumConstants::PCB_OBJECT_COMPONENT_BODY);
+
+    writer.beginBlock();
+    {
+        uint16_t flags = encodePrimitiveFlags(false, false, false, false);
+        writeCommonPrimitiveHeader(writer, 0, flags, 0xFFFF, static_cast<uint16_t>(componentIndex));
+
+        writer.writeUInt32(0);  // reserved
+        writer.writeUInt8(0);  // reserved
+
+        QMap<QString, QString> params;
+        params["V7_LAYER"] = body.layerName;
+        params["NAME"] = body.name;
+        params["KIND"] = QString::number(body.kind);
+        params["SUBPOLYINDEX"] = QString::number(body.subpolyIndex);
+        params["UNIONINDEX"] = QString::number(body.unionIndex);
+        params["ARCRESOLUTION"] = QString::number(body.arcResolutionRaw / 10000.0, 'f', 4) + "mil";
+        params["ISSHAPEBASED"] = body.isShapeBased ? "TRUE" : "FALSE";
+        params["CAVITYHEIGHT"] = QString::number(body.cavityHeightRaw / 10000.0, 'f', 4) + "mil";
+        params["STANDOFFHEIGHT"] = QString::number(body.standoffHeightRaw / 10000.0, 'f', 4) + "mil";
+        params["OVERALLHEIGHT"] = QString::number(body.overallHeightRaw / 10000.0, 'f', 4) + "mil";
+        params["BODYCOLOR3D"] = QString::number(body.bodyColor3d);
+        params["BODYOPACITY3D"] = QString::number(body.bodyOpacity3d, 'f', 3);
+        params["BODYPROJECTION"] = QString::number(body.bodyProjection);
+        params["MODELID"] = body.modelId;
+        params["MODEL.CHECKSUM"] = QString::number(body.modelChecksum);
+        params["MODEL.EMBED"] = body.modelEmbed ? "TRUE" : "FALSE";
+        params["MODEL.NAME"] = body.modelName;
+        params["MODEL.2D.X"] = QString::number(body.model2dRotX / 10000.0, 'f', 4) + "mil";
+        params["MODEL.2D.Y"] = QString::number(body.model2dRotY / 10000.0, 'f', 4) + "mil";
+        params["MODEL.2D.ROTATION"] = QString::number(body.model2dRotation, 'f', 3);
+        params["MODEL.3D.ROTX"] = QString::number(body.model3dRotX, 'f', 3);
+        params["MODEL.3D.ROTY"] = QString::number(body.model3dRotY, 'f', 3);
+        params["MODEL.3D.ROTZ"] = QString::number(body.model3dRotZ, 'f', 3);
+        params["MODEL.3D.DZ"] = QString::number(body.model3dDzRaw / 10000.0, 'f', 4) + "mil";
+        params["MODEL.MODELTYPE"] = QString::number(body.modelType);
+        params["MODEL.MODELSOURCE"] = body.modelSource;
+        writer.writeCStringParameterBlock(params);
+
+        // 轮廓顶点
+        writer.writeUInt32(static_cast<uint32_t>(body.outline.size()));
+        for (const QPointF& v : body.outline) {
+            writer.writeDouble(v.x());
+            writer.writeDouble(v.y());
+        }
+    }
+    writer.endBlock();
+}
+
+/**
+ * @brief 写入图元唯一标识信息
+ * @details 为每个图元生成 PRIMITIVEOBJECTID 条目，用于 Altium 内部引用追踪。
+ */
+void AltiumPcbLibWriter::writeUniqueIdPrimitiveInformation(QByteArray& buffer, const AltiumPcbComponent& component) {
+    AltiumBinaryWriter writer(buffer);
+
+    auto writeEntry = [&](const char* objectName, int index) {
+        QMap<QString, QString> params;
+        if (index > 0) {
+            params["PRIMITIVEINDEX"] = QString::number(index);
+        }
+        params["PRIMITIVEOBJECTID"] = QString::fromLatin1(objectName);
+        writer.writeCStringParameterBlock(params);
+    };
+
+    int idx = 0;
+    for (int i = 0; i < component.pads.size(); ++i, ++idx)
+        writeEntry("Pad", idx);
+    for (int i = 0; i < component.tracks.size(); ++i, ++idx)
+        writeEntry("Track", idx);
+    for (int i = 0; i < component.arcs.size(); ++i, ++idx)
+        writeEntry("Arc", idx);
+    for (int i = 0; i < component.texts.size(); ++i, ++idx)
+        writeEntry("Text", idx);
+    for (int i = 0; i < component.fills.size(); ++i, ++idx)
+        writeEntry("Fill", idx);
+    for (int i = 0; i < component.regions.size(); ++i, ++idx)
+        writeEntry("Region", idx);
+    for (int i = 0; i < component.bodies.size(); ++i, ++idx)
+        writeEntry("ComponentBody", idx);
 }
 
 }  // namespace EasyKiConverter
