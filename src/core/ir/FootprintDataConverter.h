@@ -20,8 +20,154 @@
 #include "SymbolDataConverter.h"  // 复用 parseFlatPointString 等工具函数
 #include "models/FootprintData.h"
 
+#include <cmath>
+
 namespace EasyKiConverter {
 namespace IR {
+
+/**
+ * @brief SVG 弧线解析结果
+ */
+struct SvgArcResult {
+    QPointF center;  ///< 圆心（已缩放）
+    double radius = 0.0;  ///< 半径（已缩放）
+    double startAngle = 0.0;  ///< 起始角度（度，0-360）
+    double endAngle = 0.0;  ///< 终止角度（度，0-360）
+};
+
+/**
+ * @brief 从 SVG 弧线路径字符串解析圆心和角度
+ * @param pathStr SVG 路径字符串
+ * @param scaleFactor 坐标缩放因子
+ * @return 解析结果，失败时 center 为 (0,0) 且 radius=0
+ */
+inline SvgArcResult parseSvgArcPath(const QString& pathStr, double scaleFactor = PX_TO_MM) {
+    SvgArcResult result;
+    if (pathStr.isEmpty())
+        return result;
+
+    // 提取所有 token（保留命令字母）
+    QStringList tokens;
+    QString current;
+    for (const QChar& ch : pathStr) {
+        if (ch.isLetter() || ch == '-') {
+            if (!current.isEmpty()) {
+                tokens.append(current.trimmed());
+                current.clear();
+            }
+            if (ch == '-') {
+                current = ch;
+            } else {
+                tokens.append(QString(ch));
+            }
+        } else if (ch == ',' || ch.isSpace()) {
+            if (!current.isEmpty()) {
+                tokens.append(current.trimmed());
+                current.clear();
+            }
+        } else {
+            current += ch;
+        }
+    }
+    if (!current.isEmpty()) {
+        tokens.append(current.trimmed());
+    }
+
+    // 找到 M 和 A 命令
+    double startX = 0, startY = 0;
+    double rx = 0, ry = 0, xRot = 0;
+    int largeArc = 0, sweep = 0;
+    double endX = 0, endY = 0;
+    bool hasM = false, hasA = false;
+
+    for (int i = 0; i < tokens.size(); ++i) {
+        QChar cmd = tokens[i][0].toUpper();
+        if (cmd == 'M' && i + 2 < tokens.size()) {
+            startX = tokens[i + 1].toDouble();
+            startY = tokens[i + 2].toDouble();
+            hasM = true;
+            i += 2;
+        } else if (cmd == 'A' && i + 7 < tokens.size()) {
+            rx = tokens[i + 1].toDouble();
+            ry = tokens[i + 2].toDouble();
+            xRot = tokens[i + 3].toDouble();
+            largeArc = tokens[i + 4].toInt();
+            sweep = tokens[i + 5].toInt();
+            endX = tokens[i + 6].toDouble();
+            endY = tokens[i + 7].toDouble();
+            hasA = true;
+            i += 7;
+        }
+    }
+
+    if (!hasM || !hasA || rx <= 0 || ry <= 0)
+        return result;
+
+    // SVG 弧线 → 圆心转换
+    double phi = xRot * M_PI / 180.0;
+    double dx = (startX - endX) / 2.0;
+    double dy = (startY - endY) / 2.0;
+
+    double x1 = std::cos(phi) * dx + std::sin(phi) * dy;
+    double y1 = -std::sin(phi) * dx + std::cos(phi) * dy;
+
+    double rxSq = rx * rx;
+    double rySq = ry * ry;
+    double x1Sq = x1 * x1;
+    double y1Sq = y1 * y1;
+
+    double temp = (rxSq * rySq - rxSq * y1Sq - rySq * x1Sq) / (rxSq * y1Sq + rySq * x1Sq);
+    if (temp < 0)
+        temp = 0;
+    temp = std::sqrt(temp);
+
+    double factor = (largeArc == sweep) ? -1.0 : 1.0;
+    double cx1 = factor * temp * rx * y1 / ry;
+    double cy1 = -factor * temp * ry * x1 / rx;
+
+    double cx = std::cos(phi) * cx1 - std::sin(phi) * cy1 + (startX + endX) / 2.0;
+    double cy = std::sin(phi) * cx1 + std::cos(phi) * cy1 + (startY + endY) / 2.0;
+
+    // 计算起始角度和终止角度
+    auto getAngle = [](double ux, double uy, double vx, double vy) -> double {
+        double dot = ux * vx + uy * vy;
+        double mag = std::sqrt(ux * ux + uy * uy) * std::sqrt(vx * vx + vy * vy);
+        if (mag < 1e-12)
+            return 0.0;
+        double cosAngle = std::clamp(dot / mag, -1.0, 1.0);
+        double angle = std::acos(cosAngle);
+        if (ux * vy - uy * vx < 0)
+            angle = -angle;
+        return angle;
+    };
+
+    double startAngle = getAngle(1.0, 0.0, (x1 - cx1) / rx, (y1 - cy1) / ry);
+    double deltaAngle = getAngle((x1 - cx1) / rx, (y1 - cy1) / ry, (-x1 - cx1) / rx, (-y1 - cy1) / ry);
+
+    // 规范化
+    while (startAngle < 0)
+        startAngle += 2 * M_PI;
+    while (startAngle >= 2 * M_PI)
+        startAngle -= 2 * M_PI;
+
+    if (sweep) {
+        if (deltaAngle < 0)
+            deltaAngle += 2 * M_PI;
+    } else {
+        if (deltaAngle > 0)
+            deltaAngle -= 2 * M_PI;
+    }
+
+    double startDeg = startAngle * 180.0 / M_PI;
+    double endDeg = (startAngle + deltaAngle) * 180.0 / M_PI;
+
+    result.center = QPointF(cx * scaleFactor, cy * scaleFactor);
+    result.radius = rx * scaleFactor;  // 简化：使用 rx 作为半径
+    result.startAngle = startDeg;
+    result.endAngle = endDeg;
+
+    return result;
+}
 
 /**
  * @brief FootprintData -> FootprintComponentIR 转换
@@ -108,14 +254,22 @@ inline FootprintComponentIR toFootprintIR(const FootprintData& data) {
     // 转换圆弧
     for (const auto& arc : data.arcs()) {
         FootprintArcIR air;
-        // FootprintArc.path 是 SVG 弧线，尝试解析圆心/半径/角度
-        // 简化处理：使用 parseSimpleSvgPath 提取坐标，取前 3 个点
-        const QList<QPointF> arcPoints = parseSimpleSvgPath(arc.path);
-        if (arcPoints.size() >= 3) {
-            air.center = arcPoints[2];  // 第三个点通常是圆心
-            const double dx = arcPoints[0].x() - air.center.x();
-            const double dy = arcPoints[0].y() - air.center.y();
-            air.radius = qSqrt(dx * dx + dy * dy);
+        // 从 SVG 弧线路径解析圆心、半径和角度
+        SvgArcResult arcResult = parseSvgArcPath(arc.path);
+        if (arcResult.radius > 0) {
+            air.center = arcResult.center;
+            air.radius = arcResult.radius;
+            air.startAngle = arcResult.startAngle;
+            air.endAngle = arcResult.endAngle;
+        } else {
+            // 使用 parseSimpleSvgPath 提取坐标点
+            const QList<QPointF> arcPoints = parseSimpleSvgPath(arc.path);
+            if (arcPoints.size() >= 3) {
+                air.center = arcPoints[2];
+                const double dx = arcPoints[0].x() - air.center.x();
+                const double dy = arcPoints[0].y() - air.center.y();
+                air.radius = qSqrt(dx * dx + dy * dy);
+            }
         }
         air.width = arc.strokeWidth * PX_TO_MM;
         air.layer = EasyedaLayerMap::toLayerType(arc.layerId);
