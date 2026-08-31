@@ -469,6 +469,7 @@ QString ExporterSymbol::generateSymbolContent(const IR::SymbolComponentIR& symbo
                  << "centerOffsetX(mm):" << graphCenterOffsetX;
 
         // 计算 y_high 和 y_low（坐标已在 KiCad 空间，无需再次翻转）
+        // 综合引脚和图形元素的 Y 坐标
         if (!pins.isEmpty()) {
             for (const IR::SymbolPinIR& pin : pins) {
                 double pinY = pin.position.y() - originY;
@@ -476,10 +477,22 @@ QString ExporterSymbol::generateSymbolContent(const IR::SymbolComponentIR& symbo
                 yLow = qMin(yLow, pinY);
             }
         }
+        // 图形元素也参与 Y 边界计算
+        for (const auto& rect : symbol.rectangles) {
+            yHigh = qMax(yHigh, rect.y0 - originY);
+            yLow = qMin(yLow, rect.y0 - originY);
+            yHigh = qMax(yHigh, rect.y1 - originY);
+            yLow = qMin(yLow, rect.y1 - originY);
+        }
+        for (const auto& circle : symbol.circles) {
+            double r = circle.radius;
+            yHigh = qMax(yHigh, circle.center.y() + r - originY);
+            yLow = qMin(yLow, circle.center.y() - r - originY);
+        }
     }
 
-    // 生成属性
-    double fieldOffset = 5.08;  // FIELD_OFFSET_START
+    // 生成属性 — 所有属性放在图形下方，水平居中，垂直统一对齐
+    double propertyY = yLow - 3.81;  // 图形下方固定偏移（150mil）
     double fontSize = 1.27;  // PROPERTY_FONT_SIZE
 
     // 辅助函数：转义属性值
@@ -491,73 +504,69 @@ QString ExporterSymbol::generateSymbolContent(const IR::SymbolComponentIR& symbo
         return escaped.trimmed();
     };
 
-    // Reference 属性
+    // Reference 属性（图形下方居中）
     QString refPrefix = symbol.designatorPrefix;
     refPrefix.replace("?", "");
     content += QString("    (property\n");
     content += QString("      \"Reference\"\n");
     content += QString("      \"%1\"\n").arg(escapePropertyValue(refPrefix));
     content += "      (id 0)\n";
-    content += QString("      (at %1 %2 0)\n").arg(graphCenterOffsetX, 0, 'f', 2).arg(yHigh + fieldOffset, 0, 'f', 2);
+    content += QString("      (at %1 %2 0)\n").arg(graphCenterOffsetX, 0, 'f', 2).arg(propertyY, 0, 'f', 2);
     content += QString("      (effects (font (size %1 %2) (thickness 0) ) )\n")
                    .arg(fontSize, 0, 'f', 2)
                    .arg(fontSize, 0, 'f', 2);
     content += "    )\n";
 
-    // Value 属性
+    // Value 属性（与 Reference 同一高度，居中对齐）
     content += QString("    (property\n");
     content += QString("      \"Value\"\n");
     content += QString("      \"%1\"\n").arg(escapePropertyValue(symbol.name));
     content += "      (id 1)\n";
-    content += QString("      (at %1 %2 0)\n").arg(graphCenterOffsetX, 0, 'f', 2).arg(yLow - fieldOffset, 0, 'f', 2);
-    content += QString("      (effects (font (size %1 %2) (thickness 0) ) )\n")
+    content += QString("      (at %1 %2 0)\n").arg(graphCenterOffsetX, 0, 'f', 2).arg(propertyY, 0, 'f', 2);
+    content += QString("      (effects (font (size %1 %2) (thickness 0) ) hide)\n")
                    .arg(fontSize, 0, 'f', 2)
                    .arg(fontSize, 0, 'f', 2);
     content += "    )\n";
 
-    // Footprint 属性
+    // Footprint 属性（隐藏，同一高度）
     if (!symbol.footprintName.isEmpty()) {
-        fieldOffset += 2.54;  // FIELD_OFFSET_INCREMENT
         content += QString("    (property\n");
         content += QString("      \"Footprint\"\n");
-        // KiCad 符号需要库前缀格式
         QString footprintPath = QString("%1:%2").arg(libName, symbol.footprintName);
         content += QString("      \"%1\"\n").arg(escapePropertyValue(footprintPath));
         content += "      (id 2)\n";
         content +=
-            QString("      (at %1 %2 0)\n").arg(graphCenterOffsetX, 0, 'f', 2).arg(yLow - fieldOffset, 0, 'f', 2);
+            QString("      (at %1 %2 0)\n").arg(graphCenterOffsetX, 0, 'f', 2).arg(propertyY, 0, 'f', 2);
         content += QString("      (effects (font (size %1 %2) (thickness 0) ) hide)\n")
                        .arg(fontSize, 0, 'f', 2)
                        .arg(fontSize, 0, 'f', 2);
         content += "    )\n";
     }
 
-    // LCSC Part 属性（从 sourceMetadata 读取）
+    // LCSC Part 属性（隐藏，同一高度）
     const QString lcscId = symbol.sourceMetadata.value("lcscId");
     if (!lcscId.isEmpty()) {
-        fieldOffset += 2.54;
         content += QString("    (property\n");
         content += QString("      \"LCSC Part\"\n");
         content += QString("      \"%1\"\n").arg(escapePropertyValue(lcscId));
         content += "      (id 5)\n";
         content +=
-            QString("      (at %1 %2 0)\n").arg(graphCenterOffsetX, 0, 'f', 2).arg(yLow - fieldOffset, 0, 'f', 2);
+            QString("      (at %1 %2 0)\n").arg(graphCenterOffsetX, 0, 'f', 2).arg(propertyY, 0, 'f', 2);
         content += QString("      (effects (font (size %1 %2) (thickness 0) ) hide)\n")
                        .arg(fontSize, 0, 'f', 2)
                        .arg(fontSize, 0, 'f', 2);
         content += "    )\n";
     }
 
-    // ki_description 属性
+    // ki_description 属性（隐藏，同一高度）
     const QString symbolDescription = symbol.description.trimmed();
     if (!symbolDescription.isEmpty()) {
-        fieldOffset += 2.54;
         content += QString("    (property\n");
         content += QString("      \"ki_description\"\n");
         content += QString("      \"%1\"\n").arg(escapePropertyValue(symbolDescription));
         content += "      (id 6)\n";
         content +=
-            QString("      (at %1 %2 0)\n").arg(graphCenterOffsetX, 0, 'f', 2).arg(yLow - fieldOffset, 0, 'f', 2);
+            QString("      (at %1 %2 0)\n").arg(graphCenterOffsetX, 0, 'f', 2).arg(propertyY, 0, 'f', 2);
         content += QString("      (effects (font (size %1 %2) (thickness 0) ) hide)\n")
                        .arg(fontSize, 0, 'f', 2)
                        .arg(fontSize, 0, 'f', 2);
