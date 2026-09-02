@@ -1,6 +1,6 @@
 {
   "uuid": "symbol-uuid",
-  "title": "Golden Symbol Fixture",
+  "title": "FIXTURE_SYMBOL",
   "description": "Basic symbol fixture",
   "docType": 2,
   "type": 1,

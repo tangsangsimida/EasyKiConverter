@@ -46,7 +46,8 @@ QSharedPointer<SymbolData> EasyedaSymbolImporter::importSymbolData(const QJsonOb
 
             if (head.contains("c_para")) {
                 QJsonObject c_para = head["c_para"].toObject();
-                info.name = c_para["name"].toString();
+                // 优先使用 title 字段作为 symbol 名称
+                info.name = info.title.isEmpty() ? c_para["name"].toString() : info.title;
                 info.prefix = c_para["pre"].toString();
                 info.package = c_para["package"].toString();
                 info.manufacturer = c_para["Manufacturer"].toString();
