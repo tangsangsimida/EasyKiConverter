@@ -307,7 +307,9 @@ void ParallelExportService::startExport() {
 
     const bool enableSymbol = m_options.exportSymbol;
     const bool enableFootprint = m_options.exportFootprint;
-    const bool enableModel3D = m_options.exportModel3D;
+    // Altium PcbLib 将 STEP 直接嵌入 Library/Models，不生成 KiCad 风格的
+    // 外部 .3dmodels 目录；封装阶段仍会按需获取 STEP 并交给写入器。
+    const bool enableModel3D = m_options.exportModel3D && m_options.targetFormat != TargetEdaFormat::Altium;
     const bool enablePreview = m_options.exportPreviewImages;
     const bool enableDatasheet = m_options.exportDatasheet;
     QStringList exportableComponentIds;
