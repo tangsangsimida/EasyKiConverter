@@ -6,7 +6,26 @@
 #include <QDebug>
 #include <QSet>
 
+#include <climits>
+
 namespace EasyKiConverter {
+
+namespace {
+
+/**
+ * @brief 将原始坐标量化到 Altium SchLib 的最小转换网格
+ * @details SchLib 多边形使用 raw / 1000 的 Schematic Unit，而引脚和基本图元
+ *          使用 raw。平移量必须落在 1000 raw 网格上，避免两套坐标写出后产生
+ *          小于 0.1 mil 的相对偏移。
+ */
+int quantizeSchematicOffset(int value) {
+    constexpr int kSchematicUnitRaw = 1000;
+    if (value >= 0)
+        return ((value + kSchematicUnitRaw / 2) / kSchematicUnitRaw) * kSchematicUnitRaw;
+    return ((value - kSchematicUnitRaw / 2) / kSchematicUnitRaw) * kSchematicUnitRaw;
+}
+
+}  // namespace
 
 /**
  * @brief 导出单个符号
@@ -267,16 +286,40 @@ AltiumSchEllipse ExporterAltiumSymbol::convertEllipse(const IR::SymbolEllipseIR&
 
 /**
  * @brief 将符号坐标归一化，以第一个引脚为原点
- * @details 用第一个引脚的位置作为偏移量，确保至少有一个引脚在原点（网格交叉点），
- *          方便用户在 Altium Designer 中连线。
+ * @details 使用符号图形包围盒中心作为统一原点，保证主体、引脚和文本在
+ *          Altium Designer 中保持相对位置。
  */
 void ExporterAltiumSymbol::centerComponent(AltiumSchComponent& component) {
     if (component.pins.isEmpty())
         return;
 
-    // 以第一个引脚位置为原点
-    int offsetX = component.pins[0].locationX;
-    int offsetY = component.pins[0].locationY;
+    int minX = INT_MAX, minY = INT_MAX, maxX = INT_MIN, maxY = INT_MIN;
+    auto include = [&](int x, int y) {
+        minX = qMin(minX, x);
+        minY = qMin(minY, y);
+        maxX = qMax(maxX, x);
+        maxY = qMax(maxY, y);
+    };
+    for (const auto& pin : component.pins)
+        include(pin.locationX, pin.locationY);
+    for (const auto& rect : component.rectangles) {
+        include(rect.locationX, rect.locationY);
+        include(rect.cornerX, rect.cornerY);
+    }
+    for (const auto& arc : component.arcs) {
+        include(arc.centerX - arc.radius, arc.centerY - arc.radius);
+        include(arc.centerX + arc.radius, arc.centerY + arc.radius);
+    }
+    for (const auto& ellipse : component.ellipses) {
+        include(ellipse.centerX - ellipse.radiusX, ellipse.centerY - ellipse.radiusY);
+        include(ellipse.centerX + ellipse.radiusX, ellipse.centerY + ellipse.radiusY);
+    }
+    if (minX == INT_MAX)
+        return;
+
+    // 量化平移量而不是逐个量化引脚，保持所有相对间距不变。
+    int offsetX = quantizeSchematicOffset((minX + maxX) / 2);
+    int offsetY = quantizeSchematicOffset((minY + maxY) / 2);
     int offsetPolyX = offsetX / 1000;
     int offsetPolyY = offsetY / 1000;
 

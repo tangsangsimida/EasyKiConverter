@@ -180,6 +180,7 @@ struct AltiumPcbComponent {
         QString id;  ///< 与 ComponentBody 关联的稳定 GUID
         QByteArray stepData;  ///< STEP 文件数据
         double rotX = 0, rotY = 0, rotZ = 0;  ///< 旋转角度
+        double x = 0, y = 0;  ///< 模型相对封装原点的 XY 放置坐标（原始单位）
         double dz = 0;  ///< Z 偏移（mil）
     };
 

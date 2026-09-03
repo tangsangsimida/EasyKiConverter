@@ -129,9 +129,6 @@ AltiumPcbComponent ExporterAltiumFootprint::convertFootprint(const IR::Footprint
         }
     }
 
-    // 坐标居中：计算所有图元的包围盒，将原点移到中心
-    centerComponent(component);
-
     // 加载 3D 模型
     QByteArray stepData;
     QString modelName;
@@ -149,6 +146,9 @@ AltiumPcbComponent ExporterAltiumFootprint::convertFootprint(const IR::Footprint
                 model.rotX = rot.x;
                 model.rotY = rot.y;
                 model.rotZ = rot.z;
+                const auto& translation = model3d.translation();
+                model.x = AltiumCoord::mmToRaw(translation.x);
+                model.y = AltiumCoord::mmToRaw(translation.y);
                 component.models.append(model);
             }
         }
@@ -165,6 +165,9 @@ AltiumPcbComponent ExporterAltiumFootprint::convertFootprint(const IR::Footprint
         model.stepData = stepData;
         component.models.append(model);
     }
+
+    // 封装图元和 3D 模型必须经过同一原点平移，避免焊盘与模型错位。
+    centerComponent(component);
 
     // 为 3D 模型生成 ComponentBody（基于封装包围盒）
     if (!component.models.isEmpty()) {
@@ -427,6 +430,10 @@ void ExporterAltiumFootprint::centerComponent(AltiumPcbComponent& component) {
         text.locationX -= offsetX;
         text.locationY -= offsetY;
     }
+    for (auto& model : component.models) {
+        model.x -= offsetX;
+        model.y -= offsetY;
+    }
 }
 
 /**
@@ -497,6 +504,12 @@ void ExporterAltiumFootprint::generateComponentBody(AltiumPcbComponent& componen
     AltiumPcbComponentBody body;
     body.modelId = modelId;
     body.modelName = component.models.first().name;
+    body.model2dRotX = component.models.first().x;
+    body.model2dRotY = component.models.first().y;
+    body.model3dRotX = component.models.first().rotX;
+    body.model3dRotY = component.models.first().rotY;
+    body.model3dRotZ = component.models.first().rotZ;
+    body.model3dDzRaw = AltiumCoord::mmToRaw(component.models.first().dz);
     body.overallHeightRaw = AltiumCoord::mmToRaw(qMax(component.height, 0.2));
 
     // 矩形轮廓

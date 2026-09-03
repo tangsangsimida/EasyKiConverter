@@ -121,7 +121,6 @@ Card {
                 height: componentList.cellHeight
                 // 别名：供 requestVisiblePreviewImages 通过 itemAtIndex 访问
                 property alias itemData: delegateItem.itemData
-
                 ComponentListItem {
                     id: delegateItem
                     width: parent.width - AppStyle.spacing.md
