@@ -199,7 +199,22 @@ void ExportSettingsViewModel::setDebugMode(bool enabled) {
 }
 
 void ExportSettingsViewModel::setTargetModel(ExportTargetModel* model) {
+    if (m_targetModel == model)
+        return;
     m_targetModel = model;
+    if (m_targetModel) {
+        connect(m_targetModel, &ExportTargetModel::currentTargetChanged, this, [this]() {
+            if (m_targetModel && m_targetModel->currentIndex() == static_cast<int>(TargetEdaFormat::Altium) &&
+                (m_exportModel3DFormat & ExportOptions::MODEL_3D_FORMAT_WRL)) {
+                // Altium PcbLib 只能可靠嵌入 STEP，切换目标时移除 WRL 位。
+                setExportModel3DFormat(ExportOptions::MODEL_3D_FORMAT_STEP);
+            }
+        });
+        if (m_targetModel->currentIndex() == static_cast<int>(TargetEdaFormat::Altium) &&
+            (m_exportModel3DFormat & ExportOptions::MODEL_3D_FORMAT_WRL)) {
+            setExportModel3DFormat(ExportOptions::MODEL_3D_FORMAT_STEP);
+        }
+    }
 }
 
 void ExportSettingsViewModel::setExportSymbolDescription(bool enabled) {

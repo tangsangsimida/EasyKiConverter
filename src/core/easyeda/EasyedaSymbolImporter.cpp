@@ -474,7 +474,10 @@ SymbolText EasyedaSymbolImporter::importTextData(const QString& textData) {
     SymbolText text;
     QStringList fields = EasyedaUtils::parseDataString(textData);
 
-    if (fields.size() >= 15) {
+    // EasyEDA T 记录布局：字段 10 为基线，字段 11 为文本类型，
+    // 字段 12 才是实际显示文本；旧实现将字段 11 误写入 text，
+    // 导致所有符号文本在 Altium 中显示为 "comment"。
+    if (fields.size() >= 16) {
         text.mark = fields[0];
         text.posX = fields[1].toDouble();
         text.posY = fields[2].toDouble();
@@ -484,13 +487,13 @@ SymbolText EasyedaSymbolImporter::importTextData(const QString& textData) {
         text.textSize = fields[6].toDouble();
         text.bold = EasyedaUtils::stringToBool(fields[7]);
         text.italic = fields[8];
-        text.baseline = fields[9];
-        text.type = fields[10];
-        text.text = fields[11];
-        text.visible = EasyedaUtils::stringToBool(fields[12]);
-        text.anchor = fields[13];
-        text.id = fields[14];
-        text.isLocked = fields.size() > 15 ? EasyedaUtils::stringToBool(fields[15]) : false;
+        text.baseline = fields[10];
+        text.type = fields[11];
+        text.text = fields[12];
+        text.visible = EasyedaUtils::stringToBool(fields[13]);
+        text.anchor = fields[14];
+        text.id = fields[15];
+        text.isLocked = fields.size() > 16 ? EasyedaUtils::stringToBool(fields[16]) : false;
     }
 
     return text;

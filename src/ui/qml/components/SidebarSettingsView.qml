@@ -290,10 +290,15 @@ Item {
                                     Layout.fillWidth: true
                                     height: 30
                                     radius: AppStyle.radius.sm
+                                    property bool isAltiumTarget: root.exportTargetModel && root.exportTargetModel.currentIndex === 1
                                     color: AppStyle.isDarkMode ? Qt.rgba(255, 255, 255, 0.06) : Qt.rgba(0, 0, 0, 0.06)
                                     property int currentFormatIndex: {
                                         if (!root.exportSettingsController)
                                             return 0;
+                                        // Altium 只允许 STEP，指示器也必须固定在 STEP，
+                                        // 避免旧配置值让滑块视觉上移动到 WRL/Both。
+                                        if (isAltiumTarget)
+                                            return 1;
                                         var fmt = root.exportSettingsController.exportModel3DFormat;
                                         if (fmt === 3)
                                             return 2;
@@ -322,10 +327,12 @@ Item {
                                         anchors.fill: parent
                                         anchors.margins: 2
                                         Repeater {
-                                            model: ["WRL", "STEP", "Both"]
+                                            model: ["WRL", "STEP", "ALL"]
                                             Item {
                                                 width: parent.width / 3
                                                 height: parent.height
+                                                // Altium PcbLib 仅支持嵌入 STEP，WRL 和 Both 都不可选。
+                                                opacity: parent.parent.isAltiumTarget && index !== 1 ? 0.4 : 1
                                                 Text {
                                                     anchors.centerIn: parent
                                                     text: modelData
@@ -341,6 +348,7 @@ Item {
 
                                                 MouseArea {
                                                     anchors.fill: parent
+                                                    enabled: !(parent.parent.isAltiumTarget && index !== 1)
                                                     cursorShape: Qt.PointingHandCursor
                                                     onClicked: {
                                                         if (!root.exportSettingsController)

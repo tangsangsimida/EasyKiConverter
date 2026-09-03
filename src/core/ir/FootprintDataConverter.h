@@ -312,6 +312,12 @@ inline FootprintComponentIR toFootprintIR(const FootprintData& data) {
 
     // 转换板框轮廓
     for (const auto& outline : data.outlines()) {
+        // EasyEDA 的 layer 19 是 SVGNODE outline3D 的模型辅助轮廓，
+        // 不是封装的二维 PCB 图元。若将其转成 Track，Altium 中会在
+        // 未映射层上显示成黑色矩形/大面积黑色轮廓；3D 模型边界由
+        // ExporterAltiumFootprint::generateComponentBody() 单独处理。
+        if (outline.layerId == 19)
+            continue;
         FootprintOutlineIR oir;
         oir.points = parseSimpleSvgPath(outline.path);
         oir.strokeWidth = outline.strokeWidth * PX_TO_MM;
