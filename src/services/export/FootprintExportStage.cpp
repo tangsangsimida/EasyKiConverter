@@ -411,6 +411,17 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
         status.status = ExportItemStatus::Status::Success;
         emit itemStatusChanged(componentId, status);
 
+        if (m_options.targetFormat == TargetEdaFormat::Altium && m_options.exportModel3D) {
+            ExportItemStatus modelStatus;
+            if (!footprint.model3D().step().isEmpty()) {
+                modelStatus.status = ExportItemStatus::Status::Success;
+            } else {
+                modelStatus.status = ExportItemStatus::Status::Failed;
+                modelStatus.errorMessage = QStringLiteral("STEP 3D model was not embedded in PcbLib");
+            }
+            emit embeddedModel3DStatusChanged(componentId, modelStatus);
+        }
+
         qDebug() << "FootprintExportStage: Collected footprint for" << componentId;
     }
 

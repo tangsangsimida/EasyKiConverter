@@ -71,6 +71,14 @@ public:
 
     bool waitForFinished(int timeoutMs = 5000) override;
 
+signals:
+    /**
+     * @brief 通知 Altium 封装中嵌入的 3D 模型结果
+     * @param componentId 元器件编号
+     * @param status 3D 模型嵌入状态
+     */
+    void embeddedModel3DStatusChanged(const QString& componentId, const ExportItemStatus& status);
+
 protected:
     // 以下方法覆盖基类纯虚函数，但在此实现中不使用
     QObject* createWorker() override {

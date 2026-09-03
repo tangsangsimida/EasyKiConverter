@@ -258,6 +258,20 @@ void ParallelExportService::registerStageAndStart(ExportTypeStage* stage,
                 }
                 onExportTypeCompleted(typeName, success, failed, skipped);
             });
+
+    if (typeName == QStringLiteral("Footprint") && m_options.exportModel3D &&
+        m_options.targetFormat == TargetEdaFormat::Altium) {
+        if (auto* footprintStage = qobject_cast<FootprintExportStage*>(stage)) {
+            connect(footprintStage,
+                    &FootprintExportStage::embeddedModel3DStatusChanged,
+                    this,
+                    [this, runGeneration](const QString& componentId, const ExportItemStatus& status) {
+                        if (runGeneration == m_activeRunGeneration) {
+                            onExportItemStatusChanged(componentId, QStringLiteral("Model3D"), status);
+                        }
+                    });
+        }
+    }
     stage->start(componentIds, m_cachedData);
 }
 
@@ -309,7 +323,9 @@ void ParallelExportService::startExport() {
     const bool enableFootprint = m_options.exportFootprint;
     // Altium PcbLib 将 STEP 直接嵌入 Library/Models，不生成 KiCad 风格的
     // 外部 .3dmodels 目录；封装阶段仍会按需获取 STEP 并交给写入器。
-    const bool enableModel3D = m_options.exportModel3D && m_options.targetFormat != TargetEdaFormat::Altium;
+    // Model3D 统计项仍需保留，Altium 下由封装阶段镜像完成状态。
+    const bool enableModel3D = m_options.exportModel3D;
+    const bool runExternalModel3DStage = enableModel3D && m_options.targetFormat != TargetEdaFormat::Altium;
     const bool enablePreview = m_options.exportPreviewImages;
     const bool enableDatasheet = m_options.exportDatasheet;
     QStringList exportableComponentIds;
@@ -380,7 +396,7 @@ void ParallelExportService::startExport() {
         }
     }
 
-    m_runningExportStages = (enableSymbol ? 1 : 0) + (enableFootprint ? 1 : 0) + (enableModel3D ? 1 : 0) +
+    m_runningExportStages = (enableSymbol ? 1 : 0) + (enableFootprint ? 1 : 0) + (runExternalModel3DStage ? 1 : 0) +
                             (enablePreview ? 1 : 0) + (enableDatasheet ? 1 : 0);
     logNetworkRuntimeStats(QStringLiteral("export-start"));
 
@@ -407,7 +423,7 @@ void ParallelExportService::startExport() {
         registerStageAndStart(stage, QStringLiteral("Footprint"), exportableComponentIds, runGeneration);
     }
 
-    if (enableModel3D) {
+    if (runExternalModel3DStage) {
         auto* stage = new Model3DExportStage(this);
         stage->setOptions(m_options);
         registerStageAndStart(stage, QStringLiteral("Model3D"), exportableComponentIds, runGeneration);
@@ -587,6 +603,13 @@ void ParallelExportService::onExportItemStatusChanged(const QString& componentId
 
     locker.unlock();
     emit itemStatusChanged(componentId, typeName, status);
+
+    // Altium 的 STEP 在 PcbLib 封装阶段写入并嵌入库中，没有独立的 Model3D stage。
+    // 将封装结果镜像到 Model3D，确保 UI 状态、成功率和总体完成判定一致。
+    if (typeName == QStringLiteral("Footprint") && m_options.exportModel3D &&
+        m_options.targetFormat == TargetEdaFormat::Altium) {
+        onExportItemStatusChanged(componentId, QStringLiteral("Model3D"), status);
+    }
 
     // 更新整体进度
     updateOverallProgress();
