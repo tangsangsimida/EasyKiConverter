@@ -126,7 +126,19 @@ void AltiumBinaryWriter::writePascalString(const QString& str) {
  */
 void AltiumBinaryWriter::writeCStringParameterBlock(const QMap<QString, QString>& params) {
     QString paramStr;
+    QList<QString> orderedKeys;
+    for (const QString& preferred : {QStringLiteral("HEADER"), QStringLiteral("RECORD"), QStringLiteral("PATTERN")}) {
+        if (params.contains(preferred))
+            orderedKeys.append(preferred);
+    }
     for (auto it = params.constBegin(); it != params.constEnd(); ++it) {
+        if (!orderedKeys.contains(it.key()))
+            orderedKeys.append(it.key());
+    }
+    for (const QString& key : orderedKeys) {
+        auto it = params.constFind(key);
+        if (it == params.constEnd())
+            continue;
         QString value = it.value();
         value.replace('|', ' ');
         value.replace(QChar::Null, ' ');
@@ -141,7 +153,24 @@ void AltiumBinaryWriter::writeCStringParameterBlock(const QMap<QString, QString>
  */
 void AltiumBinaryWriter::writeCStringParameterBlockUtf8(const QMap<QString, QString>& params) {
     QByteArray encoded;
+    // Altium 的参数块虽然语义上是键值集合，但记录识别器会读取首个
+    // 参数来判断记录类型。QMap 的字典序会把 ALLPINCOUNT/AREACOLOR
+    // 放在 RECORD/HEADER 前面，从而使合法数据被当作未知记录。保持少量
+    // 协议首字段的稳定顺序，其余字段仍使用 QMap 的确定性顺序。
+    QList<QString> orderedKeys;
+    for (const QString& preferred : {QStringLiteral("HEADER"), QStringLiteral("RECORD"), QStringLiteral("PATTERN")}) {
+        if (params.contains(preferred))
+            orderedKeys.append(preferred);
+    }
     for (auto it = params.constBegin(); it != params.constEnd(); ++it) {
+        if (!orderedKeys.contains(it.key()))
+            orderedKeys.append(it.key());
+    }
+
+    for (const QString& keyName : orderedKeys) {
+        auto it = params.constFind(keyName);
+        if (it == params.constEnd())
+            continue;
         const QByteArray key = it.key().toLatin1();
         QString value = it.value();
         value.replace('|', ' ');

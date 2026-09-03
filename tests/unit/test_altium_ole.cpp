@@ -527,9 +527,11 @@ private slots:
         QVERIFY(schHeader.contains("WEIGHT=10"));
         QVERIFY(schHeader.contains("LIBREF0=C2040"));
         QVERIFY(schHeader.contains("PARTCOUNT0=2"));
+        QVERIFY(schHeader.mid(4).startsWith("|HEADER="));
 
         QByteArray schData;
         QVERIFY(readCfbStream(schPath, QStringLiteral("C2040/Data"), schData));
+        QVERIFY(schData.mid(4).startsWith("|RECORD=1|"));
         QVERIFY(schData.contains("LibReference=C2040"));
         QVERIFY(schData.contains("RECORD=14"));
         QVERIFY(schData.contains("RECORD=45"));
@@ -590,6 +592,10 @@ private slots:
         QVERIFY((readU32(libraryData, 0) & 0x00FFFFFFU) > 10000);
         QVERIFY(libraryData.contains("KIND=Protel_Advanced_PCB"));
         QVERIFY(libraryData.contains("LAYER82NAME=Via Holes"));
+
+        QByteArray footprintParameters;
+        QVERIFY(readCfbStream(pcbPath, QStringLiteral("LQFN-56_L7.0-W7.0-P0.4-EP/Parameters"), footprintParameters));
+        QVERIFY(footprintParameters.mid(4).startsWith("|PATTERN="));
 
         QByteArray footprintData;
         QVERIFY(readCfbStream(pcbPath, QStringLiteral("LQFN-56_L7.0-W7.0-P0.4-EP/Data"), footprintData));
