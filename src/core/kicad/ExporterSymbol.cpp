@@ -535,8 +535,7 @@ QString ExporterSymbol::generateSymbolContent(const IR::SymbolComponentIR& symbo
         QString footprintPath = QString("%1:%2").arg(libName, symbol.footprintName);
         content += QString("      \"%1\"\n").arg(escapePropertyValue(footprintPath));
         content += "      (id 2)\n";
-        content +=
-            QString("      (at %1 %2 0)\n").arg(graphCenterOffsetX, 0, 'f', 2).arg(propertyY, 0, 'f', 2);
+        content += QString("      (at %1 %2 0)\n").arg(graphCenterOffsetX, 0, 'f', 2).arg(propertyY, 0, 'f', 2);
         content += QString("      (effects (font (size %1 %2) (thickness 0) ) hide)\n")
                        .arg(fontSize, 0, 'f', 2)
                        .arg(fontSize, 0, 'f', 2);
@@ -550,8 +549,7 @@ QString ExporterSymbol::generateSymbolContent(const IR::SymbolComponentIR& symbo
         content += QString("      \"LCSC Part\"\n");
         content += QString("      \"%1\"\n").arg(escapePropertyValue(lcscId));
         content += "      (id 5)\n";
-        content +=
-            QString("      (at %1 %2 0)\n").arg(graphCenterOffsetX, 0, 'f', 2).arg(propertyY, 0, 'f', 2);
+        content += QString("      (at %1 %2 0)\n").arg(graphCenterOffsetX, 0, 'f', 2).arg(propertyY, 0, 'f', 2);
         content += QString("      (effects (font (size %1 %2) (thickness 0) ) hide)\n")
                        .arg(fontSize, 0, 'f', 2)
                        .arg(fontSize, 0, 'f', 2);
@@ -565,8 +563,7 @@ QString ExporterSymbol::generateSymbolContent(const IR::SymbolComponentIR& symbo
         content += QString("      \"ki_description\"\n");
         content += QString("      \"%1\"\n").arg(escapePropertyValue(symbolDescription));
         content += "      (id 6)\n";
-        content +=
-            QString("      (at %1 %2 0)\n").arg(graphCenterOffsetX, 0, 'f', 2).arg(propertyY, 0, 'f', 2);
+        content += QString("      (at %1 %2 0)\n").arg(graphCenterOffsetX, 0, 'f', 2).arg(propertyY, 0, 'f', 2);
         content += QString("      (effects (font (size %1 %2) (thickness 0) ) hide)\n")
                        .arg(fontSize, 0, 'f', 2)
                        .arg(fontSize, 0, 'f', 2);

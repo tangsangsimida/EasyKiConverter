@@ -5,6 +5,7 @@
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
+#include <QSaveFile>
 
 namespace EasyKiConverter {
 
@@ -23,11 +24,14 @@ OLECompoundWriter::~OLECompoundWriter() = default;
  */
 bool OLECompoundWriter::create() {
     m_initialized = false;
+    m_finalized = false;
     m_directory.clear();
     m_nodes.clear();
     m_pathToNode.clear();
+    m_entryPaths.clear();
     m_streams.clear();
     m_dataSectors.clear();
+    m_difatSectors.clear();
     m_miniStream.clear();
     m_fat.clear();
     m_miniFat.clear();
@@ -75,15 +79,15 @@ int OLECompoundWriter::createDirectoryEntry(const QString& name, ObjectType type
  * @brief 在指定存储下创建子存储
  */
 bool OLECompoundWriter::addStorage(const QString& parentPath, const QString& name) {
-    if (!m_initialized) {
+    if (!m_initialized || m_finalized || !isValidEntryName(name) || !m_pathToNode.contains(parentPath)) {
         return false;
     }
 
     QString fullPath = parentPath.isEmpty() ? name : parentPath + "/" + name;
 
-    // 检查是否已存在
-    if (m_pathToNode.contains(fullPath)) {
-        return true;  // 已存在，跳过
+    const QString foldedPath = fullPath.toCaseFolded();
+    if (m_entryPaths.contains(foldedPath)) {
+        return false;
     }
 
     int dirIndex = createDirectoryEntry(name, ObjectType::Storage);
@@ -96,6 +100,7 @@ bool OLECompoundWriter::addStorage(const QString& parentPath, const QString& nam
     int nodeIndex = m_nodes.size();
     m_nodes.append(node);
     m_pathToNode[fullPath] = nodeIndex;
+    m_entryPaths.insert(foldedPath);
 
     // 添加到父节点的子列表
     if (parentPath.isEmpty()) {
@@ -123,7 +128,13 @@ bool OLECompoundWriter::addStorage(const QString& name) {
  * @brief 在指定存储下写入流数据
  */
 bool OLECompoundWriter::writeStream(const QString& storagePath, const QString& streamName, const QByteArray& data) {
-    if (!m_initialized) {
+    if (!m_initialized || m_finalized || !isValidEntryName(streamName) || !m_pathToNode.contains(storagePath)) {
+        return false;
+    }
+
+    const QString fullPath = storagePath.isEmpty() ? streamName : storagePath + "/" + streamName;
+    const QString foldedPath = fullPath.toCaseFolded();
+    if (m_entryPaths.contains(foldedPath)) {
         return false;
     }
 
@@ -132,8 +143,14 @@ bool OLECompoundWriter::writeStream(const QString& storagePath, const QString& s
     stream.streamName = streamName;
     stream.data = data;
     m_streams.append(stream);
+    m_entryPaths.insert(foldedPath);
 
     return true;
+}
+
+bool OLECompoundWriter::isValidEntryName(const QString& name) const {
+    return !name.isEmpty() && name.size() <= 31 && !name.contains('/') && !name.contains('\\') && !name.contains(':') &&
+           !name.contains('!') && !name.contains(QChar::Null);
 }
 
 /**
@@ -224,25 +241,130 @@ void OLECompoundWriter::serializeDirectoryEntry(const DirectoryEntry& entry, QBy
  * @param children 子节点的 m_nodes 索引列表（已排序）
  * @return 子树根节点的目录索引
  */
-uint32_t OLECompoundWriter::buildChildTree(int parentIndex, const QVector<int>& children) {
+uint32_t OLECompoundWriter::buildChildTree(const QVector<int>& children) {
     if (children.isEmpty()) {
         return NOSTREAM;
     }
 
-    // 使用二分法构建平衡二叉树
-    int mid = children.size() / 2;
-    int nodeIdx = children[mid];
-    int rootDirIdx = m_nodes[nodeIdx].dirIndex;
+    // CFB 的 sibling tree 不只是二叉搜索树，还必须满足红黑树不变量。
+    // children 已按 CFB 名称顺序排列；逐项插入并进行标准红黑树修复，
+    // 可以同时保持目录顺序和所有根到叶路径相同的黑高。
+    QVector<int> parent(m_directory.size(), -1);
+    int root = -1;
 
-    // 递归构建左子树
-    QVector<int> leftChildren(children.begin(), children.begin() + mid);
-    m_directory[rootDirIdx].leftChild = buildChildTree(rootDirIdx, leftChildren);
+    auto left = [this](int index) {
+        const uint32_t child = m_directory[index].leftChild;
+        return child == NOSTREAM ? -1 : static_cast<int>(child);
+    };
+    auto right = [this](int index) {
+        const uint32_t child = m_directory[index].rightChild;
+        return child == NOSTREAM ? -1 : static_cast<int>(child);
+    };
+    auto setLeft = [this, &parent](int index, int child) {
+        m_directory[index].leftChild = child < 0 ? NOSTREAM : static_cast<uint32_t>(child);
+        if (child >= 0) {
+            parent[child] = index;
+        }
+    };
+    auto setRight = [this, &parent](int index, int child) {
+        m_directory[index].rightChild = child < 0 ? NOSTREAM : static_cast<uint32_t>(child);
+        if (child >= 0) {
+            parent[child] = index;
+        }
+    };
 
-    // 递归构建右子树
-    QVector<int> rightChildren(children.begin() + mid + 1, children.end());
-    m_directory[rootDirIdx].rightChild = buildChildTree(rootDirIdx, rightChildren);
+    auto rotateLeft = [&](int pivot) {
+        const int promoted = right(pivot);
+        const int oldParent = parent[pivot];
+        setRight(pivot, left(promoted));
+        parent[promoted] = oldParent;
+        if (oldParent < 0) {
+            root = promoted;
+        } else if (left(oldParent) == pivot) {
+            m_directory[oldParent].leftChild = static_cast<uint32_t>(promoted);
+        } else {
+            m_directory[oldParent].rightChild = static_cast<uint32_t>(promoted);
+        }
+        setLeft(promoted, pivot);
+    };
+    auto rotateRight = [&](int pivot) {
+        const int promoted = left(pivot);
+        const int oldParent = parent[pivot];
+        setLeft(pivot, right(promoted));
+        parent[promoted] = oldParent;
+        if (oldParent < 0) {
+            root = promoted;
+        } else if (left(oldParent) == pivot) {
+            m_directory[oldParent].leftChild = static_cast<uint32_t>(promoted);
+        } else {
+            m_directory[oldParent].rightChild = static_cast<uint32_t>(promoted);
+        }
+        setRight(promoted, pivot);
+    };
 
-    return static_cast<uint32_t>(rootDirIdx);
+    for (int nodeIndex : children) {
+        const int inserted = m_nodes[nodeIndex].dirIndex;
+        m_directory[inserted].leftChild = NOSTREAM;
+        m_directory[inserted].rightChild = NOSTREAM;
+        m_directory[inserted].colorFlag = 0;  // 新节点为红色
+
+        // 排序后的节点总是插入当前最大值的右侧。旋转只改变树形，
+        // 不改变中序顺序，因此该性质在后续插入中仍成立。
+        int insertionParent = -1;
+        int cursor = root;
+        while (cursor >= 0) {
+            insertionParent = cursor;
+            cursor = right(cursor);
+        }
+        parent[inserted] = insertionParent;
+        if (insertionParent < 0) {
+            root = inserted;
+        } else {
+            m_directory[insertionParent].rightChild = static_cast<uint32_t>(inserted);
+        }
+
+        int current = inserted;
+        while (parent[current] >= 0 && m_directory[parent[current]].colorFlag == 0) {
+            const int currentParent = parent[current];
+            const int grandParent = parent[currentParent];
+            if (currentParent == left(grandParent)) {
+                const int uncle = right(grandParent);
+                if (uncle >= 0 && m_directory[uncle].colorFlag == 0) {
+                    m_directory[currentParent].colorFlag = 1;
+                    m_directory[uncle].colorFlag = 1;
+                    m_directory[grandParent].colorFlag = 0;
+                    current = grandParent;
+                } else {
+                    if (current == right(currentParent)) {
+                        current = currentParent;
+                        rotateLeft(current);
+                    }
+                    m_directory[parent[current]].colorFlag = 1;
+                    m_directory[parent[parent[current]]].colorFlag = 0;
+                    rotateRight(parent[parent[current]]);
+                }
+            } else {
+                const int uncle = left(grandParent);
+                if (uncle >= 0 && m_directory[uncle].colorFlag == 0) {
+                    m_directory[currentParent].colorFlag = 1;
+                    m_directory[uncle].colorFlag = 1;
+                    m_directory[grandParent].colorFlag = 0;
+                    current = grandParent;
+                } else {
+                    if (current == left(currentParent)) {
+                        current = currentParent;
+                        rotateRight(current);
+                    }
+                    m_directory[parent[current]].colorFlag = 1;
+                    m_directory[parent[parent[current]]].colorFlag = 0;
+                    rotateLeft(parent[parent[current]]);
+                }
+            }
+        }
+        m_directory[root].colorFlag = 1;
+    }
+
+    return static_cast<uint32_t>(root);
 }
 
 /**
@@ -265,7 +387,7 @@ void OLECompoundWriter::buildSubTree(int nodeIdx) {
         return nameA.compare(nameB, Qt::CaseInsensitive) < 0;
     });
 
-    m_directory[node.dirIndex].child = buildChildTree(node.dirIndex, sorted);
+    m_directory[node.dirIndex].child = buildChildTree(sorted);
 
     // 递归处理子存储节点
     for (int childIdx : node.children) {
@@ -348,7 +470,8 @@ void OLECompoundWriter::serializeFileHeader(QByteArray& header) const {
     // First directory sector
     // CFB sector 0 starts right after the 512-byte header. FAT occupies sectors
     // 0..totalFatSectors-1, so the directory begins at sector totalFatSectors.
-    uint32_t firstDirSector = totalFatSectors;
+    const uint32_t totalDifatSectors = static_cast<uint32_t>(m_difatSectors.size());
+    uint32_t firstDirSector = totalFatSectors + totalDifatSectors;
     header[offset++] = static_cast<char>(firstDirSector & 0xFF);
     header[offset++] = static_cast<char>((firstDirSector >> 8) & 0xFF);
     header[offset++] = static_cast<char>((firstDirSector >> 16) & 0xFF);
@@ -368,7 +491,7 @@ void OLECompoundWriter::serializeFileHeader(QByteArray& header) const {
     if (!m_miniFat.isEmpty()) {
         uint32_t dirSectors =
             (static_cast<uint32_t>(m_directory.size()) * DIR_ENTRY_SIZE + SECTOR_SIZE - 1) / SECTOR_SIZE;
-        firstMiniFatSector = totalFatSectors + dirSectors;
+        firstMiniFatSector = totalFatSectors + totalDifatSectors + dirSectors;
     }
     header[offset++] = static_cast<char>(firstMiniFatSector & 0xFF);
     header[offset++] = static_cast<char>((firstMiniFatSector >> 8) & 0xFF);
@@ -383,14 +506,17 @@ void OLECompoundWriter::serializeFileHeader(QByteArray& header) const {
     header[offset++] = static_cast<char>((totalMiniFatSectors >> 24) & 0xFF);
 
     // First DIFAT sector
-    uint32_t firstDifatSector = ENDOFCHAIN;
+    uint32_t firstDifatSector = totalDifatSectors == 0 ? ENDOFCHAIN : totalFatSectors;
     header[offset++] = static_cast<char>(firstDifatSector & 0xFF);
     header[offset++] = static_cast<char>((firstDifatSector >> 8) & 0xFF);
     header[offset++] = static_cast<char>((firstDifatSector >> 16) & 0xFF);
     header[offset++] = static_cast<char>((firstDifatSector >> 24) & 0xFF);
 
     // Total DIFAT sectors
-    offset += 4;
+    header[offset++] = static_cast<char>(totalDifatSectors & 0xFF);
+    header[offset++] = static_cast<char>((totalDifatSectors >> 8) & 0xFF);
+    header[offset++] = static_cast<char>((totalDifatSectors >> 16) & 0xFF);
+    header[offset++] = static_cast<char>((totalDifatSectors >> 24) & 0xFF);
 
     // DIFAT array (109 entries)
     // The first FAT sector is CFB sector 0, immediately after the header.
@@ -422,7 +548,11 @@ void OLECompoundWriter::finalize() {
         int dirIndex = createDirectoryEntry(stream.streamName, ObjectType::Stream);
         uint64_t dataSize = static_cast<uint64_t>(stream.data.size());
 
-        if (dataSize < MINI_STREAM_CUTOFF) {
+        if (dataSize == 0) {
+            // CFB 零长度流不占用普通扇区或 mini sector。
+            m_directory[dirIndex].startSector = ENDOFCHAIN;
+            m_directory[dirIndex].streamSize = 0;
+        } else if (dataSize < MINI_STREAM_CUTOFF) {
             // 小数据写入 Mini-Stream
             uint32_t miniSectorStart = static_cast<uint32_t>(m_miniStream.size() / MINI_SECTOR_SIZE);
             m_miniStream.append(stream.data);
@@ -540,7 +670,7 @@ void OLECompoundWriter::finalize() {
     uint32_t miniFatSectors = static_cast<uint32_t>((m_miniFat.size() * 4 + SECTOR_SIZE - 1) / SECTOR_SIZE);
 
     // ---- 构建完整的 FAT（包含所有扇区的条目）----
-    // 文件布局：FAT(0..N-1) | dir(N..N+D-1) | MiniFAT | data
+    // 文件布局：FAT | DIFAT | Directory | MiniFAT | Data。
     // m_fat 目前只有数据扇区的链式条目（每个条目=一个数据扇区的后继指针）
     // 需要补充 FAT/dir/MiniFAT 的条目，并为未使用的数据扇区填 FREESECT
     uint32_t dataSectorCount = static_cast<uint32_t>(m_fat.size());
@@ -548,15 +678,19 @@ void OLECompoundWriter::finalize() {
 
     // 迭代计算 FAT 扇区数（FAT 扇区自身也占条目）
     uint32_t fatSectors = 0;
+    uint32_t difatSectors = 0;
     uint32_t totalEntries = 0;
-    for (int iter = 0; iter < 10; ++iter) {
-        uint32_t newTotal = fatSectors + dirSectors + miniFatSectors + dataSectorCount;
+    for (int iter = 0; iter < 32; ++iter) {
+        uint32_t newTotal = fatSectors + difatSectors + dirSectors + miniFatSectors + dataSectorCount;
         newTotal = ((newTotal + entriesPerSector - 1) / entriesPerSector) * entriesPerSector;
         uint32_t newFatSectors = newTotal / entriesPerSector;
-        if (newFatSectors == fatSectors && newTotal == totalEntries) {
+        uint32_t newDifatSectors =
+            newFatSectors <= 109 ? 0 : (newFatSectors - 109 + (entriesPerSector - 2)) / (entriesPerSector - 1);
+        if (newFatSectors == fatSectors && newDifatSectors == difatSectors && newTotal == totalEntries) {
             break;
         }
         fatSectors = newFatSectors;
+        difatSectors = newDifatSectors;
         totalEntries = newTotal;
     }
 
@@ -569,23 +703,30 @@ void OLECompoundWriter::finalize() {
         fullFat.append(FATSECT);
     }
 
-    // [fatSectors .. fatSectors+dirSectors-1] Directory sectors → 链式
+    // DIFAT sectors are allocation-table metadata and have their own marker.
+    for (uint32_t i = 0; i < difatSectors; ++i) {
+        fullFat.append(DIFSECT);
+    }
+
+    const uint32_t directoryOffset = fatSectors + difatSectors;
+    // Directory sectors → 链式
     for (uint32_t i = 0; i < dirSectors; ++i) {
         if (i < dirSectors - 1) {
-            fullFat.append(fatSectors + i + 1);
+            fullFat.append(directoryOffset + i + 1);
         } else {
             fullFat.append(ENDOFCHAIN);
         }
     }
 
-    // MiniFAT sectors（通过 header 引用，FAT 中标记为普通已分配扇区）
+    // MiniFAT sectors 也必须通过 FAT 串成链，不能只依赖物理连续性。
+    const uint32_t firstMiniFatOffset = directoryOffset + dirSectors;
     for (uint32_t i = 0; i < miniFatSectors; ++i) {
-        fullFat.append(ENDOFCHAIN);
+        fullFat.append(i + 1 < miniFatSectors ? firstMiniFatOffset + i + 1 : ENDOFCHAIN);
     }
 
     // Data sectors → 来自 m_fat，需要加偏移量
     // m_fat 中的链式指针是从 0 开始的数据扇区索引，需要偏移到文件中的实际位置
-    uint32_t dataOffset = fatSectors + dirSectors + miniFatSectors;  // 不含 dataSectorCount
+    uint32_t dataOffset = fatSectors + difatSectors + dirSectors + miniFatSectors;
     for (uint32_t val : m_fat) {
         if (val == ENDOFCHAIN) {
             fullFat.append(ENDOFCHAIN);
@@ -601,6 +742,31 @@ void OLECompoundWriter::finalize() {
     }
 
     m_fat = fullFat;
+
+    // 头部只能容纳 109 个 FAT sector id，其余 id 以每扇区 127 项串成 DIFAT 链。
+    m_difatSectors.clear();
+    for (uint32_t difatIndex = 0; difatIndex < difatSectors; ++difatIndex) {
+        QByteArray sector(SECTOR_SIZE, static_cast<char>(0xFF));
+        const uint32_t firstFatIndex = 109 + difatIndex * (entriesPerSector - 1);
+        for (uint32_t item = 0; item < entriesPerSector - 1; ++item) {
+            const uint32_t fatIndex = firstFatIndex + item;
+            if (fatIndex >= fatSectors) {
+                break;
+            }
+            const int byteOffset = static_cast<int>(item * 4);
+            sector[byteOffset] = static_cast<char>(fatIndex & 0xFF);
+            sector[byteOffset + 1] = static_cast<char>((fatIndex >> 8) & 0xFF);
+            sector[byteOffset + 2] = static_cast<char>((fatIndex >> 16) & 0xFF);
+            sector[byteOffset + 3] = static_cast<char>((fatIndex >> 24) & 0xFF);
+        }
+        const uint32_t next = difatIndex + 1 < difatSectors ? fatSectors + difatIndex + 1 : ENDOFCHAIN;
+        const int nextOffset = static_cast<int>((entriesPerSector - 1) * 4);
+        sector[nextOffset] = static_cast<char>(next & 0xFF);
+        sector[nextOffset + 1] = static_cast<char>((next >> 8) & 0xFF);
+        sector[nextOffset + 2] = static_cast<char>((next >> 16) & 0xFF);
+        sector[nextOffset + 3] = static_cast<char>((next >> 24) & 0xFF);
+        m_difatSectors.append(sector);
+    }
 
     // Directory stream start sectors must be absolute CFB sector numbers.
     // Mini-stream entries keep their offset inside the root mini stream.
@@ -623,7 +789,10 @@ bool OLECompoundWriter::saveToFile(const QString& filePath) {
         return false;
     }
 
-    finalize();
+    if (!m_finalized) {
+        finalize();
+        m_finalized = true;
+    }
 
     qDebug() << "OLECompoundWriter::saveToFile: Writing to" << filePath << "streams:" << m_streams.size()
              << "directory:" << m_directory.size() << "fat:" << m_fat.size();
@@ -635,7 +804,7 @@ bool OLECompoundWriter::saveToFile(const QString& filePath) {
         QDir().mkpath(fileInfo.path());
     }
 
-    QFile file(filePath);
+    QSaveFile file(filePath);
     if (!file.open(QIODevice::WriteOnly)) {
         qWarning() << "OLECompoundWriter::saveToFile: Failed to open file:" << filePath
                    << "error:" << file.errorString() << "exists:" << QFile::exists(filePath)
@@ -646,7 +815,17 @@ bool OLECompoundWriter::saveToFile(const QString& filePath) {
     // 写入头部（512 字节）
     QByteArray header;
     serializeFileHeader(header);
-    file.write(header);
+    auto writeAll = [&file, &filePath](const QByteArray& bytes) {
+        if (file.write(bytes) == bytes.size()) {
+            return true;
+        }
+        qWarning() << "OLECompoundWriter::saveToFile: Short write:" << filePath << file.errorString();
+        return false;
+    };
+    if (!writeAll(header)) {
+        file.cancelWriting();
+        return false;
+    }
 
     // 写入 FAT 扇区（每个扇区 128 个条目）
     uint32_t fatSectorCount = static_cast<uint32_t>(m_fat.size()) / (SECTOR_SIZE / 4);
@@ -662,7 +841,17 @@ bool OLECompoundWriter::saveToFile(const QString& filePath) {
             sectorData[off + 2] = static_cast<char>((val >> 16) & 0xFF);
             sectorData[off + 3] = static_cast<char>((val >> 24) & 0xFF);
         }
-        file.write(sectorData);
+        if (!writeAll(sectorData)) {
+            file.cancelWriting();
+            return false;
+        }
+    }
+
+    for (const QByteArray& sector : m_difatSectors) {
+        if (!writeAll(sector)) {
+            file.cancelWriting();
+            return false;
+        }
     }
 
     // 写入目录扇区
@@ -672,7 +861,10 @@ bool OLECompoundWriter::saveToFile(const QString& filePath) {
         serializeDirectoryEntry(entry, entryData);
         dirData.append(entryData);
     }
-    file.write(dirData);
+    if (!writeAll(dirData)) {
+        file.cancelWriting();
+        return false;
+    }
 
     // 写入 Mini-FAT 扇区
     if (!m_miniFat.isEmpty()) {
@@ -683,15 +875,24 @@ bool OLECompoundWriter::saveToFile(const QString& filePath) {
             miniFatData.append(static_cast<char>((val >> 16) & 0xFF));
             miniFatData.append(static_cast<char>((val >> 24) & 0xFF));
         }
-        file.write(miniFatData);
+        if (!writeAll(miniFatData)) {
+            file.cancelWriting();
+            return false;
+        }
     }
 
     // 写入数据扇区
     for (const QByteArray& sector : m_dataSectors) {
-        file.write(sector);
+        if (!writeAll(sector)) {
+            file.cancelWriting();
+            return false;
+        }
     }
 
-    file.close();
+    if (!file.commit()) {
+        qWarning() << "OLECompoundWriter::saveToFile: Commit failed:" << filePath << file.errorString();
+        return false;
+    }
     return true;
 }
 

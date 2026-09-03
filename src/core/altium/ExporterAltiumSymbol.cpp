@@ -4,7 +4,6 @@
 #include "utils/AltiumLayerMap.h"
 
 #include <QDebug>
-
 #include <QSet>
 
 namespace EasyKiConverter {
@@ -106,18 +105,16 @@ AltiumSchPin ExporterAltiumSymbol::convertPin(const IR::SymbolPinIR& pin) {
     altiumPin.showName = pin.showName;
     altiumPin.showDesignator = pin.showDesignator;
     altiumPin.isHidden = !pin.showName && !pin.showDesignator;
+    altiumPin.ownerPartId = qMax(1, pin.partIndex + 1);
 
     // 电源引脚检测：EasyEDA 通常不区分电源引脚（type=3/Bidirectional），
     // 通过引脚名称匹配常见电源网络名称，强制设为 Power 类型
     if (altiumPin.electricalType != AltiumModels::PinElectricalType::Power) {
         static const QSet<QString> powerPinNames = {
-            "GND", "AGND", "DGND", "PGND", "SGND", "CGND", "GNDP", "GNDN",
-            "VCC", "VDD", "AVCC", "AVDD", "DVDD", "IOVDD", "PVDD", "SVDD",
-            "VDDA", "VDDIO", "VDDS", "VDDP",
-            "VBUS", "VSYS", "VIN", "5V", "3V3", "1V8",
-            "USB_VDD", "ADC_AVDD",
-            "VREG_IN", "VREG_OUT", "VREG_VOUT",
-            "VEE", "VSS", "VSSA",
+            "GND",      "AGND",    "DGND",     "PGND",      "SGND",  "CGND", "GNDP", "GNDN", "VCC",
+            "VDD",      "AVCC",    "AVDD",     "DVDD",      "IOVDD", "PVDD", "SVDD", "VDDA", "VDDIO",
+            "VDDS",     "VDDP",    "VBUS",     "VSYS",      "VIN",   "5V",   "3V3",  "1V8",  "USB_VDD",
+            "ADC_AVDD", "VREG_IN", "VREG_OUT", "VREG_VOUT", "VEE",   "VSS",  "VSSA",
         };
         QString upperName = pin.name.toUpper().trimmed();
         if (powerPinNames.contains(upperName)) {
@@ -138,7 +135,8 @@ AltiumSchRectangle ExporterAltiumSymbol::convertRectangle(const IR::SymbolRectan
     altiumRect.cornerX = AltiumCoord::mmToRaw(rect.x1);
     altiumRect.cornerY = AltiumCoord::mmToRaw(rect.y1);
     altiumRect.lineWidth = AltiumCoord::lineWidthMmToIndex(rect.strokeWidth);
-    altiumRect.isSolid = true;
+    altiumRect.isSolid = rect.isFilled;
+    altiumRect.ownerPartId = qMax(1, rect.partIndex + 1);
     return altiumRect;
 }
 
@@ -153,6 +151,7 @@ AltiumSchEllipse ExporterAltiumSymbol::convertCircle(const IR::SymbolCircleIR& c
     altiumEllipse.radiusY = AltiumCoord::mmToRaw(circle.radius);
     altiumEllipse.lineWidth = AltiumCoord::lineWidthMmToIndex(circle.strokeWidth);
     altiumEllipse.isSolid = circle.isFilled;
+    altiumEllipse.ownerPartId = qMax(1, circle.partIndex + 1);
     return altiumEllipse;
 }
 
@@ -161,8 +160,22 @@ AltiumSchEllipse ExporterAltiumSymbol::convertCircle(const IR::SymbolCircleIR& c
  */
 AltiumSchArc ExporterAltiumSymbol::convertArc(const IR::SymbolArcIR& arc) {
     AltiumSchArc altiumArc;
-    // 从三点表示估算圆心和半径
+    // 三点确定圆弧。退化为共线时，以首尾中点作为安全回退。
+    const double ax = arc.startPoint.x();
+    const double ay = arc.startPoint.y();
+    const double bx = arc.midPoint.x();
+    const double by = arc.midPoint.y();
+    const double cx = arc.endPoint.x();
+    const double cy = arc.endPoint.y();
+    const double determinant = 2.0 * (ax * (by - cy) + bx * (cy - ay) + cx * (ay - by));
     QPointF center = (arc.startPoint + arc.endPoint) / 2.0;
+    if (std::abs(determinant) > 1e-12) {
+        const double a2 = ax * ax + ay * ay;
+        const double b2 = bx * bx + by * by;
+        const double c2 = cx * cx + cy * cy;
+        center.setX((a2 * (by - cy) + b2 * (cy - ay) + c2 * (ay - by)) / determinant);
+        center.setY((a2 * (cx - bx) + b2 * (ax - cx) + c2 * (bx - ax)) / determinant);
+    }
     double dx = arc.startPoint.x() - center.x();
     double dy = arc.startPoint.y() - center.y();
     double radius = std::sqrt(dx * dx + dy * dy);
@@ -172,6 +185,7 @@ AltiumSchArc ExporterAltiumSymbol::convertArc(const IR::SymbolArcIR& arc) {
     altiumArc.startAngle = std::atan2(arc.startPoint.y() - center.y(), arc.startPoint.x() - center.x()) * 180.0 / M_PI;
     altiumArc.endAngle = std::atan2(arc.endPoint.y() - center.y(), arc.endPoint.x() - center.x()) * 180.0 / M_PI;
     altiumArc.lineWidth = AltiumCoord::lineWidthMmToIndex(arc.strokeWidth);
+    altiumArc.ownerPartId = qMax(1, arc.partIndex + 1);
     return altiumArc;
 }
 
@@ -182,6 +196,7 @@ AltiumSchPolygon ExporterAltiumSymbol::convertPolygon(const IR::SymbolPolygonIR&
     AltiumSchPolygon altiumPolygon;
     altiumPolygon.lineWidth = AltiumCoord::lineWidthMmToIndex(polygon.strokeWidth);
     altiumPolygon.isSolid = polygon.isFilled;
+    altiumPolygon.ownerPartId = qMax(1, polygon.partIndex + 1);
 
     for (const QPointF& point : polygon.points) {
         altiumPolygon.vertices.append(
@@ -196,6 +211,7 @@ AltiumSchPolygon ExporterAltiumSymbol::convertPolygon(const IR::SymbolPolygonIR&
 AltiumSchPolyline ExporterAltiumSymbol::convertPolyline(const IR::SymbolPolylineIR& polyline) {
     AltiumSchPolyline altiumPolyline;
     altiumPolyline.lineWidth = AltiumCoord::lineWidthMmToIndex(polyline.strokeWidth);
+    altiumPolyline.ownerPartId = qMax(1, polyline.partIndex + 1);
 
     for (const QPointF& point : polyline.points) {
         altiumPolyline.vertices.append(
@@ -210,6 +226,7 @@ AltiumSchPolyline ExporterAltiumSymbol::convertPolyline(const IR::SymbolPolyline
 AltiumSchPath ExporterAltiumSymbol::convertPath(const IR::SymbolPathIR& path) {
     AltiumSchPath altiumPath;
     altiumPath.lineWidth = AltiumCoord::lineWidthMmToIndex(path.strokeWidth);
+    altiumPath.ownerPartId = qMax(1, path.partIndex + 1);
 
     for (const QPointF& point : path.points) {
         altiumPath.vertices.append(
@@ -229,6 +246,7 @@ AltiumSchText ExporterAltiumSymbol::convertText(const IR::SymbolTextIR& text) {
     altiumText.fontId = 1;
     altiumText.isHidden = !text.visible;
     altiumText.orientation = static_cast<int>(text.rotation / 90.0) % 4;
+    altiumText.ownerPartId = qMax(1, text.partIndex + 1);
     return altiumText;
 }
 
@@ -243,6 +261,7 @@ AltiumSchEllipse ExporterAltiumSymbol::convertEllipse(const IR::SymbolEllipseIR&
     altiumEllipse.radiusY = AltiumCoord::mmToRaw(ellipse.radiusY);
     altiumEllipse.lineWidth = AltiumCoord::lineWidthMmToIndex(ellipse.strokeWidth);
     altiumEllipse.isSolid = ellipse.isFilled;
+    altiumEllipse.ownerPartId = qMax(1, ellipse.partIndex + 1);
     return altiumEllipse;
 }
 
@@ -252,7 +271,8 @@ AltiumSchEllipse ExporterAltiumSymbol::convertEllipse(const IR::SymbolEllipseIR&
  *          方便用户在 Altium Designer 中连线。
  */
 void ExporterAltiumSymbol::centerComponent(AltiumSchComponent& component) {
-    if (component.pins.isEmpty()) return;
+    if (component.pins.isEmpty())
+        return;
 
     // 以第一个引脚位置为原点
     int offsetX = component.pins[0].locationX;

@@ -5,19 +5,13 @@
 #include "utils/AltiumLayerMap.h"
 #include "utils/AltiumWriterUtils.h"
 
+#include <QDateTime>
 #include <QDebug>
-#include <QRandomGenerator>
+#include <QFileInfo>
+#include <QLocale>
 #include <QtEndian>
 
 namespace EasyKiConverter {
-
-/**
- * @brief 获取封装的 Section Key
- * @details 委托给 AltiumWriterUtils::getSectionKey()
- */
-QString AltiumPcbLibWriter::getSectionKey(const QString& name) const {
-    return AltiumWriterUtils::getSectionKey(name);
-}
 
 /**
  * @brief 统计封装中的图元数量
@@ -31,6 +25,10 @@ int AltiumPcbLibWriter::countPrimitives(const AltiumPcbComponent& component) con
  * @brief 添加广字符串并返回索引
  */
 int AltiumPcbLibWriter::addWideString(const QString& text) {
+    const int existing = m_wideStrings.indexOf(text);
+    if (existing >= 0) {
+        return existing;
+    }
     int idx = m_wideStrings.size();
     m_wideStrings.append(text);
     return idx;
@@ -49,6 +47,10 @@ uint32_t AltiumPcbLibWriter::toV7LayerId(uint8_t layer) const {
 bool AltiumPcbLibWriter::write(const QList<AltiumPcbComponent>& components,
                                const QString& filePath,
                                const QString& libraryName) {
+    if (components.isEmpty()) {
+        qWarning() << "AltiumPcbLibWriter: Refusing to write an empty library";
+        return false;
+    }
     m_wideStrings.clear();
 
     qDebug() << "AltiumPcbLibWriter::write: components:" << components.size() << "filePath:" << filePath;
@@ -59,15 +61,21 @@ bool AltiumPcbLibWriter::write(const QList<AltiumPcbComponent>& components,
         return false;
     }
 
-    // 写入各流
+    QStringList names;
+    for (const AltiumPcbComponent& component : components) {
+        names.append(component.name);
+    }
+    const QStringList sectionKeys = AltiumWriterUtils::makeUniqueSectionKeys(names);
+
+    // 只输出 PcbLib 核心流。未知或不完整的可选 storage 比缺省更危险，
+    // 因为 Altium 会尝试按其声明的版本反序列化它们。
     writeFileHeader(ole);
-    writeSectionKeys(ole, components);
-    writeFileVersionInfo(ole);
-    writeLibraryStorage(ole, components);
+    writeSectionKeys(ole, components, sectionKeys);
+    writeLibraryStorage(ole, components, filePath);
 
     // 写入每个封装
-    for (const AltiumPcbComponent& component : components) {
-        writeFootprintStorage(ole, component);
+    for (int i = 0; i < components.size(); ++i) {
+        writeFootprintStorage(ole, components[i], sectionKeys[i]);
     }
 
     bool result = ole.saveToFile(filePath);
@@ -76,30 +84,17 @@ bool AltiumPcbLibWriter::write(const QList<AltiumPcbComponent>& components,
 }
 
 /**
- * @brief 写入 FileHeader 流（53 字节）
+ * @brief 写入 PcbLib v6 FileHeader 流
  */
 void AltiumPcbLibWriter::writeFileHeader(OLECompoundWriter& ole) {
     QByteArray header;
     AltiumBinaryWriter writer(header);
 
-    // 版本字符串块
+    // 此流的第一个 i32 是版本文本本身的长度，随后是 Pascal short string。
+    // 它不是通用 string block，后面也没有版本 double 或随机 ID。
     QByteArray versionStr = "PCB 6.0 Binary Library File";
-    writer.writeUInt32(static_cast<uint32_t>(1 + 1 + versionStr.size()));
-    writer.writeUInt8(static_cast<uint8_t>(versionStr.size()));
-    writer.writeBytes(versionStr);
-
-    // 版本号 double
-    writer.writeDouble(5.01);
-
-    // UniqueId 块
-    QString uid;
-    for (int i = 0; i < 8; ++i) {
-        uid += QChar('A' + QRandomGenerator::global()->bounded(26));
-    }
-    QByteArray uidBytes = uid.toLatin1();
-    writer.writeUInt32(static_cast<uint32_t>(1 + 1 + uidBytes.size()));
-    writer.writeUInt8(static_cast<uint8_t>(uidBytes.size()));
-    writer.writeBytes(uidBytes);
+    writer.writeInt32(versionStr.size());
+    writer.writePascalShortString(QString::fromLatin1(versionStr));
 
     ole.writeStream("FileHeader", header);
 }
@@ -107,14 +102,17 @@ void AltiumPcbLibWriter::writeFileHeader(OLECompoundWriter& ole) {
 /**
  * @brief 写入 SectionKeys 流
  */
-void AltiumPcbLibWriter::writeSectionKeys(OLECompoundWriter& ole, const QList<AltiumPcbComponent>& components) {
+void AltiumPcbLibWriter::writeSectionKeys(OLECompoundWriter& ole,
+                                          const QList<AltiumPcbComponent>& components,
+                                          const QStringList& sectionKeys) {
     QByteArray data;
     AltiumBinaryWriter writer(data);
 
     // 计算需要映射的条目数
     QVector<QPair<QString, QString>> mappings;
-    for (const AltiumPcbComponent& comp : components) {
-        QString key = getSectionKey(comp.name);
+    for (int i = 0; i < components.size(); ++i) {
+        const AltiumPcbComponent& comp = components[i];
+        const QString& key = sectionKeys[i];
         if (key != comp.name) {
             mappings.append({comp.name, key});
         }
@@ -122,7 +120,7 @@ void AltiumPcbLibWriter::writeSectionKeys(OLECompoundWriter& ole, const QList<Al
 
     writer.writeUInt32(static_cast<uint32_t>(mappings.size()));
     for (const auto& mapping : mappings) {
-        writer.writeStringBlock(mapping.first);
+        writer.writePascalString(mapping.first);
         writer.writeStringBlock(mapping.second);
     }
 
@@ -132,30 +130,11 @@ void AltiumPcbLibWriter::writeSectionKeys(OLECompoundWriter& ole, const QList<Al
 }
 
 /**
- * @brief 写入 FileVersionInfo 存储
- */
-void AltiumPcbLibWriter::writeFileVersionInfo(OLECompoundWriter& ole) {
-    ole.addStorage("FileVersionInfo");
-
-    // Header 流
-    QByteArray headerData;
-    AltiumBinaryWriter headerWriter(headerData);
-    headerWriter.writeUInt32(1);  // record count
-    ole.writeStream("FileVersionInfo", "Header", headerData);
-
-    // Data 流
-    QByteArray data;
-    AltiumBinaryWriter writer(data);
-    QMap<QString, QString> params;
-    params["UniqueID"] = "EasyKiConverter";
-    writer.writeCStringParameterBlock(params);
-    ole.writeStream("FileVersionInfo", "Data", data);
-}
-
-/**
  * @brief 写入 Library 存储
  */
-void AltiumPcbLibWriter::writeLibraryStorage(OLECompoundWriter& ole, const QList<AltiumPcbComponent>& components) {
+void AltiumPcbLibWriter::writeLibraryStorage(OLECompoundWriter& ole,
+                                             const QList<AltiumPcbComponent>& components,
+                                             const QString& filePath) {
     ole.addStorage("Library");
 
     // Header 流
@@ -166,50 +145,11 @@ void AltiumPcbLibWriter::writeLibraryStorage(OLECompoundWriter& ole, const QList
 
     // Data 流
     QByteArray libData;
-    writeLibraryData(libData, components);
+    writeLibraryData(libData, components, filePath);
     ole.writeStream("Library", "Data", libData);
 
     // Models 存储
     writeModelsStorage(ole, components);
-
-    // LayerKindMapping 存储
-    {
-        ole.addStorage("Library", "LayerKindMapping");
-        QByteArray hdrData;
-        AltiumBinaryWriter hdr(hdrData);
-        hdr.writeUInt32(1);
-        ole.writeStream("Library/LayerKindMapping", "Header", hdrData);
-
-        QByteArray mappingData;
-        writeLayerKindMapping(mappingData);
-        ole.writeStream("Library/LayerKindMapping", "Data", mappingData);
-    }
-
-    // PadViaLibrary 存储
-    {
-        ole.addStorage("Library", "PadViaLibrary");
-        QByteArray hdrData;
-        AltiumBinaryWriter hdr(hdrData);
-        hdr.writeUInt32(0);
-        ole.writeStream("Library/PadViaLibrary", "Header", hdrData);
-
-        QByteArray pvData;
-        writePadViaLibrary(pvData);
-        ole.writeStream("Library/PadViaLibrary", "Data", pvData);
-    }
-
-    // ComponentParamsTOC 存储
-    {
-        ole.addStorage("Library", "ComponentParamsTOC");
-        QByteArray hdrData;
-        AltiumBinaryWriter hdr(hdrData);
-        hdr.writeUInt32(1);
-        ole.writeStream("Library/ComponentParamsTOC", "Header", hdrData);
-
-        QByteArray tocData;
-        writeComponentParamsToc(tocData, components);
-        ole.writeStream("Library/ComponentParamsTOC", "Data", tocData);
-    }
 
     // Textures 存储（空）
     {
@@ -235,14 +175,16 @@ void AltiumPcbLibWriter::writeLibraryStorage(OLECompoundWriter& ole, const QList
 /**
  * @brief 写入 Library/Data 流
  */
-void AltiumPcbLibWriter::writeLibraryData(QByteArray& buffer, const QList<AltiumPcbComponent>& components) {
+void AltiumPcbLibWriter::writeLibraryData(QByteArray& buffer,
+                                          const QList<AltiumPcbComponent>& components,
+                                          const QString& filePath) {
     AltiumBinaryWriter writer(buffer);
 
-    // 库头参数块
-    QMap<QString, QString> params;
-    params["HEADER"] = "PCB 6.0 Binary Library File";
-    params["WEIGHT"] = QString::number(components.size());
-    writer.writeCStringParameterBlock(params);
+    writer.beginBlock();
+    QByteArray metadata = buildLibraryMetadata(filePath).toLatin1();
+    metadata.append('\0');
+    writer.writeBytes(metadata);
+    writer.endBlock();
 
     // 元件数量
     writer.writeUInt32(static_cast<uint32_t>(components.size()));
@@ -251,6 +193,111 @@ void AltiumPcbLibWriter::writeLibraryData(QByteArray& buffer, const QList<Altium
     for (const AltiumPcbComponent& comp : components) {
         writer.writeStringBlock(comp.name);
     }
+}
+
+QString AltiumPcbLibWriter::buildLibraryMetadata(const QString& filePath) const {
+    auto safeValue = [](QString value) {
+        value.replace('|', ' ');
+        value.replace('\0', ' ');
+        return value;
+    };
+    auto append = [&safeValue](QStringList& fields, const QString& key, const QString& value) {
+        fields.append(key + "=" + safeValue(value));
+    };
+
+    QString absolutePath = QFileInfo(filePath).absoluteFilePath();
+    absolutePath.replace('/', '\\');
+    const QDateTime now = QDateTime::currentDateTime();
+
+    // Altium serializes library settings as a sequence of Board records. We build
+    // that profile from typed defaults so it remains reviewable and evolvable
+    // instead of embedding an opaque captured blob.
+    QList<QStringList> records;
+    records.append(QStringList{});
+    QStringList& identity = records.last();
+    append(identity, "FILENAME", absolutePath);
+    append(identity, "KIND", "Protel_Advanced_PCB_Library");
+    append(identity, "VERSION", "3.00");
+    append(identity, "DATE", QLocale::c().toString(now.date(), "M/d/yyyy"));
+    append(identity, "TIME", QLocale::c().toString(now.time(), "h:mm:ss AP"));
+    append(identity, "TOPTYPE", "3");
+    append(identity, "TOPCONST", "3.500");
+    append(identity, "TOPHEIGHT", "0.4mil");
+    append(identity, "TOPMATERIAL", "Solder Resist");
+    append(identity, "BOTTOMTYPE", "3");
+    append(identity, "BOTTOMCONST", "3.500");
+    append(identity, "BOTTOMHEIGHT", "0.4mil");
+    append(identity, "BOTTOMMATERIAL", "Solder Resist");
+    append(identity, "LAYERSTACKSTYLE", "0");
+
+    auto layerName = [](int layer) -> QString {
+        if (layer == 1)
+            return "Top Layer";
+        if (layer >= 2 && layer <= 31)
+            return QString("Mid-Layer %1").arg(layer - 1);
+        if (layer == 32)
+            return "Bottom Layer";
+        static const QStringList standardNames = {
+            "Top Overlay", "Bottom Overlay", "Top Paste", "Bottom Paste", "Top Solder", "Bottom Solder"};
+        if (layer >= 33 && layer <= 38)
+            return standardNames[layer - 33];
+        if (layer >= 39 && layer <= 54)
+            return QString("Internal Plane %1").arg(layer - 38);
+        if (layer == 55)
+            return "Drill Guide";
+        if (layer == 56)
+            return "Keep-Out Layer";
+        if (layer >= 57 && layer <= 72)
+            return QString("Mechanical %1").arg(layer - 56);
+        static const QStringList auxiliaryNames = {"Drill Drawing",
+                                                   "Multi-Layer",
+                                                   "Connections",
+                                                   "Background",
+                                                   "DRC Error Markers",
+                                                   "Selections",
+                                                   "Visible Grid 1",
+                                                   "Visible Grid 2",
+                                                   "Pad Holes",
+                                                   "Via Holes"};
+        return auxiliaryNames.value(layer - 73, QString("Layer %1").arg(layer));
+    };
+
+    for (int layer = 1; layer <= 82; ++layer) {
+        if ((layer - 1) % 5 == 0 && layer != 1) {
+            records.append(QStringList{});
+        }
+        QStringList& fields = records.last();
+        const QString prefix = QString("LAYER%1").arg(layer);
+        append(fields, prefix + "NAME", layerName(layer));
+        append(fields, prefix + "PREV", layer == 1 ? "0" : (layer == 32 ? "1" : "0"));
+        append(fields, prefix + "NEXT", layer == 1 ? "32" : "0");
+        append(fields, prefix + "MECHENABLED", layer == 57 ? "TRUE" : "FALSE");
+        append(fields, prefix + "COPTHICK", "1.4mil");
+        append(fields, prefix + "DIELTYPE", "0");
+        append(fields, prefix + "DIELCONST", "4.800");
+        append(fields, prefix + "DIELHEIGHT", "12.6mil");
+        append(fields, prefix + "DIELMATERIAL", "FR-4");
+    }
+
+    records.append(QStringList{});
+    QStringList& grid = records.last();
+    append(grid, "BIGVISIBLEGRIDSIZE", "0.000000");
+    append(grid, "VISIBLEGRIDSIZE", "0.000000");
+    append(grid, "SNAPGRIDSIZE", "50000.000000");
+    append(grid, "SNAPGRIDSIZEX", "50000.000000");
+    append(grid, "SNAPGRIDSIZEY", "50000.000000");
+    append(grid, "ELECTRICALGRIDRANGE", "8mil");
+    append(grid, "ELECTRICALGRIDENABLED", "TRUE");
+    append(grid, "DISPLAYUNIT", "1");
+    append(grid, "CURRENT2D3DVIEWSTATE", "2D");
+
+    QStringList serializedRecords;
+    for (const QStringList& record : records) {
+        if (!record.isEmpty()) {
+            serializedRecords.append(record.join('|'));
+        }
+    }
+    return serializedRecords.join("\r|RECORD=Board|");
 }
 
 /**
@@ -277,16 +324,19 @@ void AltiumPcbLibWriter::writeModelsStorage(OLECompoundWriter& ole, const QList<
     QByteArray modelData;
     AltiumBinaryWriter modelWriter(modelData);
     for (const AltiumPcbComponent::Model3D& model : allModels) {
-        QMap<QString, QString> params;
-        params["EMBED"] = "TRUE";
-        params["NAME"] = model.name;
-        params["ROTX"] = QString::number(model.rotX, 'f', 3);
-        params["ROTY"] = QString::number(model.rotY, 'f', 3);
-        params["ROTZ"] = QString::number(model.rotZ, 'f', 3);
-        params["DZ"] = QString::number(model.dz, 'f', 6) + "mil";
-        params["CHECKSUM"] = "0";
-        params["ID"] = model.name;
-        modelWriter.writeCStringParameterBlock(params);
+        const QString id = model.id.isEmpty() ? model.name : model.id;
+        const QString metadata =
+            QString("EMBED=TRUE|MODELSOURCE=Undefined|ID=%1|ROTX=%2|ROTY=%3|ROTZ=%4|DZ=%5|CHECKSUM=0|NAME=%6")
+                .arg(id,
+                     QString::number(model.rotX, 'f', 6),
+                     QString::number(model.rotY, 'f', 6),
+                     QString::number(model.rotZ, 'f', 6),
+                     QString::number(AltiumCoord::mmToRaw(model.dz)),
+                     model.name);
+        QByteArray encoded = metadata.toLatin1();
+        encoded.append('\0');
+        modelWriter.writeInt32(encoded.size());
+        modelWriter.writeBytes(encoded);
     }
     ole.writeStream("Library/Models", "Data", modelData);
 
@@ -300,61 +350,11 @@ void AltiumPcbLibWriter::writeModelsStorage(OLECompoundWriter& ole, const QList<
 }
 
 /**
- * @brief 写入 LayerKindMapping
- */
-void AltiumPcbLibWriter::writeLayerKindMapping(QByteArray& buffer) {
-    AltiumBinaryWriter writer(buffer);
-
-    // 格式版本字符串 "1.0" (UTF-16LE)
-    QByteArray versionU16;
-    versionU16.append('1').append('\0').append('.').append('\0').append('0').append('\0').append('\0').append('\0');
-    writer.writeUInt32(static_cast<uint32_t>(versionU16.size()));
-    writer.writeBytes(versionU16);
-
-    // 签名（PcbLib 为 0）
-    writer.writeUInt32(0);
-
-    // 条目数（PcbLib 为 0）
-    writer.writeUInt32(0);
-}
-
-/**
- * @brief 写入 PadViaLibrary
- */
-void AltiumPcbLibWriter::writePadViaLibrary(QByteArray& buffer) {
-    AltiumBinaryWriter writer(buffer);
-
-    QMap<QString, QString> params;
-    params["PADVIALIBRARY.LIBRARYID"] = "{00000000-0000-0000-0000-000000000000}";
-    params["PADVIALIBRARY.LIBRARYNAME"] = "";
-    params["PADVIALIBRARY.DISPLAYUNITS"] = "0";
-    writer.writeCStringParameterBlock(params);
-}
-
-/**
- * @brief 写入 ComponentParamsTOC
- */
-void AltiumPcbLibWriter::writeComponentParamsToc(QByteArray& buffer, const QList<AltiumPcbComponent>& components) {
-    AltiumBinaryWriter writer(buffer);
-
-    QString toc;
-    for (const AltiumPcbComponent& comp : components) {
-        toc += QString("Name=%1|Pad Count=%2|Height=%3|Description=%4\r\n")
-                   .arg(comp.name)
-                   .arg(comp.pads.size())
-                   .arg(QString::number(comp.height, 'f', 6) + "mil")
-                   .arg(comp.description);
-    }
-
-    QByteArray encoded = toc.toLatin1();
-    writer.writeCStringParameterBlockRaw(encoded);
-}
-
-/**
  * @brief 写入封装存储
  */
-void AltiumPcbLibWriter::writeFootprintStorage(OLECompoundWriter& ole, const AltiumPcbComponent& component) {
-    QString sectionKey = getSectionKey(component.name);
+void AltiumPcbLibWriter::writeFootprintStorage(OLECompoundWriter& ole,
+                                               const AltiumPcbComponent& component,
+                                               const QString& sectionKey) {
     ole.addStorage(sectionKey);
     QString basePath = sectionKey;
 
@@ -412,7 +412,7 @@ void AltiumPcbLibWriter::writeFootprintParameters(QByteArray& buffer, const Alti
 
     QMap<QString, QString> params;
     params["PATTERN"] = component.name;
-    params["HEIGHT"] = QString::number(component.height, 'f', 6) + "mil";
+    params["HEIGHT"] = QString::number(AltiumCoord::mmToRaw(component.height));
     if (!component.description.isEmpty()) {
         params["DESCRIPTION"] = component.description;
     }
@@ -485,17 +485,11 @@ void AltiumPcbLibWriter::writeWideStrings(QByteArray& buffer, const AltiumPcbCom
 /**
  * @brief 写入通用图元头部（13 字节）
  */
-void AltiumPcbLibWriter::writeCommonPrimitiveHeader(AltiumBinaryWriter& writer,
-                                                    uint8_t layer,
-                                                    uint16_t flags,
-                                                    uint16_t netIndex,
-                                                    uint16_t componentIndex) {
+void AltiumPcbLibWriter::writeCommonPrimitiveHeader(AltiumBinaryWriter& writer, uint8_t layer, uint16_t flags) {
     writer.writeUInt8(layer);
     writer.writeUInt16(flags);
-    writer.writeUInt16(netIndex);
-    writer.writeUInt16(AltiumConstants::PCB_POLYGON_NONE);
-    writer.writeUInt16(componentIndex);
-    writer.writeUInt32(0xFFFFFFFF);  // reserved
+    // PcbLib 图元不属于已放置的 board component/net/polygon，五个索引均为 -1。
+    writer.writeBytes(QByteArray(10, static_cast<char>(0xFF)));
 }
 
 /**
@@ -549,7 +543,7 @@ void AltiumPcbLibWriter::writePad(AltiumBinaryWriter& writer, const AltiumPcbPad
     {
         uint8_t layer = pad.isSMD ? pad.layer : AltiumConstants::PCB_LAYER_MULTI;
         uint16_t flags = encodePrimitiveFlags(pad.isLocked, pad.isTentingTop, pad.isTentingBottom, pad.isKeepout);
-        writeCommonPrimitiveHeader(writer, layer, flags, pad.netIndex, static_cast<uint16_t>(componentIndex));
+        writeCommonPrimitiveHeader(writer, layer, flags);
 
         // 位置
         writer.writeInt32(pad.locationX);
@@ -595,15 +589,6 @@ void AltiumPcbLibWriter::writePad(AltiumBinaryWriter& writer, const AltiumPcbPad
         writer.writeInt32(0);  // reserved
         writer.writeInt16(0);  // jumper ID
         writer.writeInt16(0);  // reserved
-
-        // 填充到 202 字节总大小
-        constexpr int WRITTEN_SO_FAR =
-            13 + 8 + 24 + 4 + 3 + 8 + 1 + 1 + 1 + 1 + 4 + 4 + 2 + 4 + 4 + 4 + 4 + 4 + 7 + 1 + 1 + 1 + 2 + 4 + 2 + 2;
-        constexpr int REMAINING = AltiumConstants::PCB_PAD_MAIN_RECORD_SIZE - WRITTEN_SO_FAR;
-        static_assert(REMAINING >= 0, "Pad main record overflow");
-        if (REMAINING > 0) {
-            writer.writeBytes(QByteArray(REMAINING, 0));
-        }
     }
     writer.endBlock();
 
@@ -616,9 +601,9 @@ void AltiumPcbLibWriter::writePad(AltiumBinaryWriter& writer, const AltiumPcbPad
 /**
  * @brief 写入焊盘扩展块
  * @details 包含各层尺寸/形状覆盖、孔形状/槽孔/旋转、圆角半径等。
- *          布局：29层尺寸X(116) + 29层尺寸Y(116) + 32层形状(32) +
- *                孔元数据(15) + 32*4保留(128) + 32*4保留(128) +
- *                圆角标记(1) + 32层形状(32) + 32层圆角(32) = 684
+ *          布局：29层尺寸X(116) + 29层尺寸Y(116) + 29层形状及保留位(30) +
+ *                孔元数据(13) + 两组32层保留坐标(256) +
+ *                圆角标记(1) + 32层形状(32) + 32层圆角(32) = 596
  */
 void AltiumPcbLibWriter::writePadExtendedBlock(AltiumBinaryWriter& writer, const AltiumPcbPad& pad) {
     // 尺寸 X 覆盖：29 层 × 4 字节 = 116 字节
@@ -629,10 +614,11 @@ void AltiumPcbLibWriter::writePadExtendedBlock(AltiumBinaryWriter& writer, const
     for (int i = 0; i < AltiumConstants::PCB_PAD_LAYER_COUNT; ++i) {
         writer.writeInt32(pad.sizeMidY);
     }
-    // 形状覆盖：32 层 × 1 字节 = 32 字节
-    for (int i = 0; i < 32; ++i) {
+    // 形状覆盖：29 个铜层，随后一个保留字节
+    for (int i = 0; i < AltiumConstants::PCB_PAD_LAYER_COUNT; ++i) {
         writer.writeUInt8(pad.shapeMid);
     }
+    writer.writeUInt8(0);
 
     // 孔元数据
     writer.writeUInt8(pad.holeType);
@@ -671,7 +657,7 @@ void AltiumPcbLibWriter::writeTrack(AltiumBinaryWriter& writer, const AltiumPcbT
     writer.beginBlock();
     {
         uint16_t flags = encodePrimitiveFlags(false, false, false, false);
-        writeCommonPrimitiveHeader(writer, track.layer, flags, track.netIndex, static_cast<uint16_t>(componentIndex));
+        writeCommonPrimitiveHeader(writer, track.layer, flags);
 
         writer.writeInt32(track.startX);
         writer.writeInt32(track.startY);
@@ -679,12 +665,8 @@ void AltiumPcbLibWriter::writeTrack(AltiumBinaryWriter& writer, const AltiumPcbT
         writer.writeInt32(track.endY);
         writer.writeInt32(track.width);
 
-        writer.writeInt16(0);  // sub-poly index
-        writer.writeInt32(0);  // solder mask expansion
-        writer.writeInt16(0);  // paste mask expansion
-        writer.writeUInt32(toV7LayerId(track.layer));
-        writer.writeUInt8(0);  // keepout restrictions
-        writer.writeBytes(QByteArray(3, 0));  // reserved
+        writer.writeUInt16(track.netIndex);
+        writer.writeUInt8(static_cast<uint8_t>(qBound(0, componentIndex, 255)));
     }
     writer.endBlock();
 }
@@ -698,7 +680,7 @@ void AltiumPcbLibWriter::writeArc(AltiumBinaryWriter& writer, const AltiumPcbArc
     writer.beginBlock();
     {
         uint16_t flags = encodePrimitiveFlags(false, false, false, false);
-        writeCommonPrimitiveHeader(writer, arc.layer, flags, arc.netIndex, static_cast<uint16_t>(componentIndex));
+        writeCommonPrimitiveHeader(writer, arc.layer, flags);
 
         writer.writeInt32(arc.centerX);
         writer.writeInt32(arc.centerY);
@@ -706,13 +688,6 @@ void AltiumPcbLibWriter::writeArc(AltiumBinaryWriter& writer, const AltiumPcbArc
         writer.writeDouble(arc.startAngle);
         writer.writeDouble(arc.endAngle);
         writer.writeInt32(arc.width);
-
-        writer.writeInt16(0);  // sub-poly index
-        writer.writeInt32(0);  // solder mask expansion
-        writer.writeUInt8(0);  // paste mask expansion
-        writer.writeUInt32(toV7LayerId(arc.layer));
-        writer.writeUInt8(0);  // keepout restrictions
-        writer.writeBytes(QByteArray(3, 0));  // reserved
     }
     writer.endBlock();
 }
@@ -726,7 +701,7 @@ void AltiumPcbLibWriter::writeText(AltiumBinaryWriter& writer, const AltiumPcbTe
     writer.beginBlock();
     {
         uint16_t flags = 0x08;
-        writeCommonPrimitiveHeader(writer, text.layer, flags, 0xFFFF, static_cast<uint16_t>(componentIndex));
+        writeCommonPrimitiveHeader(writer, text.layer, flags);
 
         writer.writeInt32(text.locationX);
         writer.writeInt32(text.locationY);
@@ -740,20 +715,21 @@ void AltiumPcbLibWriter::writeText(AltiumBinaryWriter& writer, const AltiumPcbTe
         writer.writeUInt8(0);  // char set
         writer.writeUInt8(0);  // base font type (Stroke)
 
-        // 剩余填充到文本记录总大小（从偏移 44 开始）
-        QByteArray padding(AltiumConstants::PCB_TEXT_RECORD_SIZE - (13 + 4 * 2 + 4 + 2 + 8 + 1 + 4 + 3), 0);
+        // 剩余填充到文本记录总大小（已写字段精确占 44 字节）。
+        constexpr int WRITTEN_TEXT_HEADER_SIZE = 44;
+        QByteArray padding(AltiumConstants::PCB_TEXT_RECORD_SIZE - WRITTEN_TEXT_HEADER_SIZE, 0);
         // wide string index
         int wsIdx = addWideString(text.text);
-        int wsBase = AltiumConstants::PCB_TEXT_WS_INDEX_FIELD_OFFSET - 44;
+        int wsBase = AltiumConstants::PCB_TEXT_WS_INDEX_FIELD_OFFSET - WRITTEN_TEXT_HEADER_SIZE;
         padding[wsBase] = static_cast<char>(wsIdx & 0xFF);
         padding[wsBase + 1] = static_cast<char>((wsIdx >> 8) & 0xFF);
         padding[wsBase + 2] = static_cast<char>((wsIdx >> 16) & 0xFF);
         padding[wsBase + 3] = static_cast<char>((wsIdx >> 24) & 0xFF);
         // text kind = Stroke
-        padding[AltiumConstants::PCB_TEXT_KIND_FIELD_OFFSET - 44] = 0;
+        padding[AltiumConstants::PCB_TEXT_KIND_FIELD_OFFSET - WRITTEN_TEXT_HEADER_SIZE] = 0;
         // V7 layer ID
         uint32_t v7id = toV7LayerId(text.layer);
-        int v7Base = AltiumConstants::PCB_TEXT_V7LAYER_FIELD_OFFSET - 44;
+        int v7Base = AltiumConstants::PCB_TEXT_V7LAYER_FIELD_OFFSET - WRITTEN_TEXT_HEADER_SIZE;
         padding[v7Base] = static_cast<char>(v7id & 0xFF);
         padding[v7Base + 1] = static_cast<char>((v7id >> 8) & 0xFF);
         padding[v7Base + 2] = static_cast<char>((v7id >> 16) & 0xFF);
@@ -776,7 +752,7 @@ void AltiumPcbLibWriter::writeFill(AltiumBinaryWriter& writer, const AltiumPcbFi
     writer.beginBlock();
     {
         uint16_t flags = 0x08;
-        writeCommonPrimitiveHeader(writer, fill.layer, flags, fill.netIndex, static_cast<uint16_t>(componentIndex));
+        writeCommonPrimitiveHeader(writer, fill.layer, flags);
 
         writer.writeInt32(fill.corner1X);
         writer.writeInt32(fill.corner1Y);
@@ -801,11 +777,10 @@ void AltiumPcbLibWriter::writeRegion(AltiumBinaryWriter& writer, const AltiumPcb
     writer.beginBlock();
     {
         uint16_t flags = encodePrimitiveFlags(false, false, false, false);
-        writeCommonPrimitiveHeader(writer, region.layer, flags, 0xFFFF, static_cast<uint16_t>(componentIndex));
+        writeCommonPrimitiveHeader(writer, region.layer, flags);
 
-        writer.writeUInt8(0);  // reserved
-        writer.writeUInt16(static_cast<uint16_t>(region.holes.size()));
-        writer.writeUInt16(0);  // reserved
+        writer.writeUInt32(0);
+        writer.writeUInt8(0);
 
         // 嵌套参数块
         QMap<QString, QString> params;
@@ -831,15 +806,6 @@ void AltiumPcbLibWriter::writeRegion(AltiumBinaryWriter& writer, const AltiumPcb
             writer.writeDouble(v.x());
             writer.writeDouble(v.y());
         }
-
-        // 孔洞
-        for (const QList<QPointF>& hole : region.holes) {
-            writer.writeUInt32(static_cast<uint32_t>(hole.size()));
-            for (const QPointF& v : hole) {
-                writer.writeDouble(v.x());
-                writer.writeDouble(v.y());
-            }
-        }
     }
     writer.endBlock();
 }
@@ -855,7 +821,16 @@ void AltiumPcbLibWriter::writeComponentBody(AltiumBinaryWriter& writer,
     writer.beginBlock();
     {
         uint16_t flags = encodePrimitiveFlags(false, false, false, false);
-        writeCommonPrimitiveHeader(writer, 0, flags, 0xFFFF, static_cast<uint16_t>(componentIndex));
+        uint8_t layer = 57;
+        const QString normalizedLayer = body.layerName.trimmed().toUpper();
+        if (normalizedLayer.startsWith("MECHANICAL")) {
+            bool ok = false;
+            const int number = normalizedLayer.mid(10).toInt(&ok);
+            if (ok && number >= 1 && number <= 16) {
+                layer = static_cast<uint8_t>(56 + number);
+            }
+        }
+        writeCommonPrimitiveHeader(writer, layer, flags);
 
         writer.writeUInt32(0);  // reserved
         writer.writeUInt8(0);  // reserved
@@ -874,6 +849,13 @@ void AltiumPcbLibWriter::writeComponentBody(AltiumBinaryWriter& writer,
         params["BODYCOLOR3D"] = QString::number(body.bodyColor3d);
         params["BODYOPACITY3D"] = QString::number(body.bodyOpacity3d, 'f', 3);
         params["BODYPROJECTION"] = QString::number(body.bodyProjection);
+        params["IDENTIFIER"] = "";
+        params["TEXTURE"] = "";
+        params["TEXTURECENTERX"] = "0mil";
+        params["TEXTURECENTERY"] = "0mil";
+        params["TEXTURESIZEX"] = "0mil";
+        params["TEXTURESIZEY"] = "0mil";
+        params["TEXTUREROTATION"] = "0.000000";
         params["MODELID"] = body.modelId;
         params["MODEL.CHECKSUM"] = QString::number(body.modelChecksum);
         params["MODEL.EMBED"] = body.modelEmbed ? "TRUE" : "FALSE";

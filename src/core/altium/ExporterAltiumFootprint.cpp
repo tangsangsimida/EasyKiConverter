@@ -65,9 +65,31 @@ AltiumPcbComponent ExporterAltiumFootprint::convertFootprint(const IR::Footprint
         component.pads.append(convertPad(pad));
     }
 
-    // 转换走线
+    // IR 折线必须逐段展开。PcbLib Track 原语只表示一个起点和终点，
+    // 直接取首尾点会把折线错误地压成一条对角线。
     for (const IR::FootprintTrackIR& track : data.tracks) {
-        component.tracks.append(convertTrack(track));
+        for (int i = 1; i < track.points.size(); ++i) {
+            IR::FootprintTrackIR segment = track;
+            segment.points = {track.points[i - 1], track.points[i]};
+            component.tracks.append(convertTrack(segment));
+        }
+    }
+
+    // 独立安装孔用非电镀 MultiLayer pad 表示，使孔径、钻孔属性和图元归属
+    // 都进入同一套已验证的 pad 序列化路径。
+    for (const IR::FootprintHoleIR& hole : data.holes) {
+        AltiumPcbPad pad;
+        pad.locationX = AltiumCoord::mmToRaw(hole.center.x());
+        pad.locationY = AltiumCoord::mmToRaw(hole.center.y());
+        pad.holeSize = AltiumCoord::mmToRaw(hole.radius * 2.0);
+        pad.sizeTopX = pad.sizeMidX = pad.sizeBotX = pad.holeSize;
+        pad.sizeTopY = pad.sizeMidY = pad.sizeBotY = pad.holeSize;
+        pad.shapeTop = pad.shapeMid = pad.shapeBot = AltiumConstants::PCB_PAD_SHAPE_ROUND;
+        pad.layer = AltiumConstants::PCB_LAYER_MULTI;
+        pad.isSMD = false;
+        pad.isPlated = false;
+        pad.isLocked = hole.isLocked;
+        component.pads.append(pad);
     }
 
     // 转换圆
@@ -93,6 +115,18 @@ AltiumPcbComponent ExporterAltiumFootprint::convertFootprint(const IR::Footprint
     // 转换区域
     for (const IR::FootprintRegionIR& region : data.regions) {
         component.regions.append(convertSolidRegion(region));
+    }
+
+    // 板框同样是逐段线原语；保留 IR 的层和线宽，不引入导入器特有假设。
+    for (const IR::FootprintOutlineIR& outline : data.outlines) {
+        for (int i = 1; i < outline.points.size(); ++i) {
+            IR::FootprintTrackIR segment;
+            segment.points = {outline.points[i - 1], outline.points[i]};
+            segment.width = outline.strokeWidth;
+            segment.layer = outline.layer;
+            segment.isLocked = outline.isLocked;
+            component.tracks.append(convertTrack(segment));
+        }
     }
 
     // 坐标居中：计算所有图元的包围盒，将原点移到中心
@@ -458,6 +492,7 @@ void ExporterAltiumFootprint::generateComponentBody(AltiumPcbComponent& componen
                           .arg(((~hash) >> 48) & 0xFFFF, 4, 16, QChar('0'))
                           .arg((~hash) & 0xFFFFFFFFFFFFLL, 12, 16, QChar('0'))
                           .toUpper();
+    component.models.first().id = modelId;
 
     AltiumPcbComponentBody body;
     body.modelId = modelId;

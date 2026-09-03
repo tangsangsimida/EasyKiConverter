@@ -7,7 +7,7 @@ namespace EasyKiConverter {
 /**
  * @brief Altium 格式常量定义
  * @details 集中定义 Altium SchLib/PcbLib 格式中使用的魔数、标志位和尺寸常量。
- *          参考：AltiumSharp PcbBinaryConstants.cs, SchLibWriter.cs
+ *          固定记录长度与字段偏移集中在此处，作为写入器和回归测试共享的协议契约。
  */
 namespace AltiumConstants {
 
@@ -188,11 +188,8 @@ constexpr int DEFAULT_STROKE_WIDTH = 10000;
 
 // ==================== PcbLib 焊盘记录布局 ====================
 
-/** @brief 焊盘主记录总大小（字节） */
-constexpr int PCB_PAD_MAIN_RECORD_SIZE = 202;
-
-/** @brief 焊盘主记录填充大小（总大小 - 已写入字段 = 202 - 61 = 141） */
-constexpr int PCB_PAD_MAIN_PADDING_SIZE = 141;
+/** @brief PcbLib v6 焊盘主记录负载大小（不含四字节 block length） */
+constexpr int PCB_PAD_MAIN_RECORD_SIZE = 114;
 
 /** @brief 焊盘尺寸/形状覆盖数据总大小（字节） */
 constexpr int PCB_PAD_SIZE_OVERRIDE_SIZE = 596;

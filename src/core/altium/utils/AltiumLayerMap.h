@@ -144,7 +144,7 @@ inline uint8_t toAltiumPinOrientation(IR::PinDirection dir) {
 inline int fromLayerTypeToAltium(IR::LayerType layer) {
     switch (layer) {
         case IR::LayerType::TopCopper:
-            return 1;   // Top Layer
+            return 1;  // Top Layer
         case IR::LayerType::BottomCopper:
             return 32;  // Bottom Layer
         case IR::LayerType::TopSilk:
@@ -162,7 +162,7 @@ inline int fromLayerTypeToAltium(IR::LayerType layer) {
         case IR::LayerType::MultiLayer:
             return 74;  // Multi Layer
         case IR::LayerType::EdgeCuts:
-            return 11;  // Board outline (mechanical)
+            return 57;  // Mechanical 1 (library body outline)
         case IR::LayerType::KeepOut:
             return 56;  // Keepout
         case IR::LayerType::TopAssembly:

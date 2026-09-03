@@ -2,6 +2,7 @@
 
 #include <QByteArray>
 #include <QHash>
+#include <QSet>
 #include <QString>
 #include <QVector>
 
@@ -70,6 +71,7 @@ private:
     static constexpr uint32_t ENDOFCHAIN = 0xFFFFFFFE;
     static constexpr uint32_t FREESECT = 0xFFFFFFFF;
     static constexpr uint32_t FATSECT = 0xFFFFFFFD;
+    static constexpr uint32_t DIFSECT = 0xFFFFFFFC;
     static constexpr uint32_t NOSTREAM = 0xFFFFFFFF;
     static constexpr uint32_t SECTOR_SIZE = 512;
     static constexpr uint32_t MINI_SECTOR_SIZE = 64;
@@ -110,18 +112,21 @@ private:
     int createDirectoryEntry(const QString& name, ObjectType type);
     void buildRedBlackTree();
     void buildSubTree(int nodeIdx);
-    uint32_t buildChildTree(int parentIndex, const QVector<int>& children);
+    uint32_t buildChildTree(const QVector<int>& children);
 
     // ---- 数据写入 ----
     void serializeDirectoryEntry(const DirectoryEntry& entry, QByteArray& buffer) const;
     void serializeFileHeader(QByteArray& header) const;
     void finalize();
+    bool isValidEntryName(const QString& name) const;
 
     // ---- 内部状态 ----
     bool m_initialized = false;
+    bool m_finalized = false;
     QVector<DirectoryEntry> m_directory;  ///< 目录条目列表
     QVector<StorageNode> m_nodes;  ///< 存储节点树
     QHash<QString, int> m_pathToNode;  ///< 路径 → 节点索引映射
+    QSet<QString> m_entryPaths;  ///< CFB 大小写不敏感的完整路径，用于阻止同级重名
 
     // 流数据（按存储路径+流名索引）
     struct StreamData {
@@ -134,6 +139,7 @@ private:
 
     // 扇区数据
     QVector<QByteArray> m_dataSectors;  ///< 普通数据扇区
+    QVector<QByteArray> m_difatSectors;  ///< 扩展 DIFAT 扇区（FAT 超过头部 109 项时使用）
     QByteArray m_miniStream;  ///< Mini-Stream 数据
     QVector<uint32_t> m_fat;  ///< FAT 表
     QVector<uint32_t> m_miniFat;  ///< Mini-FAT 表

@@ -6,6 +6,7 @@
 
 #include <QList>
 #include <QString>
+#include <QStringList>
 
 namespace EasyKiConverter {
 
@@ -21,7 +22,7 @@ namespace EasyKiConverter {
  *     Data              — 所有图元记录
  *   Storage             — 嵌入图像数据（可选）
  *
- * 参考：AltiumSharp SchLibWriter.cs
+ * 文件索引、组件记录及子图元归属在同一模型上计算，保证 Header 的计数与 Data 流一致。
  */
 class AltiumSchLibWriter {
 public:
@@ -39,8 +40,10 @@ public:
 private:
     // ---- 文件级写入 ----
     void writeFileHeader(OLECompoundWriter& ole, const QList<AltiumSchComponent>& components);
-    void writeSectionKeys(OLECompoundWriter& ole, const QList<AltiumSchComponent>& components);
-    void writeComponentStorage(OLECompoundWriter& ole, const AltiumSchComponent& component);
+    void writeSectionKeys(OLECompoundWriter& ole,
+                          const QList<AltiumSchComponent>& components,
+                          const QStringList& sectionKeys);
+    void writeComponentStorage(OLECompoundWriter& ole, const AltiumSchComponent& component, const QString& sectionKey);
 
     // ---- 记录写入 ----
     void writeComponentRecord(AltiumBinaryWriter& writer, const AltiumSchComponent& component);
@@ -51,7 +54,9 @@ private:
     void writePolygonRecord(AltiumBinaryWriter& writer, const AltiumSchPolygon& polygon);
     void writeEllipseRecord(AltiumBinaryWriter& writer, const AltiumSchEllipse& ellipse);
     void writePolylineRecord(AltiumBinaryWriter& writer, const AltiumSchPolyline& polyline);
+    void writePathRecord(AltiumBinaryWriter& writer, const AltiumSchPath& path);
     void writeTextRecord(AltiumBinaryWriter& writer, const AltiumSchText& text);
+    void writeComponentParameterRecords(AltiumBinaryWriter& writer, const AltiumSchComponent& component);
     void writeImplementationRecords(AltiumBinaryWriter& writer, const AltiumSchComponent& component);
 
     // ---- 辅助 ----
@@ -64,10 +69,13 @@ private:
     void addCoordParam(QMap<QString, QString>& params, const QString& key, int raw);
     void addColorParam(QMap<QString, QString>& params, const QString& key, uint32_t color);
     void addUniqueID(QMap<QString, QString>& params);
+    int componentRecordCount(const AltiumSchComponent& component) const;
+    void addOwnerParams(QMap<QString, QString>& params, int ownerPartId) const;
 
     // 字体表管理
     QList<AltiumModels::FontEntry> m_fonts;
     int m_uniqueIdCounter = 0;
+    QString m_libraryName;
 };
 
 }  // namespace EasyKiConverter

@@ -55,23 +55,23 @@ struct AltiumPcbPad {
  * @brief Altium PCB 走线
  */
 struct AltiumPcbTrack {
-    int32_t startX = 0, startY = 0;
-    int32_t endX = 0, endY = 0;
-    int32_t width = 0;
-    uint8_t layer = 1;
-    uint16_t netIndex = 0xFFFF;
+    int32_t startX = 0, startY = 0;  ///< 起点坐标（PCB 原始单位）
+    int32_t endX = 0, endY = 0;  ///< 终点坐标（PCB 原始单位）
+    int32_t width = 0;  ///< 线宽（PCB 原始单位）
+    uint8_t layer = 1;  ///< 所在层（1=Top, 32=Bottom, 33=Top Overlay）
+    uint16_t netIndex = 0xFFFF;  ///< 网络索引（0xFFFF = 无网络）
 };
 
 /**
  * @brief Altium PCB 弧线
  */
 struct AltiumPcbArc {
-    int32_t centerX = 0, centerY = 0;
-    int32_t radius = 0;
-    double startAngle = 0.0, endAngle = 360.0;
-    int32_t width = 0;
-    uint8_t layer = 1;
-    uint16_t netIndex = 0xFFFF;
+    int32_t centerX = 0, centerY = 0;  ///< 圆心坐标（PCB 原始单位）
+    int32_t radius = 0;  ///< 半径（PCB 原始单位）
+    double startAngle = 0.0, endAngle = 360.0;  ///< 起始/结束角度
+    int32_t width = 0;  ///< 线宽（PCB 原始单位）
+    uint8_t layer = 1;  ///< 所在层
+    uint16_t netIndex = 0xFFFF;  ///< 网络索引
 };
 
 /**
@@ -91,11 +91,11 @@ struct AltiumPcbText {
  * @brief Altium PCB 填充
  */
 struct AltiumPcbFill {
-    int32_t corner1X = 0, corner1Y = 0;
-    int32_t corner2X = 0, corner2Y = 0;
-    double rotation = 0.0;
-    uint8_t layer = 1;
-    uint16_t netIndex = 0xFFFF;
+    int32_t corner1X = 0, corner1Y = 0;  ///< 角点 1 坐标（PCB 原始单位）
+    int32_t corner2X = 0, corner2Y = 0;  ///< 角点 2 坐标（PCB 原始单位）
+    double rotation = 0.0;  ///< 旋转角度
+    uint8_t layer = 1;  ///< 所在层
+    uint16_t netIndex = 0xFFFF;  ///< 网络索引
 };
 
 /**
@@ -158,7 +158,7 @@ struct AltiumPcbComponentBody {
 
 /**
  * @brief Altium PCB 封装元件
- * @details 对应 AltiumSharp PcbComponent，包含所有 PCB 图元
+ * @details IR 与 PcbLib 二进制协议之间的强类型边界，包含导出所需的 PCB 图元。
  */
 struct AltiumPcbComponent {
     QString name;  ///< 封装名称
@@ -177,6 +177,7 @@ struct AltiumPcbComponent {
     /** @brief 3D 模型信息 */
     struct Model3D {
         QString name;  ///< 模型文件名
+        QString id;  ///< 与 ComponentBody 关联的稳定 GUID
         QByteArray stepData;  ///< STEP 文件数据
         double rotX = 0, rotY = 0, rotZ = 0;  ///< 旋转角度
         double dz = 0;  ///< Z 偏移（mil）

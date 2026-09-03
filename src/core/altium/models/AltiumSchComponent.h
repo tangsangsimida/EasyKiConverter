@@ -23,6 +23,7 @@ struct AltiumSchPin {
     bool showDesignator = true;
     bool isHidden = false;
     uint32_t color = 0x000000;  ///< 颜色（0x00BBGGRR）
+    int ownerPartId = 1;  ///< 所属部件（Altium 使用 1-based 编号）
 };
 
 /**
@@ -35,6 +36,7 @@ struct AltiumSchRectangle {
     uint32_t color = 0x000000;
     uint32_t areaColor = 0xFFFFFF;  ///< 填充色
     bool isSolid = true;
+    int ownerPartId = 1;
 };
 
 /**
@@ -45,6 +47,7 @@ struct AltiumSchLine {
     int cornerX = 0, cornerY = 0;  ///< 终点
     int lineWidth = 0;
     uint32_t color = 0x000000;
+    int ownerPartId = 1;
 };
 
 /**
@@ -57,6 +60,7 @@ struct AltiumSchArc {
     double endAngle = 360.0;  ///< 结束角度
     int lineWidth = 0;
     uint32_t color = 0x000000;
+    int ownerPartId = 1;
 };
 
 /**
@@ -68,6 +72,7 @@ struct AltiumSchPolygon {
     uint32_t color = 0x000000;
     uint32_t areaColor = 0xFFFFFF;
     bool isSolid = true;
+    int ownerPartId = 1;
 };
 
 /**
@@ -80,6 +85,7 @@ struct AltiumSchEllipse {
     uint32_t color = 0x000000;
     uint32_t areaColor = 0xFFFFFF;
     bool isSolid = true;
+    int ownerPartId = 1;
 };
 
 /**
@@ -89,6 +95,7 @@ struct AltiumSchPolyline {
     QList<QPointF> vertices;  ///< 顶点列表（Schematic Units）
     int lineWidth = 0;
     uint32_t color = 0x000000;
+    int ownerPartId = 1;
 };
 
 /**
@@ -98,6 +105,7 @@ struct AltiumSchPath {
     QList<QPointF> vertices;  ///< 路径顶点（Schematic Units）
     int lineWidth = 0;
     uint32_t color = 0x000000;
+    int ownerPartId = 1;
 };
 
 /**
@@ -110,11 +118,12 @@ struct AltiumSchText {
     uint32_t color = 0x000000;
     bool isHidden = false;
     int orientation = 0;  ///< 0-3，表示 0°/90°/180°/270°
+    int ownerPartId = 1;
 };
 
 /**
  * @brief Altium 符号元件
- * @details 对应 AltiumSharp SchComponent，包含所有图元和引脚
+ * @details IR 与 SchLib 二进制协议之间的强类型边界，包含图元、引脚及实现关系。
  */
 struct AltiumSchComponent {
     QString name;  ///< 元件名称（LibReference）

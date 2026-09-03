@@ -73,8 +73,13 @@ void AltiumSchLibWriter::addUniqueID(QMap<QString, QString>& params) {
 bool AltiumSchLibWriter::write(const QList<AltiumSchComponent>& components,
                                const QString& filePath,
                                const QString& libraryName) {
+    if (components.isEmpty()) {
+        qWarning() << "AltiumSchLibWriter: Refusing to write an empty library";
+        return false;
+    }
     m_fonts.clear();
     m_uniqueIdCounter = 0;
+    m_libraryName = libraryName;
 
     // 确保有默认字体
     getOrAddFont("Times New Roman", 10);
@@ -85,19 +90,31 @@ bool AltiumSchLibWriter::write(const QList<AltiumSchComponent>& components,
         return false;
     }
 
+    QStringList names;
+    for (const AltiumSchComponent& component : components) {
+        names.append(component.name);
+    }
+    const QStringList sectionKeys = AltiumWriterUtils::makeUniqueSectionKeys(names);
+
     // 写入 FileHeader
     writeFileHeader(ole, components);
 
     // 写入 SectionKeys（如果需要）
-    writeSectionKeys(ole, components);
+    writeSectionKeys(ole, components, sectionKeys);
 
     // 写入每个元件的存储
-    for (const AltiumSchComponent& component : components) {
-        writeComponentStorage(ole, component);
+    for (int i = 0; i < components.size(); ++i) {
+        writeComponentStorage(ole, components[i], sectionKeys[i]);
     }
 
-    // 写入空的 Storage 流（嵌入图像）
-    ole.writeStream("Storage", QByteArray());
+    // 即使没有图标，也写入合法的 icon-storage 参数记录。部分 AD 版本
+    // 会主动读取该流，零长度占位符并不是 SchLib 的规范表示。
+    QByteArray storageData;
+    AltiumBinaryWriter storageWriter(storageData);
+    QMap<QString, QString> storageParams;
+    storageParams["HEADER"] = "Icon storage";
+    storageWriter.writeCStringParameterBlock(storageParams);
+    ole.writeStream("Storage", storageData);
 
     return ole.saveToFile(filePath);
 }
@@ -108,7 +125,11 @@ bool AltiumSchLibWriter::write(const QList<AltiumSchComponent>& components,
 void AltiumSchLibWriter::writeFileHeader(OLECompoundWriter& ole, const QList<AltiumSchComponent>& components) {
     QMap<QString, QString> params;
     params["HEADER"] = "Protel for Windows - Schematic Library Editor Binary File Version 5.0";
-    params["WEIGHT"] = QString::number(components.size());
+    int totalWeight = 0;
+    for (const AltiumSchComponent& component : components) {
+        totalWeight += componentRecordCount(component);
+    }
+    params["WEIGHT"] = QString::number(totalWeight);
     params["MINORVERSION"] = "2";
 
     // 生成 8 字符随机 UniqueID
@@ -137,20 +158,28 @@ void AltiumSchLibWriter::writeFileHeader(OLECompoundWriter& ole, const QList<Alt
     params["SheetStyle"] = "9";
     params["BorderOn"] = "T";
     params["Display_Unit"] = "0";
-
-    // 构建参数字符串
-    QString paramStr;
-    for (auto it = params.constBegin(); it != params.constEnd(); ++it) {
-        paramStr += "|" + it.key() + "=" + it.value();
+    params["SYSTEMFONT"] = "1";
+    params["SHEETNUMBERSPACESIZE"] = "12";
+    params["AREACOLOR"] = "16317695";
+    params["SNAPGRIDON"] = "T";
+    params["SNAPGRIDSIZE"] = "10";
+    params["VISIBLEGRIDON"] = "T";
+    params["VISIBLEGRIDSIZE"] = "10";
+    params["COMPCOUNT"] = QString::number(components.size());
+    for (int i = 0; i < components.size(); ++i) {
+        const AltiumSchComponent& component = components[i];
+        params[QString("LIBREF%1").arg(i)] = component.name;
+        params[QString("COMPDESCR%1").arg(i)] = component.description;
+        // 磁盘格式把公共 Part 0 计入总数，IR 的 partCount 只表示用户可见部件。
+        params[QString("PARTCOUNT%1").arg(i)] = QString::number(qMax(1, component.partCount) + 1);
     }
-    paramStr += "|";
 
     // 序列化
     QByteArray headerData;
     AltiumBinaryWriter writer(headerData);
 
-    // 写入参数块
-    writer.writeCStringParameterBlockRaw(paramStr);
+    // Header 中的库索引同样允许非 ASCII 名称/描述，统一用 ANSI fallback + %UTF8% 扩展。
+    writer.writeCStringParameterBlockUtf8(params);
 
     // 写入元件数量
     writer.writeInt32(static_cast<int32_t>(components.size()));
@@ -166,12 +195,14 @@ void AltiumSchLibWriter::writeFileHeader(OLECompoundWriter& ole, const QList<Alt
 /**
  * @brief 写入 SectionKeys 流
  */
-void AltiumSchLibWriter::writeSectionKeys(OLECompoundWriter& ole, const QList<AltiumSchComponent>& components) {
+void AltiumSchLibWriter::writeSectionKeys(OLECompoundWriter& ole,
+                                          const QList<AltiumSchComponent>& components,
+                                          const QStringList& sectionKeys) {
     QMap<QString, QString> params;
     int keyCount = 0;
 
     for (int i = 0; i < components.size(); ++i) {
-        QString sectionKey = getSectionKey(components[i].name);
+        const QString& sectionKey = sectionKeys[i];
         if (sectionKey != components[i].name) {
             params[QString("LibRef%1").arg(keyCount)] = components[i].name;
             params[QString("SectionKey%1").arg(keyCount)] = sectionKey;
@@ -183,7 +214,7 @@ void AltiumSchLibWriter::writeSectionKeys(OLECompoundWriter& ole, const QList<Al
         params["KeyCount"] = QString::number(keyCount);
         QByteArray data;
         AltiumBinaryWriter writer(data);
-        writer.writeCStringParameterBlock(params);
+        writer.writeCStringParameterBlockUtf8(params);
         ole.writeStream("SectionKeys", data);
     }
 }
@@ -191,9 +222,9 @@ void AltiumSchLibWriter::writeSectionKeys(OLECompoundWriter& ole, const QList<Al
 /**
  * @brief 写入元件存储
  */
-void AltiumSchLibWriter::writeComponentStorage(OLECompoundWriter& ole, const AltiumSchComponent& component) {
-    QString sectionKey = getSectionKey(component.name);
-
+void AltiumSchLibWriter::writeComponentStorage(OLECompoundWriter& ole,
+                                               const AltiumSchComponent& component,
+                                               const QString& sectionKey) {
     // 创建存储区
     ole.addStorage(sectionKey);
 
@@ -239,10 +270,16 @@ void AltiumSchLibWriter::writeComponentStorage(OLECompoundWriter& ole, const Alt
         writePolylineRecord(writer, polyline);
     }
 
+    for (const AltiumSchPath& path : component.paths) {
+        writePathRecord(writer, path);
+    }
+
     // 写入文本
     for (const AltiumSchText& text : component.texts) {
         writeTextRecord(writer, text);
     }
+
+    writeComponentParameterRecords(writer, component);
 
     // 写入实现记录
     writeImplementationRecords(writer, component);
@@ -263,7 +300,7 @@ void AltiumSchLibWriter::writeComponentRecord(AltiumBinaryWriter& writer, const 
         params["ComponentDescription"] = component.description;
     }
 
-    params["PartCount"] = QString::number(component.partCount + 1);
+    params["PartCount"] = QString::number(qMax(1, component.partCount) + 1);
     params["DisplayModeCount"] = "1";
     params["IndexInSheet"] = "-1";
     params["OwnerPartId"] = "-1";
@@ -272,7 +309,6 @@ void AltiumSchLibWriter::writeComponentRecord(AltiumBinaryWriter& writer, const 
     params["SourceLibraryName"] = "*";
     params["SheetPartFileName"] = "*";
     params["TargetFileName"] = "*";
-    params["DesignatorPrefix"] = component.designatorPrefix.isEmpty() ? "IC" : component.designatorPrefix;
     params["ALLPINCOUNT"] = QString::number(component.pins.size());
 
     addUniqueID(params);
@@ -287,7 +323,8 @@ void AltiumSchLibWriter::writePinRecord(AltiumBinaryWriter& writer, const Altium
 
     writer.writeInt32(2);  // Record type = 2
     writer.writeUInt8(0);  // Unknown
-    writer.writeInt16(static_cast<int16_t>(partId));  // OwnerPartId
+    Q_UNUSED(partId);
+    writer.writeInt16(static_cast<int16_t>(qBound(1, pin.ownerPartId, 32767)));  // OwnerPartId
     writer.writeUInt8(0);  // OwnerPartDisplayMode
 
     // Symbol edges
@@ -347,6 +384,7 @@ void AltiumSchLibWriter::writePinRecord(AltiumBinaryWriter& writer, const Altium
 void AltiumSchLibWriter::writeRectangleRecord(AltiumBinaryWriter& writer, const AltiumSchRectangle& rect) {
     QMap<QString, QString> params;
     params["RECORD"] = "14";
+    addOwnerParams(params, rect.ownerPartId);
     addCoordParam(params, "Location.X", rect.locationX);
     addCoordParam(params, "Location.Y", rect.locationY);
     addCoordParam(params, "Corner.X", rect.cornerX);
@@ -370,6 +408,7 @@ void AltiumSchLibWriter::writeRectangleRecord(AltiumBinaryWriter& writer, const 
 void AltiumSchLibWriter::writeLineRecord(AltiumBinaryWriter& writer, const AltiumSchLine& line) {
     QMap<QString, QString> params;
     params["RECORD"] = "13";
+    addOwnerParams(params, line.ownerPartId);
     addCoordParam(params, "Location.X", line.locationX);
     addCoordParam(params, "Location.Y", line.locationY);
     addCoordParam(params, "Corner.X", line.cornerX);
@@ -388,6 +427,7 @@ void AltiumSchLibWriter::writeLineRecord(AltiumBinaryWriter& writer, const Altiu
 void AltiumSchLibWriter::writeArcRecord(AltiumBinaryWriter& writer, const AltiumSchArc& arc) {
     QMap<QString, QString> params;
     params["RECORD"] = "12";
+    addOwnerParams(params, arc.ownerPartId);
     addCoordParam(params, "Location.X", arc.centerX);
     addCoordParam(params, "Location.Y", arc.centerY);
     addCoordParam(params, "Radius", arc.radius);
@@ -409,6 +449,7 @@ void AltiumSchLibWriter::writeArcRecord(AltiumBinaryWriter& writer, const Altium
 void AltiumSchLibWriter::writePolygonRecord(AltiumBinaryWriter& writer, const AltiumSchPolygon& polygon) {
     QMap<QString, QString> params;
     params["RECORD"] = "7";
+    addOwnerParams(params, polygon.ownerPartId);
     params["LineWidth"] = QString::number(polygon.lineWidth);
     addColorParam(params, "Color", polygon.color);
     if (polygon.areaColor != 0xFFFFFF)
@@ -437,6 +478,7 @@ void AltiumSchLibWriter::writePolygonRecord(AltiumBinaryWriter& writer, const Al
 void AltiumSchLibWriter::writeEllipseRecord(AltiumBinaryWriter& writer, const AltiumSchEllipse& ellipse) {
     QMap<QString, QString> params;
     params["RECORD"] = "8";
+    addOwnerParams(params, ellipse.ownerPartId);
     addCoordParam(params, "Location.X", ellipse.centerX);
     addCoordParam(params, "Location.Y", ellipse.centerY);
     addCoordParam(params, "Radius", ellipse.radiusX);
@@ -460,6 +502,7 @@ void AltiumSchLibWriter::writeEllipseRecord(AltiumBinaryWriter& writer, const Al
 void AltiumSchLibWriter::writePolylineRecord(AltiumBinaryWriter& writer, const AltiumSchPolyline& polyline) {
     QMap<QString, QString> params;
     params["RECORD"] = "6";
+    addOwnerParams(params, polyline.ownerPartId);
     params["LineWidth"] = QString::number(polyline.lineWidth);
     addColorParam(params, "Color", polyline.color);
 
@@ -479,11 +522,26 @@ void AltiumSchLibWriter::writePolylineRecord(AltiumBinaryWriter& writer, const A
 }
 
 /**
+ * @brief 写入路径记录（委托给折线记录）
+ * @param writer 二进制写入器
+ * @param path 路径数据
+ */
+void AltiumSchLibWriter::writePathRecord(AltiumBinaryWriter& writer, const AltiumSchPath& path) {
+    AltiumSchPolyline polyline;
+    polyline.vertices = path.vertices;
+    polyline.lineWidth = path.lineWidth;
+    polyline.color = path.color;
+    polyline.ownerPartId = path.ownerPartId;
+    writePolylineRecord(writer, polyline);
+}
+
+/**
  * @brief 写入文本记录 (RECORD=4, Label)
  */
 void AltiumSchLibWriter::writeTextRecord(AltiumBinaryWriter& writer, const AltiumSchText& text) {
     QMap<QString, QString> params;
     params["RECORD"] = "4";
+    addOwnerParams(params, text.ownerPartId);
     addCoordParam(params, "Location.X", text.locationX);
     addCoordParam(params, "Location.Y", text.locationY);
 
@@ -497,6 +555,46 @@ void AltiumSchLibWriter::writeTextRecord(AltiumBinaryWriter& writer, const Altiu
 
     addUniqueID(params);
     writer.writeCStringParameterBlockUtf8(params);
+}
+
+/**
+ * @brief 写入元件参数记录（Designator 和 Comment）
+ * @param writer 二进制写入器
+ * @param component 元件数据
+ */
+void AltiumSchLibWriter::writeComponentParameterRecords(AltiumBinaryWriter& writer,
+                                                        const AltiumSchComponent& component) {
+    QString designator = component.designatorPrefix.trimmed();
+    if (designator.isEmpty()) {
+        designator = "?";
+    } else if (!designator.endsWith('?')) {
+        designator += '?';
+    }
+
+    QMap<QString, QString> designatorParams;
+    designatorParams["RECORD"] = "34";
+    designatorParams["OWNERPARTID"] = "-1";
+    designatorParams["LOCATION.X_FRAC"] = "-5";
+    designatorParams["LOCATION.Y_FRAC"] = "5";
+    designatorParams["COLOR"] = "8388608";
+    designatorParams["FONTID"] = "1";
+    designatorParams["TEXT"] = designator;
+    designatorParams["NAME"] = "Designator";
+    designatorParams["READONLYSTATE"] = "1";
+    addUniqueID(designatorParams);
+    writer.writeCStringParameterBlockUtf8(designatorParams);
+
+    QMap<QString, QString> commentParams;
+    commentParams["RECORD"] = "41";
+    commentParams["OWNERPARTID"] = "-1";
+    commentParams["LOCATION.X_FRAC"] = "-5";
+    commentParams["LOCATION.Y_FRAC"] = "-15";
+    commentParams["COLOR"] = "8388608";
+    commentParams["FONTID"] = "1";
+    commentParams["TEXT"] = "*";
+    commentParams["NAME"] = "Comment";
+    addUniqueID(commentParams);
+    writer.writeCStringParameterBlock(commentParams);
 }
 
 /**
@@ -523,9 +621,10 @@ void AltiumSchLibWriter::writeImplementationRecords(AltiumBinaryWriter& writer, 
             params["MODELNAME"] = impl.modelName;
             params["MODELTYPE"] = impl.modelType;
             params["DATAFILECOUNT"] = "1";
-            params["MODELDATAFILEKIND1"] = "PCB";
-            params["MODELDATAFILEENTITY1"] = "1";
+            params["MODELDATAFILEKIND1"] = "PCBLib";
+            params["MODELDATAFILEENTITY1"] = m_libraryName.isEmpty() ? "*" : m_libraryName + ".PcbLib";
             params["ISCURRENT"] = "T";
+            addUniqueID(params);
             writer.writeCStringParameterBlock(params);
         }
 
@@ -543,17 +642,29 @@ void AltiumSchLibWriter::writeImplementationRecords(AltiumBinaryWriter& writer, 
             writer.writeCStringParameterBlock(params);
         }
     }
+}
 
-    // 如果没有实现，仍然写入空的容器记录
-    if (component.implementations.isEmpty()) {
-        QMap<QString, QString> params;
-        params["RECORD"] = "46";
-        writer.writeCStringParameterBlock(params);
+/**
+ * @brief 计算元件的记录总数（用于 FileHeader WEIGHT 字段）
+ * @param component 元件数据
+ * @return 记录数（含元件记录、图元、参数和实现记录）
+ */
+int AltiumSchLibWriter::componentRecordCount(const AltiumSchComponent& component) const {
+    const int graphics = component.pins.size() + component.rectangles.size() + component.lines.size() +
+                         component.arcs.size() + component.polygons.size() + component.ellipses.size() +
+                         component.polylines.size() + component.paths.size() + component.texts.size();
+    // Component + graphics + Designator + Comment + ImplementationList + implementation triplets.
+    return 1 + graphics + 2 + 1 + component.implementations.size() * 3;
+}
 
-        params.clear();
-        params["RECORD"] = "48";
-        writer.writeCStringParameterBlock(params);
-    }
+/**
+ * @brief 向参数映射中添加 OwnerPartId 和 ISNOTACCESIBLE 字段
+ * @param params 参数映射（输出）
+ * @param ownerPartId 所属部件 ID
+ */
+void AltiumSchLibWriter::addOwnerParams(QMap<QString, QString>& params, int ownerPartId) const {
+    params["ISNOTACCESIBLE"] = "T";
+    params["OWNERPARTID"] = QString::number(qMax(1, ownerPartId));
 }
 
 }  // namespace EasyKiConverter

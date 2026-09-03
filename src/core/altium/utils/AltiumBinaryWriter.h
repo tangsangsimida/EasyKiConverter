@@ -9,7 +9,7 @@ namespace EasyKiConverter {
 
 /**
  * @brief Altium 二进制格式写入器
- * @details 提供与 AltiumSharp BinaryFormatWriter 对应的底层序列化方法。
+ * @details 集中实现小端整数、长度前缀块及参数块，避免上层写入器自行拼接协议字节。
  *          所有数据以小端序 (Little-Endian) 写入。
  *
  * 块格式：[u32: (flags << 24) | payload_length][payload]
@@ -63,6 +63,11 @@ public:
     void writeStringBlock(const QString& str);
 
     /**
+     * @brief 写入带额外 NUL 的 Pascal 字符串块（SectionKeys 名称格式）
+     */
+    void writePascalString(const QString& str);
+
+    /**
      * @brief 写入 C 字符串参数块
      * @param params 参数键值对（按键排序）
      * @details [u32 size]["|KEY1=VAL1|KEY2=VAL2|...\0"]
@@ -82,6 +87,7 @@ public:
      * @param paramString 已格式化的参数字符串（含管道分隔符）
      */
     void writeCStringParameterBlockRaw(const QString& paramString);
+    void writeCStringParameterBlockRaw(const QByteArray& parameterBytes);
 
     /**
      * @brief 写入坐标点（两个 i32）

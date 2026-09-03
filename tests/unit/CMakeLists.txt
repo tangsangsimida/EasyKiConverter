@@ -78,6 +78,7 @@ add_test(NAME test_atomic_file_writer COMMAND test_atomic_file_writer)
 add_executable(test_altium_ole test_altium_ole.cpp)
 target_link_libraries(test_altium_ole PRIVATE
     Qt6::Test
+    Qt6::Gui
     EasyKiConverterLib
 )
 target_include_directories(test_altium_ole PRIVATE
