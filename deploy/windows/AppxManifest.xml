@@ -28,7 +28,7 @@
 
   <Properties>
     <DisplayName>EasyKiConverter</DisplayName>
-    <PublisherDisplayName>tangsangsimida</PublisherDisplayName>
+    <PublisherDisplayName>dennisreyoonjiho</PublisherDisplayName>
     <Description>EasyEDA to KiCad component library converter. Convert LCSC/EasyEDA component libraries to KiCad format.</Description>
     <!-- Logo paths are relative to the MSIX package root -->
     <Logo>app_icon.png</Logo>
