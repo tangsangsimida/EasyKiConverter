@@ -22,8 +22,8 @@
          xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
          IgnorableNamespaces="uap rescap">
 
-  <Identity Name="EasyKiConverter.EasyKiConverter"
-            Publisher="CN=674ae893-5637-43c6-894d-d9a3976ec062"
+  <Identity Name="dennisreyoonjiho.EasyKiConverter"
+            Publisher="CN=BAA293FA-54C2-4DC9-AD9D-633EDBC9BC37"
             Version="3.1.12.0" ProcessorArchitecture="x64" />
 
   <Properties>
