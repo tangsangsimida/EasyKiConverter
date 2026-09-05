@@ -84,7 +84,7 @@
 
 ## 参考文档
 
-- [弱网支持分析报告](../../WEAK_NETWORK_ANALYSIS.md)
+- [弱网支持分析报告](../archive/WEAK_NETWORK_ANALYSIS.md)
 - [ADR-006: 网络性能优化](006-network-performance-optimization.md)
 - [ADR-003: 流水线性能优化](003-pipeline-performance-optimization.md)
-- [性能优化报告](../../PERFORMANCE_OPTIMIZATION_REPORT.md)
+- [性能优化报告](../archive/PERFORMANCE_OPTIMIZATION_REPORT.md)

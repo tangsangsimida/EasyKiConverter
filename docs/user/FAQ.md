@@ -6,7 +6,7 @@
 
 ### EasyKiConverter 是什么？
 
-EasyKiConverter 是一个基于 Qt 6 Quick 和 MVVM 架构的 C++ 桌面应用程序，用于将嘉立创（LCSC）和 EasyEDA 元件转换为 KiCad 格式。它提供符号、封装和 3D 模型的完整转换功能。
+EasyKiConverter 是一个基于 Qt 6 Quick 和 MVVM 架构的 C++ 桌面应用程序，用于将嘉立创（LCSC）和 EasyEDA 元件转换为 KiCad 或 Altium 格式。它提供符号、封装和 3D 模型的完整转换功能。
 
 ### EasyKiConverter 是免费的吗？
 

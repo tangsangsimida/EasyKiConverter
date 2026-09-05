@@ -23,23 +23,10 @@
 
 ### 采用两层缓存架构 (L1 + L2)
 
-```
-┌─────────────────────────────────────────────────┐
-│                 应用层                            │
-│  ┌─────────────────────────────────────────┐   │
-│  │        ComponentCacheService             │   │
-│  │        (单例, 全局缓存管理)               │   │
-│  └──────────────────┬──────────────────────┘   │
-│                     │                            │
-│        ┌────────────┴────────────┐               │
-│        ▼                         ▼               │
-│  ┌──────────────┐      ┌──────────────┐         │
-│  │  L1 内存缓存   │      │  L2 磁盘缓存   │         │
-│  │  (QCache)     │      │  (文件系统)    │         │
-│  │  50MB 限制    │      │  5GB 配额      │         │
-│  │  LRU 淘汰     │      │  7天过期       │         │
-│  └──────────────┘      └──────────────┘         │
-└─────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    Service[ComponentCacheService<br/>单例缓存管理] --> Memory[L1 内存缓存<br/>QCache / 50 MB / LRU]
+    Service --> Disk[L2 磁盘缓存<br/>文件系统 / 配额 / 过期策略]
 ```
 
 ### L1 内存缓存
@@ -120,7 +107,7 @@
 - `src/services/ComponentCacheService.cpp` - 实现
 - `src/services/LcscImageService.h` - 预览图服务
 - `src/services/export/ComponentDataCache.h` - 未使用的缓存类
-- `docs/developer/WEAK_NETWORK_UPGRADE_REPORT.md` - 弱网报告
+- `docs/project/archive/WEAK_NETWORK_ANALYSIS.md` - 弱网历史分析报告
 
 ## 后续建议
 

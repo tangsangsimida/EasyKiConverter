@@ -453,6 +453,6 @@ The project now features:
 
 ## References
 
-- [ADR-003: Pipeline Performance Optimization](project/adr/003-pipeline-performance-optimization_en.md)
-- [CHANGELOG.md](developer/CHANGELOG_en.md)
-- [ARCHITECTURE.md](developer/ARCHITECTURE_en.md)
+- [ADR-003: Pipeline Performance Optimization](../adr/003-pipeline-performance-optimization_en.md)
+- [CHANGELOG.md](../../developer/CHANGELOG_en.md)
+- [ARCHITECTURE.md](../../developer/ARCHITECTURE_en.md)

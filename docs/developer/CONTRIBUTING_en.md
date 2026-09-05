@@ -154,12 +154,10 @@ Follow the MVVM architecture pattern:
 
 ### Export Service Architecture
 
-Use multi-stage pipeline parallelism architecture (ExportServicePipeline):
+Use the two-stage pipeline architecture (Fetch → Export):
 
-- **Fetch Stage**: I/O-intensive, 5 threads (reduced from 32 to prevent rate limiting)
-- **Process Stage**: CPU-intensive, CPU core count threads
-- **Write Stage**: Disk I/O-intensive, 3 threads
-- Stages communicate via thread-safe bounded queues
+- **Fetch stage**: concurrent network tasks controlled by the shared network layer (currently 10)
+- **Export stage**: builds IR, converts formats, and writes files in parallel
 - See: [ADR-002: Pipeline Parallelism](../project/adr/002-pipeline-parallelism-for-export_en.md)
 
 ## Development Workflow Diagram

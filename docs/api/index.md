@@ -6,7 +6,7 @@
 
 API 文档由 CI 工作流自动生成并部署到 GitHub Pages：
 
-- **[C++ API 参考](./html/index.html)** - 完整的类、函数、信号槽参考
+- **C++ API 参考** - 运行 Doxygen 后生成 `docs/api/html/index.html`；该生成目录不纳入源码仓库
 
 ## 本地生成
 

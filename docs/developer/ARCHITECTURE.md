@@ -16,95 +16,15 @@ EasyKiConverter 采用 MVVM (Model-View-ViewModel) 架构模式，支持 GUI 和
 
 项目使用 MVVM 架构模式，将应用程序分为四个主要层次：
 
-```
-┌─────────────────────────────────────────┐
-│              View Layer                  │
-│         (QML Components)                 │
-│  - src/ui/qml/Main.qml                  │
-│  - MainWindow.qml                        │
-│  - Components (Card, Button, etc.)       │
-│  - Styles (AppStyle)                     │
-└──────────────┬──────────────────────────┘
-               │
-┌──────────────▼──────────────────────────┐
-│          ViewModel Layer                │
-│  ┌──────────────────────────────────┐   │
-│  │ ComponentListViewModel          │   │
-│  │ - 管理元件列表状态                │   │
-│  │ - 处理用户输入                    │   │
-│  │ - 调用 ComponentService          │   │
-│  └──────────────────────────────────┘   │
-│  ┌──────────────────────────────────┐   │
-│  │ ExportSettingsViewModel         │   │
-│  │ - 管理导出设置状态                │   │
-│  │ - 处理配置更改                    │   │
-│  │ - 调用 ConfigService             │   │
-│  └──────────────────────────────────┘   │
-│  ┌──────────────────────────────────┐   │
-│  │ ExportProgressViewModel         │   │
-│  │ - 管理导出进度状态                │   │
-│  │ - 显示转换结果                    │   │
-│  │ - 调用 ExportService             │   │
-│  └──────────────────────────────────┘   │
-│  ┌──────────────────────────────────┐   │
-│  │ ThemeSettingsViewModel          │   │
-│  │ - 管理主题设置状态                │   │
-│  │ - 处理深色/浅色模式切换           │   │
-│  │ - 调用 ConfigService             │   │
-│  └──────────────────────────────────┘   │
-└──────────────┬──────────────────────────┘
-               │
-┌──────────────▼──────────────────────────┐
-│           Service Layer                  │
-│  ┌──────────────────────────────────┐   │
-│  │ ComponentService                 │   │
-│  │ - 元件数据获取                    │   │
-│  │ - 元件验证                        │   │
-│  │ - 调用 EasyedaApi                │   │
-│  └──────────────────────────────────┘   │
-│  ┌──────────────────────────────────┐   │
-│  │ ExportService                    │   │
-│  │ - 符号/封装/3D模型导出            │   │
-│  │ - 并行转换管理                    │   │
-│  │ - 调用 Exporter*                 │   │
-│  └──────────────────────────────────┘   │
-│  ┌──────────────────────────────────┐   │
-│  │ ConfigService                    │   │
-│  │ - 配置加载/保存                   │   │
-│  │ - 主题管理                        │   │
-│  │ - 调用 ConfigManager             │   │
-│  └──────────────────────────────────┘   │
-│  ┌──────────────────────────────────┐   │
-│  │ ParallelExportService            │   │
-│  │ - 预加载与导出编排                │   │
-│  │ - 多导出类型并行管理              │   │
-│  │ - 统一进度聚合                    │   │
-│  └──────────────────────────────────┘   │
-└──────────────┬──────────────────────────┘
-               │
-┌──────────────▼──────────────────────────┐
-│            Model Layer                   │
-│  ┌──────────────────────────────────┐   │
-│  │ ComponentData                    │   │
-│  │ - 元件基本信息                    │   │
-│  │ - 符号/封装/3D模型数据            │   │
-│  └──────────────────────────────────┘   │
-│  ┌──────────────────────────────────┐   │
-│  │ SymbolData                       │   │
-│  │ - 符号几何数据                    │   │
-│  │ - 引脚信息                        │   │
-│  └──────────────────────────────────┘   │
-│  ┌──────────────────────────────────┐   │
-│  │ FootprintData                    │   │
-│  │ - 封装几何数据                    │   │
-│  │ - 焊盘信息                        │   │
-│  └──────────────────────────────────┘   │
-│  ┌──────────────────────────────────┐   │
-│  │ Model3DData                      │   │
-│  │ - 3D模型数据                      │   │
-│  │ - 模型UUID                        │   │
-│  └──────────────────────────────────┘   │
-└─────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    View["View 层<br/>QML Components"] --> ViewModel["ViewModel 层<br/>ComponentList / ExportSettings / ExportProgress / ThemeSettings"]
+    ViewModel --> Service["Service 层<br/>ComponentService / ExportService / ConfigService / ParallelExportService"]
+    Service --> Model["Model 层<br/>ComponentData / SymbolData / FootprintData / Model3DData"]
+    Service --> Core["Core 转换引擎<br/>Importers + IR Builders + Exporters"]
+    Model --> Core
+    Core --> KiCad["KiCad 输出<br/>.kicad_sym / .kicad_mod / 3D"]
+    Core --> Altium["Altium 输出<br/>.SchLib / .PcbLib / 嵌入 STEP"]
 ```
 
 ## 层次职责
@@ -253,30 +173,12 @@ Model 层负责数据的存储和管理。
 
 #### 架构概述
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│  NetworkClient (Singleton)                                       │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                  │
-│  ┌─────────────────────────────────────────────────────────────┐│
-│  │  专用网络线程 ("EasyKiConverterNetworkThread")               ││
-│  │  - 所有 HTTP 请求都在此线程中执行                            ││
-│  │  - QNetworkAccessManager 在此线程中运行                      ││
-│  └─────────────────────────────────────────────────────────────┘│
-│                              │                                   │
-│  ┌─────────────────────────────────────────────────────────────┐│
-│  │  请求队列 (m_pendingAsyncRequests)                           ││
-│  │  - 所有请求都入队到同一个队列                                ││
-│  │  - 按 ResourceType 分组进行并发控制                          ││
-│  └─────────────────────────────────────────────────────────────┘│
-│                              │                                   │
-│  ┌─────────────────────────────────────────────────────────────┐│
-│  │  并发控制 (m_activeAsyncRequestsByType)                      ││
-│  │  - 每种 ResourceType 有独立的 maxConcurrent 限制             ││
-│  │  - pumpAsyncQueue() 按优先级和并发限制调度请求               ││
-│  └─────────────────────────────────────────────────────────────┘│
-│                                                                  │
-└─────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    Client[NetworkClient 单例] --> Thread[专用网络线程<br/>QNetworkAccessManager]
+    Thread --> Queue[请求队列<br/>m_pendingAsyncRequests]
+    Queue --> Control[按 ResourceType 并发控制<br/>m_activeAsyncRequestsByType]
+    Control --> Pump[pumpAsyncQueue 按优先级调度]
 ```
 
 #### 关键实现细节
@@ -329,7 +231,7 @@ NetworkResult result = NetworkClient::instance().get(
 
 // 异步请求（返回 AsyncNetworkRequest*，调用方管理生命周期）
 AsyncNetworkRequest* req = NetworkClient::instance().getAsync(url, ResourceType::PreviewImage);
-connect(req, &AsyncNetworkRequest::finished, this, [req](const NetworkResult& r) {
+connect(req, &AsyncNetworkRequest::finished, this, [req] /* capture */ (const NetworkResult& r) {
     if (r.success) { /* ... */ }
     req->deleteLater();  // 必须在完成后删除
 });
@@ -357,31 +259,14 @@ connect(req, &AsyncNetworkRequest::finished, this, [req](const NetworkResult& r)
 
 项目实现了**两阶段导出架构**，用于批量导出元件数据，最大化性能。
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                    导出架构                                        │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                  │
-│  ┌─────────────────────────────────────────────────────────────┐│
-│  │  阶段一：预加载 (Preload)                                    ││
-│  │  • ComponentService::fetchMultipleComponentsData()          ││
-│  │  • 并行获取所有组件数据（网络 I/O）                          ││
-│  │  • 并发数：m_maxConcurrentRequests (默认 10)                ││
-│  └─────────────────────────────────────────────────────────────┘│
-│                              ↓                                   │
-│  ┌─────────────────────────────────────────────────────────────┐│
-│  │  阶段二：导出 (Export)                                       ││
-│  │  • ParallelExportService 协调多个 ExportTypeStage           ││
-│  │  • 每种导出类型独立并行运行                                  ││
-│  │  • 各类型有自己的线程池配置：                                ││
-│  │    - Symbol: maxConcurrent=1 (库级别导出)                    ││
-│  │    - Footprint: maxConcurrent=1 (库级别导出)                 ││
-│  │    - Model3D: maxConcurrent=2 (弱网时降为 1)                 ││
-│  │    - PreviewImages: maxConcurrent=4 (弱网时降为 2)           ││
-│  │    - Datasheet: maxConcurrent=2 (弱网时降为 1)               ││
-│  └─────────────────────────────────────────────────────────────┘│
-│                                                                  │
-└─────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    Preload[阶段一：预加载<br/>并行获取组件数据<br/>默认并发 10] --> Export[阶段二：导出<br/>ParallelExportService 协调各 ExportTypeStage]
+    Export --> Symbol[符号库导出]
+    Export --> Footprint[封装库导出]
+    Export --> Model3D[3D 模型导出]
+    Export --> Preview[预览图导出]
+    Export --> Datasheet[数据手册导出]
 ```
 
 ### 阶段一：预加载（Preload）
@@ -431,42 +316,22 @@ connect(req, &AsyncNetworkRequest::finished, this, [req](const NetworkResult& r)
 
 ### 数据流
 
-```
-用户输入元件ID
-    ↓
-ComponentService::fetchComponentData() 或 fetchMultipleComponentsData()
-    ↓ (并行获取)
-┌─────────────────────────────────────────────┐
-│  网络获取 (NetworkClient)                    │
-│  • EasyedaApi: 组件信息 + CAD 数据           │
-│  • LcscImageService: 预览图 + 数据手册       │
-│  • 3D 模型下载                               │
-└─────────────────────────────────────────────┘
-    ↓ (ComponentData 缓存)
-ParallelExportService::startPreload() + startExport()
-    ↓
-┌─────────────────────────────────────────────┐
-│  SymbolExportStage (1 thread)                │
-│  • 合并所有符号到单个 .kicad_sym 文件        │
-└─────────────────────────────────────────────┘
-┌─────────────────────────────────────────────┐
-│  FootprintExportStage (1 thread)             │
-│  • 合并所有封装到单个 .kicad_mod 目录        │
-└─────────────────────────────────────────────┘
-┌─────────────────────────────────────────────┐
-│  Model3DExportStage (2 threads)              │
-│  • 并行写入 3D 模型文件 (.wrl, .step)        │
-└─────────────────────────────────────────────┘
-┌─────────────────────────────────────────────┐
-│  PreviewImagesExportStage (4 threads)        │
-│  • 并行下载和写入预览图文件                  │
-└─────────────────────────────────────────────┘
-┌─────────────────────────────────────────────┐
-│  DatasheetExportStage (2 threads)            │
-│  • 并行下载和写入数据手册文件                │
-└─────────────────────────────────────────────┘
-    ↓
-完成导出
+```mermaid
+flowchart TD
+    Input[用户输入元件 ID] --> Fetch[ComponentService 获取数据]
+    Fetch --> Network[NetworkClient<br/>EasyEDA CAD / 预览图 / 数据手册 / 3D]
+    Network --> Cache[ComponentData 缓存]
+    Cache --> Start[ParallelExportService<br/>startPreload + startExport]
+    Start --> Symbol[SymbolExportStage]
+    Start --> Footprint[FootprintExportStage]
+    Start --> Model3D[Model3DExportStage]
+    Start --> Preview[PreviewImagesExportStage]
+    Start --> Datasheet[DatasheetExportStage]
+    Symbol --> Done[完成导出]
+    Footprint --> Done
+    Model3D --> Done
+    Preview --> Done
+    Datasheet --> Done
 ```
 
 ---
@@ -699,7 +564,7 @@ EasyKiConverter/
 
 > 注：`NetworkUtils` 源码已移除，其功能已整合到 `NetworkClient` 统一网络层。
 
-已知问题及改进方向详见 [弱网支持分析报告](../WEAK_NETWORK_ANALYSIS.md) 和 [ADR-007](../project/adr/007-weak-network-resilience-analysis.md)。
+已知问题及改进方向详见 [弱网支持分析报告](../project/archive/WEAK_NETWORK_ANALYSIS.md) 和 [ADR-007](../project/adr/007-weak-network-resilience-analysis.md)。
 
 ## 安全性
 

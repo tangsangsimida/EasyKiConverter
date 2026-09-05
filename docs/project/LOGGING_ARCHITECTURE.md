@@ -21,7 +21,17 @@
 
 ## 2. 架构概览
 
+```mermaid
+flowchart TD
+    Code[用户代码层<br/>LOG_DEBUG / LOG_INFO] --> Logger[Logger 门面/单例<br/>全局配置与模块分发]
+    Logger --> Console[ConsoleAppender<br/>彩色控制台输出]
+    Logger --> File[FileAppender<br/>滚动文件与异步写入]
+    Logger --> Callback[CallbackAppender<br/>UI/自定义回调]
+    Console --> Formatter[PatternFormatter<br/>时间 / 级别 / 模块 / 线程 / 消息]
+    File --> Formatter
+    Callback --> Formatter
 ```
+<!-- Legacy ASCII diagram retained below for historical reference.
 ┌─────────────────────────────────────────────────────────────────┐
 │                        用户代码层                                │
 │   LOG_DEBUG(Module::Network, "Fetching data from {}", url)      │
@@ -49,6 +59,7 @@
 │  PatternFormatter: [时间] [级别] [模块] [线程] 消息 (文件:行)     │
 └─────────────────────────────────────────────────────────────────┘
 ```
+-->
 
 ---
 

@@ -154,4 +154,4 @@ statistics.avgNetworkLatencyMs += diag.latencyMs;
 
 - [ADR-002: 导出流水线并行](002-pipeline-parallelism-for-export.md)
 - [ADR-003: 流水线性能优化](003-pipeline-performance-optimization.md)
-- [性能优化报告](../../PERFORMANCE_OPTIMIZATION_REPORT.md)
+- [性能优化报告](../archive/PERFORMANCE_OPTIMIZATION_REPORT.md)

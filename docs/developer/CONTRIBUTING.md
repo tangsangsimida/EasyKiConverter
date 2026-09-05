@@ -90,10 +90,9 @@ git checkout -b feature/your-feature-name
 
 **导出服务架构**：
 
-- 使用多阶段流水线并行架构（ExportServicePipeline）
-- Fetch Stage：I/O 密集型，5 线程（避免触发服务器限流）
-- Process Stage：CPU 密集型，CPU 核心数线程
-- Write Stage：磁盘 I/O 密集型，3 线程
+- 使用两阶段流水线并行架构（Fetch → Export）
+- Fetch 阶段：网络 I/O 并发任务，默认并发度由网络层统一控制（当前为 10）
+- Export 阶段：并行完成 IR 构建、格式转换和文件写入
 - 阶段间通过线程安全的有界队列通信
 - 详见：[ADR-002: 流水线并行架构](../project/adr/002-pipeline-parallelism-for-export.md)
 

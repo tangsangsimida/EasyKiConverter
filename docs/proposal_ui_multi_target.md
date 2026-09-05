@@ -1,8 +1,10 @@
-# UI Multi‑Target Export Proposal
+# UI Multi‑Target Export Proposal（已落地设计记录）
+
+> 状态：已实现。本文保留原始设计意图；当前实现以 `ExportSettingsBaseCard.qml`、目标设置卡片、导出工厂和 `docs/developer/CONVERSION_MAPPING.md` 为准。
 
 ## 背景
-- 当前 UI 只实现 **EasyEDA → KiCad** 单一转换路径。
-- 业务计划在未来加入 **EasyEDA → Altium Designer (AD)**，甚至更多库格式。
+- 当前 UI 已支持 **EasyEDA → KiCad** 和 **EasyEDA → Altium Designer (AD)**。
+- 后续仍可按同一目标抽象扩展更多库格式。
 - 直接在现有 QML 卡片中硬编码新选项会导致代码膨胀、维护难度大、 UI 不一致。
 
 ## 目标
@@ -65,14 +67,14 @@
 2. **搬迁原 ExportSettings 卡**：
    - 将原有通用 UI 迁入 `ExportSettingsBaseCard.qml`。
    - 为 KiCad 创建 `KiCadSettingsCard.qml`（复制原有 KiCad 开关）。
-   - 为 Altium 创建 `AltiumSettingsCard.qml`（后期实现）。
+   - 已创建并维护 `AltiumSettingsCard.qml`，其可用能力以当前 Altium 导出器为准。
 3. **改造 `ExportSettingsViewModel`**：加入 `targetOptions` 管理逻辑并响应 `ExportTargetModel` 信号。
 4. **在 `MainWindow.qml`** 用 `<ExportSettingsBaseCard>` 替换原 `<ExportSettingsCard>`，注入 `exportTargetModel` 与 `exportSettingsViewModel`。
 5. **编写 `export_plugins.json`** 并放置在 `resources/`。确保构建系统把它打包为资源（`qrc`）。
 6. **测试**：
    - 切换目标，检查 UI 动态加载、属性绑定是否正常。
    - 运行一次 KiCad 导出，确保功能未受影响。
-   - 添加一条假目标（如 `MockTarget`），验证只要 JSON 中描述即可出现（即插件化成功）。
+   - 新目标必须同时提供能力声明、设置卡片、导出器、测试和文档，不能仅通过 JSON 条目伪造可用目标。
 7. **文档 & 代码审查**：更新 `README`、`docs/` 中的 UI 架构章节。
 
 ## 预期收益
@@ -82,4 +84,4 @@
 - **代码一致性**：保持 MVVM、单一职责的架构风格。
 
 ---
-**后续**：完成上述步骤后，可在 `src/ui/qml/components` 中看到 `ExportSettingsBaseCard.qml`、`KiCadSettingsCard.qml`、`AltiumSettingsCard.qml`，以及 `resources/export_plugins.json`。所有新目标均通过 `ExportTargetModel` 自动驱动 UI 与业务层。
+**当前结果**：通用设置卡片及 KiCad/Altium 目标卡片已经存在。目标能力由目标模型和 C++ 导出工厂共同约束；新增格式时还需要实现相应 IR 导出器、能力声明、测试和文档，不能只修改 JSON。

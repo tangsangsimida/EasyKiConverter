@@ -25,14 +25,10 @@ The project has **5+ independent network request implementations**, gzip decompr
 
 ### 2. Two Parallel Architectures Doing the Same Thing
 
-```
-Path 1 (Direct Service Layer):
-ComponentService → EasyedaApi → NetworkUtils → Network
-Use: UI real-time preview, single component validation
-
-Path 2 (Pipeline Layer):
-ExportServicePipeline → FetchStageHandler → FetchWorker → Network
-Use: Batch export, large-scale conversion
+```mermaid
+flowchart LR
+    Direct[Path 1: direct service layer<br/>ComponentService → EasyedaApi → NetworkClient<br/>UI preview / single-component validation] --> Network[Network]
+    Pipeline[Path 2: pipeline layer<br/>ParallelExportService → FetchStageHandler → FetchWorker<br/>batch export / large-scale conversion] --> Network
 ```
 
 `EasyedaApi::fetchCadData()` and `FetchWorker::run()` have highly overlapping functionality but independent implementations.
@@ -150,23 +146,12 @@ private:
 
 #### 1.2 Gradual Migration Strategy
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│  Phase 1 Migration Strategy                                  │
-├─────────────────────────────────────────────────────────────┤
-│                                                              │
-│  Step 1: NetworkClient implements basic get/post (keep old)  │
-│     ↓                                                        │
-│  Step 2: PreviewImageExporter switches to NetworkClient     │
-│     ↓                                                        │
-│  Step 3: DatasheetExporter switches (no timeout=most danger) │
-│     ↓                                                        │
-│  Step 4: FetchWorker switches (core component, last)          │
-│     ↓                                                        │
-│  Step 5: Remove old implementation (after confirming no      │
-│          rollback needed)                                    │
-│                                                              │
-└─────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    A[NetworkClient implements get/post] --> B[PreviewImageExporter switches]
+    B --> C[DatasheetExporter switches]
+    C --> D[FetchWorker switches]
+    D --> E[Remove old implementation after rollback review]
 ```
 
 #### 1.3 Migration Priority
@@ -200,17 +185,10 @@ grep -r "ComponentDataCollector" src/ --include="*.cpp" | grep -v "ComponentData
 
 #### 3.1 Define Clear Responsibility Boundaries
 
-```
-Direct Service Layer (ComponentService):
-├── Use: UI real-time preview, single component validation
-├── Characteristics: Fast response, no complex pipeline needed
-└── Implementation: Direct NetworkClient calls
-
-Pipeline Layer (ExportServicePipeline):
-├── Use: Batch export, large-scale conversion
-├── Characteristics: High performance, multi-stage parallel
-└── Implementation: Fetch → Process → Write
-                └── Internally uses NetworkClient
+```mermaid
+flowchart LR
+    Direct[ComponentService<br/>Real-time preview / single-component validation<br/>Direct NetworkClient calls]
+    Pipeline[ParallelExportService<br/>Batch export / parallel processing<br/>Fetch → Export]
 ```
 
 #### 3.2 Unified Error Signals
@@ -334,5 +312,5 @@ private:
 
 - [ADR-006: Network Performance Optimization](006-network-performance-optimization.md)
 - [ADR-007: Weak Network Resilience Analysis](007-weak-network-resilience-analysis.md)
-- [Weak Network Analysis Report](../../WEAK_NETWORK_ANALYSIS.md)
+- [Weak Network Analysis Report](../archive/WEAK_NETWORK_ANALYSIS_en.md)
 - [Architecture Documentation](../../developer/ARCHITECTURE.md)

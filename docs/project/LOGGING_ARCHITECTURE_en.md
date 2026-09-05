@@ -21,7 +21,17 @@
 
 ## 2. Architecture Overview
 
+```mermaid
+flowchart TD
+    Code[Application code<br/>LOG_DEBUG / LOG_INFO] --> Logger[Logger facade/singleton<br/>global configuration and module routing]
+    Logger --> Console[ConsoleAppender<br/>colored console output]
+    Logger --> File[FileAppender<br/>rolling files and async writes]
+    Logger --> Callback[CallbackAppender<br/>UI/custom callback]
+    Console --> Formatter[PatternFormatter<br/>time / level / module / thread / message]
+    File --> Formatter
+    Callback --> Formatter
 ```
+<!-- Legacy ASCII diagram retained below for historical reference.
 ┌─────────────────────────────────────────────────────────────────┐
 │                        User Code Layer                           │
 │   LOG_DEBUG(Module::Network, "Fetching data from {}", url)     │
@@ -49,6 +59,7 @@
 │  PatternFormatter: [time] [level] [module] [thread] message    │
 └─────────────────────────────────────────────────────────────────┘
 ```
+-->
 
 ---
 

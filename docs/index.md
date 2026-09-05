@@ -21,7 +21,7 @@
 
 ### 面向开发者 (developer/)
 
-这类文档的目标是让其他开发者（或未来的你）能够理解项目、参与贡献和进行维护。
+这类文档的目标是让其他开发者能够理解项目、参与贡献和进行维护。
 
 - [构建指南](developer/BUILD.md) - 从源代码构建
 - [构建指南 (英文)](developer/BUILD_en.md) - Build Guide
@@ -30,6 +30,9 @@
 - [贡献指南](developer/CONTRIBUTING.md) - 如何贡献代码
 - [贡献指南 (英文)](developer/CONTRIBUTING_en.md) - Contributing Guide
 - [架构文档](developer/ARCHITECTURE.md) - 项目架构设计
+- [转换层与映射关系](developer/CONVERSION_MAPPING.md) - EasyEDA、IR、KiCad、Altium 的算法与字段映射
+- [EasyEDA API 原始数据说明](developer/EASYEDA_API_DATA.md) - API 响应结构、shape 编码和字段解析
+- [文档维护指南](developer/DOCUMENTATION_MAINTENANCE.md) - 文档事实来源、更新触发条件和过时内容清理规则
 - [架构文档 (英文)](developer/ARCHITECTURE_en.md) - Architecture
 - [测试开发指南](developer/TESTING_GUIDE.md) - 测试架构与 Mock 策略
 - [开发者常见问题](developer/FAQ.md) - 技术问题、根因分析和回归预防
@@ -42,10 +45,6 @@
 - [项目路线图](project/ROADMAP.md) - 未来发展方向
 - [项目路线图 (英文)](project/ROADMAP_en.md) - Roadmap
 - [架构决策记录](project/adr/README.md) - 技术决策记录
-
-### 重构规划
-
-- [代码重构计划](../../REFACTORING_PLAN.md) - 大型源文件重构优化方案
 
 ### 历史分析报告（归档）
 
