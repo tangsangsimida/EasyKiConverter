@@ -4,7 +4,7 @@ This guide will help you get started with EasyKiConverter quickly.
 
 ## Introduction
 
-EasyKiConverter is a powerful C++ desktop application for converting LCSC and EasyEDA components to KiCad format. It provides complete conversion of symbols, footprints, and 3D models with a modern user interface and efficient conversion performance.
+EasyKiConverter is a powerful C++ desktop application for converting LCSC and EasyEDA components to KiCad or Altium formats. It provides complete conversion of symbols, footprints, and 3D models with a modern user interface and efficient conversion performance.
 
 ## Prerequisites
 
