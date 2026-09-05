@@ -40,6 +40,70 @@ int quantizeSchematicOffset(int value) {
     return ((value - kSchematicUnitRaw / 2) / kSchematicUnitRaw) * kSchematicUnitRaw;
 }
 
+/**
+ * @brief 量化坐标到 Altium 10 mil 吸附网格
+ * @details Altium SchLib 的 SNAPGRIDSIZE 默认为 10 mil = 100,000 raw。
+ *          引脚连接端必须落在此网格上，否则 AD 中无法吸附连线。
+ */
+int quantizeToSnapGrid(int value) {
+    constexpr int kSnapGrid = 100000;  // 10 mil
+    if (value >= 0)
+        return ((value + kSnapGrid / 2) / kSnapGrid) * kSnapGrid;
+    return ((value - kSnapGrid / 2) / kSnapGrid) * kSnapGrid;
+}
+
+/**
+ * @brief 计算引脚连接端坐标
+ * @details Altium 中 Location 是主体端（引脚根部），连接端沿 Orientation 方向
+ *          偏移 PinLength。连接端是用户在 AD 中连线时吸附的端点。
+ * @param pin 引脚数据
+ * @return 连接端坐标（raw 单位）
+ */
+QPointF computePinConnectionPoint(const AltiumSchPin& pin) {
+    switch (pin.orientation) {
+        case AltiumModels::PinOrientation::Right:
+            return QPointF(pin.locationX + pin.length, pin.locationY);
+        case AltiumModels::PinOrientation::Left:
+            return QPointF(pin.locationX - pin.length, pin.locationY);
+        case AltiumModels::PinOrientation::Up:
+            return QPointF(pin.locationX, pin.locationY + pin.length);
+        case AltiumModels::PinOrientation::Down:
+            return QPointF(pin.locationX, pin.locationY - pin.length);
+    }
+    return QPointF(pin.locationX, pin.locationY);
+}
+
+/**
+ * @brief 将引脚连接端量化到吸附网格，保持引脚长度不变
+ * @details 量化连接端的 X 和 Y 坐标到10 mil 网格，然后根据方向和长度
+ *          反推主体端位置。引脚长度保持不变。
+ * @param pin 待修改的引脚
+ */
+void quantizePinConnectionPoint(AltiumSchPin& pin) {
+    QPointF conn = computePinConnectionPoint(pin);
+    int quantizedConnX = quantizeToSnapGrid(static_cast<int>(conn.x()));
+    int quantizedConnY = quantizeToSnapGrid(static_cast<int>(conn.y()));
+
+    switch (pin.orientation) {
+        case AltiumModels::PinOrientation::Right:
+            pin.locationX = quantizedConnX - pin.length;
+            pin.locationY = quantizedConnY;
+            break;
+        case AltiumModels::PinOrientation::Left:
+            pin.locationX = quantizedConnX + pin.length;
+            pin.locationY = quantizedConnY;
+            break;
+        case AltiumModels::PinOrientation::Up:
+            pin.locationX = quantizedConnX;
+            pin.locationY = quantizedConnY - pin.length;
+            break;
+        case AltiumModels::PinOrientation::Down:
+            pin.locationX = quantizedConnX;
+            pin.locationY = quantizedConnY + pin.length;
+            break;
+    }
+}
+
 }  // namespace
 
 /**
@@ -471,6 +535,11 @@ void ExporterAltiumSymbol::centerComponent(AltiumSchComponent& component) {
                     pin.locationY = bodyMinY;
                     break;
             }
+        }
+
+        // 将引脚连接端量化到 10 mil 吸附网格，保持引脚长度不变。
+        for (auto& pin : component.pins) {
+            quantizePinConnectionPoint(pin);
         }
 
         // EasyEDA 的 Value/Comment 字段有时共享同一个锚点，并携带 270°
