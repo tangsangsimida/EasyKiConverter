@@ -310,16 +310,22 @@ Card {
                 }
                 TextField {
                     id: diskCacheLimitInput
+                    objectName: "diskCacheLimitInput"
                     Layout.fillWidth: true
                     Layout.preferredHeight: 36
-                    text: baseCard.exportSettingsController ? baseCard.exportSettingsController.diskCacheLimitMB : ""
-                    onTextChanged: {
-                        if (baseCard.exportSettingsController) {
-                            var val = parseInt(text);
-                            if (!isNaN(val)) {
-                                baseCard.exportSettingsController.setDiskCacheLimitMB(val);
-                            }
+                    text: baseCard.exportSettingsController ? baseCard.exportSettingsController.diskCacheLimitMB.toString() : "5120"
+                    onEditingFinished: {
+                        if (!baseCard.exportSettingsController)
+                            return;
+                        var value = parseInt(text);
+                        if (isNaN(value)) {
+                            text = baseCard.exportSettingsController.diskCacheLimitMB.toString();
+                            return;
                         }
+                        var maximum = baseCard.exportSettingsController.maxDiskCacheLimitMB;
+                        var clamped = Math.max(1, Math.min(maximum, value));
+                        baseCard.exportSettingsController.setDiskCacheLimitMB(clamped);
+                        text = clamped.toString();
                     }
                     validator: IntValidator {
                         bottom: 1
