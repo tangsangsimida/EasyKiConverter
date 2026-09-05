@@ -338,5 +338,5 @@ private:
 
 - [ADR-006: 网络性能优化](006-network-performance-optimization.md)
 - [ADR-007: 弱网容错分析](007-weak-network-resilience-analysis.md)
-- [弱网支持分析报告](../../WEAK_NETWORK_ANALYSIS.md)
+- [弱网支持分析报告](../archive/WEAK_NETWORK_ANALYSIS.md)
 - [架构文档](../../developer/ARCHITECTURE.md)

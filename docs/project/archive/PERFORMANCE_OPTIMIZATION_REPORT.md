@@ -467,7 +467,7 @@ cmake --build build --config Debug --parallel 16
 
 ## 参考资料
 
-- [ADR-003: 流水线性能优化](project/adr/003-pipeline-performance-optimization.md)
-- [ADR-006: 网络性能优化](project/adr/006-network-performance-optimization.md)
-- [CHANGELOG.md](developer/CHANGELOG.md)
-- [ARCHITECTURE.md](developer/ARCHITECTURE.md)
+- [ADR-003: 流水线性能优化](../adr/003-pipeline-performance-optimization.md)
+- [ADR-006: 网络性能优化](../adr/006-network-performance-optimization.md)
+- [CHANGELOG.md](../../developer/CHANGELOG.md)
+- [ARCHITECTURE.md](../../developer/ARCHITECTURE.md)

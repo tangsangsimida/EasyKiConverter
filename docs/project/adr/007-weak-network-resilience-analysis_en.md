@@ -84,7 +84,7 @@ Based on the analysis conclusions, improvements are recommended in two priority 
 
 ## References
 
-- [Weak Network Support Analysis Report](../../WEAK_NETWORK_ANALYSIS_en.md)
+- [Weak Network Support Analysis Report](../archive/WEAK_NETWORK_ANALYSIS_en.md)
 - [ADR-006: Network Performance Optimization](006-network-performance-optimization.md)
 - [ADR-003: Pipeline Performance Optimization](003-pipeline-performance-optimization.md)
-- [Performance Optimization Report](../../PERFORMANCE_OPTIMIZATION_REPORT_en.md)
+- [Performance Optimization Report](../archive/PERFORMANCE_OPTIMIZATION_REPORT_en.md)

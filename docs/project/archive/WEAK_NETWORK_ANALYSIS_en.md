@@ -183,7 +183,7 @@ int FetchWorker::calculateRetryDelay(int retryCount) {
 
 ## References
 
-- [ADR-007: Weak Network Resilience Analysis](project/adr/007-weak-network-resilience-analysis_en.md)
-- [ADR-006: Network Performance Optimization](project/adr/006-network-performance-optimization.md)
+- [ADR-007: Weak Network Resilience Analysis](../adr/007-weak-network-resilience-analysis_en.md)
+- [ADR-006: Network Performance Optimization](../adr/006-network-performance-optimization_en.md)
 - [Performance Optimization Report](PERFORMANCE_OPTIMIZATION_REPORT_en.md)
-- [Architecture](developer/ARCHITECTURE_en.md)
+- [Architecture](../../developer/ARCHITECTURE_en.md)

@@ -357,7 +357,7 @@ The project has four independent network request implementations with inconsiste
 - **`NetworkWorker`** (legacy single fetch): No timeout or retry mechanism; may block permanently under weak network conditions
 - **`ComponentService`** (LCSC preview images): Supports timeout (15s) + retry with fallback mechanism
 
-For known issues and improvement directions, see the [Weak Network Analysis Report](../WEAK_NETWORK_ANALYSIS_en.md) and [ADR-007](../project/adr/007-weak-network-resilience-analysis_en.md).
+For known issues and improvement directions, see the [Weak Network Analysis Report](../project/archive/WEAK_NETWORK_ANALYSIS_en.md) and [ADR-007](../project/adr/007-weak-network-resilience-analysis_en.md).
 
 ## Security
 

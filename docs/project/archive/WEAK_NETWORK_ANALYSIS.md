@@ -183,7 +183,7 @@ int FetchWorker::calculateRetryDelay(int retryCount) {
 
 ## 参考资料
 
-- [ADR-007: 弱网容错分析](project/adr/007-weak-network-resilience-analysis.md)
-- [ADR-006: 网络性能优化](project/adr/006-network-performance-optimization.md)
+- [ADR-007: 弱网容错分析](../adr/007-weak-network-resilience-analysis.md)
+- [ADR-006: 网络性能优化](../adr/006-network-performance-optimization.md)
 - [性能优化报告](PERFORMANCE_OPTIMIZATION_REPORT.md)
-- [架构文档](developer/ARCHITECTURE.md)
+- [架构文档](../../developer/ARCHITECTURE.md)

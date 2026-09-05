@@ -6,7 +6,7 @@
 
 ### 符号转换
 
-EasyKiConverter 可以将 EasyEDA 符号转换为 KiCad 符号库格式（.kicad_sym）。
+EasyKiConverter 可以将 EasyEDA 符号转换为 KiCad（.kicad_sym）或 Altium（.SchLib）符号库格式。
 
 - 支持完整的符号几何数据转换
 - 自动处理引脚信息和属性
@@ -15,7 +15,7 @@ EasyKiConverter 可以将 EasyEDA 符号转换为 KiCad 符号库格式（.kicad
 
 ### 封装生成
 
-从 EasyEDA 封装创建 KiCad 封装格式（.kicad_mod）。
+从 EasyEDA 封装创建 KiCad（.kicad_mod）或 Altium（.PcbLib）封装库格式。
 
 - 支持通孔和表面贴装封装
 - 完整的焊盘信息转换
@@ -28,6 +28,7 @@ EasyKiConverter 可以将 EasyEDA 符号转换为 KiCad 符号库格式（.kicad
 
 - 支持 WRL 格式
 - 支持 STEP 格式
+- Altium 目标将 STEP 模型嵌入 PcbLib，不生成外部 WRL 模型引用
 - 自动模型定位和缩放
 - 模型偏移参数自动计算
 
@@ -51,26 +52,21 @@ EasyKiConverter 可以将 EasyEDA 符号转换为 KiCad 符号库格式（.kicad
 - 线程安全的数据访问
 - 智能任务调度
 
-### 三阶段流水线并行架构
+### 两阶段流水线并行架构
 
-优化批量转换性能的三阶段流水线策略。
+优化批量转换性能的两阶段流水线策略。
 
-**阶段一：数据抓取（Fetch，5 线程）**
+**阶段一：数据抓取（Fetch，并发网络任务）**
 - 并行从网络获取所有元件数据
 - 异步网络请求
 - 支持超时和重试机制
 
-**阶段二：数据处理（Process，N 核心）**
-- 多核 CPU 并行处理数据
-- 符号、封装、3D 模型转换
-- 充分利用多核性能
+**阶段二：导出（Process/Write，并行导出任务）**
+- 在独立任务中完成 IR 构建、目标格式转换和文件写入
+- Altium 的 STEP 模型在封装写入阶段嵌入 PcbLib
+- 统一汇总符号、封装和 3D 模型的成功/失败状态
 
-**阶段三：数据写入（Write，3 线程）**
-- 并行写入文件
-- 避免文件写入冲突
-- 保证数据一致性
-
-**进度权重**：抓取 30%、处理 50%、写入 20%
+**进度权重**：由 `ExportProgress` 根据任务数量和阶段状态动态聚合，不再固定为三段百分比
 
 ### 状态机模式
 
@@ -303,7 +299,7 @@ EasyKiConverter 可以将 EasyEDA 符号转换为 KiCad 符号库格式（.kicad
 - **内存泄漏修复**: 修复 thread_local QNAM 内存泄漏问题
 - **容错导出**: 3D 模型导出失败不影响符号/封装导出
 
-详见: [弱网支持分析](../WEAK_NETWORK_ANALYSIS.md)
+详见: [弱网支持分析](../project/archive/WEAK_NETWORK_ANALYSIS.md)
 
 ## 开发工具
 
@@ -342,7 +338,7 @@ EasyKiConverter 可以将 EasyEDA 符号转换为 KiCad 符号库格式（.kicad
 
 - MVVM 模式：清晰的职责分离
 - 状态机模式：异步数据收集
-- 三阶段流水线并行架构：性能优化
+- 两阶段流水线并行架构：性能优化
 - 单例模式：全局样式管理
 - 工厂模式：导出器创建
 - 观察者模式：Qt 信号槽机制

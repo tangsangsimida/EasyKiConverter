@@ -6,7 +6,7 @@ This document provides a detailed description of the features available in EasyK
 
 ### Symbol Conversion
 
-Convert EasyEDA symbols to KiCad symbol libraries (.kicad_sym).
+Convert EasyEDA symbols to KiCad (.kicad_sym) or Altium (.SchLib) symbol libraries.
 
 **Features:**
 - Complete symbol geometry conversion
@@ -23,7 +23,7 @@ Convert EasyEDA symbols to KiCad symbol libraries (.kicad_sym).
 
 ### Footprint Generation
 
-Create KiCad footprints from EasyEDA packages (.kicad_mod).
+Create KiCad (.kicad_mod) or Altium (.PcbLib) footprint libraries from EasyEDA packages.
 
 **Features:**
 - Complete footprint geometry conversion
@@ -54,6 +54,7 @@ Automatically download and convert 3D models.
 - Position and rotation adjustment
 - Model scaling
 - Model verification
+- Altium embeds STEP models in PcbLib instead of creating external WRL references
 
 ## Performance Optimization
 
@@ -73,26 +74,21 @@ Support multi-threaded parallel processing to fully utilize multi-core CPUs.
 - Better resource utilization
 - Improved user experience
 
-### Three-Stage Pipeline Parallel Architecture
+### Two-Stage Pipeline Parallel Architecture
 
-Optimize batch conversion performance with three-stage pipeline strategy.
+Optimize batch conversion performance with a two-stage pipeline strategy.
 
-**Stage 1: Data Fetch (Fetch, 5 threads)**
+**Stage 1: Data Fetch (Fetch, concurrent network tasks)**
 - Parallel data fetching from network
 - Asynchronous network requests
 - Timeout and retry support
 
-**Stage 2: Data Processing (Process, N cores)**
-- Multi-core CPU parallel processing
-- Symbol, footprint, 3D model conversion
-- Full utilization of multi-core performance
+**Stage 2: Export (Process/Write, parallel export tasks)**
+- Build IR, convert to the target format, and write files in isolated tasks
+- Altium STEP models are embedded into PcbLib during footprint writing
+- Aggregate success and failure states for symbols, footprints, and 3D models
 
-**Stage 3: Data Write (Write, 3 threads)**
-- Parallel file writing
-- File write conflict prevention
-- Data consistency guarantee
-
-**Progress weights**: Fetch 30%, Process 50%, Write 20%
+**Progress weights**: dynamically aggregated by `ExportProgress` from task counts and stage state
 
 **Benefits:**
 - Optimal performance

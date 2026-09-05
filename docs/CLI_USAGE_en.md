@@ -23,6 +23,7 @@ easykiconverter convert batch -i <component_list_file> -o <output_dir> [options]
 | `--output` | `-o` | Output directory path | - |
 | `--lib-name` | | Export library name | EasyKiConverter |
 | `--component` | `-c` | LCSC component ID | - |
+| `--target-format` | | Target format (kicad/altium) | kicad |
 | `--symbol` | | Export symbol library | true |
 | `--footprint` | | Export footprint library | true |
 | `--3d-model` | | Export 3D models (default WRL format) | false |
@@ -50,7 +51,7 @@ CLI mode exports the following by default:
 
 **Note**:
 - 3D models, preview images, and datasheets are not exported by default
-- Use `--3d-model` when needed; defaults to WRL format if not specified
+- Use `--3d-model` when needed; KiCad defaults to WRL, while Altium automatically converges to STEP and embeds it in PcbLib
 - Use `--datasheet` when datasheets are needed
 - Normal mode does not generate detailed reports; only in debug mode (`--debug`)
 
@@ -119,8 +120,11 @@ easykiconverter --completion fish > ~/.config/fish/completions/easykiconverter.f
 # Default export (symbol + footprint library)
 easykiconverter convert bom -i my_project.xlsx -o ./kicad_libs
 
-# Export symbol, footprint, and 3D models (default WRL format)
+# Export KiCad symbol, footprint, and 3D models (default WRL format)
 easykiconverter convert bom -i my_project.xlsx -o ./output --3d-model
+
+# Export Altium SchLib/PcbLib (3D models are embedded as STEP)
+easykiconverter convert bom -i my_project.xlsx -o ./output --target-format altium --3d-model
 
 # Export everything including preview images
 easykiconverter convert bom -i my_project.xlsx -o ./output --3d-model --preview

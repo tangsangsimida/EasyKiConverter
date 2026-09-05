@@ -20,11 +20,13 @@ These documents help users understand what the project is and how to use it.
 
 ### For Developers (developer/)
 
-These documents help other developers (or your future self) understand the project, contribute, and maintain it.
+These documents help other developers understand the project, contribute, and maintain it.
 
 - [Build Guide](developer/BUILD_en.md) - Build from source
 - [Contributing Guide](developer/CONTRIBUTING_en.md) - How to contribute code
 - [Architecture](developer/ARCHITECTURE_en.md) - Project architecture design
+- [Conversion Layer and Mapping](developer/CONVERSION_MAPPING.md) - EasyEDA, IR, KiCad, and Altium mapping (Chinese)
+- [Documentation Maintenance](developer/DOCUMENTATION_MAINTENANCE.md) - Documentation sources of truth and update checklist (Chinese)
 - [Testing Guide](developer/TESTING_GUIDE_en.md) - Testing architecture & Mocking strategy
 - [BOM Parsing Guide](developer/BOM_PARSING_GUIDE_en.md) - BOM file parsing documentation
 - [Coding Style](developer/CODING_STYLE_en.md) - Code style guidelines

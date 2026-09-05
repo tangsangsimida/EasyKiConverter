@@ -23,6 +23,7 @@ easykiconverter convert batch -i <component_list_file> -o <output_dir> [options]
 | `--output` | `-o` | 输出目录路径 | - |
 | `--lib-name` | | 导出库名称 | EasyKiConverter |
 | `--component` | `-c` | LCSC 元器件编号 | - |
+| `--target-format` | | 目标格式（kicad/altium） | kicad |
 | `--symbol` | | 导出符号库 | true |
 | `--footprint` | | 导出封装库 | true |
 | `--3d-model` | | 导出 3D 模型（默认 WRL 格式） | false |
@@ -50,7 +51,7 @@ CLI 模式默认导出以下内容：
 
 **注意**：
 - 默认不导出 3D 模型、预览图和数据手册
-- 需要 3D 模型时传入 `--3d-model`，未指定格式时使用 WRL 格式
+- 需要 3D 模型时传入 `--3d-model`；KiCad 默认使用 WRL，Altium 会自动收敛为 STEP 并嵌入 PcbLib
 - 需要数据手册时传入 `--datasheet`
 - 普通模式不生成详细报告，仅在调试模式 (`--debug`) 下生成
 
@@ -119,8 +120,11 @@ easykiconverter --completion fish > ~/.config/fish/completions/easykiconverter.f
 # 默认导出 (符号库 + 封装库)
 easykiconverter convert bom -i my_project.xlsx -o ./kicad_libs
 
-# 导出符号库、封装库和 3D 模型（默认 WRL 格式）
+# 导出 KiCad 符号库、封装库和 3D 模型（默认 WRL 格式）
 easykiconverter convert bom -i my_project.xlsx -o ./output --3d-model
+
+# 导出 Altium SchLib/PcbLib（3D 模型固定嵌入 STEP）
+easykiconverter convert bom -i my_project.xlsx -o ./output --target-format altium --3d-model
 
 # 导出所有内容，包括预览图
 easykiconverter convert bom -i my_project.xlsx -o ./output --3d-model --preview

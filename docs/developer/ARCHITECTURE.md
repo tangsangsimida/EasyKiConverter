@@ -699,7 +699,7 @@ EasyKiConverter/
 
 > 注：`NetworkUtils` 源码已移除，其功能已整合到 `NetworkClient` 统一网络层。
 
-已知问题及改进方向详见 [弱网支持分析报告](../WEAK_NETWORK_ANALYSIS.md) 和 [ADR-007](../project/adr/007-weak-network-resilience-analysis.md)。
+已知问题及改进方向详见 [弱网支持分析报告](../project/archive/WEAK_NETWORK_ANALYSIS.md) 和 [ADR-007](../project/adr/007-weak-network-resilience-analysis.md)。
 
 ## 安全性
 

@@ -334,5 +334,5 @@ private:
 
 - [ADR-006: Network Performance Optimization](006-network-performance-optimization.md)
 - [ADR-007: Weak Network Resilience Analysis](007-weak-network-resilience-analysis.md)
-- [Weak Network Analysis Report](../../WEAK_NETWORK_ANALYSIS.md)
+- [Weak Network Analysis Report](../archive/WEAK_NETWORK_ANALYSIS_en.md)
 - [Architecture Documentation](../../developer/ARCHITECTURE.md)
