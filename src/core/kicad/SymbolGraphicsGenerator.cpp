@@ -348,8 +348,9 @@ QString SymbolGraphicsGenerator::generateText(const IR::SymbolTextIR& text) cons
     double x = text.position.x() - m_originX;
     double y = text.position.y() - m_originY;
 
-    // IR 中 fontSizeMm 已从 pt 转换
-    double fontSize = text.fontSizeMm;
+    // IR 中 fontSizeMm 已从 pt 转换；部分 EasyEDA 文本记录未提供字号，
+    // 使用与平台属性一致的默认字号，避免生成 0.00 的不可见文本。
+    double fontSize = text.fontSizeMm > 0.0 ? text.fontSizeMm : 1.27;
 
     // 处理粗体和斜体（IR 中 italic 已为 bool）
     QString fontStyle = "";

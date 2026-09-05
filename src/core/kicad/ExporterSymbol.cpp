@@ -419,6 +419,27 @@ QString ExporterSymbol::generateSymbolContent(const IR::SymbolComponentIR& symbo
         includeOriginPoint(circle.center.x() - circle.radius, circle.center.y() - circle.radius);
         includeOriginPoint(circle.center.x() + circle.radius, circle.center.y() + circle.radius);
     }
+    for (const auto& ellipse : symbol.ellipses) {
+        includeOriginPoint(ellipse.center.x() - ellipse.radiusX, ellipse.center.y() - ellipse.radiusY);
+        includeOriginPoint(ellipse.center.x() + ellipse.radiusX, ellipse.center.y() + ellipse.radiusY);
+    }
+    for (const auto& arc : symbol.arcs) {
+        includeOriginPoint(arc.startPoint.x(), arc.startPoint.y());
+        includeOriginPoint(arc.midPoint.x(), arc.midPoint.y());
+        includeOriginPoint(arc.endPoint.x(), arc.endPoint.y());
+    }
+    for (const auto& polyline : symbol.polylines) {
+        for (const QPointF& point : polyline.points)
+            includeOriginPoint(point.x(), point.y());
+    }
+    for (const auto& polygon : symbol.polygons) {
+        for (const QPointF& point : polygon.points)
+            includeOriginPoint(point.x(), point.y());
+    }
+    for (const auto& path : symbol.paths) {
+        for (const QPointF& point : path.points)
+            includeOriginPoint(point.x(), point.y());
+    }
     if (minOriginX <= maxOriginX) {
         originX = (minOriginX + maxOriginX) / 2.0;
         originY = (minOriginY + maxOriginY) / 2.0;
@@ -528,7 +549,8 @@ QString ExporterSymbol::generateSymbolContent(const IR::SymbolComponentIR& symbo
      * @brief 计算 Value 属性锚点
      * @details Value 使用主体中心，不复用 EasyEDA 文本的自由坐标和旋转。
      */
-    double valueX = graphCenterOffsetX;
+    // 原点已经是完整几何包围盒中心，属性统一使用局部中心 X=0。
+    double valueX = 0.0;
     double valueY = symbolCenterY - propertySpacing / 2.0;
     double valueRotation = 0.0;
 
@@ -653,8 +675,41 @@ QString ExporterSymbol::generateSymbolContent(const IR::SymbolComponentIR& symbo
         // 单部分符号：直接在主符号中包含图形元素，不使用子符号
         qDebug() << "Exporting single-part symbol";
 
+        /**
+         * @brief 归一化越界的图形文本
+         * @details API 文本坐标可能使用独立画布基准，超出主体边界时将其按可见顺序
+         *          放置到主体中心区域；不依赖文本内容进行判断。
+         */
+        IR::SymbolComponentIR drawingSymbol = symbol;
+        if (!symbol.rectangles.isEmpty()) {
+            double bodyMinX = std::numeric_limits<double>::max();
+            double bodyMinY = std::numeric_limits<double>::max();
+            double bodyMaxX = -std::numeric_limits<double>::max();
+            double bodyMaxY = -std::numeric_limits<double>::max();
+            for (const auto& rect : symbol.rectangles) {
+                bodyMinX = qMin(bodyMinX, qMin(rect.x0, rect.x1));
+                bodyMinY = qMin(bodyMinY, qMin(rect.y0, rect.y1));
+                bodyMaxX = qMax(bodyMaxX, qMax(rect.x0, rect.x1));
+                bodyMaxY = qMax(bodyMaxY, qMax(rect.y0, rect.y1));
+            }
+            const double textCenterX = (bodyMinX + bodyMaxX) / 2.0;
+            const double textCenterY = (bodyMinY + bodyMaxY) / 2.0;
+            int visibleTextOrder = 0;
+            for (IR::SymbolTextIR& text : drawingSymbol.texts) {
+                const double localX = text.position.x();
+                const double localY = text.position.y();
+                const bool outsideBody =
+                    localX < bodyMinX || localX > bodyMaxX || localY < bodyMinY || localY > bodyMaxY;
+                if (!outsideBody)
+                    continue;
+                text.position = QPointF(textCenterX, textCenterY - visibleTextOrder * 1.27);
+                text.rotation = 0.0;
+                ++visibleTextOrder;
+            }
+        }
+
         // 生成图形元素
-        content += m_graphicsGenerator.generateDrawings(symbol);
+        content += m_graphicsGenerator.generateDrawings(drawingSymbol);
 
         // 生成引脚
         content += m_graphicsGenerator.generatePins(pins);
