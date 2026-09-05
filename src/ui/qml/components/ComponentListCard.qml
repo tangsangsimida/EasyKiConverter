@@ -1060,7 +1060,6 @@ Card {
         var popupH = _previewPopup.height;
         if (winW <= 0 || winH <= 0 || popupW <= 0 || popupH <= 0)
             return;
-
         var thumbX = _previewPopup.anchorX;
         var thumbY = _previewPopup.anchorY;
         var thumbW = _previewPopup.anchorWidth;
