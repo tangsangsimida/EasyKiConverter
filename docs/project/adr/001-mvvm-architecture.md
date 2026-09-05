@@ -26,40 +26,11 @@ EasyKiConverter 是一个基于 Qt 6 Quick 的桌面应用程序，用于将 Eas
 
 ### 架构设计
 
-```
-┌─────────────────────────────────────────┐
-│              View Layer                  │
-│         (QML Components)                 │
-└──────────────┬──────────────────────────┘
-               │
-┌──────────────▼──────────────────────────┐
-│          ViewModel Layer                │
-│  ┌──────────────────────────────────┐   │
-│  │ ComponentListViewModel          │   │
-│  │ ExportSettingsViewModel         │   │
-│  │ ExportProgressViewModel         │   │
-│  │ ThemeSettingsViewModel          │   │
-│  └──────────────────────────────────┘   │
-└──────────────┬──────────────────────────┘
-               │
-┌──────────────▼──────────────────────────┐
-│           Service Layer                  │
-│  ┌──────────────────────────────────┐   │
-│  │ ComponentService                 │   │
-│  │ ExportService                    │   │
-│  │ ConfigService                    │   │
-│  └──────────────────────────────────┘   │
-└──────────────┬──────────────────────────┘
-               │
-┌──────────────▼──────────────────────────┐
-│            Model Layer                   │
-│  ┌──────────────────────────────────┐   │
-│  │ ComponentData                    │   │
-│  │ SymbolData                       │   │
-│  │ FootprintData                    │   │
-│  │ Model3DData                      │   │
-│  └──────────────────────────────────┘   │
-└─────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    View[View 层<br/>QML Components] --> ViewModel[ViewModel 层<br/>ComponentList / ExportSettings / ExportProgress / ThemeSettings]
+    ViewModel --> Service[Service 层<br/>ComponentService / ExportService / ConfigService]
+    Service --> Model[Model 层<br/>ComponentData / SymbolData / FootprintData / Model3DData]
 ```
 
 ### 层次职责

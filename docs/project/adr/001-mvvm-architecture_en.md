@@ -26,40 +26,11 @@ We chose to adopt the MVVM (Model-View-ViewModel) architecture for the following
 
 ### Architecture Design
 
-```
-┌─────────────────────────────────────────┐
-│              View Layer                  │
-│         (QML Components)                 │
-└──────────────┬──────────────────────────┘
-               │
-┌──────────────▼──────────────────────────┐
-│          ViewModel Layer                │
-│  ┌──────────────────────────────────┐   │
-│  │ ComponentListViewModel          │   │
-│  │ ExportSettingsViewModel         │   │
-│  │ ExportProgressViewModel         │   │
-│  │ ThemeSettingsViewModel          │   │
-│  └──────────────────────────────────┘   │
-└──────────────┬──────────────────────────┘
-               │
-┌──────────────▼──────────────────────────┐
-│           Service Layer                  │
-│  ┌──────────────────────────────────┐   │
-│  │ ComponentService                 │   │
-│  │ ExportService                    │   │
-│  │ ConfigService                    │   │
-│  └──────────────────────────────────┘   │
-└──────────────┬──────────────────────────┘
-               │
-┌──────────────▼──────────────────────────┐
-│            Model Layer                   │
-│  ┌──────────────────────────────────┐   │
-│  │ ComponentData                    │   │
-│  │ SymbolData                       │   │
-│  │ FootprintData                    │   │
-│  │ Model3DData                      │   │
-│  └──────────────────────────────────┘   │
-└─────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    View[View layer<br/>QML components] --> ViewModel[ViewModel layer<br/>ComponentList / ExportSettings / ExportProgress / ThemeSettings]
+    ViewModel --> Service[Service layer<br/>ComponentService / ExportService / ConfigService]
+    Service --> Model[Model layer<br/>ComponentData / SymbolData / FootprintData / Model3DData]
 ```
 
 ### Layer Responsibilities
