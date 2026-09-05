@@ -55,7 +55,7 @@ flatpak install flathub org.kde.Sdk//6.10
 cd /path/to/EasyKiConverter
 
 # Build Flatpak package (using local test manifest)
-flatpak-builder --force-clean --repo=flatpak-repo build-flatpak deploy/flatpak/io.github.tangsangsimida.easykiconverter.local.yml
+flatpak-builder --force-clean --repo=flatpak-repo build-flatpak ../../deploy/flatpak/io.github.tangsangsimida.easykiconverter.local.yml
 
 # Install the built package
 flatpak --user remote-add --no-gpg-verify local-repo flatpak-repo
@@ -351,7 +351,7 @@ error: Out of memory
 **Solution:**
 ```bash
 # Increase build cache size
-flatpak-builder --force-clean --repo=flatpak-repo --keep-build-dirs build-flatpak deploy/flatpak/io.github.tangsangsimida.easykiconverter.local.yml
+flatpak-builder --force-clean --repo=flatpak-repo --keep-build-dirs build-flatpak ../../deploy/flatpak/io.github.tangsangsimida.easykiconverter.local.yml
 
 # Clean old build cache
 rm -rf ~/.var/app/io.github.tangsangsimida.easykiconverter/cache/
@@ -363,10 +363,10 @@ rm -rf ~/.var/app/io.github.tangsangsimida.easykiconverter/cache/
 
 ```bash
 # Enable debug build
-flatpak-builder --force-clean --repo=flatpak-repo --build-args="--env=CMAKE_BUILD_TYPE=Debug" build-flatpak deploy/flatpak/io.github.tangsangsimida.easykiconverter.local.yml
+flatpak-builder --force-clean --repo=flatpak-repo --build-args="--env=CMAKE_BUILD_TYPE=Debug" build-flatpak ../../deploy/flatpak/io.github.tangsangsimida.easykiconverter.local.yml
 
 # Enable tests
-flatpak-builder --force-clean --repo=flatpak-repo --build-args="--env=EASYKICONVERTER_BUILD_TESTS=ON" build-flatpak deploy/flatpak/io.github.tangsangsimida.easykiconverter.local.yml
+flatpak-builder --force-clean --repo=flatpak-repo --build-args="--env=EASYKICONVERTER_BUILD_TESTS=ON" build-flatpak ../../deploy/flatpak/io.github.tangsangsimida.easykiconverter.local.yml
 ```
 
 ### Export as Single Bundle
@@ -397,7 +397,7 @@ flatpak build dev-sandbox /path/to/easykiconverter/build/bin/easykiconverter
 
 - [Flatpak Official Documentation](https://docs.flatpak.org/)
 - [KDE Flatpak Guide](https://community.kde.org/Guidelines_and_HOWTOs/Flatpak)
-- [Project Flatpak Config](deploy/flatpak/io.github.tangsangsimida.easykiconverter.local.yml)
+- [Project Flatpak Config](../../deploy/flatpak/io.github.tangsangsimida.easykiconverter.local.yml)
 - [Flatpak Manifest Format](https://docs.flatpak.org/en/latest/flatpak-manifest.html)
 
 ## Contributing

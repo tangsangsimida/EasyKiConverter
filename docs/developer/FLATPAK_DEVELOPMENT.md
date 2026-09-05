@@ -55,7 +55,7 @@ flatpak install flathub org.kde.Sdk//6.10
 cd /path/to/EasyKiConverter
 
 # 构建 Flatpak 包（使用本地测试版清单）
-flatpak-builder --force-clean --repo=flatpak-repo build-flatpak deploy/flatpak/io.github.tangsangsimida.easykiconverter.local.yml
+flatpak-builder --force-clean --repo=flatpak-repo build-flatpak ../../deploy/flatpak/io.github.tangsangsimida.easykiconverter.local.yml
 
 # 安装构建的包
 flatpak --user remote-add --no-gpg-verify local-repo flatpak-repo
@@ -351,7 +351,7 @@ error: Out of memory
 **解决方案：**
 ```bash
 # 增加构建缓存大小
-flatpak-builder --force-clean --repo=flatpak-repo --keep-build-dirs build-flatpak deploy/flatpak/io.github.tangsangsimida.easykiconverter.local.yml
+flatpak-builder --force-clean --repo=flatpak-repo --keep-build-dirs build-flatpak ../../deploy/flatpak/io.github.tangsangsimida.easykiconverter.local.yml
 
 # 清理旧的构建缓存
 rm -rf ~/.var/app/io.github.tangsangsimida.easykiconverter/cache/
@@ -363,10 +363,10 @@ rm -rf ~/.var/app/io.github.tangsangsimida.easykiconverter/cache/
 
 ```bash
 # 启用调试构建
-flatpak-builder --force-clean --repo=flatpak-repo --build-args="--env=CMAKE_BUILD_TYPE=Debug" build-flatpak deploy/flatpak/io.github.tangsangsimida.easykiconverter.local.yml
+flatpak-builder --force-clean --repo=flatpak-repo --build-args="--env=CMAKE_BUILD_TYPE=Debug" build-flatpak ../../deploy/flatpak/io.github.tangsangsimida.easykiconverter.local.yml
 
 # 启用测试
-flatpak-builder --force-clean --repo=flatpak-repo --build-args="--env=EASYKICONVERTER_BUILD_TESTS=ON" build-flatpak deploy/flatpak/io.github.tangsangsimida.easykiconverter.local.yml
+flatpak-builder --force-clean --repo=flatpak-repo --build-args="--env=EASYKICONVERTER_BUILD_TESTS=ON" build-flatpak ../../deploy/flatpak/io.github.tangsangsimida.easykiconverter.local.yml
 ```
 
 ### 导出为单文件
@@ -397,7 +397,7 @@ flatpak build dev-sandbox /path/to/easykiconverter/build/bin/easykiconverter
 
 - [Flatpak 官方文档](https://docs.flatpak.org/)
 - [KDE Flatpak 指南](https://community.kde.org/Guidelines_and_HOWTOs/Flatpak)
-- [项目 Flatpak 配置文件](deploy/flatpak/io.github.tangsangsimida.easykiconverter.local.yml)
+- [项目 Flatpak 配置文件](../../deploy/flatpak/io.github.tangsangsimida.easykiconverter.local.yml)
 - [Flatpak manifest 格式](https://docs.flatpak.org/en/latest/flatpak-manifest.html)
 
 ## 贡献
