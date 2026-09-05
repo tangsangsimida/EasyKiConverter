@@ -173,30 +173,12 @@ Model 层负责数据的存储和管理。
 
 #### 架构概述
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│  NetworkClient (Singleton)                                       │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                  │
-│  ┌─────────────────────────────────────────────────────────────┐│
-│  │  专用网络线程 ("EasyKiConverterNetworkThread")               ││
-│  │  - 所有 HTTP 请求都在此线程中执行                            ││
-│  │  - QNetworkAccessManager 在此线程中运行                      ││
-│  └─────────────────────────────────────────────────────────────┘│
-│                              │                                   │
-│  ┌─────────────────────────────────────────────────────────────┐│
-│  │  请求队列 (m_pendingAsyncRequests)                           ││
-│  │  - 所有请求都入队到同一个队列                                ││
-│  │  - 按 ResourceType 分组进行并发控制                          ││
-│  └─────────────────────────────────────────────────────────────┘│
-│                              │                                   │
-│  ┌─────────────────────────────────────────────────────────────┐│
-│  │  并发控制 (m_activeAsyncRequestsByType)                      ││
-│  │  - 每种 ResourceType 有独立的 maxConcurrent 限制             ││
-│  │  - pumpAsyncQueue() 按优先级和并发限制调度请求               ││
-│  └─────────────────────────────────────────────────────────────┘│
-│                                                                  │
-└─────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    Client[NetworkClient 单例] --> Thread[专用网络线程<br/>QNetworkAccessManager]
+    Thread --> Queue[请求队列<br/>m_pendingAsyncRequests]
+    Queue --> Control[按 ResourceType 并发控制<br/>m_activeAsyncRequestsByType]
+    Control --> Pump[pumpAsyncQueue 按优先级调度]
 ```
 
 #### 关键实现细节
@@ -277,31 +259,14 @@ connect(req, &AsyncNetworkRequest::finished, this, [req] /* capture */ (const Ne
 
 项目实现了**两阶段导出架构**，用于批量导出元件数据，最大化性能。
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                    导出架构                                        │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                  │
-│  ┌─────────────────────────────────────────────────────────────┐│
-│  │  阶段一：预加载 (Preload)                                    ││
-│  │  • ComponentService::fetchMultipleComponentsData()          ││
-│  │  • 并行获取所有组件数据（网络 I/O）                          ││
-│  │  • 并发数：m_maxConcurrentRequests (默认 10)                ││
-│  └─────────────────────────────────────────────────────────────┘│
-│                              ↓                                   │
-│  ┌─────────────────────────────────────────────────────────────┐│
-│  │  阶段二：导出 (Export)                                       ││
-│  │  • ParallelExportService 协调多个 ExportTypeStage           ││
-│  │  • 每种导出类型独立并行运行                                  ││
-│  │  • 各类型有自己的线程池配置：                                ││
-│  │    - Symbol: maxConcurrent=1 (库级别导出)                    ││
-│  │    - Footprint: maxConcurrent=1 (库级别导出)                 ││
-│  │    - Model3D: maxConcurrent=2 (弱网时降为 1)                 ││
-│  │    - PreviewImages: maxConcurrent=4 (弱网时降为 2)           ││
-│  │    - Datasheet: maxConcurrent=2 (弱网时降为 1)               ││
-│  └─────────────────────────────────────────────────────────────┘│
-│                                                                  │
-└─────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    Preload[阶段一：预加载<br/>并行获取组件数据<br/>默认并发 10] --> Export[阶段二：导出<br/>ParallelExportService 协调各 ExportTypeStage]
+    Export --> Symbol[符号库导出]
+    Export --> Footprint[封装库导出]
+    Export --> Model3D[3D 模型导出]
+    Export --> Preview[预览图导出]
+    Export --> Datasheet[数据手册导出]
 ```
 
 ### 阶段一：预加载（Preload）
@@ -351,42 +316,22 @@ connect(req, &AsyncNetworkRequest::finished, this, [req] /* capture */ (const Ne
 
 ### 数据流
 
-```
-用户输入元件ID
-    ↓
-ComponentService::fetchComponentData() 或 fetchMultipleComponentsData()
-    ↓ (并行获取)
-┌─────────────────────────────────────────────┐
-│  网络获取 (NetworkClient)                    │
-│  • EasyedaApi: 组件信息 + CAD 数据           │
-│  • LcscImageService: 预览图 + 数据手册       │
-│  • 3D 模型下载                               │
-└─────────────────────────────────────────────┘
-    ↓ (ComponentData 缓存)
-ParallelExportService::startPreload() + startExport()
-    ↓
-┌─────────────────────────────────────────────┐
-│  SymbolExportStage (1 thread)                │
-│  • 合并所有符号到单个 .kicad_sym 文件        │
-└─────────────────────────────────────────────┘
-┌─────────────────────────────────────────────┐
-│  FootprintExportStage (1 thread)             │
-│  • 合并所有封装到单个 .kicad_mod 目录        │
-└─────────────────────────────────────────────┘
-┌─────────────────────────────────────────────┐
-│  Model3DExportStage (2 threads)              │
-│  • 并行写入 3D 模型文件 (.wrl, .step)        │
-└─────────────────────────────────────────────┘
-┌─────────────────────────────────────────────┐
-│  PreviewImagesExportStage (4 threads)        │
-│  • 并行下载和写入预览图文件                  │
-└─────────────────────────────────────────────┘
-┌─────────────────────────────────────────────┐
-│  DatasheetExportStage (2 threads)            │
-│  • 并行下载和写入数据手册文件                │
-└─────────────────────────────────────────────┘
-    ↓
-完成导出
+```mermaid
+flowchart TD
+    Input[用户输入元件 ID] --> Fetch[ComponentService 获取数据]
+    Fetch --> Network[NetworkClient<br/>EasyEDA CAD / 预览图 / 数据手册 / 3D]
+    Network --> Cache[ComponentData 缓存]
+    Cache --> Start[ParallelExportService<br/>startPreload + startExport]
+    Start --> Symbol[SymbolExportStage]
+    Start --> Footprint[FootprintExportStage]
+    Start --> Model3D[Model3DExportStage]
+    Start --> Preview[PreviewImagesExportStage]
+    Start --> Datasheet[DatasheetExportStage]
+    Symbol --> Done[完成导出]
+    Footprint --> Done
+    Model3D --> Done
+    Preview --> Done
+    Datasheet --> Done
 ```
 
 ---

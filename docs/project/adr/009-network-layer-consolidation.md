@@ -29,14 +29,10 @@
 
 ### 2. 两套并行架构做同一件事
 
-```
-路径1 (直接服务层):
-ComponentService → EasyedaApi → NetworkUtils → 网络
-用途：UI 实时预览、单个组件验证
-
-路径2 (流水线层):
-ExportServicePipeline → FetchStageHandler → FetchWorker → 网络
-用途：批量导出、大规模转换
+```mermaid
+flowchart LR
+    Direct[路径 1：直接服务层<br/>ComponentService → EasyedaApi → NetworkClient<br/>UI 实时预览 / 单个组件验证] --> Network[网络]
+    Pipeline[路径 2：流水线层<br/>ParallelExportService → FetchStageHandler → FetchWorker<br/>批量导出 / 大规模转换] --> Network
 ```
 
 `EasyedaApi::fetchCadData()` 与 `FetchWorker::run()` 功能高度重叠，但实现独立。

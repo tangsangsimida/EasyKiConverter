@@ -12,6 +12,17 @@ EasyKiConverter uses the MVVM (Model-View-ViewModel) architecture pattern, provi
 
 The project uses the MVVM architecture pattern, dividing the application into four main layers:
 
+```mermaid
+flowchart TB
+    View[View layer<br/>QML components] --> ViewModel[ViewModel layer<br/>component list / export settings / progress / theme]
+    ViewModel --> Service[Service layer<br/>component / export / config / parallel export]
+    Service --> Model[Model layer<br/>component / symbol / footprint / 3D data]
+    Service --> Core[Core conversion engine<br/>importers + IR builders + exporters]
+    Model --> Core
+    Core --> KiCad[KiCad output<br/>symbol / footprint / 3D]
+    Core --> Altium[Altium output<br/>SchLib / PcbLib / embedded STEP]
+```
+<!-- Legacy ASCII diagram retained below for historical reference.
 ```
 ┌─────────────────────────────────────────┐
 │              View Layer                  │
@@ -102,6 +113,7 @@ The project uses the MVVM architecture pattern, dividing the application into fo
 │  └──────────────────────────────────┘   │
 └─────────────────────────────────────────┘
 ```
+-->
 
 ## Layer Responsibilities
 

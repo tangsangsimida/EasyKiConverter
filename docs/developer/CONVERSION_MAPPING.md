@@ -67,16 +67,16 @@ C2040 的 API 数据描述的是 RP2040，符号包含 57 个引脚和一个主�
 
 以左侧 `QSPI_SS` 为例：
 
-```text
-EasyEDA pin.settings.posX/posY
-        │  transformPoint（减原点、翻转 Y、px → mm）
-        ▼
-SymbolPinIR.position       ← 引脚主体端
-SymbolPinIR.length         ← 从 pinPath 的 h/v 段解析
-SymbolPinIR.direction      ← rotation → Left/Right/Up/Down
-        │
-        ├── 连接端 = position + length × direction
-        └── 连接端 X/Y 量化到 10 mil 网格
+```mermaid
+flowchart TD
+    Raw[EasyEDA pin.settings.posX / posY] --> Transform[transformPoint<br/>减原点、翻转 Y、px → mm]
+    Transform --> Position[SymbolPinIR.position<br/>引脚主体端]
+    Transform --> Length[SymbolPinIR.length<br/>从 pinPath 的 h/v 段解析]
+    Transform --> Direction[SymbolPinIR.direction<br/>rotation → Left / Right / Up / Down]
+    Position --> Endpoint[连接端 = position + length × direction]
+    Length --> Endpoint
+    Direction --> Endpoint
+    Endpoint --> Quantize[连接端 X/Y 量化到 10 mil 网格]
 ```
 
 连接端必须落在网格交叉处，主体端允许在边界附近产生不超过半个网格的微小调整。C2040 原始数据已经位于网格上，因此量化不会改变 57 个引脚的最终坐标。

@@ -25,14 +25,10 @@ The project has **5+ independent network request implementations**, gzip decompr
 
 ### 2. Two Parallel Architectures Doing the Same Thing
 
-```
-Path 1 (Direct Service Layer):
-ComponentService → EasyedaApi → NetworkUtils → Network
-Use: UI real-time preview, single component validation
-
-Path 2 (Pipeline Layer):
-ExportServicePipeline → FetchStageHandler → FetchWorker → Network
-Use: Batch export, large-scale conversion
+```mermaid
+flowchart LR
+    Direct[Path 1: direct service layer<br/>ComponentService → EasyedaApi → NetworkClient<br/>UI preview / single-component validation] --> Network[Network]
+    Pipeline[Path 2: pipeline layer<br/>ParallelExportService → FetchStageHandler → FetchWorker<br/>batch export / large-scale conversion] --> Network
 ```
 
 `EasyedaApi::fetchCadData()` and `FetchWorker::run()` have highly overlapping functionality but independent implementations.
