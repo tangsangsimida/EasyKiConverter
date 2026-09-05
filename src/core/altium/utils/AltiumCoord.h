@@ -16,9 +16,15 @@ namespace EasyKiConverter {
  */
 namespace AltiumCoord {
 
-/** @brief 原始单位 → DXP 整数部分（SchLib 参数记录使用） */
+/**
+ * @brief 原始单位 → DXP 整数部分（SchLib 参数记录使用）
+ * @details SchLib 二进制记录使用 10 mil DXP 网格；采用对称四舍五入，
+ *          避免直接截断造成相邻引脚的量化误差。
+ */
 constexpr int16_t toDxpInt(int raw) {
-    return static_cast<int16_t>(raw / 100000);
+    // 对称四舍五入，保持 0.4 mm 等非整数 mil 间距的相对比例。
+    const int rounded = raw >= 0 ? (raw + 50000) / 100000 : (raw - 50000) / 100000;
+    return static_cast<int16_t>(rounded);
 }
 
 /** @brief 原始单位 → DXP 小数部分（SchLib 参数记录使用） */

@@ -327,11 +327,11 @@ void AltiumSchLibWriter::writePinRecord(AltiumBinaryWriter& writer, const Altium
     writer.writeInt16(static_cast<int16_t>(qBound(1, pin.ownerPartId, 32767)));  // OwnerPartId
     writer.writeUInt8(0);  // OwnerPartDisplayMode
 
-    // Symbol edges
-    writer.writeUInt8(0);  // SymbolInnerEdge
-    writer.writeUInt8(0);  // SymbolOuterEdge
-    writer.writeUInt8(0);  // SymbolInside
-    writer.writeUInt8(0);  // SymbolOutside
+    // Symbol edges / IEEE 装饰。四个字节必须位于描述字符串之前。
+    writer.writeUInt8(pin.symbolInnerEdge);
+    writer.writeUInt8(pin.symbolOuterEdge);
+    writer.writeUInt8(pin.symbolInside);
+    writer.writeUInt8(pin.symbolOutside);
 
     // Description (空 Pascal 短字符串)
     writer.writePascalShortString("");
@@ -633,6 +633,20 @@ void AltiumSchLibWriter::writeImplementationRecords(AltiumBinaryWriter& writer, 
             QMap<QString, QString> params;
             params["RECORD"] = "46";
             writer.writeCStringParameterBlock(params);
+        }
+
+        // RECORD=47: 将每个引脚映射到当前实现。
+        // Altium 会依据这些索引建立符号引脚与 PCBLib 实现之间的关系；
+        // 缺少该记录时，库虽然可以打开，但引脚归属和封装关联并不完整。
+        for (int pinIndex = 1; pinIndex <= component.pins.size(); ++pinIndex) {
+            QMap<QString, QString> pinMappingParams;
+            pinMappingParams["RECORD"] = "47";
+            pinMappingParams["DESINTF"] = QString::number(pinIndex);
+            pinMappingParams["DESIMPCOUNT"] = "1";
+            pinMappingParams["DESIMP0"] = QString::number(pinIndex);
+            pinMappingParams["ISTRIVIAL"] = "T";
+            addUniqueID(pinMappingParams);
+            writer.writeCStringParameterBlock(pinMappingParams);
         }
 
         // RECORD=48: ImplementationParameters（空容器）

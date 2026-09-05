@@ -13,6 +13,21 @@ namespace EasyKiConverter {
 namespace {
 
 /**
+ * @brief 将 Qt 颜色转换为 Altium 使用的 0x00BBGGRR 编码。
+ * @details IR 统一使用 RGB，而 SchLib 参数保存的是 BGR 数值。此前转换器
+ *          没有复制颜色字段，导致所有图元退化为 Altium 默认黑色。
+ */
+uint32_t toAltiumColor(const QColor& color) {
+    // Altium 原理图库的默认符号色是深蓝色；黑色是 IR 的“未指定”默认值，
+    // 若直接写入 0，SchLib 写入器会省略 Color 参数并由 AD 使用不可预测的默认值。
+    constexpr uint32_t kDefaultSchematicColor = 0x68380B;
+    if (!color.isValid() || color.alpha() == 0 || color == QColor(Qt::black))
+        return kDefaultSchematicColor;
+    return (static_cast<uint32_t>(color.blue()) << 16) | (static_cast<uint32_t>(color.green()) << 8) |
+           static_cast<uint32_t>(color.red());
+}
+
+/**
  * @brief 将原始坐标量化到 Altium SchLib 的最小转换网格
  * @details SchLib 多边形使用 raw / 1000 的 Schematic Unit，而引脚和基本图元
  *          使用 raw。平移量必须落在 1000 raw 网格上，避免两套坐标写出后产生
@@ -121,9 +136,31 @@ AltiumSchPin ExporterAltiumSymbol::convertPin(const IR::SymbolPinIR& pin) {
         static_cast<AltiumModels::PinElectricalType>(AltiumLayerMap::toAltiumElectricalType(pin.electricalType));
     altiumPin.orientation =
         static_cast<AltiumModels::PinOrientation>(AltiumLayerMap::toAltiumPinOrientation(pin.direction));
-    altiumPin.showName = pin.showName;
+    // EasyEDA 的 pin name 显示标志在部分库中未设置，但名称字符串本身
+    // 仍是符号的一部分。Altium 的 PinConglomerate 必须显式打开 show-name，
+    // 否则 AD 只绘制 Pin Number，名称会表现为脱离引脚的独立文本。
+    altiumPin.showName = pin.showName || !pin.name.trimmed().isEmpty();
     altiumPin.showDesignator = pin.showDesignator;
     altiumPin.isHidden = !pin.showName && !pin.showDesignator;
+    altiumPin.color = toAltiumColor(QColor(Qt::black));
+    // EasyEDA 的反相圆点位于引脚外侧，时钟标记贴近主体内侧。
+    if (pin.hasDot)
+        altiumPin.symbolOuterEdge = 1;  // Dot
+    if (pin.hasClock)
+        altiumPin.symbolInnerEdge = 3;  // Clock
+
+    // 这些电气类型同时具有明确的 Altium IEEE 装饰；普通 Input/Output/
+    // Bidirectional 不强行添加三角形，避免改变原始符号语义。
+    switch (pin.electricalType) {
+        case IR::PinElectricalType::OpenCollector:
+            altiumPin.symbolOuterEdge = 8;
+            break;
+        case IR::PinElectricalType::OpenEmitter:
+            altiumPin.symbolOuterEdge = 15;
+            break;
+        default:
+            break;
+    }
     altiumPin.ownerPartId = qMax(1, pin.partIndex + 1);
 
     // 电源引脚检测：EasyEDA 通常不区分电源引脚（type=3/Bidirectional），
@@ -154,6 +191,8 @@ AltiumSchRectangle ExporterAltiumSymbol::convertRectangle(const IR::SymbolRectan
     altiumRect.cornerX = AltiumCoord::mmToRaw(rect.x1);
     altiumRect.cornerY = AltiumCoord::mmToRaw(rect.y1);
     altiumRect.lineWidth = AltiumCoord::lineWidthMmToIndex(rect.strokeWidth);
+    altiumRect.color = toAltiumColor(rect.strokeColor);
+    altiumRect.areaColor = rect.isFilled ? toAltiumColor(rect.fillColor) : 0xFFFFFF;
     altiumRect.isSolid = rect.isFilled;
     altiumRect.ownerPartId = qMax(1, rect.partIndex + 1);
     return altiumRect;
@@ -169,6 +208,8 @@ AltiumSchEllipse ExporterAltiumSymbol::convertCircle(const IR::SymbolCircleIR& c
     altiumEllipse.radiusX = AltiumCoord::mmToRaw(circle.radius);
     altiumEllipse.radiusY = AltiumCoord::mmToRaw(circle.radius);
     altiumEllipse.lineWidth = AltiumCoord::lineWidthMmToIndex(circle.strokeWidth);
+    altiumEllipse.color = toAltiumColor(circle.strokeColor);
+    altiumEllipse.areaColor = circle.isFilled ? toAltiumColor(circle.fillColor) : 0xFFFFFF;
     altiumEllipse.isSolid = circle.isFilled;
     altiumEllipse.ownerPartId = qMax(1, circle.partIndex + 1);
     return altiumEllipse;
@@ -204,6 +245,7 @@ AltiumSchArc ExporterAltiumSymbol::convertArc(const IR::SymbolArcIR& arc) {
     altiumArc.startAngle = std::atan2(arc.startPoint.y() - center.y(), arc.startPoint.x() - center.x()) * 180.0 / M_PI;
     altiumArc.endAngle = std::atan2(arc.endPoint.y() - center.y(), arc.endPoint.x() - center.x()) * 180.0 / M_PI;
     altiumArc.lineWidth = AltiumCoord::lineWidthMmToIndex(arc.strokeWidth);
+    altiumArc.color = toAltiumColor(arc.strokeColor);
     altiumArc.ownerPartId = qMax(1, arc.partIndex + 1);
     return altiumArc;
 }
@@ -214,6 +256,8 @@ AltiumSchArc ExporterAltiumSymbol::convertArc(const IR::SymbolArcIR& arc) {
 AltiumSchPolygon ExporterAltiumSymbol::convertPolygon(const IR::SymbolPolygonIR& polygon) {
     AltiumSchPolygon altiumPolygon;
     altiumPolygon.lineWidth = AltiumCoord::lineWidthMmToIndex(polygon.strokeWidth);
+    altiumPolygon.color = toAltiumColor(polygon.strokeColor);
+    altiumPolygon.areaColor = polygon.isFilled ? toAltiumColor(polygon.fillColor) : 0xFFFFFF;
     altiumPolygon.isSolid = polygon.isFilled;
     altiumPolygon.ownerPartId = qMax(1, polygon.partIndex + 1);
 
@@ -230,6 +274,7 @@ AltiumSchPolygon ExporterAltiumSymbol::convertPolygon(const IR::SymbolPolygonIR&
 AltiumSchPolyline ExporterAltiumSymbol::convertPolyline(const IR::SymbolPolylineIR& polyline) {
     AltiumSchPolyline altiumPolyline;
     altiumPolyline.lineWidth = AltiumCoord::lineWidthMmToIndex(polyline.strokeWidth);
+    altiumPolyline.color = toAltiumColor(polyline.strokeColor);
     altiumPolyline.ownerPartId = qMax(1, polyline.partIndex + 1);
 
     for (const QPointF& point : polyline.points) {
@@ -245,6 +290,7 @@ AltiumSchPolyline ExporterAltiumSymbol::convertPolyline(const IR::SymbolPolyline
 AltiumSchPath ExporterAltiumSymbol::convertPath(const IR::SymbolPathIR& path) {
     AltiumSchPath altiumPath;
     altiumPath.lineWidth = AltiumCoord::lineWidthMmToIndex(path.strokeWidth);
+    altiumPath.color = toAltiumColor(path.strokeColor);
     altiumPath.ownerPartId = qMax(1, path.partIndex + 1);
 
     for (const QPointF& point : path.points) {
@@ -263,6 +309,7 @@ AltiumSchText ExporterAltiumSymbol::convertText(const IR::SymbolTextIR& text) {
     altiumText.locationY = AltiumCoord::mmToRaw(text.position.y());
     altiumText.text = text.text;
     altiumText.fontId = 1;
+    altiumText.color = toAltiumColor(text.color);
     altiumText.isHidden = !text.visible;
     altiumText.orientation = static_cast<int>(text.rotation / 90.0) % 4;
     altiumText.ownerPartId = qMax(1, text.partIndex + 1);
@@ -279,6 +326,8 @@ AltiumSchEllipse ExporterAltiumSymbol::convertEllipse(const IR::SymbolEllipseIR&
     altiumEllipse.radiusX = AltiumCoord::mmToRaw(ellipse.radiusX);
     altiumEllipse.radiusY = AltiumCoord::mmToRaw(ellipse.radiusY);
     altiumEllipse.lineWidth = AltiumCoord::lineWidthMmToIndex(ellipse.strokeWidth);
+    altiumEllipse.color = toAltiumColor(ellipse.strokeColor);
+    altiumEllipse.areaColor = ellipse.isFilled ? toAltiumColor(ellipse.fillColor) : 0xFFFFFF;
     altiumEllipse.isSolid = ellipse.isFilled;
     altiumEllipse.ownerPartId = qMax(1, ellipse.partIndex + 1);
     return altiumEllipse;
@@ -320,6 +369,11 @@ void ExporterAltiumSymbol::centerComponent(AltiumSchComponent& component) {
     // 量化平移量而不是逐个量化引脚，保持所有相对间距不变。
     int offsetX = quantizeSchematicOffset((minX + maxX) / 2);
     int offsetY = quantizeSchematicOffset((minY + maxY) / 2);
+    // Altium 符号的可编辑原点相对 EasyEDA 几何中心有一个 10 mil 的
+    // Y 基准偏置。将偏置加入统一平移量，使主体上下边界和四侧引脚
+    // 在同一坐标基准上（例如 C2040 的 -180..200 mil）。
+    constexpr int kAltiumSymbolOriginYBias = 1000000;
+    offsetY -= kAltiumSymbolOriginYBias;
     int offsetPolyX = offsetX / 1000;
     int offsetPolyY = offsetY / 1000;
 
@@ -365,6 +419,71 @@ void ExporterAltiumSymbol::centerComponent(AltiumSchComponent& component) {
     for (auto& text : component.texts) {
         text.locationX -= offsetX;
         text.locationY -= offsetY;
+    }
+
+    // 统一引脚与主体的法向锚点。Altium 的 Pin Name/Number 都以二进制
+    // 引脚位置为基准；如果引脚位置落在主体边界外，名称就会看起来与图形
+    // 脱离。仅修正朝向法向坐标，沿边方向坐标保持不变，因此不会改变引脚
+    // 间距。没有矩形主体的符号不强制投影，避免破坏原始几何。
+    if (!component.rectangles.isEmpty()) {
+        int bodyMinX = INT_MAX, bodyMinY = INT_MAX;
+        int bodyMaxX = INT_MIN, bodyMaxY = INT_MIN;
+        for (const auto& rect : component.rectangles) {
+            bodyMinX = qMin(bodyMinX, qMin(rect.locationX, rect.cornerX));
+            bodyMinY = qMin(bodyMinY, qMin(rect.locationY, rect.cornerY));
+            bodyMaxX = qMax(bodyMaxX, qMax(rect.locationX, rect.cornerX));
+            bodyMaxY = qMax(bodyMaxY, qMax(rect.locationY, rect.cornerY));
+        }
+        for (auto& pin : component.pins) {
+            switch (pin.orientation) {
+                case AltiumModels::PinOrientation::Right:
+                    pin.locationX = bodyMaxX;
+                    break;
+                case AltiumModels::PinOrientation::Left:
+                    pin.locationX = bodyMinX;
+                    break;
+                case AltiumModels::PinOrientation::Up:
+                    pin.locationY = bodyMaxY;
+                    break;
+                case AltiumModels::PinOrientation::Down:
+                    pin.locationY = bodyMinY;
+                    break;
+            }
+        }
+
+        // EasyEDA 的 Value/Comment 字段有时共享同一个锚点，并携带 270°
+        // 的画布旋转值。直接写入 Altium 后，两个字段会被放到符号外部或
+        // 变成不可见的竖排文本。仅当多个可见字段确实重合时，按 Altium
+        // 符号字段习惯在主体中心水平排列；独立文本仍保留其原始几何。
+        QList<int> visibleTextIndices;
+        for (int i = 0; i < component.texts.size(); ++i) {
+            if (!component.texts[i].isHidden)
+                visibleTextIndices.append(i);
+        }
+        if (visibleTextIndices.size() > 1) {
+            const auto& first = component.texts[visibleTextIndices.first()];
+            bool coincident = true;
+            for (int index : visibleTextIndices) {
+                const auto& text = component.texts[index];
+                if (qAbs(text.locationX - first.locationX) > 10000 ||
+                    qAbs(text.locationY - first.locationY) > 10000) {
+                    coincident = false;
+                    break;
+                }
+            }
+            if (coincident) {
+                const int centerX = (bodyMinX + bodyMaxX) / 2;
+                const int centerY = (bodyMinY + bodyMaxY) / 2;
+                constexpr int kFieldStart = -300000;  // 主体中心 + (-3 mil) = 7 mil
+                constexpr int kFieldSpacing = 2000000;  // 20 mil
+                for (int order = 0; order < visibleTextIndices.size(); ++order) {
+                    auto& text = component.texts[visibleTextIndices[order]];
+                    text.locationX = centerX;
+                    text.locationY = centerY + kFieldStart + order * kFieldSpacing;
+                    text.orientation = 0;
+                }
+            }
+        }
     }
 }
 

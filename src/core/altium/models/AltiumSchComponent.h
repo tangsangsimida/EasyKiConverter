@@ -23,6 +23,10 @@ struct AltiumSchPin {
     bool showDesignator = true;
     bool isHidden = false;
     uint32_t color = 0x000000;  ///< 颜色（0x00BBGGRR）
+    uint8_t symbolInnerEdge = 0;  ///< 主体内侧装饰（0=None, 3=Clock）
+    uint8_t symbolOuterEdge = 0;  ///< 引脚外侧装饰（1=Dot 等）
+    uint8_t symbolInside = 0;  ///< 引脚内部装饰
+    uint8_t symbolOutside = 0;  ///< 引脚外部装饰
     int ownerPartId = 1;  ///< 所属部件（Altium 使用 1-based 编号）
 };
 
