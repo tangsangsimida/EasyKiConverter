@@ -31,6 +31,7 @@
 - [贡献指南 (英文)](developer/CONTRIBUTING_en.md) - Contributing Guide
 - [架构文档](developer/ARCHITECTURE.md) - 项目架构设计
 - [转换层与映射关系](developer/CONVERSION_MAPPING.md) - EasyEDA、IR、KiCad、Altium 的算法与字段映射
+- [EasyEDA API 原始数据说明](developer/EASYEDA_API_DATA.md) - API 响应结构、shape 编码和字段解析
 - [文档维护指南](developer/DOCUMENTATION_MAINTENANCE.md) - 文档事实来源、更新触发条件和过时内容清理规则
 - [架构文档 (英文)](developer/ARCHITECTURE_en.md) - Architecture
 - [测试开发指南](developer/TESTING_GUIDE.md) - 测试架构与 Mock 策略
