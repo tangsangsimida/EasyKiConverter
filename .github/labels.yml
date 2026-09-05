@@ -89,6 +89,10 @@
   color: "fe81f4"
   description: "Icons, images, QML / 图标、图片、QML"
 
+- name: "utils / 工具"
+  color: "6f42c1"
+  description: "Shared utility code / 共享工具代码"
+
 # ============================================
 # 状态标签 (Status Labels)
 # ============================================

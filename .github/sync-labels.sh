@@ -44,6 +44,7 @@ gh label create "workers / 工作线程" --color "b5a4fa" --description "Backgro
 gh label create "cli / 命令行" --color "ededed" --description "Command line interface / 命令行工具" --repo "$REPO" --force
 gh label create "models / 数据模型" --color "0e28c6" --description "Data models / 数据模型" --repo "$REPO" --force
 gh label create "resources / 资源" --color "fe81f4" --description "Icons, images, QML / 图标、图片、QML" --repo "$REPO" --force
+gh label create "utils / 工具" --color "6f42c1" --description "Shared utility code / 共享工具代码" --repo "$REPO" --force
 
 # 状态标签
 gh label create "good first issue / 新手友好" --color "7057ff" --description "Good for newcomers / 适合新手参与" --repo "$REPO" --force

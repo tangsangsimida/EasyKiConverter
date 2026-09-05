@@ -4,7 +4,7 @@
 # v5 格式文档: https://github.com/actions/labeler
 
 # 文档相关
-docs:
+"docs / 文档":
   - changed-files:
       - any-glob-to-any-file:
           - docs/**/*
@@ -15,49 +15,49 @@ docs:
           - GEMINI.md
 
 # 核心转换引擎
-core:
+"core / 核心":
   - changed-files:
       - any-glob-to-any-file:
           - src/core/**/*
 
 # 数据模型
-models:
+"models / 数据模型":
   - changed-files:
       - any-glob-to-any-file:
           - src/models/**/*
 
 # 服务层
-services:
+"services / 服务":
   - changed-files:
       - any-glob-to-any-file:
           - src/services/**/*
 
 # UI 层
-ui:
+"ui / 界面":
   - changed-files:
       - any-glob-to-any-file:
           - src/ui/**/*
 
 # 工作线程
-workers:
+"workers / 工作线程":
   - changed-files:
       - any-glob-to-any-file:
           - src/workers/**/*
 
 # 工具类
-utils:
+"utils / 工具":
   - changed-files:
       - any-glob-to-any-file:
           - src/utils/**/*
 
 # 测试
-tests:
+"test / 测试":
   - changed-files:
       - any-glob-to-any-file:
           - tests/**/*
 
 # CI/CD
-ci:
+"ci / 持续集成":
   - changed-files:
       - any-glob-to-any-file:
           - .github/**/*
@@ -65,7 +65,30 @@ ci:
           - .gitignore
 
 # 资源文件
-resources:
+"resources / 资源":
   - changed-files:
       - any-glob-to-any-file:
           - resources/**/*
+
+# 格式与数据源模块
+"easyeda / 嘉立创":
+  - changed-files:
+      - any-glob-to-any-file:
+          - src/core/easyeda/**/*
+          - tools/python/**/*
+
+"kicad / KiCad":
+  - changed-files:
+      - any-glob-to-any-file:
+          - src/core/kicad/**/*
+
+"network / 网络":
+  - changed-files:
+      - any-glob-to-any-file:
+          - src/core/network/**/*
+
+"cli / 命令行":
+  - changed-files:
+      - any-glob-to-any-file:
+          - src/cli/**/*
+          - tools/**/*
