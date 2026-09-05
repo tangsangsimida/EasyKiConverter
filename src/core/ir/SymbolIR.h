@@ -23,23 +23,72 @@ namespace EasyKiConverter {
 namespace IR {
 
 /**
+ * @brief 引脚样式（电气语义层）
+ *
+ * 描述引脚的电气语义特征，与具体 EDA 格式的图形表示解耦。
+ * 各导出器根据自身能力将这些语义映射为图形装饰。
+ */
+struct SymbolPinStyle {
+    bool inverted = false;  ///< 取反（低电平有效）
+    bool clock = false;  ///< 时钟信号
+    bool activeLow = false;  ///< 低电平有效（语义标记，与 inverted 不同）
+    PinDecoration decoration = PinDecoration::None;  ///< IEEE 图形装饰
+
+    /** @brief 是否有任何样式标记 */
+    bool hasAny() const { return inverted || clock || activeLow || decoration != PinDecoration::None; }
+};
+
+/**
+ * @brief 引脚显示控制
+ *
+ * 控制引脚名称和编号的显示方式，包括锚点和字体信息。
+ * 适用于需要精确控制文本位置的格式（如 Altium）。
+ */
+struct SymbolPinDisplay {
+    bool showName = true;  ///< 是否显示引脚名称
+    bool showDesignator = true;  ///< 是否显示引脚编号
+    TextAnchor nameAnchor = TextAnchor::Start;  ///< 名称文本锚点
+    TextAnchor numberAnchor = TextAnchor::Start;  ///< 编号文本锚点
+    TextOrientation nameOrientation = TextOrientation::Horizontal;  ///< 名称文本方向
+    TextOrientation numberOrientation = TextOrientation::Horizontal;  ///< 编号文本方向
+    double nameFontSizeMm = 0.0;  ///< 名称字体大小（mm，0 表示默认）
+    double numberFontSizeMm = 0.0;  ///< 编号字体大小（mm，0 表示默认）
+};
+
+/**
  * @brief 通用符号引脚
  *
  * 替代 SymbolPin 及其子结构体（SymbolPinSettings, SymbolPinDot,
  * SymbolPinPath, SymbolPinName, SymbolPinDotBis, SymbolPinClock）。
  * 所有字段均为解析后的最终值，不再存储原始字符串。
+ *
+ * 结构分为三层：
+ * - 几何：position, length, direction
+ * - 电气语义：electricalType, style
+ * - 显示控制：display
  */
 struct SymbolPinIR {
+    // === 几何 ===
     QString name;  ///< 引脚名称（如 "VCC", "A0"）
     QString designator;  ///< 引脚编号（如 "1", "2"）
     QPointF position;  ///< 引脚位置（已解析，单位 mm）
     double length = 0.0;  ///< 引脚长度（mm，替代 SVG path 解析）
     PinDirection direction = PinDirection::Right;  ///< 引脚方向
+
+    // === 电气语义 ===
     PinElectricalType electricalType = PinElectricalType::Unspecified;  ///< 电气类型
-    bool showName = true;  ///< 是否显示引脚名称
-    bool showDesignator = true;  ///< 是否显示引脚编号
-    bool hasDot = false;  ///< 是否有取反圆圈（用于 KiCad 引脚样式）
-    bool hasClock = false;  ///< 是否有时钟三角（用于 KiCad 引脚样式）
+    SymbolPinStyle style;  ///< 引脚样式（语义层）
+
+    // === 显示控制 ===
+    SymbolPinDisplay display;  ///< 引脚显示控制
+
+    // === 兼容性字段（过渡期，新代码请使用 style/display） ===
+    bool showName = true;  ///< @deprecated 使用 display.showName
+    bool showDesignator = true;  ///< @deprecated 使用 display.showDesignator
+    bool hasDot = false;  ///< @deprecated 使用 style.inverted
+    bool hasClock = false;  ///< @deprecated 使用 style.clock
+
+    // === 部件 ===
     int partIndex = 0;  ///< 所属部件索引（多部件符号使用）
 };
 

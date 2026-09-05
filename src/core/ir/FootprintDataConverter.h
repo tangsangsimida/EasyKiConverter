@@ -17,7 +17,7 @@
 #include "EasyedaPadShapeMap.h"
 #include "FootprintIR.h"
 #include "Model3DDataConverter.h"
-#include "SymbolDataConverter.h"  // 复用 parseFlatPointString 等工具函数
+#include "GeometryNormalizer.h"  // 复用 parseFlatPointString 等工具函数
 #include "models/FootprintData.h"
 
 #include <cmath>

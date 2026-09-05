@@ -16,6 +16,8 @@ target_sources(EasyKiConverterIR
         EasyedaLayerMap.cpp
         EasyedaPadShapeMap.h
         EasyedaPinTypeMap.h
+        GeometryNormalizer.h
+        IrBuilder.h
         Model3DDataConverter.h
         SymbolDataConverter.h
         FootprintDataConverter.h

@@ -139,18 +139,40 @@ AltiumSchPin ExporterAltiumSymbol::convertPin(const IR::SymbolPinIR& pin) {
     // EasyEDA 的 pin name 显示标志在部分库中未设置，但名称字符串本身
     // 仍是符号的一部分。Altium 的 PinConglomerate 必须显式打开 show-name，
     // 否则 AD 只绘制 Pin Number，名称会表现为脱离引脚的独立文本。
-    altiumPin.showName = pin.showName || !pin.name.trimmed().isEmpty();
-    altiumPin.showDesignator = pin.showDesignator;
-    altiumPin.isHidden = !pin.showName && !pin.showDesignator;
+    // 优先从 display 控制层获取，兼容旧 showName 字段。
+    altiumPin.showName = pin.display.showName || pin.showName || !pin.name.trimmed().isEmpty();
+    altiumPin.showDesignator = pin.display.showDesignator || pin.showDesignator;
+    altiumPin.isHidden = !altiumPin.showName && !altiumPin.showDesignator;
     altiumPin.color = toAltiumColor(QColor(Qt::black));
     // EasyEDA 的反相圆点位于引脚外侧，时钟标记贴近主体内侧。
-    if (pin.hasDot)
+    // 优先从 style 语义层获取，兼容旧 hasDot/hasClock 字段。
+    if (pin.style.inverted || pin.hasDot)
         altiumPin.symbolOuterEdge = 1;  // Dot
-    if (pin.hasClock)
+    if (pin.style.clock || pin.hasClock)
         altiumPin.symbolInnerEdge = 3;  // Clock
 
-    // 这些电气类型同时具有明确的 Altium IEEE 装饰；普通 Input/Output/
-    // Bidirectional 不强行添加三角形，避免改变原始符号语义。
+    // 处理更丰富的 PinDecoration 枚举
+    switch (pin.style.decoration) {
+        case IR::PinDecoration::OpenCollector:
+            altiumPin.symbolOuterEdge = 8;
+            break;
+        case IR::PinDecoration::OpenEmitter:
+            altiumPin.symbolOuterEdge = 15;
+            break;
+        case IR::PinDecoration::HiZ:
+            altiumPin.symbolOuterEdge = 12;
+            break;
+        case IR::PinDecoration::Pulse:
+            altiumPin.symbolOuterEdge = 14;
+            break;
+        case IR::PinDecoration::Postponed:
+            altiumPin.symbolOuterEdge = 11;
+            break;
+        default:
+            break;
+    }
+
+    // 这些电气类型同时具有明确的 Altium IEEE 装饰
     switch (pin.electricalType) {
         case IR::PinElectricalType::OpenCollector:
             altiumPin.symbolOuterEdge = 8;

@@ -71,6 +71,41 @@ enum class PinDirection {
 };
 
 /**
+ * @brief 引脚 IEEE 图形装饰枚举
+ *
+ * 描述引脚端点的 IEEE 标准图形符号，与电气类型解耦。
+ * KiCad 通过 pin style 映射，Altium 通过四个边缘字节映射。
+ */
+enum class PinDecoration {
+    None = 0,  ///< 无装饰
+    Dot,  ///< 取反圆圈（低电平有效）
+    Clock,  ///< 时钟三角
+    InvertedClock,  ///< 取反 + 时钟
+    ActiveLow,  ///< 低电平有效（与 Dot 类似，语义不同）
+    Postponed,  ///< 延迟输出
+    OpenCollector,  ///< 集电极开路
+    OpenEmitter,  ///< 发射极开路
+    HiZ,  ///< 高阻
+    ShiftLeft,  ///< 左移符号
+    AnalogInput,  ///< 模拟输入
+    NoConnect,  ///< 无连接
+    Pulse,  ///< 脉冲
+    GroupLine,  ///< 总线组
+    FlagRight,  ///< 右侧标志
+    FlagLeft  ///< 左侧标志
+};
+
+/**
+ * @brief 文本锚点方向枚举
+ *
+ * 描述文本相对于锚点的对齐方向。
+ */
+enum class TextOrientation {
+    Horizontal,  ///< 水平
+    Vertical  ///< 垂直
+};
+
+/**
  * @brief PCB 层类型枚举（EDA 无关）
  * @note 替代 EasyEDA 数字层 ID（1=Top, 2=Bottom, 99=KeepOut 等）
  *

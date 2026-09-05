@@ -67,13 +67,13 @@ QString SymbolGraphicsGenerator::generatePin(const IR::SymbolPinIR& pin) const {
     // 使用 IR 映射获取 KiCad 引脚电气类型
     const char* kicadPinType = KiCadTypeMap::toKicadPinType(pin.electricalType);
 
-    // 引脚样式：根据 hasDot 和 hasClock 计算
+    // 引脚样式：从 IR 语义层获取
     QString kicadPinStyle = "line";
-    if (pin.hasDot && pin.hasClock) {
+    if (pin.style.inverted && pin.style.clock) {
         kicadPinStyle = "inverted_clock";
-    } else if (pin.hasDot) {
+    } else if (pin.style.inverted) {
         kicadPinStyle = "inverted";
-    } else if (pin.hasClock) {
+    } else if (pin.style.clock) {
         kicadPinStyle = "clock";
     }
 
