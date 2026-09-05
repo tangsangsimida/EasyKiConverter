@@ -288,6 +288,12 @@ Card {
             property real popupScale: 1
             property real scaleOriginX: 0
             property real scaleOriginY: 0
+            property real anchorX: 0
+            property real anchorY: 0
+            property real anchorWidth: 0
+            property real anchorHeight: 0
+            property real cursorX: NaN
+            property real cursorY: NaN
             readonly property bool hasImages: imageSources.length > 0
             readonly property int panelPadding: AppStyle.spacing.md
             readonly property int headerHeight: 34
@@ -978,10 +984,28 @@ Card {
     }
     // === 全局单例预览弹窗 ===
     property alias previewPopup: _previewPopup
+    Connections {
+        target: componentListCard.Window.window
+        function onWidthChanged() {
+            if (_previewPopup.visible)
+                Qt.callLater(positionPreviewPopup);
+        }
+        function onHeightChanged() {
+            if (_previewPopup.visible)
+                Qt.callLater(positionPreviewPopup);
+        }
+    }
+
     function clampPopupCoordinate(value, size, boundary) {
         var margin = AppStyle.spacing.xs;
         var maxValue = Math.max(margin, boundary - size - margin);
         return Math.max(margin, Math.min(value, maxValue));
+    }
+
+    function snapPopupCoordinate(value) {
+        var win = componentListCard.Window.window;
+        var dpr = win && win.devicePixelRatio > 0 ? win.devicePixelRatio : 1;
+        return Math.round(value * dpr) / dpr;
     }
 
     function cursorOverPopup(x, y, width, height, cursorX, cursorY, safetyGap) {
@@ -1027,18 +1051,20 @@ Card {
         exportStatusMap = map;
     }
 
-    // 弹窗显示/隐藏辅助函数（供 delegate 调用）
-    function showPreviewPopup(imageSources, itemData, thumbX, thumbY, thumbW, thumbH, cursorX, cursorY) {
-        popupHideTimer.stop();
-        _previewPopup.imageSources = imageSources || [];
-        _previewPopup.currentItemData = itemData;
-        // 计算位置
+    function positionPreviewPopup() {
         var popupParent = _previewPopup.parent || componentListCard;
         var winW = popupParent.width;
         var winH = popupParent.height;
-        var gap = AppStyle.spacing.lg + 8; // 额外偏移避开鼠标
+        var gap = AppStyle.spacing.lg + 8;
         var popupW = _previewPopup.width;
         var popupH = _previewPopup.height;
+        if (winW <= 0 || winH <= 0 || popupW <= 0 || popupH <= 0)
+            return;
+
+        var thumbX = _previewPopup.anchorX;
+        var thumbY = _previewPopup.anchorY;
+        var thumbW = _previewPopup.anchorWidth;
+        var thumbH = _previewPopup.anchorHeight;
         var spaceRight = winW - (thumbX + thumbW);
         var spaceLeft = thumbX;
         var targetX;
@@ -1052,14 +1078,33 @@ Card {
         targetX = clampPopupCoordinate(targetX, popupW, winW);
         var targetY = thumbY + (thumbH - popupH) / 2;
         targetY = clampPopupCoordinate(targetY, popupH, winH);
-        var adjustedPos = avoidCursorOverlap(targetX, targetY, popupW, popupH, winW, winH, cursorX, cursorY);
-        _previewPopup.x = adjustedPos.x;
-        _previewPopup.y = adjustedPos.y;
+        var adjustedPos = avoidCursorOverlap(targetX, targetY, popupW, popupH, winW, winH, _previewPopup.cursorX, _previewPopup.cursorY);
+        _previewPopup.x = snapPopupCoordinate(adjustedPos.x);
+        _previewPopup.y = snapPopupCoordinate(adjustedPos.y);
         var thumbCenterX = thumbX + thumbW / 2;
         var thumbCenterY = thumbY + thumbH / 2;
         _previewPopup.scaleOriginX = Math.max(0, Math.min(popupW, thumbCenterX - _previewPopup.x));
         _previewPopup.scaleOriginY = Math.max(0, Math.min(popupH, thumbCenterY - _previewPopup.y));
-        _previewPopup.open();
+    }
+
+    // 弹窗显示/隐藏辅助函数（供 delegate 调用）
+    function showPreviewPopup(imageSources, itemData, thumbX, thumbY, thumbW, thumbH, cursorX, cursorY) {
+        popupHideTimer.stop();
+        _previewPopup.imageSources = imageSources || [];
+        _previewPopup.currentItemData = itemData;
+        _previewPopup.anchorX = thumbX;
+        _previewPopup.anchorY = thumbY;
+        _previewPopup.anchorWidth = thumbW;
+        _previewPopup.anchorHeight = thumbH;
+        _previewPopup.cursorX = cursorX;
+        _previewPopup.cursorY = cursorY;
+        // imageSources 改变后 Popup 尺寸由绑定表达式重新计算，下一轮事件循环再定位。
+        Qt.callLater(function () {
+            if (_previewPopup.currentItemData !== itemData)
+                return;
+            positionPreviewPopup();
+            _previewPopup.open();
+        });
     }
 
     function hidePreviewPopup() {
@@ -1083,7 +1128,8 @@ Card {
                 var w = width - AppStyle.spacing.md;
                 var minCellW = ResponsiveHelper.responsive(180, 220, 230, 250);
                 var c = Math.max(1, Math.floor(w / minCellW));
-                return w / c;
+                // 使用整数逻辑像素，避免 Windows 高 DPI 下 delegate 和缩略图落在半像素。
+                return Math.max(1, Math.round(w / c));
             }
             cellHeight: ResponsiveHelper.isShortWindow ? 60 : 76
             flow: GridView.FlowLeftToRight
