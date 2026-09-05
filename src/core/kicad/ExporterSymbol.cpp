@@ -384,21 +384,44 @@ QString ExporterSymbol::generateSymbolContent(const IR::SymbolComponentIR& symbo
     content += "    (in_bom yes)\n";
     content += "    (on_board yes)\n";
 
-    // 找到最左上角的引脚（x最小且y最大），将其位置作为新的坐标原点
-    // 注意：KiCad Y 轴已翻转，"最上方"对应最大 Y 值
+    /**
+     * @brief 根据完整符号几何计算稳定原点
+     * @details 原点取主体与引脚几何包围盒中心，不依赖引脚输入顺序。
+     */
     double originX = 0.0;
     double originY = 0.0;
     const QList<IR::SymbolPinIR>& pins = symbol.pins;
-    if (!pins.isEmpty()) {
-        originX = pins.first().position.x();
-        originY = pins.first().position.y();
-        for (const IR::SymbolPinIR& pin : pins) {
-            if (pin.position.x() < originX || (pin.position.x() == originX && pin.position.y() > originY)) {
-                originX = pin.position.x();
-                originY = pin.position.y();
-            }
-        }
-        qDebug() << "Top-left pin at:" << originX << originY;
+    double minOriginX = std::numeric_limits<double>::max();
+    double minOriginY = std::numeric_limits<double>::max();
+    double maxOriginX = -std::numeric_limits<double>::max();
+    double maxOriginY = -std::numeric_limits<double>::max();
+    auto includeOriginPoint = [&](double x, double y) {
+        minOriginX = qMin(minOriginX, x);
+        minOriginY = qMin(minOriginY, y);
+        maxOriginX = qMax(maxOriginX, x);
+        maxOriginY = qMax(maxOriginY, y);
+    };
+    for (const auto& pin : pins) {
+        includeOriginPoint(pin.position.x(), pin.position.y());
+        const double dx = pin.direction == IR::PinDirection::Right  ? pin.length
+                          : pin.direction == IR::PinDirection::Left ? -pin.length
+                                                                    : 0.0;
+        const double dy = pin.direction == IR::PinDirection::Up     ? pin.length
+                          : pin.direction == IR::PinDirection::Down ? -pin.length
+                                                                    : 0.0;
+        includeOriginPoint(pin.position.x() + dx, pin.position.y() + dy);
+    }
+    for (const auto& rect : symbol.rectangles) {
+        includeOriginPoint(rect.x0, rect.y0);
+        includeOriginPoint(rect.x1, rect.y1);
+    }
+    for (const auto& circle : symbol.circles) {
+        includeOriginPoint(circle.center.x() - circle.radius, circle.center.y() - circle.radius);
+        includeOriginPoint(circle.center.x() + circle.radius, circle.center.y() + circle.radius);
+    }
+    if (minOriginX <= maxOriginX) {
+        originX = (minOriginX + maxOriginX) / 2.0;
+        originY = (minOriginY + maxOriginY) / 2.0;
     }
 
     // 设置原点偏移，使所有图形元素相对于该点定位
@@ -491,9 +514,23 @@ QString ExporterSymbol::generateSymbolContent(const IR::SymbolComponentIR& symbo
         }
     }
 
-    // 生成属性 — 所有属性放在图形下方，水平居中，垂直统一对齐
-    double propertyY = yLow - 3.81;  // 图形下方固定偏移（150mil）
+    /**
+     * @brief 统一布局符号属性
+     * @details 所有字段共用同一水平锚点，按可见字段在上、隐藏字段在下的顺序垂直排列。
+     */
+    constexpr double propertySpacing = 2.54;  // 100mil
+    const double symbolCenterY = (yHigh + yLow) / 2.0;
+    const double visibleTopY = symbolCenterY + propertySpacing / 2.0;
+    double hiddenFieldY = yLow - propertySpacing;
     double fontSize = 1.27;  // PROPERTY_FONT_SIZE
+
+    /**
+     * @brief 计算 Value 属性锚点
+     * @details Value 使用主体中心，不复用 EasyEDA 文本的自由坐标和旋转。
+     */
+    double valueX = graphCenterOffsetX;
+    double valueY = symbolCenterY - propertySpacing / 2.0;
+    double valueRotation = 0.0;
 
     // 辅助函数：转义属性值
     auto escapePropertyValue = [](const QString& value) -> QString {
@@ -504,26 +541,27 @@ QString ExporterSymbol::generateSymbolContent(const IR::SymbolComponentIR& symbo
         return escaped.trimmed();
     };
 
-    // Reference 属性（图形下方居中）
+    // Reference 属性（主体中心上方）
     QString refPrefix = symbol.designatorPrefix;
     refPrefix.replace("?", "");
     content += QString("    (property\n");
     content += QString("      \"Reference\"\n");
     content += QString("      \"%1\"\n").arg(escapePropertyValue(refPrefix));
     content += "      (id 0)\n";
-    content += QString("      (at %1 %2 0)\n").arg(graphCenterOffsetX, 0, 'f', 2).arg(propertyY, 0, 'f', 2);
+    content += QString("      (at %1 %2 0)\n").arg(valueX, 0, 'f', 2).arg(visibleTopY, 0, 'f', 2);
     content += QString("      (effects (font (size %1 %2) (thickness 0) ) )\n")
                    .arg(fontSize, 0, 'f', 2)
                    .arg(fontSize, 0, 'f', 2);
     content += "    )\n";
 
-    // Value 属性（与 Reference 同一高度，居中对齐）
+    // Value 属性：位于主体中心并保持水平可读。
     content += QString("    (property\n");
     content += QString("      \"Value\"\n");
     content += QString("      \"%1\"\n").arg(escapePropertyValue(symbol.name));
     content += "      (id 1)\n";
-    content += QString("      (at %1 %2 0)\n").arg(graphCenterOffsetX, 0, 'f', 2).arg(propertyY, 0, 'f', 2);
-    content += QString("      (effects (font (size %1 %2) (thickness 0) ) hide)\n")
+    content +=
+        QString("      (at %1 %2 %3)\n").arg(valueX, 0, 'f', 2).arg(valueY, 0, 'f', 2).arg(valueRotation, 0, 'f', 0);
+    content += QString("      (effects (font (size %1 %2) (thickness 0) ) )\n")
                    .arg(fontSize, 0, 'f', 2)
                    .arg(fontSize, 0, 'f', 2);
     content += "    )\n";
@@ -535,7 +573,8 @@ QString ExporterSymbol::generateSymbolContent(const IR::SymbolComponentIR& symbo
         QString footprintPath = QString("%1:%2").arg(libName, symbol.footprintName);
         content += QString("      \"%1\"\n").arg(escapePropertyValue(footprintPath));
         content += "      (id 2)\n";
-        content += QString("      (at %1 %2 0)\n").arg(graphCenterOffsetX, 0, 'f', 2).arg(propertyY, 0, 'f', 2);
+        content += QString("      (at %1 %2 0)\n").arg(valueX, 0, 'f', 2).arg(hiddenFieldY, 0, 'f', 2);
+        hiddenFieldY -= propertySpacing;
         content += QString("      (effects (font (size %1 %2) (thickness 0) ) hide)\n")
                        .arg(fontSize, 0, 'f', 2)
                        .arg(fontSize, 0, 'f', 2);
@@ -549,7 +588,8 @@ QString ExporterSymbol::generateSymbolContent(const IR::SymbolComponentIR& symbo
         content += QString("      \"LCSC Part\"\n");
         content += QString("      \"%1\"\n").arg(escapePropertyValue(lcscId));
         content += "      (id 5)\n";
-        content += QString("      (at %1 %2 0)\n").arg(graphCenterOffsetX, 0, 'f', 2).arg(propertyY, 0, 'f', 2);
+        content += QString("      (at %1 %2 0)\n").arg(valueX, 0, 'f', 2).arg(hiddenFieldY, 0, 'f', 2);
+        hiddenFieldY -= propertySpacing;
         content += QString("      (effects (font (size %1 %2) (thickness 0) ) hide)\n")
                        .arg(fontSize, 0, 'f', 2)
                        .arg(fontSize, 0, 'f', 2);
@@ -563,7 +603,8 @@ QString ExporterSymbol::generateSymbolContent(const IR::SymbolComponentIR& symbo
         content += QString("      \"ki_description\"\n");
         content += QString("      \"%1\"\n").arg(escapePropertyValue(symbolDescription));
         content += "      (id 6)\n";
-        content += QString("      (at %1 %2 0)\n").arg(graphCenterOffsetX, 0, 'f', 2).arg(propertyY, 0, 'f', 2);
+        content += QString("      (at %1 %2 0)\n").arg(valueX, 0, 'f', 2).arg(hiddenFieldY, 0, 'f', 2);
+        hiddenFieldY -= propertySpacing;
         content += QString("      (effects (font (size %1 %2) (thickness 0) ) hide)\n")
                        .arg(fontSize, 0, 'f', 2)
                        .arg(fontSize, 0, 'f', 2);
