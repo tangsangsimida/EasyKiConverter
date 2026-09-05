@@ -35,7 +35,9 @@ struct SymbolPinStyle {
     PinDecoration decoration = PinDecoration::None;  ///< IEEE 图形装饰
 
     /** @brief 是否有任何样式标记 */
-    bool hasAny() const { return inverted || clock || activeLow || decoration != PinDecoration::None; }
+    bool hasAny() const {
+        return inverted || clock || activeLow || decoration != PinDecoration::None;
+    }
 };
 
 /**

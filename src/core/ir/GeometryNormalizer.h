@@ -117,8 +117,10 @@ inline QList<QPointF> parseSimpleSvgPath(const QString& pathStr, double scaleFac
  * @param scaleFactor 缩放因子
  * @return 变换后的点（mm）
  */
-inline QPointF transformPoint(double rawX, double rawY,
-                              double originX, double originY,
+inline QPointF transformPoint(double rawX,
+                              double rawY,
+                              double originX,
+                              double originY,
                               double scaleFactor = EASYEDA_PX_TO_MM) {
     return QPointF((rawX - originX) * scaleFactor, -(rawY - originY) * scaleFactor);
 }

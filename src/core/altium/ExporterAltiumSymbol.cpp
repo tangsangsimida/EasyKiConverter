@@ -487,8 +487,7 @@ void ExporterAltiumSymbol::centerComponent(AltiumSchComponent& component) {
             bool coincident = true;
             for (int index : visibleTextIndices) {
                 const auto& text = component.texts[index];
-                if (qAbs(text.locationX - first.locationX) > 10000 ||
-                    qAbs(text.locationY - first.locationY) > 10000) {
+                if (qAbs(text.locationX - first.locationX) > 10000 || qAbs(text.locationY - first.locationY) > 10000) {
                     coincident = false;
                     break;
                 }

@@ -16,14 +16,19 @@
 #include "EasyedaLayerMap.h"
 #include "EasyedaPadShapeMap.h"
 #include "FootprintIR.h"
-#include "Model3DDataConverter.h"
 #include "GeometryNormalizer.h"  // 复用 parseFlatPointString 等工具函数
+#include "Model3DDataConverter.h"
 #include "models/FootprintData.h"
 
 #include <cmath>
 
 namespace EasyKiConverter {
 namespace IR {
+
+// 从 GeometryNormalizer 引入坐标解析工具（向后兼容）
+using GeometryNormalizer::parseCommaSeparatedPoints;
+using GeometryNormalizer::parseFlatPointString;
+using GeometryNormalizer::parseSimpleSvgPath;
 
 /**
  * @brief SVG 弧线解析结果
@@ -41,7 +46,7 @@ struct SvgArcResult {
  * @param scaleFactor 坐标缩放因子
  * @return 解析结果，失败时 center 为 (0,0) 且 radius=0
  */
-inline SvgArcResult parseSvgArcPath(const QString& pathStr, double scaleFactor = PX_TO_MM) {
+inline SvgArcResult parseSvgArcPath(const QString& pathStr, double scaleFactor = EASYEDA_PX_TO_MM) {
     SvgArcResult result;
     if (pathStr.isEmpty())
         return result;
@@ -185,13 +190,13 @@ inline FootprintComponentIR toFootprintIR(const FootprintData& data) {
     for (const auto& pad : data.pads()) {
         FootprintPadIR pir;
         pir.number = pad.number;
-        pir.position = QPointF(pad.centerX * PX_TO_MM, pad.centerY * PX_TO_MM);
+        pir.position = QPointF(pad.centerX * EASYEDA_PX_TO_MM, pad.centerY * EASYEDA_PX_TO_MM);
         pir.shape = EasyedaPadShapeMap::toPadShape(pad.shape);
-        pir.size = QSizeF(pad.width * PX_TO_MM, pad.height * PX_TO_MM);
+        pir.size = QSizeF(pad.width * EASYEDA_PX_TO_MM, pad.height * EASYEDA_PX_TO_MM);
         pir.layer = EasyedaLayerMap::toLayerType(pad.layerId);
         pir.rotation = pad.rotation;
-        pir.holeSize = pad.holeRadius * 2.0 * PX_TO_MM;  // radius -> diameter
-        pir.holeLength = pad.holeLength * PX_TO_MM;
+        pir.holeSize = pad.holeRadius * 2.0 * EASYEDA_PX_TO_MM;  // radius -> diameter
+        pir.holeLength = pad.holeLength * EASYEDA_PX_TO_MM;
         pir.netName = pad.net;
         pir.isPlated = pad.isPlated;
         pir.isLocked = pad.isLocked;
@@ -202,8 +207,8 @@ inline FootprintComponentIR toFootprintIR(const FootprintData& data) {
             pir.customShapePoints = parseFlatPointString(pad.points);
             // 注意：自定义形状点相对于焊盘中心，但不翻转 Y（与旧代码一致）
             for (auto& pt : pir.customShapePoints) {
-                pt.setX(pt.x() - pad.centerX * PX_TO_MM);
-                pt.setY(pt.y() - pad.centerY * PX_TO_MM);
+                pt.setX(pt.x() - pad.centerX * EASYEDA_PX_TO_MM);
+                pt.setY(pt.y() - pad.centerY * EASYEDA_PX_TO_MM);
             }
         }
 
@@ -214,7 +219,7 @@ inline FootprintComponentIR toFootprintIR(const FootprintData& data) {
     for (const auto& track : data.tracks()) {
         FootprintTrackIR tir;
         tir.points = parseFlatPointString(track.points);
-        tir.width = track.strokeWidth * PX_TO_MM;
+        tir.width = track.strokeWidth * EASYEDA_PX_TO_MM;
         tir.layer = EasyedaLayerMap::toLayerType(track.layerId);
         tir.netName = track.net;
         tir.isLocked = track.isLocked;
@@ -224,8 +229,8 @@ inline FootprintComponentIR toFootprintIR(const FootprintData& data) {
     // 转换安装孔
     for (const auto& hole : data.holes()) {
         FootprintHoleIR hir;
-        hir.center = QPointF(hole.centerX * PX_TO_MM, hole.centerY * PX_TO_MM);
-        hir.radius = hole.radius * PX_TO_MM;
+        hir.center = QPointF(hole.centerX * EASYEDA_PX_TO_MM, hole.centerY * EASYEDA_PX_TO_MM);
+        hir.radius = hole.radius * EASYEDA_PX_TO_MM;
         hir.isLocked = hole.isLocked;
         ir.holes.append(hir);
     }
@@ -233,9 +238,9 @@ inline FootprintComponentIR toFootprintIR(const FootprintData& data) {
     // 转换圆
     for (const auto& circle : data.circles()) {
         FootprintCircleIR cir;
-        cir.center = QPointF(circle.cx * PX_TO_MM, circle.cy * PX_TO_MM);
-        cir.radius = circle.radius * PX_TO_MM;
-        cir.strokeWidth = circle.strokeWidth * PX_TO_MM;
+        cir.center = QPointF(circle.cx * EASYEDA_PX_TO_MM, circle.cy * EASYEDA_PX_TO_MM);
+        cir.radius = circle.radius * EASYEDA_PX_TO_MM;
+        cir.strokeWidth = circle.strokeWidth * EASYEDA_PX_TO_MM;
         cir.layer = EasyedaLayerMap::toLayerType(circle.layerId);
         cir.isLocked = circle.isLocked;
         ir.circles.append(cir);
@@ -244,8 +249,11 @@ inline FootprintComponentIR toFootprintIR(const FootprintData& data) {
     // 转换矩形
     for (const auto& rect : data.rectangles()) {
         FootprintRectangleIR rir;
-        rir.bounds = QRectF(rect.x * PX_TO_MM, rect.y * PX_TO_MM, rect.width * PX_TO_MM, rect.height * PX_TO_MM);
-        rir.strokeWidth = rect.strokeWidth * PX_TO_MM;
+        rir.bounds = QRectF(rect.x * EASYEDA_PX_TO_MM,
+                            rect.y * EASYEDA_PX_TO_MM,
+                            rect.width * EASYEDA_PX_TO_MM,
+                            rect.height * EASYEDA_PX_TO_MM);
+        rir.strokeWidth = rect.strokeWidth * EASYEDA_PX_TO_MM;
         rir.layer = EasyedaLayerMap::toLayerType(rect.layerId);
         rir.isLocked = rect.isLocked;
         ir.rectangles.append(rir);
@@ -271,7 +279,7 @@ inline FootprintComponentIR toFootprintIR(const FootprintData& data) {
                 air.radius = qSqrt(dx * dx + dy * dy);
             }
         }
-        air.width = arc.strokeWidth * PX_TO_MM;
+        air.width = arc.strokeWidth * EASYEDA_PX_TO_MM;
         air.layer = EasyedaLayerMap::toLayerType(arc.layerId);
         air.netName = arc.net;
         air.isLocked = arc.isLocked;
@@ -282,11 +290,11 @@ inline FootprintComponentIR toFootprintIR(const FootprintData& data) {
     for (const auto& text : data.texts()) {
         FootprintTextIR tir;
         tir.text = text.text;
-        tir.position = QPointF(text.centerX * PX_TO_MM, text.centerY * PX_TO_MM);
+        tir.position = QPointF(text.centerX * EASYEDA_PX_TO_MM, text.centerY * EASYEDA_PX_TO_MM);
         tir.rotation = text.rotation;
         tir.mirror = (text.mirror == "1" || text.mirror.toLower() == "true");
-        tir.strokeWidth = text.strokeWidth * PX_TO_MM;
-        tir.fontSize = text.fontSize * PX_TO_MM;
+        tir.strokeWidth = text.strokeWidth * EASYEDA_PX_TO_MM;
+        tir.fontSize = text.fontSize * EASYEDA_PX_TO_MM;
         tir.layer = EasyedaLayerMap::toLayerType(text.layerId);
         tir.isDisplayed = text.isDisplayed;
         tir.isFabrication = (text.type == "N");
@@ -320,7 +328,7 @@ inline FootprintComponentIR toFootprintIR(const FootprintData& data) {
             continue;
         FootprintOutlineIR oir;
         oir.points = parseSimpleSvgPath(outline.path);
-        oir.strokeWidth = outline.strokeWidth * PX_TO_MM;
+        oir.strokeWidth = outline.strokeWidth * EASYEDA_PX_TO_MM;
         oir.layer = EasyedaLayerMap::toLayerType(outline.layerId);
         oir.isLocked = outline.isLocked;
         ir.outlines.append(oir);

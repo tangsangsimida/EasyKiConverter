@@ -71,8 +71,7 @@ inline SymbolComponentIR toSymbolIR(const SymbolData& data) {
 
             // 从 pinPath SVG 解析引脚长度
             const QString pathStr = pin.pinPath.path;
-            static const QRegularExpression lengthExpression(
-                QStringLiteral(R"([hHvV]\s*([-+]?(?:\d+\.?\d*|\.\d+)))"));
+            static const QRegularExpression lengthExpression(QStringLiteral(R"([hHvV]\s*([-+]?(?:\d+\.?\d*|\.\d+)))"));
             const QRegularExpressionMatch lengthMatch = lengthExpression.match(pathStr);
             if (lengthMatch.hasMatch()) {
                 bool ok = false;
@@ -130,8 +129,8 @@ inline SymbolComponentIR toSymbolIR(const SymbolData& data) {
     auto convertCircles = [&](const QList<SymbolCircle>& circles, double originX, double originY, int partIdx = 0) {
         for (const auto& circle : circles) {
             SymbolCircleIR cir;
-            cir.center = QPointF((circle.centerX - originX) * EASYEDA_PX_TO_MM,
-                                 -(circle.centerY - originY) * EASYEDA_PX_TO_MM);
+            cir.center =
+                QPointF((circle.centerX - originX) * EASYEDA_PX_TO_MM, -(circle.centerY - originY) * EASYEDA_PX_TO_MM);
             cir.radius = circle.radius * EASYEDA_PX_TO_MM;
             cir.strokeColor = parseColor(circle.strokeColor);
             cir.strokeWidth = circle.strokeWidth * EASYEDA_PX_TO_MM;
@@ -214,8 +213,7 @@ inline SymbolComponentIR toSymbolIR(const SymbolData& data) {
         for (const auto& text : texts) {
             SymbolTextIR tir;
             tir.text = text.text;
-            tir.position = QPointF((text.posX - originX) * EASYEDA_PX_TO_MM,
-                                   -(text.posY - originY) * EASYEDA_PX_TO_MM);
+            tir.position = QPointF((text.posX - originX) * EASYEDA_PX_TO_MM, -(text.posY - originY) * EASYEDA_PX_TO_MM);
             tir.rotation = text.rotation;
             tir.color = parseColor(text.color);
             tir.fontFamily = text.font;
@@ -244,8 +242,7 @@ inline SymbolComponentIR toSymbolIR(const SymbolData& data) {
                 air.startPoint = QPointF((arc.path.first().x() - originX) * EASYEDA_PX_TO_MM,
                                          -(arc.path.first().y() - originY) * EASYEDA_PX_TO_MM);
                 QPointF mid = (arc.path.first() + arc.path.last()) / 2.0;
-                air.midPoint = QPointF((mid.x() - originX) * EASYEDA_PX_TO_MM,
-                                       -(mid.y() - originY) * EASYEDA_PX_TO_MM);
+                air.midPoint = QPointF((mid.x() - originX) * EASYEDA_PX_TO_MM, -(mid.y() - originY) * EASYEDA_PX_TO_MM);
                 air.endPoint = QPointF((arc.path.last().x() - originX) * EASYEDA_PX_TO_MM,
                                        -(arc.path.last().y() - originY) * EASYEDA_PX_TO_MM);
             }
