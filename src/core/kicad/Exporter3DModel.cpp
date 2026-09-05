@@ -6,6 +6,8 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QRegularExpression>
 #include <QTextStream>
 #include <QVector>
@@ -61,7 +63,7 @@ bool Exporter3DModel::downloadStepDataSync(const QString& uuid, QByteArray* data
     return downloadModelDataSync(uuid, ModelFormat::STEP, data, errorMessage);
 }
 
-bool Exporter3DModel::exportToWrl(const Model3DData& modelData, const QString& savePath) {
+bool Exporter3DModel::exportToWrl(const IR::Model3DIR& model, const QString& savePath) {
     QFile file(savePath);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
         qWarning() << "Failed to open file for writing:" << savePath;
@@ -72,29 +74,26 @@ bool Exporter3DModel::exportToWrl(const Model3DData& modelData, const QString& s
     out.setEncoding(QStringConverter::Utf8);
 
     // 获取 OBJ 数据
-    QByteArray objData = modelData.rawObj().toUtf8();
+    QByteArray objData = model.rawObj().toUtf8();
 
     // 生成 WRL 文件内容
-    QString content = generateWrlContent(modelData, objData);
+    QString content = generateWrlContent(model, objData);
 
     out << content;
-    file.flush();  // 确保数据被写
+    file.flush();
     file.close();
-
-    // 验证文件大小
-    QFileInfo fileInfo(savePath);
 
     return true;
 }
 
-bool Exporter3DModel::exportToStep(const Model3DData& modelData, const QString& savePath) {
+bool Exporter3DModel::exportToStep(const IR::Model3DIR& model, const QString& savePath) {
     QFile file(savePath);
     if (!file.open(QIODevice::WriteOnly)) {
         qWarning() << "Failed to open file for writing:" << savePath;
         return false;
     }
 
-    file.write(modelData.step());
+    file.write(model.stepData());
     file.close();
 
     return true;
@@ -131,7 +130,7 @@ double Exporter3DModel::calculateObjMinZ(const QByteArray& objData) {
                 }
             }
 
-            // 解析 Z 分量（转换为毫米，与 calculateWrlDisplayMinZ 单位一致）
+            // 解析 Z 分量
             if (pos < end) {
                 bool ok = false;
                 double z = QByteArray(objData.constData() + pos, end - pos).toDouble(&ok);
@@ -200,34 +199,11 @@ double Exporter3DModel::calculateWrlDisplayMinZ(const QByteArray& wrlData) {
     return minZ;
 }
 
-void Exporter3DModel::convertToKiCadCoordinates(Model3DData& modelData) {
-    // EasyEDA 使用右手坐标系，KiCad 使用左手坐标
-    // 需要进行坐标转
-
-    // 获取当前的平移和旋转
-    Model3DBase translation = modelData.translation();
-    Model3DBase rotation = modelData.rotation();
-
-    // 旋转 X 轴 180 度
-    rotation.x += 180.0;
-
-    // Y 轴翻转
-    rotation.y = -rotation.y;
-
-    // Z 轴翻
-    rotation.z = -rotation.z;
-
-    // 更新模型数据
-    modelData.setTranslation(translation);
-    modelData.setRotation(rotation);
-}
-
 void Exporter3DModel::cancel() {
     // 使用同步的 NetworkClient，不需要取消请求
-    // 如果需要支持取消，可以使用 wasCancelled 标志
 }
 
-QString Exporter3DModel::generateWrlContent(const Model3DData& modelData, const QByteArray& objData) {
+QString Exporter3DModel::generateWrlContent(const IR::Model3DIR& model, const QByteArray& objData) {
     QString content;
 
     // 解析 OBJ 数据
@@ -236,11 +212,6 @@ QString Exporter3DModel::generateWrlContent(const Model3DData& modelData, const 
     QJsonArray faces = parsedData["faces"].toArray();
     QJsonObject materials = parsedData["materials"].toObject();
     QJsonArray shapes = parsedData["shapes"].toArray();
-
-    // qDebug() << "Generating WRL content - vertices:" << vertices.size()
-    //          << "faces:" << faces.size()
-    //          << "materials:" << materials.size()
-    //          << "shapes:" << shapes.size();
 
     // WRL 文件头部
     content += "#VRML V2.0 utf8\n";
@@ -255,14 +226,9 @@ QString Exporter3DModel::generateWrlContent(const Model3DData& modelData, const 
             QJsonArray shapePoints = shape["points"].toArray();
             QJsonArray coordIndex = shape["coordIndex"].toArray();
 
-            // qDebug() << "Processing shape - materialId:" << materialId
-            //          << "points:" << shapePoints.size()
-            //          << "coordIndex:" << coordIndex.size();
-
             // 在倒数第二个位置插入最后一个点的副本
             if (shapePoints.size() > 0) {
                 shapePoints.insert(shapePoints.size() - 1, shapePoints.last());
-                // qDebug() << "Inserted duplicate of last point, new size:" << shapePoints.size();
             }
 
             // 获取材质信息
@@ -295,7 +261,6 @@ QString Exporter3DModel::generateWrlContent(const Model3DData& modelData, const 
             content += "      point [\n";
 
             for (const QJsonValue& pointValue : shapePoints) {
-                // pointValue 现在是字符串格式，直接输出
                 content += "        " + pointValue.toString() + ",\n";
             }
 
@@ -304,7 +269,6 @@ QString Exporter3DModel::generateWrlContent(const Model3DData& modelData, const 
             content += "    coordIndex [\n";
 
             for (const QJsonValue& indexValue : coordIndex) {
-                // indexValue 是一QJsonArray，包含面索引
                 QJsonArray faceIndices = indexValue.toArray();
                 QString indexStr;
                 for (const QJsonValue& idx : faceIndices) {
@@ -318,11 +282,9 @@ QString Exporter3DModel::generateWrlContent(const Model3DData& modelData, const 
             content += "}\n";
         }
     } else {
-        // qDebug() << "No shapes found, using simple Transform mode";
         // 如果没有形状数据，使用简单的 Transform 包装
-        // 获取平移和旋
-        Model3DBase translation = modelData.translation();
-        Model3DBase rotation = modelData.rotation();
+        IR::Model3DVec3 translation = model.translation();
+        IR::Model3DVec3 rotation = model.rotation();
 
         content += "Transform {\n";
         content += "  translation ";
@@ -458,17 +420,6 @@ QJsonObject Exporter3DModel::parseObjData(const QByteArray& objData) {
     QString objString = QString::fromUtf8(objData);
     QStringList lines = objString.split('\n');
 
-    // qDebug() << "=== OBJ Data Debug ===";
-    // qDebug() << "OBJ data size:" << objData.size();
-    // qDebug() << "OBJ string size:" << objString.size();
-    // qDebug() << "Total lines:" << lines.size();
-    // qDebug() << "First 500 chars:" << objString.left(500);
-    // qDebug() << "First 20 lines:";
-    // for (int i = 0; i < qMin(20, lines.size()); ++i) {
-    //     qDebug() << "  Line" << i << ":" << lines[i].left(100);
-    // }
-    // qDebug() << "===================";
-
     // 第一遍：提取材质信息
     QString currentMaterialId;
     QJsonObject currentMaterial;
@@ -486,17 +437,14 @@ QJsonObject Exporter3DModel::parseObjData(const QByteArray& objData) {
         }
 
         if (parts[0] == "newmtl") {
-            // 保存上一个材
             if (!currentMaterialId.isEmpty() && !currentMaterial.isEmpty()) {
                 materials[currentMaterialId] = currentMaterial;
             }
-            // 开始新材质
             currentMaterialId = parts[1];
             currentMaterial = QJsonObject();
             inMaterial = true;
         } else if (inMaterial) {
             if (parts[0] == "endmtl") {
-                // 保存材质
                 if (!currentMaterialId.isEmpty() && !currentMaterial.isEmpty()) {
                     materials[currentMaterialId] = currentMaterial;
                 }
@@ -527,15 +475,12 @@ QJsonObject Exporter3DModel::parseObjData(const QByteArray& objData) {
         }
     }
 
-    // 保存最后一个材
     if (!currentMaterialId.isEmpty() && !currentMaterial.isEmpty()) {
         materials[currentMaterialId] = currentMaterial;
     }
 
-    // qDebug() << "Found" << materials.size() << "materials";
-
     // 第二遍：提取顶点数据
-    QVector<Model3DBase> convertedVertices;
+    QVector<IR::Model3DVec3> convertedVertices;
     double minX = std::numeric_limits<double>::max();
     double maxX = std::numeric_limits<double>::lowest();
     double minY = std::numeric_limits<double>::max();
@@ -553,12 +498,11 @@ QJsonObject Exporter3DModel::parseObjData(const QByteArray& objData) {
         }
 
         if (parts[0] == 'v') {
-            // 顶点数据，转换为毫米
             if (parts.size() >= 4) {
                 double x = parts[1].toDouble() / WRL_UNIT_TO_MM;
                 double y = parts[2].toDouble() / WRL_UNIT_TO_MM;
                 double z = parts[3].toDouble() / WRL_UNIT_TO_MM;
-                convertedVertices.append(Model3DBase(x, y, z));
+                convertedVertices.append(IR::Model3DVec3(x, y, z));
                 minX = qMin(minX, x);
                 maxX = qMax(maxX, x);
                 minY = qMin(minY, y);
@@ -574,17 +518,15 @@ QJsonObject Exporter3DModel::parseObjData(const QByteArray& objData) {
     const double normalizeZ = hasVertices && minZ > 0.0 ? minZ : 0.0;
 
     QStringList vertexStrings;
-    for (Model3DBase vertexData : convertedVertices) {
+    for (IR::Model3DVec3 vertexData : convertedVertices) {
         vertexData.x -= normalizeX;
         vertexData.y -= normalizeY;
         vertexData.z -= normalizeZ;
 
-        // 保留 4 位小数，与 Python 版本保持一致
         QString vertexStr =
             QString("%1 %2 %3").arg(vertexData.x, 0, 'f', 4).arg(vertexData.y, 0, 'f', 4).arg(vertexData.z, 0, 'f', 4);
         vertexStrings.append(vertexStr);
 
-        // 同时保存JSON 数组，用于后续处理
         QJsonArray vertex;
         vertex.append(vertexData.x);
         vertex.append(vertexData.y);
@@ -592,13 +534,11 @@ QJsonObject Exporter3DModel::parseObjData(const QByteArray& objData) {
         vertices.append(vertex);
     }
 
-    // qDebug() << "Found" << vertices.size() << "vertices";
-
     // 第三遍：按材质分割形状并提取面数
     QString currentShapeMaterial = "default";
-    QStringList currentShapePoints;  // 使用字符串列
+    QStringList currentShapePoints;
     QJsonArray currentShapeCoordIndex;
-    QMap<int, int> vertexIndexMap;  // 映射原始顶点索引到形状中的索
+    QMap<int, int> vertexIndexMap;
     int shapeVertexCounter = 0;
 
     for (const QString& line : lines) {
@@ -613,7 +553,6 @@ QJsonObject Exporter3DModel::parseObjData(const QByteArray& objData) {
         }
 
         if (parts[0] == "usemtl") {
-            // 保存上一个形
             if (!currentShapePoints.isEmpty()) {
                 QJsonObject shape;
                 shape["materialId"] = currentShapeMaterial;
@@ -621,25 +560,21 @@ QJsonObject Exporter3DModel::parseObjData(const QByteArray& objData) {
                 shape["coordIndex"] = currentShapeCoordIndex;
                 shapes.append(shape);
             }
-            // 开始新形状
             currentShapeMaterial = parts[1];
             currentShapePoints.clear();
             currentShapeCoordIndex = QJsonArray();
             vertexIndexMap.clear();
             shapeVertexCounter = 0;
         } else if (parts[0] == 'f') {
-            // 面数
             QJsonArray faceIndices;
             for (int i = 1; i < parts.size(); ++i) {
                 QString vertexIndexStr = parts[i].split('/')[0];
-                int vertexIndex = vertexIndexStr.toInt() - 1;  // OBJ 索引1 开
+                int vertexIndex = vertexIndexStr.toInt() - 1;
 
                 if (!vertexIndexMap.contains(vertexIndex)) {
-                    // WRL 格式使用字符串格式的顶点
                     if (vertexIndex >= 0 && vertexIndex < vertexStrings.size()) {
                         currentShapePoints.append(vertexStrings[vertexIndex]);
                     } else {
-                        // 默认顶点
                         currentShapePoints.append("0 0 0");
                     }
                     vertexIndexMap[vertexIndex] = shapeVertexCounter;
@@ -649,12 +584,11 @@ QJsonObject Exporter3DModel::parseObjData(const QByteArray& objData) {
                     faceIndices.append(vertexIndexMap[vertexIndex]);
                 }
             }
-            faceIndices.append(-1);  // WRL 格式要求每个面以 -1 结束
+            faceIndices.append(-1);
             currentShapeCoordIndex.append(QJsonArray(faceIndices));
         }
     }
 
-    // 保存最后一个形
     if (!currentShapePoints.isEmpty()) {
         QJsonObject shape;
         shape["materialId"] = currentShapeMaterial;
@@ -662,8 +596,6 @@ QJsonObject Exporter3DModel::parseObjData(const QByteArray& objData) {
         shape["coordIndex"] = currentShapeCoordIndex;
         shapes.append(shape);
     }
-
-    // qDebug() << "Found" << shapes.size() << "shapes";
 
     result["vertices"] = vertices;
     result["faces"] = faces;

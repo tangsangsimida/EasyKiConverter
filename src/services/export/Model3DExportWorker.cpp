@@ -5,6 +5,7 @@
 #include "../../services/ComponentCacheService.h"
 #include "../../utils/PathSecurity.h"
 #include "DebugExportHelper.h"
+#include "core/ir/Model3DDataConverter.h"
 
 #include <QDebug>
 #include <QDir>
@@ -78,6 +79,9 @@ void Model3DExportWorker::run() {
         return;
     }
 
+    // [NOTE] 直接使用 Exporter3DModel 而非 ExporterFactory，因为 Worker 依赖其
+    // downloadObjDataSync/downloadStepDataSync 等 EasyEDA 特有方法，
+    // 这些方法不在 IModel3DExporter 通用接口中。
     Exporter3DModel exporter;
 
     // 获取模型名称用于命名文件（仅在需要时）
@@ -177,7 +181,8 @@ void Model3DExportWorker::run() {
             cache->saveModel3D(uuid, objData, QStringLiteral("obj"), gen);
             Model3DData modelData = buildModelData();
             modelData.setRawObj(QString::fromUtf8(objData));
-            if (!exporter.exportToWrl(modelData, wrlWritePath)) {
+            IR::Model3DIR modelIR = IR::toModel3DIR(modelData);
+            if (!exporter.exportToWrl(modelIR, wrlWritePath)) {
                 error = QStringLiteral("Failed to convert OBJ to WRL");
             } else {
                 QFile file(wrlWritePath);
@@ -204,7 +209,8 @@ void Model3DExportWorker::run() {
             if (!stepData.isEmpty()) {
                 Model3DData modelData = buildModelData();
                 modelData.setStep(stepData);
-                if (!exporter.exportToStep(modelData, stepWritePath)) {
+                IR::Model3DIR modelIR = IR::toModel3DIR(modelData);
+                if (!exporter.exportToStep(modelIR, stepWritePath)) {
                     error = QStringLiteral("Failed to write STEP file");
                 } else {
                     cache->saveModel3D(uuid, stepData, QStringLiteral("step"), gen);

@@ -109,7 +109,7 @@ This guide is primarily based on the [Qt Coding Style](https://wiki.qt.io/Qt_Cod
 
 *   Prefer self-documenting code. Add comments only when the intent of the code is not obvious.
 *   Use C++-style `//` for single-line and end-of-line comments.
-*   For detailed descriptions of functions, classes, or complex code blocks, use Doxygen-style comments.
+*   **All public interfaces (functions, classes, structs, enums) MUST use Doxygen-style comments.**
     ```cpp
     /**
      * @brief A brief description.
@@ -119,6 +119,13 @@ This guide is primarily based on the [Qt Coding Style](https://wiki.qt.io/Qt_Cod
      * @return Description of the return value.
      */
     ```
+*   **Doxygen comment conventions**:
+    *   **File-level**: Every `.cpp` / `.h` / `.cxx` / `.hxx` file must start with `@file` and `@brief` tags.
+    *   **Classes/Structs**: Every class and struct definition must have a `@brief` comment; complex types need `@details`.
+    *   **Functions**: All public functions must have `@brief`; functions with parameters need `@param` tags; functions with return values need `@return` tags.
+    *   **Member variables**: Use end-of-line `///< comment` syntax.
+    *   **Constants and enum values**: Use end-of-line `///< comment` or block `/** @brief ... */` comments.
+    *   **Test methods**: Test functions must have `@brief` explaining the test purpose; complex scenarios need `@details` explaining the verification logic.
 
 ## 4. Modern C++ Features
 

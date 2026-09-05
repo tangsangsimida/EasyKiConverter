@@ -1,7 +1,8 @@
 #ifndef EXPORTER3DMODEL_H
 #define EXPORTER3DMODEL_H
 
-#include "models/Model3DData.h"
+#include "core/interfaces/IModel3DExporter.h"
+#include "core/ir/Model3DIR.h"
 
 #include <QByteArray>
 #include <QObject>
@@ -14,7 +15,7 @@ namespace EasyKiConverter {
  *
  * 用于处理 EasyEDA 3D 模型数据的下载和转换
  */
-class Exporter3DModel : public QObject {
+class Exporter3DModel : public QObject, public IModel3DExporter {
     Q_OBJECT
 
 public:
@@ -66,50 +67,36 @@ public:
     /**
      * @brief 计算 OBJ 顶点数据的最小 Z 坐标（毫米）
      *
-     * 解析 OBJ 格式的顶点数据，返回毫米单位下的最小 Z 值（不做钳位）。
-     * OBJ 原始坐标除以 2.54 转换为毫米，与 calculateWrlDisplayMinZ 单位一致。
-     * 调用方负责根据需要对正值进行地板钳位（sitting-on-board 语义）。
-     *
      * @param objData OBJ 格式的原始数据
-     * @return 毫米单位下的最小 Z 坐标，无有效顶点时返回 numeric_limits<double>::max()
+     * @return 毫米单位下的最小 Z 坐标
      */
     static double calculateObjMinZ(const QByteArray& objData);
 
     /**
      * @brief 计算 WRL 文件在 KiCad 显示单位下的最小 Z 坐标
      *
-     * WRL 坐标本身没有单位，KiCad 按 1 WRL unit = 0.1 inch = 2.54 mm 解释。
-     * 用于在只能复用 WRL 缓存时，按实际写出的 WRL 几何对齐 STEP。
-     *
      * @param wrlData WRL 文件数据
-     * @return KiCad 显示单位下的最小 Z 坐标，无有效顶点时返回 numeric_limits<double>::max()
+     * @return KiCad 显示单位下的最小 Z 坐标
      */
     static double calculateWrlDisplayMinZ(const QByteArray& wrlData);
 
     /**
-     * @brief 导出模型KiCad WRL 格式
+     * @brief 导出模型为 KiCad WRL 格式
      *
-     * @param modelData 模型数据
+     * @param model 模型 IR 数据
      * @param savePath 保存路径
      * @return bool 是否成功
      */
-    bool exportToWrl(const Model3DData& modelData, const QString& savePath);
+    bool exportToWrl(const IR::Model3DIR& model, const QString& savePath) override;
 
     /**
-     * @brief 导出模型STEP 格式
+     * @brief 导出模型为 STEP 格式
      *
-     * @param modelData 模型数据
+     * @param model 模型 IR 数据
      * @param savePath 保存路径
      * @return bool 是否成功
      */
-    bool exportToStep(const Model3DData& modelData, const QString& savePath);
-
-    /**
-     * @brief 符号部分数据3D 模型转换KiCad 坐标
-         *
-     * @param modelData 模型数据
-     */
-    void convertToKiCadCoordinates(Model3DData& modelData);
+    bool exportToStep(const IR::Model3DIR& model, const QString& savePath) override;
 
     /**
      * @brief 取消下载
@@ -143,11 +130,11 @@ private:
     /**
      * @brief 生成 WRL 文件内容
      *
-     * @param modelData 模型数据
+     * @param model 模型 IR 数据
      * @param objData OBJ 模型数据
      * @return QString WRL 文件内容
      */
-    QString generateWrlContent(const Model3DData& modelData, const QByteArray& objData);
+    QString generateWrlContent(const IR::Model3DIR& model, const QByteArray& objData);
 
     /**
      * @brief 解析 OBJ 数据

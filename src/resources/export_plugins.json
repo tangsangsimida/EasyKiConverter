@@ -1,0 +1,16 @@
+{
+    "plugins": [
+        {
+            "id": "kicad",
+            "displayName": "KiCad",
+            "icon": "kicad",
+            "optionsComponent": "KiCadSettingsCard.qml"
+        },
+        {
+            "id": "altium",
+            "displayName": "Altium Designer",
+            "icon": "altium",
+            "optionsComponent": "AltiumSettingsCard.qml"
+        }
+    ]
+}

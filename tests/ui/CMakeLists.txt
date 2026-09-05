@@ -17,7 +17,11 @@ set(QML_FILES
     ${CMAKE_SOURCE_DIR}/src/ui/qml/components/ComponentInputCard.qml
     ${CMAKE_SOURCE_DIR}/src/ui/qml/components/BomImportCard.qml
     ${CMAKE_SOURCE_DIR}/src/ui/qml/components/ComponentListCard.qml
-    ${CMAKE_SOURCE_DIR}/src/ui/qml/components/ExportSettingsCard.qml
+    ${CMAKE_SOURCE_DIR}/src/ui/qml/components/ExportSettingsBaseCard.qml
+    ${CMAKE_SOURCE_DIR}/src/ui/qml/components/KiCadSettingsCard.qml
+    ${CMAKE_SOURCE_DIR}/src/ui/qml/components/AltiumSettingsCard.qml
+    ${CMAKE_SOURCE_DIR}/src/ui/qml/components/StyledCheckBox.qml
+    ${CMAKE_SOURCE_DIR}/src/ui/qml/components/SettingsSectionHeader.qml
     ${CMAKE_SOURCE_DIR}/src/ui/qml/components/ExportProgressCard.qml
     ${CMAKE_SOURCE_DIR}/src/ui/qml/components/ExportResultsCard.qml
     ${CMAKE_SOURCE_DIR}/src/ui/qml/components/ExportStatisticsCard.qml
@@ -41,7 +45,6 @@ set(QML_FILES
     ${CMAKE_SOURCE_DIR}/src/ui/qml/styles/AppStyle.qml
     ${CMAKE_SOURCE_DIR}/src/ui/qml/styles/ResponsiveHelper.qml
     ${CMAKE_CURRENT_SOURCE_DIR}/tst_BasicComponents.qml
-    ${CMAKE_CURRENT_SOURCE_DIR}/tst_ExportSettingsCard.qml
     ${CMAKE_CURRENT_SOURCE_DIR}/tst_ExportFlow.qml
     ${CMAKE_CURRENT_SOURCE_DIR}/tst_ExportProgressCard.qml
     ${CMAKE_CURRENT_SOURCE_DIR}/tst_ExportResultsCard.qml

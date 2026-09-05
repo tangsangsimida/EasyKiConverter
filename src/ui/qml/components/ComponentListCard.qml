@@ -116,32 +116,40 @@ Card {
                 }
             ]
             filterOnGroup: "display"
-            delegate: ComponentListItem {
-                width: componentList.cellWidth - AppStyle.spacing.md
-                anchors.horizontalCenter: parent ? undefined : undefined
-                // 绑定数据和搜索词
-                // 注意：QAbstractListModel 暴露的角色名为 "itemData"
-                itemData: model.itemData
-                searchText: searchInput.text // 传递搜索词用于高亮
-                // 绑定导出状态（由 ComponentListCard 维护的查找表）
-                exportStatus: {
-                    var id = itemData ? itemData.componentId : "";
-                    return id && componentListCard.exportStatusMap[id] ? componentListCard.exportStatusMap[id] : null;
-                }
-                onDeleteClicked: {
-                    if (itemData) {
-                        componentListCard.componentListController.removeComponentById(itemData.componentId);
+            delegate: Item {
+                width: componentList.cellWidth
+                height: componentList.cellHeight
+                // 别名：供 requestVisiblePreviewImages 通过 itemAtIndex 访问
+                property alias itemData: delegateItem.itemData
+                ComponentListItem {
+                    id: delegateItem
+                    width: parent.width - AppStyle.spacing.md
+                    height: parent.height - AppStyle.spacing.md
+                    anchors.centerIn: parent
+                    // 绑定数据和搜索词
+                    // 注意：QAbstractListModel 暴露的角色名为 "itemData"
+                    itemData: model.itemData
+                    searchText: searchInput.text // 传递搜索词用于高亮
+                    // 绑定导出状态（由 ComponentListCard 维护的查找表）
+                    exportStatus: {
+                        var id = itemData ? itemData.componentId : "";
+                        return id && componentListCard.exportStatusMap[id] ? componentListCard.exportStatusMap[id] : null;
                     }
-                }
-                onRetryClicked: {
-                    if (itemData) {
-                        componentListCard.componentListController.refreshComponentInfo(index);
+                    onDeleteClicked: {
+                        if (itemData) {
+                            componentListCard.componentListController.removeComponentById(itemData.componentId);
+                        }
                     }
-                }
-                onDescriptionEditRequested: function (componentId, description) {
-                    componentListCard.editingDescriptionComponentId = componentId;
-                    descriptionDialog.descriptionText = description;
-                    descriptionDialog.open();
+                    onRetryClicked: {
+                        if (itemData) {
+                            componentListCard.componentListController.refreshComponentInfo(index);
+                        }
+                    }
+                    onDescriptionEditRequested: function (componentId, description) {
+                        componentListCard.editingDescriptionComponentId = componentId;
+                        descriptionDialog.descriptionText = description;
+                        descriptionDialog.open();
+                    }
                 }
             }
 

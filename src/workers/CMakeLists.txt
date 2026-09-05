@@ -22,6 +22,7 @@ target_link_libraries(EasyKiConverterWorkers
         EasyKiConverterModels
         EasyKiConverterEasyeda
         EasyKiConverterKicad
+        EasyKiConverterIR
         EasyKiConverterUtils
         EasyKiConverterSafeUtils # 新增链接
 )

@@ -217,7 +217,11 @@ set(QML_FILES
     src/ui/qml/components/ComponentInputCard.qml
     src/ui/qml/components/BomImportCard.qml
     src/ui/qml/components/ComponentListCard.qml
-    src/ui/qml/components/ExportSettingsCard.qml
+    src/ui/qml/components/ExportSettingsBaseCard.qml
+    src/ui/qml/components/KiCadSettingsCard.qml
+    src/ui/qml/components/AltiumSettingsCard.qml
+    src/ui/qml/components/StyledCheckBox.qml
+    src/ui/qml/components/SettingsSectionHeader.qml
     src/ui/qml/components/ExportProgressCard.qml
     src/ui/qml/components/ExportResultsCard.qml
     src/ui/qml/components/ExportStatisticsCard.qml
@@ -319,6 +323,7 @@ qt_add_qml_module(appEasyKiconverter_Cpp_Version
         resources/icons/minimize.svg
         resources/icons/maximize.svg
         resources/icons/close.svg
+        src/resources/export_plugins.json
         resources/icons/loading.svg
         resources/icons/github-mark.svg
         resources/icons/github-mark-white.svg

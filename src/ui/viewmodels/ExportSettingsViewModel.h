@@ -2,6 +2,7 @@
 
 #include "services/ConfigService.h"
 #include "services/export/ParallelExportService.h"
+#include "ui/viewmodels/ExportTargetModel.h"
 
 #include <QObject>
 #include <QString>
@@ -52,6 +53,12 @@ class ExportSettingsViewModel : public QObject {
 public:
     explicit ExportSettingsViewModel(ParallelExportService* exportService, QObject* parent = nullptr);
     ~ExportSettingsViewModel() override;
+
+    /**
+     * @brief 设置导出目标模型引用，用于同步目标格式状态
+     * @param model ExportTargetModel 实例指针
+     */
+    void setTargetModel(ExportTargetModel* model);
 
     // Getter 方法
     QString outputPath() const {
@@ -220,6 +227,7 @@ private:
 private:
     ParallelExportService* m_exportService;
     ConfigService* m_configService;
+    ExportTargetModel* m_targetModel = nullptr;  ///< 导出目标模型引用（非拥有）
     QString m_outputPath;
     QString m_libName;
     bool m_exportSymbol;

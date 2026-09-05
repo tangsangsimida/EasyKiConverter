@@ -3,6 +3,7 @@
 add_library(EasyKiConverterViewModels STATIC
     ComponentListViewModel.cpp
     ExportSettingsViewModel.cpp
+    ExportTargetModel.cpp
     ExportProgressViewModel.cpp
     ThemeSettingsViewModel.cpp
     SystemTrayManager.cpp

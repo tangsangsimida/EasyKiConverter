@@ -1,9 +1,11 @@
 # Core 模块
 
 add_subdirectory(easyeda)
+add_subdirectory(ir)
 add_subdirectory(kicad)
 add_subdirectory(network)
 add_subdirectory(utils)
+add_subdirectory(altium)
 
 add_library(EasyKiConverterCore STATIC)
 
@@ -11,15 +13,22 @@ target_sources(EasyKiConverterCore
     PRIVATE
         LanguageManager.cpp
         LanguageManager.h
+        ExporterFactory.cpp
+        ExporterFactory.h
+        interfaces/ISymbolExporter.h
+        interfaces/IFootprintExporter.h
+        interfaces/IModel3DExporter.h
 )
 
 target_link_libraries(EasyKiConverterCore
     PUBLIC
         EasyKiConverterEasyeda
+        EasyKiConverterIR
         EasyKiConverterKicad
         EasyKiConverterNetwork
         EasyKiConverterUtils
         EasyKiConverterModels
+        EasyKiConverterAltium
 )
 
 target_include_directories(EasyKiConverterCore

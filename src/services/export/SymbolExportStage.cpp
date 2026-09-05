@@ -2,7 +2,8 @@
 
 #include "DebugExportHelper.h"
 #include "KiCadLibraryTableManager.h"
-#include "core/kicad/ExporterSymbol.h"
+#include "core/ExporterFactory.h"
+#include "core/ir/SymbolDataConverter.h"
 #include "models/ComponentData.h"
 
 #include <QDateTime>
@@ -185,7 +186,17 @@ void SymbolExportStage::doLibraryExport(const QStringList& componentIds,
     };
 
     QString libName = m_options.libName.isEmpty() ? QStringLiteral("EasyKiConverter") : m_options.libName;
-    QString fileName = libName + QStringLiteral(".kicad_sym");
+
+    // 创建导出器（提前创建以获取格式自描述信息）
+    auto exporter = ExporterFactory::createSymbolExporter(m_options.targetFormat);
+    if (!exporter) {
+        abortExport(QStringLiteral("Failed to create symbol exporter for target format"));
+        return;
+    }
+
+    // 从导出器获取文件扩展名
+    const QString fileExt = exporter->libraryFileExtension();
+    QString fileName = libName + fileExt;
     QString outputDir = m_options.outputPath;
     if (outputDir.isEmpty()) {
         outputDir = QDir::currentPath() + QStringLiteral("/export");
@@ -200,7 +211,7 @@ void SymbolExportStage::doLibraryExport(const QStringList& componentIds,
 
     const bool finalFileExists = QFile::exists(finalPath);
 
-    QString tempPath = m_tempManager.createSymbolTempPath(libName, QStringLiteral(".kicad_sym"));
+    QString tempPath = m_tempManager.createSymbolTempPath(libName, fileExt);
     if (tempPath.isEmpty()) {
         abortExport(QStringLiteral("Failed to create temp file path"));
         return;
@@ -258,14 +269,21 @@ void SymbolExportStage::doLibraryExport(const QStringList& componentIds,
     }
 
     qDebug() << "SymbolExportStage: Exporting" << symbolList.size() << "symbols to temp:" << tempPath;
+    qDebug() << "SymbolExportStage: targetFormat:" << static_cast<int>(m_options.targetFormat) << "("
+             << (m_options.targetFormat == TargetEdaFormat::Altium ? "Altium" : "KiCad") << ")";
 
     bool exportSuccess = false;
     QString libraryDescription = m_options.symbolLibraryDescription;
     {
-        ExporterSymbol exporter;
         bool appendMode = !m_options.overwriteExistingFiles;
-        exportSuccess = exporter.exportSymbolLibrary(
-            symbolList, libName, tempPath, appendMode, m_options.updateMode, libraryDescription);
+        // 转换旧类型列表到 IR 类型
+        QList<IR::SymbolComponentIR> irSymbolList;
+        irSymbolList.reserve(symbolList.size());
+        for (const SymbolData& sd : symbolList) {
+            irSymbolList.append(IR::toSymbolIR(sd));
+        }
+        exportSuccess = exporter->exportSymbolLibrary(
+            irSymbolList, libName, tempPath, appendMode, m_options.updateMode, libraryDescription);
     }
 
     if (m_cancelled.load()) {
@@ -287,13 +305,13 @@ void SymbolExportStage::doLibraryExport(const QStringList& componentIds,
     }
     qDebug() << "SymbolExportStage: Successfully exported to:" << finalPath;
 
-    if (!libraryDescription.isEmpty()) {
-        ExporterSymbol symTableExporter;
-        symTableExporter.generateSymLibTable(libName, finalPath, outputDir, libraryDescription);
+    // KiCad 特有：生成 sym-lib-table 并注册库
+    if (m_options.targetFormat == TargetEdaFormat::KiCad && !libraryDescription.isEmpty()) {
         KiCadLibraryTableManager::registerSymbolLibrary(outputDir, libName, finalPath, libraryDescription);
     }
 
-    m_tempManager.cleanupTempDirectory();
+    // 注意：不在这里清理临时目录，由 ParallelExportService 统一管理
+    // 避免与其他 Stage（如 FootprintExportStage）的临时文件冲突
 
     qDebug() << "SymbolExportStage: Completed. Success:" << successCount << "Failed:" << failedIds.size();
 

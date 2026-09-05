@@ -1,5 +1,8 @@
 #include "WriteWorker.h"
 
+#include "core/ir/FootprintDataConverter.h"
+#include "core/ir/Model3DDataConverter.h"
+#include "core/ir/SymbolDataConverter.h"
 #include "core/kicad/Exporter3DModel.h"
 #include "core/kicad/ExporterFootprint.h"
 #include "core/kicad/ExporterSymbol.h"
@@ -332,7 +335,8 @@ bool WriteWorker::writeSymbolFile(ComponentExportStatus& status) {
 
     bool success = AtomicFileWriter::writeAtomically(
         m_tempDir, finalFilePath, ".kicad_sym.tmp", [this, &status](const QString& tempPath) -> bool {
-            return m_symbolExporter.exportSymbol(*status.symbolData, tempPath);
+            IR::SymbolComponentIR symbolIR = IR::toSymbolIR(*status.symbolData);
+            return m_symbolExporter.exportSymbol(symbolIR, tempPath);
         });
 
     if (success) {
@@ -390,13 +394,13 @@ bool WriteWorker::writeFootprintFile(ComponentExportStatus& status) {
         filePath,
         ".kicad_mod.tmp",
         [this, &status, &model3DWrlPath, &model3DStepPath](const QString& tempPath) -> bool {
+            IR::FootprintComponentIR footprintIR = IR::toFootprintIR(*status.footprintData);
             if (!model3DStepPath.isEmpty()) {
-                return m_footprintExporter.exportFootprint(
-                    *status.footprintData, tempPath, model3DWrlPath, model3DStepPath);
+                return m_footprintExporter.exportFootprint(footprintIR, tempPath, model3DWrlPath, model3DStepPath);
             } else if (!model3DWrlPath.isEmpty()) {
-                return m_footprintExporter.exportFootprint(*status.footprintData, tempPath, model3DWrlPath);
+                return m_footprintExporter.exportFootprint(footprintIR, tempPath, model3DWrlPath);
             } else {
-                return m_footprintExporter.exportFootprint(*status.footprintData, tempPath);
+                return m_footprintExporter.exportFootprint(footprintIR, tempPath);
             }
         });
 
@@ -445,7 +449,8 @@ bool WriteWorker::write3DModelFile(ComponentExportStatus& status) {
         QString wrlFilePath = QString("%1/%2.wrl").arg(modelsDirPath, footprintName);
         wrlSuccess = AtomicFileWriter::writeAtomically(
             m_tempDir, wrlFilePath, ".wrl.tmp", [this, &status](const QString& tempPath) -> bool {
-                return m_model3DExporter.exportToWrl(*status.model3DData, tempPath);
+                IR::Model3DIR modelIR = IR::toModel3DIR(*status.model3DData);
+                return m_model3DExporter.exportToWrl(modelIR, tempPath);
             });
         if (wrlSuccess) {
             status.addDebugLog(QString("3D model WRL file written atomically: %1").arg(wrlFilePath));

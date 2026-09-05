@@ -16,6 +16,7 @@ Item {
     property var componentListController: componentListViewModel
     property var exportSettingsController: exportSettingsViewModel
     property var exportProgressController: exportProgressViewModel
+    property var exportTargetController: exportTargetModel
     property var themeController: themeSettingsViewModel
     property var updateChecker: updateCheckerService
     // 对话框引用（供 SidebarPanel 等子组件访问）
@@ -690,8 +691,9 @@ Item {
                             id: compactSettingsLoader
                             Layout.fillWidth: true
                             active: !window.isSidebarMode
-                            sourceComponent: ExportSettingsCard {
+                            sourceComponent: ExportSettingsBaseCard {
                                 exportSettingsController: window.exportSettingsController
+                                exportTargetModel: window.exportTargetController
                             }
                         }
 
@@ -713,6 +715,7 @@ Item {
                             sourceComponent: ExportButtonsSection {
                                 exportProgressController: window.exportProgressController
                                 exportSettingsController: window.exportSettingsController
+                                exportTargetModel: window.exportTargetController
                                 componentListController: window.componentListController
                             }
                         }

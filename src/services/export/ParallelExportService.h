@@ -242,6 +242,20 @@ private:
     ExportTypeStage* createExportStage(const QString& typeName);
 
     /**
+     * @brief 注册并启动一个导出 Stage
+     * @param stage 已创建的 Stage 实例（所有权转移给 ParallelExportService）
+     * @param typeName 导出类型名称（如 "Symbol"、"Footprint"）
+     * @param componentIds 需要导出的元器件 ID 列表
+     * @param runGeneration 当前导出会话代数（用于屏蔽取消后的迟到回调）
+     *
+     * 封装信号连接和启动逻辑，消除各 Stage 的重复样板代码。
+     */
+    void registerStageAndStart(ExportTypeStage* stage,
+                               const QString& typeName,
+                               const QStringList& componentIds,
+                               quint64 runGeneration);
+
+    /**
      * @brief 更新整体进度
      */
     void updateOverallProgress();

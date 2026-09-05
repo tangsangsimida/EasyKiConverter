@@ -1,6 +1,6 @@
 #include "FootprintGraphicsGenerator.h"
 
-#include "core/utils/GeometryUtils.h"
+#include "KiCadTypeMap.h"
 
 #include <QDebug>
 #include <QRegularExpression>
@@ -9,14 +9,15 @@
 
 namespace EasyKiConverter {
 
-QString FootprintGraphicsGenerator::generatePad(const FootprintPad& pad, double bboxX, double bboxY) const {
+QString FootprintGraphicsGenerator::generatePad(const IR::FootprintPadIR& pad, double originX, double originY) const {
     QString content;
 
-    double x = pxToMmRounded(pad.centerX - bboxX);
-    double y = pxToMmRounded(pad.centerY - bboxY);
-    double width = pxToMmRounded(pad.width);
-    double height = pxToMmRounded(pad.height);
-    double holeRadius = pxToMmRounded(pad.holeRadius);
+    // 坐标已为 mm，计算相对位置
+    double x = roundTo2(pad.position.x() - originX);
+    double y = roundTo2(pad.position.y() - originY);
+    double width = roundTo2(pad.size.width());
+    double height = roundTo2(pad.size.height());
+    double holeRadius = roundTo2(pad.holeSize / 2.0);
 
     QString padNumber = pad.number;
     if (padNumber.contains("(") && padNumber.contains(")")) {
@@ -30,38 +31,24 @@ QString FootprintGraphicsGenerator::generatePad(const FootprintPad& pad, double 
         rotation = rotation - 360.0;
     }
 
-    bool isCustomShape = (padShapeToKicad(pad.shape) == "custom");
+    // 使用 IR 映射获取 KiCad 焊盘形状
+    bool isCustomShape = (pad.shape == IR::PadShape::Polygon);
     QString polygonStr;
 
     if (isCustomShape) {
-        QStringList pointList = pad.points.split(" ", Qt::SkipEmptyParts);
-
-        if (pointList.isEmpty()) {
-            qWarning() << "Pad" << pad.id << "is a custom polygon, but has no points defined";
+        if (pad.customShapePoints.isEmpty()) {
+            qWarning() << "Pad" << pad.number << "is a custom polygon, but has no points defined";
         } else {
             width = 0.005;
             height = 0.005;
-
             rotation = 0.0;
 
             QString path;
-            for (int i = 0; i < pointList.size(); i += 2) {
-                if (i + 1 < pointList.size()) {
-                    bool okX = false;
-                    bool okY = false;
-                    double px = pointList[i].toDouble(&okX);
-                    double py = pointList[i + 1].toDouble(&okY);
-                    // 检查转换是否成功
-                    if (!okX || !okY) {
-                        qWarning() << "Failed to parse point coordinates at index" << i << "for pad" << pad.id;
-                        continue;
-                    }
-
-                    double relX = pxToMmRounded(px - bboxX) - x;
-                    double relY = pxToMmRounded(py - bboxY) - y;
-
-                    path += QString("(xy %1 %2) ").arg(relX, 0, 'f', 2).arg(relY, 0, 'f', 2);
-                }
+            // customShapePoints 已经是相对于焊盘中心的坐标（在 FootprintDataConverter 中计算）
+            for (const QPointF& pt : pad.customShapePoints) {
+                double relX = roundTo2(pt.x());
+                double relY = roundTo2(pt.y());
+                path += QString("(xy %1 %2) ").arg(relX, 0, 'f', 2).arg(relY, 0, 'f', 2);
             }
 
             polygonStr = QString(
@@ -74,33 +61,30 @@ QString FootprintGraphicsGenerator::generatePad(const FootprintPad& pad, double 
         height = qMax(height, 0.01);
     }
 
-    QString kicadShape;
-    if (isCustomShape) {
-        kicadShape = "custom";
-    } else {
-        kicadShape = padShapeToKicad(pad.shape);
-    }
+    QString kicadShape = KiCadTypeMap::toKicadPadShape(pad.shape);
 
-    QString kicadType = padTypeToKicad(pad.layerId);
-    QString layers = padLayersToKicad(pad.layerId);
+    QString kicadType = padTypeToKicad(pad);
+    QString layers = padLayersToKicad(pad.layer);
 
     QString drillStr;
-    if (holeRadius > 0 && pad.holeLength > 0) {
-        double holeLengthMm = pxToMmRounded(pad.holeLength);
-        double maxDistanceHole = qMax(holeRadius * 2, holeLengthMm);
-        double pos0 = height - maxDistanceHole;
-        double pos90 = width - maxDistanceHole;
-        double maxDistance = qMax(pos0, pos90);
+    if (pad.isThroughHole()) {
+        double holeRadiusMm = roundTo2(pad.holeSize / 2.0);
+        if (holeRadiusMm > 0 && pad.holeLength > 0) {
+            double holeLengthMm = roundTo2(pad.holeLength);
+            double maxDistanceHole = qMax(holeRadiusMm * 2, holeLengthMm);
+            double pos0 = height - maxDistanceHole;
+            double pos90 = width - maxDistanceHole;
+            double maxDistance = qMax(pos0, pos90);
 
-        if (qAbs(maxDistance - pos0) < qAbs(maxDistance - pos90)) {
-            drillStr = QString(" (drill oval %1 %2)").arg(holeRadius * 2, 0, 'f', 2).arg(holeLengthMm, 0, 'f', 2);
-        } else {
-            drillStr = QString(" (drill oval %1 %2)").arg(holeLengthMm, 0, 'f', 2).arg(holeRadius * 2, 0, 'f', 2);
+            if (qAbs(maxDistance - pos0) < qAbs(maxDistance - pos90)) {
+                drillStr = QString(" (drill oval %1 %2)").arg(holeRadiusMm * 2, 0, 'f', 2).arg(holeLengthMm, 0, 'f', 2);
+            } else {
+                drillStr = QString(" (drill oval %1 %2)").arg(holeLengthMm, 0, 'f', 2).arg(holeRadiusMm * 2, 0, 'f', 2);
+            }
+        } else if (holeRadiusMm > 0) {
+            double drillDiameter = holeRadiusMm * 2;
+            drillStr = QString(" (drill %1)").arg(drillDiameter, 0, 'f', 2);
         }
-    } else if (holeRadius > 0) {
-        double drillDiameter = holeRadius * 2;
-
-        drillStr = QString(" (drill %1)").arg(drillDiameter, 0, 'f', 2);
     }
 
     content += QString("  (pad %1 %2 %3 (at %4 %5 %6) (size %7 %8) (layers %9)%10%11)\n")
@@ -119,40 +103,37 @@ QString FootprintGraphicsGenerator::generatePad(const FootprintPad& pad, double 
     return content;
 }
 
-QString FootprintGraphicsGenerator::generateTrack(const FootprintTrack& track, double bboxX, double bboxY) const {
+QString FootprintGraphicsGenerator::generateTrack(const IR::FootprintTrackIR& track,
+                                                  double originX,
+                                                  double originY) const {
     QString content;
 
-    QStringList pointList = track.points.split(" ", Qt::SkipEmptyParts);
-
-    for (int i = 0; i + 3 < pointList.size(); i += 2) {
-        bool ok1 = false, ok2 = false, ok3 = false, ok4 = false;
-        double startX = pxToMmRounded(pointList[i].toDouble(&ok1) - bboxX);
-        double startY = pxToMmRounded(pointList[i + 1].toDouble(&ok2) - bboxY);
-        double endX = pxToMmRounded(pointList[i + 2].toDouble(&ok3) - bboxX);
-        double endY = pxToMmRounded(pointList[i + 3].toDouble(&ok4) - bboxY);
-        // 检查转换是否成功
-        if (!ok1 || !ok2 || !ok3 || !ok4) {
-            qWarning() << "Failed to parse track coordinates at index" << i;
-            continue;
-        }
+    // IR 中坐标已解析为 QList<QPointF>
+    for (int i = 0; i + 1 < track.points.size(); ++i) {
+        double startX = roundTo2(track.points[i].x() - originX);
+        double startY = roundTo2(track.points[i].y() - originY);
+        double endX = roundTo2(track.points[i + 1].x() - originX);
+        double endY = roundTo2(track.points[i + 1].y() - originY);
 
         content += QString("  (fp_line (start %1 %2) (end %3 %4) (layer %5) (width %6))\n")
                        .arg(startX, 0, 'f', 2)
                        .arg(startY, 0, 'f', 2)
                        .arg(endX, 0, 'f', 2)
                        .arg(endY, 0, 'f', 2)
-                       .arg(layerIdToKicad(track.layerId))
-                       .arg(pxToMmRounded(track.strokeWidth), 0, 'f', 2);
+                       .arg(layerTypeToKicad(track.layer))
+                       .arg(roundTo2(track.width), 0, 'f', 2);
     }
 
     return content;
 }
 
-QString FootprintGraphicsGenerator::generateHole(const FootprintHole& hole, double bboxX, double bboxY) const {
+QString FootprintGraphicsGenerator::generateHole(const IR::FootprintHoleIR& hole,
+                                                 double originX,
+                                                 double originY) const {
     QString content;
-    double cx = pxToMmRounded(hole.centerX - bboxX);
-    double cy = pxToMmRounded(hole.centerY - bboxY);
-    double radius = pxToMmRounded(hole.radius);
+    double cx = roundTo2(hole.center.x() - originX);
+    double cy = roundTo2(hole.center.y() - originY);
+    double radius = roundTo2(hole.radius);
 
     content += QString("  (pad \"\" thru_hole circle (at %1 %2) (size %3 %3) (drill %3) (layers *.Cu *.Mask))\n")
                    .arg(cx, 0, 'f', 2)
@@ -162,33 +143,35 @@ QString FootprintGraphicsGenerator::generateHole(const FootprintHole& hole, doub
     return content;
 }
 
-QString FootprintGraphicsGenerator::generateCircle(const FootprintCircle& circle, double bboxX, double bboxY) const {
+QString FootprintGraphicsGenerator::generateCircle(const IR::FootprintCircleIR& circle,
+                                                   double originX,
+                                                   double originY) const {
     QString content;
-    double cx = pxToMmRounded(circle.cx - bboxX);
-    double cy = pxToMmRounded(circle.cy - bboxY);
-    double radius = pxToMmRounded(circle.radius);
+    double cx = roundTo2(circle.center.x() - originX);
+    double cy = roundTo2(circle.center.y() - originY);
+    double radius = roundTo2(circle.radius);
 
     content += QString("  (fp_circle (center %1 %2) (end %3 %4) (layer %5) (width %6))\n")
                    .arg(cx, 0, 'f', 2)
                    .arg(cy, 0, 'f', 2)
                    .arg(cx + radius, 0, 'f', 2)
                    .arg(cy, 0, 'f', 2)
-                   .arg(layerIdToKicad(circle.layerId))
-                   .arg(pxToMm(circle.strokeWidth), 0, 'f', 2);
+                   .arg(layerTypeToKicad(circle.layer))
+                   .arg(circle.strokeWidth, 0, 'f', 2);
 
     return content;
 }
 
-QString FootprintGraphicsGenerator::generateRectangle(const FootprintRectangle& rectangle,
-                                                      double bboxX,
-                                                      double bboxY) const {
+QString FootprintGraphicsGenerator::generateRectangle(const IR::FootprintRectangleIR& rectangle,
+                                                      double originX,
+                                                      double originY) const {
     QString content;
-    double x = pxToMmRounded(rectangle.x - bboxX);
-    double y = pxToMmRounded(rectangle.y - bboxY);
-    double width = pxToMmRounded(rectangle.width);
-    double height = pxToMmRounded(rectangle.height);
-    QString layer = layerIdToKicad(rectangle.layerId);
-    double strokeWidth = pxToMmRounded(rectangle.strokeWidth);
+    double x = roundTo2(rectangle.bounds.left() - originX);
+    double y = roundTo2(rectangle.bounds.top() - originY);
+    double width = roundTo2(rectangle.bounds.width());
+    double height = roundTo2(rectangle.bounds.height());
+    QString layer = layerTypeToKicad(rectangle.layer);
+    double strokeWidth = roundTo2(rectangle.strokeWidth);
 
     content += QString("  (fp_line (start %1 %2) (end %3 %2) (layer %4) (width %5))\n")
                    .arg(x, 0, 'f', 2)
@@ -221,19 +204,16 @@ QString FootprintGraphicsGenerator::generateRectangle(const FootprintRectangle& 
     return content;
 }
 
-QString FootprintGraphicsGenerator::generateArc(const FootprintArc& arc, double bboxX, double bboxY) const {
+QString FootprintGraphicsGenerator::generateArc(const IR::FootprintArcIR& arc, double originX, double originY) const {
     QString content;
 
-    QString arcParam = "M " + arc.path;
+    // IR 弧线已解析为 center/radius/startAngle/endAngle
+    if (arc.radius > 0) {
+        double cx = roundTo2(arc.center.x() - originX);
+        double cy = roundTo2(arc.center.y() - originY);
 
-    GeometryUtils::SvgArcResult svgArc = GeometryUtils::solveSvgArc(arcParam);
-
-    double cx = pxToMmRounded(svgArc.cx - bboxX);
-    double cy = -pxToMmRounded(svgArc.cy - bboxY);
-
-    if (svgArc.rx == svgArc.ry && svgArc.rx > 0) {
-        double startAngle = svgArc.startAngle;
-        double deltaAngle = svgArc.deltaAngle;
+        double startAngle = arc.startAngle;
+        double deltaAngle = arc.endAngle - arc.startAngle;
         double step = 180.0;
 
         if (deltaAngle < 0) {
@@ -246,57 +226,47 @@ QString FootprintGraphicsGenerator::generateArc(const FootprintArc& arc, double 
                 step = deltaAngle;
             }
 
-            svgArc.startAngle = startAngle;
-            svgArc.deltaAngle = step;
+            // 计算圆弧段的起点和终点
+            double radStart = startAngle * M_PI / 180.0;
+            double radEnd = (startAngle + step) * M_PI / 180.0;
 
-            GeometryUtils::SvgArcEndpoints pt = GeometryUtils::calcSvgArc(svgArc);
+            double endX = roundTo2(arc.center.x() + arc.radius * std::cos(radEnd) - originX);
+            double endY = roundTo2(arc.center.y() + arc.radius * std::sin(radEnd) - originY);
 
-            double kiEndAngle = svgArc.startAngle;
+            double kiEndAngle = startAngle;
             if (step == 180.0)
                 kiEndAngle += 0.1;
 
             content += QString("  (fp_arc (start %1 %2) (end %3 %4) (angle %5) (layer %6) (width %7))\n")
                            .arg(cx, 0, 'f', 2)
                            .arg(cy, 0, 'f', 2)
-                           .arg(pxToMmRounded(pt.x2 - bboxX), 0, 'f', 2)
-                           .arg(-pxToMmRounded(pt.y2 - bboxY), 0, 'f', 2)
+                           .arg(endX, 0, 'f', 2)
+                           .arg(endY, 0, 'f', 2)
                            .arg(-kiEndAngle, 0, 'f', 2)
-                           .arg(layerIdToKicad(arc.layerId))
-                           .arg(pxToMmRounded(arc.strokeWidth), 0, 'f', 2);
+                           .arg(layerTypeToKicad(arc.layer))
+                           .arg(roundTo2(arc.width), 0, 'f', 2);
 
             deltaAngle -= step;
             startAngle += step;
         }
     } else {
-        QList<GeometryUtils::SvgPoint> points = GeometryUtils::arcToPath(svgArc, false);
-
-        for (int i = 1; i < points.size(); ++i) {
-            double x1 = pxToMmRounded(points[i - 1].x - bboxX);
-            double y1 = -pxToMmRounded(points[i - 1].y - bboxY);
-            double x2 = pxToMmRounded(points[i].x - bboxX);
-            double y2 = -pxToMmRounded(points[i].y - bboxY);
-
-            content += QString("  (fp_line (start %1 %2) (end %3 %4) (layer %5) (width %6))\n")
-                           .arg(x1, 0, 'f', 2)
-                           .arg(y1, 0, 'f', 2)
-                           .arg(x2, 0, 'f', 2)
-                           .arg(y2, 0, 'f', 2)
-                           .arg(layerIdToKicad(arc.layerId))
-                           .arg(pxToMmRounded(arc.strokeWidth), 0, 'f', 2);
-        }
+        qWarning() << "Warning: Arc has zero radius, skipping";
     }
 
     return content;
 }
 
-QString FootprintGraphicsGenerator::generateText(const FootprintText& text, double bboxX, double bboxY) const {
+QString FootprintGraphicsGenerator::generateText(const IR::FootprintTextIR& text,
+                                                 double originX,
+                                                 double originY) const {
     QString content;
-    double x = pxToMmRounded(text.centerX - bboxX);
-    double y = pxToMmRounded(text.centerY - bboxY);
+    double x = roundTo2(text.position.x() - originX);
+    double y = roundTo2(text.position.y() - originY);
 
-    QString layer = layerIdToKicad(text.layerId);
+    QString layer = layerTypeToKicad(text.layer);
 
-    if (text.type == "N") {
+    // 装配层文本映射
+    if (text.isFabrication) {
         layer = layer.replace(".SilkS", ".Fab");
     }
 
@@ -309,35 +279,27 @@ QString FootprintGraphicsGenerator::generateText(const FootprintText& text, doub
             break;
         }
     }
-    if (isNonASCII && !text.textPath.isEmpty()) {
+    if (isNonASCII && !text.textPathPoints.isEmpty()) {
         qWarning() << "Warning: Converting non-ASCII text to polygon:" << text.text;
 
-        QStringList paths = text.textPath.split("M", Qt::SkipEmptyParts);
-        for (const QString& pathStr : paths) {
-            if (pathStr.trimmed().isEmpty())
-                continue;
+        // IR 中已解析为 QList<QPointF>
+        const QList<QPointF>& points = text.textPathPoints;
 
-            QStringList tokens = pathStr.split(QRegularExpression("[\\s,]+"), Qt::SkipEmptyParts);
-            QList<QPointF> points;
-            for (int i = 0; i + 1 < tokens.size(); i += 2) {
-                double px = tokens[i].toDouble();
-                double py = tokens[i + 1].toDouble();
-
-                double relX = pxToMmRounded(px - bboxX);
-                double relY = pxToMmRounded(py - bboxY);
-                points.append(QPointF(relX, relY));
+        if (points.size() >= 2) {
+            // 计算相对坐标
+            QList<QPointF> relPoints;
+            for (const QPointF& pt : points) {
+                relPoints.append(QPointF(roundTo2(pt.x() - originX), roundTo2(pt.y() - originY)));
             }
 
-            if (points.size() >= 2) {
-                for (int i = 1; i < points.size(); ++i) {
-                    content += QString("  (fp_line (start %1 %2) (end %3 %4) (layer %5) (width %6))\n")
-                                   .arg(points[i - 1].x(), 0, 'f', 2)
-                                   .arg(points[i - 1].y(), 0, 'f', 2)
-                                   .arg(points[i].x(), 0, 'f', 2)
-                                   .arg(points[i].y(), 0, 'f', 2)
-                                   .arg(layer)
-                                   .arg(pxToMmRounded(text.strokeWidth) * 0.8, 0, 'f', 2);
-                }
+            for (int i = 1; i < relPoints.size(); ++i) {
+                content += QString("  (fp_line (start %1 %2) (end %3 %4) (layer %5) (width %6))\n")
+                               .arg(relPoints[i - 1].x(), 0, 'f', 2)
+                               .arg(relPoints[i - 1].y(), 0, 'f', 2)
+                               .arg(relPoints[i].x(), 0, 'f', 2)
+                               .arg(relPoints[i].y(), 0, 'f', 2)
+                               .arg(layer)
+                               .arg(roundTo2(text.strokeWidth) * 0.8, 0, 'f', 2);
             }
         }
     } else {
@@ -348,12 +310,13 @@ QString FootprintGraphicsGenerator::generateText(const FootprintText& text, doub
                        .arg(text.text)
                        .arg(x, 0, 'f', 2)
                        .arg(y, 0, 'f', 2)
-                       .arg(double(text.rotation), 0, 'f', 2)
+                       .arg(text.rotation, 0, 'f', 2)
                        .arg(layer)
                        .arg(displayStr);
 
-        double fontSize = pxToMmRounded(text.fontSize);
-        double thickness = pxToMmRounded(text.strokeWidth);
+        // IR 中 fontSize 和 strokeWidth 已为 mm
+        double fontSize = roundTo2(text.fontSize);
+        double thickness = roundTo2(text.strokeWidth);
         fontSize = qMax(fontSize, 1.0);
         thickness = qMax(thickness, 0.01);
         content += QString("    (effects (font (size %1 %2) (thickness %3)) (justify left%4))\n")
@@ -367,60 +330,26 @@ QString FootprintGraphicsGenerator::generateText(const FootprintText& text, doub
     return content;
 }
 
-QString FootprintGraphicsGenerator::generateSolidRegion(const FootprintSolidRegion& region,
-                                                        double bboxX,
-                                                        double bboxY) const {
+QString FootprintGraphicsGenerator::generateSolidRegion(const IR::FootprintRegionIR& region,
+                                                        double originX,
+                                                        double originY) const {
     QString content;
 
-    bool isCourtYard = (region.layerId == 99);
-    QString layer;
+    QString layer = layerTypeToKicad(region.layer);
 
-    if (isCourtYard) {
-        layer = "F.CrtYd";
-    } else if (region.layerId == 100) {
-        layer = "F.Fab";
-    } else if (region.layerId == 101) {
-        layer = "F.SilkS";
-    } else {
-        layer = layerIdToKicad(region.layerId);
+    // IR 中顶点已解析为 QList<QPointF>
+    QList<QPointF> points;
+    for (const QPointF& pt : region.vertices) {
+        points.append(QPointF(roundTo2(pt.x() - originX), roundTo2(pt.y() - originY)));
     }
 
-    QStringList tokens = region.path.split(QRegularExpression("[\\s,]+"), Qt::SkipEmptyParts);
-    QList<QPointF> points;
-
-    for (int i = 0; i < tokens.size();) {
-        QString token = tokens[i].toUpper();
-
-        if (token == "M") {
-            if (i + 2 < tokens.size()) {
-                double x = tokens[i + 1].toDouble();
-                double y = tokens[i + 2].toDouble();
-                points.append(QPointF(pxToMmRounded(x - bboxX), pxToMmRounded(y - bboxY)));
-                i += 3;
-            } else {
-                i++;
-            }
-        } else if (token == "L") {
-            if (i + 2 < tokens.size()) {
-                double x = tokens[i + 1].toDouble();
-                double y = tokens[i + 2].toDouble();
-                points.append(QPointF(pxToMmRounded(x - bboxX), pxToMmRounded(y - bboxY)));
-                i += 3;
-            } else {
-                i++;
-            }
-        } else if (token == "Z") {
-            if (!points.isEmpty()) {
-                points.append(points.first());
-            }
-            i++;
-        } else {
-            i++;
-        }
+    // 闭合多边形
+    if (!points.isEmpty() && points.first() != points.last()) {
+        points.append(points.first());
     }
 
     if (points.size() >= 2) {
-        if (isCourtYard || region.isKeepOut) {
+        if (region.layer == IR::LayerType::KeepOut || region.isKeepOut) {
             for (int i = 1; i < points.size(); ++i) {
                 content += QString("  (fp_line (start %1 %2) (end %3 %4) (layer %5) (width 0.05))\n")
                                .arg(points[i - 1].x(), 0, 'f', 2)
@@ -438,9 +367,7 @@ QString FootprintGraphicsGenerator::generateSolidRegion(const FootprintSolidRegi
             content += ")\n";
             content += QString("    (layer %1)\n").arg(layer);
             content += "    (width 0.1)\n";
-            if (region.fillStyle == "solid") {
-                content += "    (fill solid)\n";
-            }
+            content += "    (fill solid)\n";
             content += "  )\n";
         }
     }
@@ -448,15 +375,8 @@ QString FootprintGraphicsGenerator::generateSolidRegion(const FootprintSolidRegi
     return content;
 }
 
-QString FootprintGraphicsGenerator::generateCourtyardFromBBox(const FootprintBBox& bbox,
-                                                              double bboxX,
-                                                              double bboxY) const {
+QString FootprintGraphicsGenerator::generateCourtyardFromBBox(double x1, double y1, double x2, double y2) const {
     QString content;
-
-    double x1 = pxToMmRounded(bbox.x - bboxX);
-    double y1 = pxToMmRounded(bbox.y - bboxY);
-    double x2 = pxToMmRounded(bbox.x + bbox.width - bboxX);
-    double y2 = pxToMmRounded(bbox.y + bbox.height - bboxY);
 
     content += QString("  (fp_line (start %1 %2) (end %3 %2) (layer F.CrtYd) (width 0.05))\n")
                    .arg(x1, 0, 'f', 2)
@@ -478,43 +398,27 @@ QString FootprintGraphicsGenerator::generateCourtyardFromBBox(const FootprintBBo
     return content;
 }
 
-QString FootprintGraphicsGenerator::generateModel3D(const Model3DData& model3D,
-                                                    double bboxX,
-                                                    double bboxY,
-                                                    const QString& model3DPath,
-                                                    const QString& fpType) const {
+QString FootprintGraphicsGenerator::generateModel3D(const IR::Model3DIR& model3D, const QString& model3DPath) const {
     QString content;
 
     QString finalPath = model3DPath.isEmpty() ? model3D.name() : model3DPath;
 
-    double z = pxToMmRounded(model3D.translation().z);
-    z = -z;
+    // IR 中 translation 和 rotation 已为 mm/度
+    double z = -model3D.translation().z;
 
-    double rotX = (360.0 - model3D.rotation().x);
-    // 使用 fmod 替代 while 循环，避免死循环风险
-    rotX = fmod(rotX, 360.0);
-    if (rotX < 0.0) {
+    double rotX = fmod(360.0 - model3D.rotation().x, 360.0);
+    if (rotX < 0.0)
         rotX += 360.0;
-    }
 
-    double rotY = (360.0 - model3D.rotation().y);
-    // 使用 fmod 替代 while 循环，避免死循环风险
-    rotY = fmod(rotY, 360.0);
-    if (rotY < 0.0) {
+    double rotY = fmod(360.0 - model3D.rotation().y, 360.0);
+    if (rotY < 0.0)
         rotY += 360.0;
-    }
 
-    double rotZ = (360.0 - model3D.rotation().z);
-    // 使用 fmod 替代 while 循环，避免死循环风险
-    rotZ = fmod(rotZ, 360.0);
-    if (rotZ < 0.0) {
+    double rotZ = fmod(360.0 - model3D.rotation().z, 360.0);
+    if (rotZ < 0.0)
         rotZ += 360.0;
-    }
 
-    // OBJ→WRL 转换已将模型居中到原点，WRL 几何中心 = (0,0)。
-    // STEP 文件保持原始绝对坐标，几何中心通过 stepOffsetMm 记录。
-    // XY: 两者都需要将几何中心对齐到封装原点。
-    // Z: WRL 使用 API translation.z（已居中），STEP 需要额外的 stepOffset.z 补偿坐标差异。
+    // STEP 文件需要额外的 stepOffsetMm 补偿
     double finalOffsetX = 0.0;
     double finalOffsetY = 0.0;
 
@@ -524,8 +428,6 @@ QString FootprintGraphicsGenerator::generateModel3D(const Model3DData& model3D,
         finalOffsetY = model3D.stepOffsetMm().y;
         z += model3D.stepOffsetMm().z;
     }
-    // WRL: z 来自 API translation.z（已在 FootprintExportStage 中通过 wrlBaseZOffset 调整），
-    // 无需额外偏移。STEP: z 额外叠加 stepOffset.z 补偿 STEP 与 WRL 的坐标差异。
 
     content += QString("  (model \"%1\"\n").arg(finalPath);
 
@@ -543,122 +445,97 @@ QString FootprintGraphicsGenerator::generateModel3D(const Model3DData& model3D,
     return content;
 }
 
-double FootprintGraphicsGenerator::pxToMm(double px) const {
-    return GeometryUtils::convertToMm(px);
+double FootprintGraphicsGenerator::roundTo2(double value) {
+    return std::floor(value * 100.0) / 100.0;
 }
 
-double FootprintGraphicsGenerator::pxToMmRounded(double px) const {
-    return std::floor(GeometryUtils::convertToMm(px) * 100.0) / 100.0;
-}
-
-QString FootprintGraphicsGenerator::padShapeToKicad(const QString& shape) const {
-    QString shapeLower = shape.toLower();
-
-    if (shapeLower == "rect" || shapeLower == "rectangle") {
-        return "rect";
-    } else if (shapeLower == "circle") {
-        return "circle";
-    } else if (shapeLower == "oval") {
-        return "oval";
-    } else if (shapeLower == "roundrect") {
-        return "roundrect";
-    } else if (shapeLower == "trapezoid") {
-        return "trapezoid";
-    } else {
-        return "custom";
+QString FootprintGraphicsGenerator::layerTypeToKicad(IR::LayerType layerType) {
+    switch (layerType) {
+        case IR::LayerType::TopCopper:
+            return "F.Cu";
+        case IR::LayerType::BottomCopper:
+            return "B.Cu";
+        case IR::LayerType::InnerCopper1:
+            return "In1.Cu";
+        case IR::LayerType::InnerCopper2:
+            return "In2.Cu";
+        case IR::LayerType::InnerCopper3:
+            return "In3.Cu";
+        case IR::LayerType::InnerCopper4:
+            return "In4.Cu";
+        case IR::LayerType::TopSilk:
+            return "F.SilkS";
+        case IR::LayerType::BottomSilk:
+            return "B.SilkS";
+        case IR::LayerType::TopPaste:
+            return "F.Paste";
+        case IR::LayerType::BottomPaste:
+            return "B.Paste";
+        case IR::LayerType::TopMask:
+            return "F.Mask";
+        case IR::LayerType::BottomMask:
+            return "B.Mask";
+        case IR::LayerType::TopOverlay:
+            return "F.SilkS";
+        case IR::LayerType::BottomOverlay:
+            return "B.SilkS";
+        case IR::LayerType::TopAssembly:
+            return "F.Fab";
+        case IR::LayerType::BottomAssembly:
+            return "B.Fab";
+        case IR::LayerType::MultiLayer:
+            return "F.Cu";
+        case IR::LayerType::KeepOut:
+            return "F.CrtYd";
+        case IR::LayerType::EdgeCuts:
+            return "Edge.Cuts";
+        case IR::LayerType::Mechanical1:
+            return "Dwgs.User";
+        case IR::LayerType::Mechanical2:
+            return "Dwgs.User";
+        case IR::LayerType::Mechanical3:
+            return "Eco1.User";
+        case IR::LayerType::Mechanical4:
+            return "Eco2.User";
+        case IR::LayerType::UserDefined:
+            return "Dwgs.User";
+        default:
+            qWarning() << "Unknown layer type, defaulting to F.Fab";
+            return "F.Fab";
     }
 }
 
-QString FootprintGraphicsGenerator::padTypeToKicad(int layerId) const {
-    if (layerId == 1) {
+QString FootprintGraphicsGenerator::padLayersToKicad(IR::LayerType layer) {
+    switch (layer) {
+        case IR::LayerType::TopCopper:
+            return "F.Cu F.Paste F.Mask";
+        case IR::LayerType::BottomCopper:
+            return "B.Cu B.Paste B.Mask";
+        case IR::LayerType::TopSilk:
+            return "F.SilkS";
+        case IR::LayerType::BottomSilk:
+            return "B.SilkS";
+        case IR::LayerType::MultiLayer:
+            return "*.Cu *.Mask";
+        case IR::LayerType::TopAssembly:
+            return "F.Fab";
+        case IR::LayerType::BottomAssembly:
+            return "B.Fab";
+        case IR::LayerType::UserDefined:
+            return "Dwgs.User";
+        default:
+            qWarning() << "Unknown pad layer type, using default thru-hole configuration";
+            return "*.Cu *.Mask";
+    }
+}
+
+QString FootprintGraphicsGenerator::padTypeToKicad(const IR::FootprintPadIR& pad) {
+    if (pad.isSmd()) {
         return "smd";
-    } else if (layerId == 2) {
-        return "smd";
-    } else {
+    } else if (pad.isThroughHole()) {
         return "thru_hole";
     }
-}
-
-QString FootprintGraphicsGenerator::padLayersToKicad(int layerId) const {
-    switch (layerId) {
-        case 1:
-
-            return "F.Cu F.Paste F.Mask";
-        case 2:
-
-            return "B.Cu B.Paste B.Mask";
-        case 3:
-
-            return "F.SilkS";
-        case 4:
-
-            return "B.SilkS";
-        case 11:
-
-            return "*.Cu *.Mask";
-        case 13:
-
-            return "F.Fab";
-        case 14:
-
-            return "B.Fab";
-        case 15:
-
-            return "Dwgs.User";
-        default:
-
-            qWarning() << "Unknown pad layer ID:" << layerId << ", using default thru-hole configuration";
-            return "*.Cu *.Mask";
-    }
-}
-
-QString FootprintGraphicsGenerator::layerIdToKicad(int layerId) const {
-    switch (layerId) {
-        case 1:
-            return "F.Cu";
-        case 2:
-            return "B.Cu";
-        case 3:
-            return "F.SilkS";
-        case 4:
-            return "B.SilkS";
-        case 5:
-            return "F.Paste";
-        case 6:
-            return "B.Paste";
-        case 7:
-            return "F.Mask";
-        case 8:
-            return "B.Mask";
-        case 9:
-            return "F.Cu";
-        case 10:
-            return "Edge.Cuts";
-        case 11:
-            return "Edge.Cuts";
-        case 12:
-            return "Dwgs.User";
-        case 13:
-            return "F.Fab";
-        case 14:
-            return "B.Fab";
-        case 15:
-            return "Dwgs.User";
-        case 20:
-            return "Cmts.User";
-        case 21:
-            return "Eco1.User";
-        case 22:
-            return "Eco2.User";
-        case 100:
-            return "F.Fab";
-        case 101:
-            return "F.SilkS";
-        default:
-
-            qWarning() << "Unknown layer ID:" << layerId << ", defaulting to F.Fab";
-            return "F.Fab";
-    }
+    return "thru_hole";
 }
 
 }  // namespace EasyKiConverter

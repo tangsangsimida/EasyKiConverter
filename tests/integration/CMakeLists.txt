@@ -1,4 +1,4 @@
-find_package(Qt6 REQUIRED COMPONENTS Test)
+find_package(Qt6 REQUIRED COMPONENTS Gui Test)
 
 add_executable(test_fixture_to_kicad_export
     test_fixture_to_kicad_export.cpp
@@ -12,11 +12,13 @@ add_executable(test_parallel_export_cancellation
 
 target_link_libraries(test_fixture_to_kicad_export PRIVATE
     Qt6::Test
+    Qt6::Gui
     EasyKiConverterLib
 )
 
 target_link_libraries(test_parallel_export_cancellation PRIVATE
     Qt6::Test
+    Qt6::Gui
     EasyKiConverterLib
 )
 

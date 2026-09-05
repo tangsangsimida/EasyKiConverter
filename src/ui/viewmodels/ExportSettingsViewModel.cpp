@@ -198,6 +198,25 @@ void ExportSettingsViewModel::setDebugMode(bool enabled) {
     }
 }
 
+void ExportSettingsViewModel::setTargetModel(ExportTargetModel* model) {
+    if (m_targetModel == model)
+        return;
+    m_targetModel = model;
+    if (m_targetModel) {
+        connect(m_targetModel, &ExportTargetModel::currentTargetChanged, this, [this]() {
+            if (m_targetModel && m_targetModel->currentIndex() == static_cast<int>(TargetEdaFormat::Altium) &&
+                (m_exportModel3DFormat & ExportOptions::MODEL_3D_FORMAT_WRL)) {
+                // Altium PcbLib 只能可靠嵌入 STEP，切换目标时移除 WRL 位。
+                setExportModel3DFormat(ExportOptions::MODEL_3D_FORMAT_STEP);
+            }
+        });
+        if (m_targetModel->currentIndex() == static_cast<int>(TargetEdaFormat::Altium) &&
+            (m_exportModel3DFormat & ExportOptions::MODEL_3D_FORMAT_WRL)) {
+            setExportModel3DFormat(ExportOptions::MODEL_3D_FORMAT_STEP);
+        }
+    }
+}
+
 void ExportSettingsViewModel::setExportSymbolDescription(bool enabled) {
     if (m_exportSymbolDescription != enabled) {
         m_exportSymbolDescription = enabled;
@@ -339,8 +358,12 @@ void ExportSettingsViewModel::buildExportOptions() {
     options.symbolLibraryDescription = m_symbolLibraryDescription;
     options.footprintLibraryDescription = m_footprintLibraryDescription;
     options.footprintLibraryKeywords = m_footprintLibraryKeywords;
+    // 从 ExportTargetModel 读取目标格式（唯一真相源）
+    options.targetFormat =
+        m_targetModel ? static_cast<TargetEdaFormat>(m_targetModel->currentIndex()) : TargetEdaFormat::KiCad;
 
     qInfo() << "Export options:" << "OutputPath:" << options.outputPath << "LibName:" << options.libName
+            << "TargetFormat:" << (options.targetFormat == TargetEdaFormat::Altium ? "Altium" : "KiCad")
             << "Symbol:" << options.exportSymbol << "Footprint:" << options.exportFootprint
             << "3D Model:" << options.exportModel3D << "3D Model Format:" << options.exportModel3DFormat
             << "(1=WRL, 2=STEP, 3=Both)" << "3D Model Path Mode:" << options.exportModel3DPathMode

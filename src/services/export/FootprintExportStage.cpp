@@ -1,8 +1,9 @@
 #include "FootprintExportStage.h"
 
 #include "KiCadLibraryTableManager.h"
+#include "core/ExporterFactory.h"
+#include "core/ir/FootprintDataConverter.h"
 #include "core/kicad/Exporter3DModel.h"
-#include "core/kicad/ExporterFootprint.h"
 #include "core/utils/GeometryUtils.h"
 #include "models/ComponentData.h"
 #include "services/ComponentCacheService.h"
@@ -392,6 +393,7 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
                     stepOffset.y = -geometryCenter.y;
                     stepOffset.z = calculateStepZOffset(wrlDisplayMinZ, stepMinZ);
                     model3D.setStepOffsetMm(stepOffset);
+                    model3D.setStep(stepData);
                     footprint.setModel3D(model3D);
                     qDebug() << "FootprintExportStage: STEP offset for" << componentId << "uuid" << model3D.uuid()
                              << "xyCenter:" << geometryCenter.x << geometryCenter.y << "minZ:" << geometryCenter.z
@@ -408,6 +410,17 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
         ExportItemStatus status;
         status.status = ExportItemStatus::Status::Success;
         emit itemStatusChanged(componentId, status);
+
+        if (m_options.targetFormat == TargetEdaFormat::Altium && m_options.exportModel3D) {
+            ExportItemStatus modelStatus;
+            if (!footprint.model3D().step().isEmpty()) {
+                modelStatus.status = ExportItemStatus::Status::Success;
+            } else {
+                modelStatus.status = ExportItemStatus::Status::Failed;
+                modelStatus.errorMessage = QStringLiteral("STEP 3D model was not embedded in PcbLib");
+            }
+            emit embeddedModel3DStatusChanged(componentId, modelStatus);
+        }
 
         qDebug() << "FootprintExportStage: Collected footprint for" << componentId;
     }
@@ -427,108 +440,144 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
         return;
     }
 
+    // 标记所有已收集的封装为失败（参照 SymbolExportStage 的 failCollectedSymbols 模式）
+    const auto failCollectedFootprints = [this, &failedIds, &successCount](const QString& errorMessage) {
+        for (const auto& fp : failedIds) {
+            ExportItemStatus status;
+            status.status = ExportItemStatus::Status::Failed;
+            status.errorMessage = errorMessage;
+            status.endTime = QDateTime::currentDateTime();
+            emit itemStatusChanged(fp, status);
+        }
+        successCount = 0;
+    };
+
+    // 统一的中止导出 lambda
+    const auto abortExport = [&](const QString& errorMessage) {
+        qCritical() << "FootprintExportStage:" << errorMessage;
+        failCollectedFootprints(errorMessage);
+        m_tempManager.rollbackAll();
+        m_isExporting.store(false);
+        m_isRunning.store(false);
+        emit completed(0, footprintList.size(), 0);
+    };
+
     QString libName = m_options.libName.isEmpty() ? QStringLiteral("EasyKiConverter") : m_options.libName;
-    QString dirName = libName + QStringLiteral(".pretty");
     QString outputDir = m_options.outputPath;
     if (outputDir.isEmpty()) {
         outputDir = QDir::currentPath() + QStringLiteral("/export");
     }
-    QString finalDir = outputDir + QDir::separator() + dirName;
 
     QDir dir;
     if (!dir.mkpath(outputDir)) {
-        qCritical() << "FootprintExportStage: Failed to create output directory:" << outputDir;
-        m_isExporting.store(false);
-        m_isRunning.store(false);
-        emit completed(0, footprintList.size(), 0);
+        abortExport(QStringLiteral("Failed to create output directory: %1").arg(outputDir));
         return;
     }
 
-    QString tempDirPath = m_tempManager.createTempDirectoryPath(dirName);
-    if (tempDirPath.isEmpty()) {
-        qCritical() << "FootprintExportStage: Failed to create temp dir path";
-        m_isExporting.store(false);
-        m_isRunning.store(false);
-        emit completed(0, footprintList.size(), 0);
+    // 创建导出器（提前创建以获取格式自描述信息）
+    auto exporter = ExporterFactory::createFootprintExporter(m_options.targetFormat);
+    if (!exporter) {
+        abortExport(QStringLiteral("Failed to create footprint exporter for target format"));
         return;
     }
 
-    // 追加/更新封装库时，先将已有 .kicad_mod 复制到临时目录，避免提交临时目录时丢失旧封装。
-    const bool preserveExistingFootprints =
-        QDir(finalDir).exists() && (!m_options.overwriteExistingFiles || m_options.updateMode || m_options.retryMode);
-    if (preserveExistingFootprints) {
-        if (!QDir().mkpath(tempDirPath)) {
-            qCritical() << "FootprintExportStage: Failed to create temp dir for merge:" << tempDirPath;
-            m_isExporting.store(false);
-            m_isRunning.store(false);
-            emit completed(0, footprintList.size(), 0);
-            return;
-        }
-        const QStringList existingFiles = QDir(finalDir).entryList({"*.kicad_mod"}, QDir::Files);
-        for (const QString& file : existingFiles) {
-            if (!QFile::copy(finalDir + QDir::separator() + file, tempDirPath + QDir::separator() + file)) {
-                qWarning() << "FootprintExportStage: Failed to copy existing footprint:" << file;
+    const QString fileExt = exporter->libraryFileExtension();
+    const bool isDirOutput = exporter->isDirectoryOutput();
+
+    // 根据输出结构类型选择路径
+    QString finalPath;
+    QString tempPath;
+    if (isDirOutput) {
+        finalPath = outputDir + QDir::separator() + libName + fileExt;
+        tempPath = m_tempManager.createTempDirectoryPath(libName + fileExt);
+    } else {
+        finalPath = outputDir + QDir::separator() + libName + fileExt;
+        tempPath = m_tempManager.createSymbolTempPath(libName, fileExt);
+    }
+    if (tempPath.isEmpty()) {
+        abortExport(QStringLiteral("Failed to create temp path"));
+        return;
+    }
+
+    // 目录输出时：追加/更新封装库，先将已有文件复制到临时目录
+    if (isDirOutput) {
+        const bool preserveExistingFootprints =
+            QDir(finalPath).exists() &&
+            (!m_options.overwriteExistingFiles || m_options.updateMode || m_options.retryMode);
+        if (preserveExistingFootprints) {
+            if (!QDir().mkpath(tempPath)) {
+                abortExport(QStringLiteral("Failed to create temp dir for merge: %1").arg(tempPath));
+                return;
             }
+            const QStringList existingFiles = QDir(finalPath).entryList({"*.kicad_mod"}, QDir::Files);
+            for (const QString& file : existingFiles) {
+                if (!QFile::copy(finalPath + QDir::separator() + file, tempPath + QDir::separator() + file)) {
+                    qWarning() << "FootprintExportStage: Failed to copy existing footprint:" << file;
+                }
+            }
+            qDebug() << "FootprintExportStage: Preserved" << existingFiles.size() << "existing footprints";
         }
-        qDebug() << "FootprintExportStage: Preserved" << existingFiles.size() << "existing footprints";
     }
 
-    qDebug() << "FootprintExportStage: Exporting" << footprintList.size() << "footprints to temp:" << tempDirPath;
+    qDebug() << "FootprintExportStage: Exporting" << footprintList.size() << "footprints to temp:" << tempPath;
+    qDebug() << "FootprintExportStage: fileExt:" << fileExt << "isDirOutput:" << isDirOutput;
 
     bool exportSuccess = false;
     QString libraryDescription = m_options.footprintLibraryDescription;
     {
-        ExporterFootprint exporter;
         const bool preferWrl = m_options.needsModel3DWrl();
         const bool exportStep = m_options.needsModel3DStep();
         QString libraryKeywords = m_options.footprintLibraryKeywords;
+        // 转换旧类型列表到 IR 类型
+        QList<IR::FootprintComponentIR> irFootprintList;
+        irFootprintList.reserve(footprintList.size());
+        for (const FootprintData& fd : footprintList) {
+            irFootprintList.append(IR::toFootprintIR(fd));
+        }
         exportSuccess =
-            exporter.exportFootprintLibrary(footprintList,
-                                            libName,
-                                            tempDirPath,
-                                            preferWrl,
-                                            exportStep,
-                                            libraryDescription,
-                                            libraryKeywords,
-                                            m_options.exportModel3DPathMode == ExportOptions::MODEL_3D_PATH_ABSOLUTE,
-                                            outputDir);
+            exporter->exportFootprintLibrary(irFootprintList,
+                                             libName,
+                                             tempPath,
+                                             preferWrl,
+                                             exportStep,
+                                             libraryDescription,
+                                             libraryKeywords,
+                                             m_options.exportModel3DPathMode == ExportOptions::MODEL_3D_PATH_ABSOLUTE,
+                                             outputDir);
+        qDebug() << "FootprintExportStage: exportFootprintLibrary result:" << exportSuccess;
     }
 
     if (m_cancelled.load()) {
-        m_tempManager.rollbackAll();
-        m_isExporting.store(false);
-        m_isRunning.store(false);
-        emit completed(0, footprintList.size(), 0);
+        abortExport(QStringLiteral("Export cancelled"));
         return;
     }
 
     if (!exportSuccess) {
-        qCritical() << "FootprintExportStage: Failed to export footprint library";
-        m_tempManager.rollbackAll();
-        m_isExporting.store(false);
-        m_isRunning.store(false);
-        emit completed(0, footprintList.size(), 0);
+        abortExport(QStringLiteral("Failed to export footprint library"));
         return;
     }
 
-    if (m_tempManager.commitDirectoryWithBackup(tempDirPath, finalDir)) {
-        qDebug() << "FootprintExportStage: Successfully exported to:" << finalDir;
+    // 提交临时文件/目录到最终路径
+    bool commitSuccess = false;
+    if (!isDirOutput) {
+        commitSuccess = m_tempManager.commitWithBackup(tempPath, finalPath);
     } else {
-        qCritical() << "FootprintExportStage: Failed to commit temp dir";
-        m_tempManager.rollbackAll();
-        m_isExporting.store(false);
-        m_isRunning.store(false);
-        emit completed(0, footprintList.size(), 0);
+        commitSuccess = m_tempManager.commitDirectoryWithBackup(tempPath, finalPath);
+    }
+
+    if (commitSuccess) {
+        qDebug() << "FootprintExportStage: Successfully exported to:" << finalPath;
+    } else {
+        abortExport(QStringLiteral("Failed to commit temp path"));
         return;
     }
 
-    if (!libraryDescription.isEmpty()) {
-        ExporterFootprint fpTableExporter;
-        fpTableExporter.generateFpLibTable(libName, finalDir, outputDir, libraryDescription);
-        KiCadLibraryTableManager::registerFootprintLibrary(outputDir, libName, finalDir, libraryDescription);
+    // 目录输出模式下注册库（如 KiCad 库表）
+    if (isDirOutput && !libraryDescription.isEmpty()) {
+        KiCadLibraryTableManager::registerFootprintLibrary(outputDir, libName, finalPath, libraryDescription);
     }
 
-    m_tempManager.cleanupTempDirectory();
+    // 注意：不在这里清理临时目录，由 ParallelExportService 统一管理
 
     qDebug() << "FootprintExportStage: Completed. Success:" << successCount << "Failed:" << failedIds.size();
 

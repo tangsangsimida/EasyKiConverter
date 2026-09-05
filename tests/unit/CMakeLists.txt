@@ -21,6 +21,7 @@ add_test(NAME test_easyeda_api COMMAND test_easyeda_api)
 add_executable(test_models test_models.cpp)
 target_link_libraries(test_models PRIVATE
     Qt6::Test
+    Qt6::Gui
     EasyKiConverterLib
 )
 target_include_directories(test_models PRIVATE
@@ -73,6 +74,19 @@ target_include_directories(test_atomic_file_writer PRIVATE
     ${CMAKE_SOURCE_DIR}
 )
 add_test(NAME test_atomic_file_writer COMMAND test_atomic_file_writer)
+
+add_executable(test_altium_ole test_altium_ole.cpp)
+target_link_libraries(test_altium_ole PRIVATE
+    Qt6::Test
+    Qt6::Gui
+    EasyKiConverterLib
+)
+target_include_directories(test_altium_ole PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}/src/core/altium
+    ${CMAKE_SOURCE_DIR}
+)
+add_test(NAME test_altium_ole COMMAND test_altium_ole)
 
 add_executable(test_temp_file_manager test_temp_file_manager.cpp)
 target_link_libraries(test_temp_file_manager PRIVATE
@@ -192,6 +206,7 @@ add_test(NAME test_write_worker COMMAND test_write_worker)
 add_executable(test_kicad_graphics_generators test_kicad_graphics_generators.cpp)
 target_link_libraries(test_kicad_graphics_generators PRIVATE
     Qt6::Test
+    Qt6::Gui
     EasyKiConverterLib
 )
 target_include_directories(test_kicad_graphics_generators PRIVATE
@@ -382,6 +397,7 @@ add_executable(test_kicad_exporter_golden
 )
 target_link_libraries(test_kicad_exporter_golden PRIVATE
     Qt6::Test
+    Qt6::Gui
     EasyKiConverterLib
 )
 target_include_directories(test_kicad_exporter_golden PRIVATE
@@ -407,6 +423,7 @@ add_executable(test_exporter_3d_model
 )
 target_link_libraries(test_exporter_3d_model PRIVATE
     Qt6::Test
+    Qt6::Gui
     EasyKiConverterLib
 )
 target_include_directories(test_exporter_3d_model PRIVATE

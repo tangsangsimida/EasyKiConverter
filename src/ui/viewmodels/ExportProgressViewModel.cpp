@@ -140,8 +140,10 @@ void ExportProgressViewModel::startExport(const QStringList& componentIds,
                                           bool debugMode,
                                           const QString& symbolLibraryDescription,
                                           const QString& footprintLibraryDescription,
-                                          const QString& footprintLibraryKeywords) {
-    qDebug() << "ExportProgressViewModel: Starting export for" << componentIds.size() << "components";
+                                          const QString& footprintLibraryKeywords,
+                                          int targetFormat) {
+    qDebug() << "ExportProgressViewModel: Starting export for" << componentIds.size() << "components"
+             << "targetFormat:" << targetFormat;
 
     if (m_isExporting) {
         qWarning() << "Export already in progress";
@@ -215,6 +217,7 @@ void ExportProgressViewModel::startExport(const QStringList& componentIds,
     options.symbolLibraryDescription = symbolLibraryDescription;
     options.footprintLibraryDescription = footprintLibraryDescription;
     options.footprintLibraryKeywords = footprintLibraryKeywords;
+    options.targetFormat = static_cast<TargetEdaFormat>(targetFormat);
 
     m_exportService->setOptions(options);
     m_exportService->setOutputPath(outputPath);

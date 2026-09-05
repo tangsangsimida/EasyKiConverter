@@ -14,6 +14,7 @@ Rectangle {
     // 直接使用全局 Context Property
     readonly property var progressController: exportProgressViewModel
     readonly property var settingsController: exportSettingsViewModel
+    readonly property var targetModel: exportTargetModel
     readonly property var listController: componentListViewModel
     readonly property bool isExporting: progressController ? progressController.isExporting : false
     readonly property int failureCount: progressController ? progressController.failureCount : 0
@@ -207,6 +208,7 @@ Rectangle {
                 SidebarSettingsView {
                     Layout.fillWidth: true
                     exportSettingsController: root.settingsController
+                    exportTargetModel: root.targetModel
                     onOpenOutputFolderDialog: root.requestOutputFolderDialog()
                     onOpenCacheFolderDialog: root.requestCacheFolderDialog()
                     opacity: root.collapsed ? 0 : 1
@@ -228,6 +230,7 @@ Rectangle {
                     Layout.fillWidth: true
                     exportProgressController: root.progressController
                     exportSettingsController: root.settingsController
+                    exportTargetModel: root.targetModel
                     componentListController: root.listController
                 }
             }

@@ -6,6 +6,7 @@ import EasyKiconverter_Cpp_Version.src.ui.qml.styles 1.0
 Item {
     id: root
     property var exportSettingsController
+    property var exportTargetModel
     signal openOutputFolderDialog
     signal openCacheFolderDialog
     implicitHeight: mainColumn.implicitHeight
@@ -13,6 +14,83 @@ Item {
         id: mainColumn
         width: parent.width
         spacing: AppStyle.spacing.lg
+        // ==================== 目标格式选择 ====================
+        ColumnLayout {
+            Layout.fillWidth: true
+            spacing: AppStyle.spacing.sm
+            visible: root.exportTargetModel !== null && root.exportTargetModel !== undefined
+            Text {
+                text: qsTranslate("MainWindow", "目标格式")
+                font.pixelSize: AppStyle.fontSizes.sm
+                font.bold: true
+                color: AppStyle.colors.textPrimary
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: AppStyle.spacing.sm
+                Repeater {
+                    model: root.exportTargetModel ? root.exportTargetModel.availableTargets : []
+                    Rectangle {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 52
+                        radius: AppStyle.radius.md
+                        property bool isActive: root.exportTargetModel ? root.exportTargetModel.currentIndex === index : false
+                        property string targetId: modelData.id || ""
+                        color: isActive ? Qt.rgba(AppStyle.colors.primary.r, AppStyle.colors.primary.g, AppStyle.colors.primary.b, 0.12) : AppStyle.colors.surface
+                        border.color: isActive ? AppStyle.colors.primary : AppStyle.colors.border
+                        border.width: isActive ? 2 : 1
+                        Behavior on color {
+                            ColorAnimation {
+                                duration: AppStyle.durations.fast
+                            }
+                        }
+                        Behavior on border.color {
+                            ColorAnimation {
+                                duration: AppStyle.durations.fast
+                            }
+                        }
+
+                        ColumnLayout {
+                            anchors.fill: parent
+                            anchors.margins: AppStyle.spacing.sm
+                            spacing: 1
+                            Text {
+                                text: modelData.displayName || ""
+                                font.pixelSize: AppStyle.fontSizes.xs
+                                font.bold: true
+                                color: isActive ? AppStyle.colors.primary : AppStyle.colors.textPrimary
+                                Layout.alignment: Qt.AlignHCenter
+                            }
+
+                            Text {
+                                text: {
+                                    if (targetId === "kicad")
+                                        return ".kicad_sym";
+                                    if (targetId === "altium")
+                                        return ".SchLib";
+                                    return "";
+                                }
+                                font.pixelSize: 9
+                                color: AppStyle.colors.textSecondary
+                                Layout.alignment: Qt.AlignHCenter
+                            }
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                if (root.exportTargetModel) {
+                                    root.exportTargetModel.currentIndex = index;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         // ==================== 导出路径与库名 ====================
         SidebarSection {
             title: qsTranslate("MainWindow", "输出配置")
@@ -212,10 +290,15 @@ Item {
                                     Layout.fillWidth: true
                                     height: 30
                                     radius: AppStyle.radius.sm
+                                    property bool isAltiumTarget: root.exportTargetModel && root.exportTargetModel.currentIndex === 1
                                     color: AppStyle.isDarkMode ? Qt.rgba(255, 255, 255, 0.06) : Qt.rgba(0, 0, 0, 0.06)
                                     property int currentFormatIndex: {
                                         if (!root.exportSettingsController)
                                             return 0;
+                                        // Altium 只允许 STEP，指示器也必须固定在 STEP，
+                                        // 避免旧配置值让滑块视觉上移动到 WRL/Both。
+                                        if (isAltiumTarget)
+                                            return 1;
                                         var fmt = root.exportSettingsController.exportModel3DFormat;
                                         if (fmt === 3)
                                             return 2;
@@ -244,10 +327,12 @@ Item {
                                         anchors.fill: parent
                                         anchors.margins: 2
                                         Repeater {
-                                            model: ["WRL", "STEP", "Both"]
+                                            model: ["WRL", "STEP", "ALL"]
                                             Item {
                                                 width: parent.width / 3
                                                 height: parent.height
+                                                // Altium PcbLib 仅支持嵌入 STEP，WRL 和 Both 都不可选。
+                                                opacity: parent.parent.isAltiumTarget && index !== 1 ? 0.4 : 1
                                                 Text {
                                                     anchors.centerIn: parent
                                                     text: modelData
@@ -263,6 +348,7 @@ Item {
 
                                                 MouseArea {
                                                     anchors.fill: parent
+                                                    enabled: !(parent.parent.isAltiumTarget && index !== 1)
                                                     cursorShape: Qt.PointingHandCursor
                                                     onClicked: {
                                                         if (!root.exportSettingsController)
@@ -386,6 +472,63 @@ Item {
             }
         }
 
+        // ==================== Altium 导出说明（仅 Altium 格式显示，带动画） ====================
+        Item {
+            Layout.fillWidth: true
+            Layout.preferredHeight: (root.exportTargetModel !== null && root.exportTargetModel.currentIndex === 1) ? altiumInfoBox.implicitHeight + AppStyle.spacing.md * 2 : 0
+            clip: true
+            Behavior on Layout.preferredHeight {
+                NumberAnimation {
+                    duration: 400
+                    easing.type: Easing.OutQuart
+                }
+            }
+
+            Rectangle {
+                id: altiumInfoBox
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.top: parent.top
+                implicitHeight: altiumInfoText.implicitHeight + AppStyle.spacing.md * 2
+                radius: AppStyle.radius.sm
+                color: AppStyle.colors.surface
+                border.color: AppStyle.colors.border
+                border.width: 1
+                opacity: (root.exportTargetModel !== null && root.exportTargetModel.currentIndex === 1) ? 1 : 0
+                scale: (root.exportTargetModel !== null && root.exportTargetModel.currentIndex === 1) ? 1 : 0.97
+                y: (root.exportTargetModel !== null && root.exportTargetModel.currentIndex === 1) ? 0 : 20
+                Behavior on opacity {
+                    NumberAnimation {
+                        duration: 500
+                        easing.type: Easing.OutCubic
+                    }
+                }
+                Behavior on scale {
+                    NumberAnimation {
+                        duration: 500
+                        easing.type: Easing.OutQuart
+                    }
+                }
+                Behavior on y {
+                    NumberAnimation {
+                        duration: 500
+                        easing.type: Easing.OutQuart
+                    }
+                }
+
+                Text {
+                    id: altiumInfoText
+                    anchors.fill: parent
+                    anchors.margins: AppStyle.spacing.md
+                    text: qsTranslate("MainWindow", "Altium 导出说明：\n" + "- 符号库导出为 .SchLib 格式\n" + "- 封装库导出为 .PcbLib 格式\n" + "- 3D 模型以 STEP 格式嵌入封装\n" + "- 生成的文件可直接在 Altium Designer 中打开")
+                    font.pixelSize: AppStyle.fontSizes.xs
+                    color: AppStyle.colors.textSecondary
+                    wrapMode: Text.WordWrap
+                    lineHeight: 1.4
+                }
+            }
+        }
+
         // ==================== 运行策略（滑块式导出模式选择） ====================
         SidebarSection {
             title: qsTranslate("MainWindow", "运行策略")
@@ -475,10 +618,10 @@ Item {
             }
         }
 
-        // ==================== 库信息（短窗口时自动隐藏） ====================
+        // ==================== 库信息（短窗口时自动隐藏，仅 KiCad 格式显示） ====================
         SidebarSection {
             title: qsTranslate("MainWindow", "库信息 (可选)")
-            visible: !ResponsiveHelper.isShortWindow
+            visible: !ResponsiveHelper.isShortWindow && (root.exportTargetModel === null || root.exportTargetModel.currentIndex === 0)
             SidebarTextField {
                 label: qsTranslate("MainWindow", "符号库描述")
                 text: root.exportSettingsController ? root.exportSettingsController.symbolLibraryDescription : ""

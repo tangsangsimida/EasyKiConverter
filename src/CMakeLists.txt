@@ -17,6 +17,7 @@ target_link_libraries(EasyKiConverterLib
         EasyKiConverterLogging
         EasyKiConverterSafeUtils
         EasyKiConverterModels
+        EasyKiConverterIR
         EasyKiConverterCore
         EasyKiConverterWorkers
         EasyKiConverterServices

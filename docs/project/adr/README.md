@@ -68,6 +68,8 @@ ADR 文件应使用以下命名格式：
 - [ADR 009: 网络层架构整合与状态管理统一](009-network-layer-consolidation.md)
 - [ADR 010: 组件缓存架构](010-component-cache-architecture.md)
 - [ADR 011: 文件夹对话框路径绑定修复](011-folder-dialog-path-binding-fix.md)
+- [ADR 012: 中间表示层 (IR) 架构重构](012-intermediate-representation-refactor.md)
+- [ADR 012: Intermediate Representation (IR) Architecture Refactoring](012-intermediate-representation-refactor_en.md) (English)
 
 ## 参考资料
 
