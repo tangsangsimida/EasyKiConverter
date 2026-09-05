@@ -336,7 +336,9 @@ void AltiumSchLibWriter::writePinRecord(AltiumBinaryWriter& writer, const Altium
     // Description (空 Pascal 短字符串)
     writer.writePascalShortString("");
 
-    writer.writeUInt8(0);  // FormalType
+    // FormalType=1 表示普通的有效引脚。值为 0 时，Altium 仍可能绘制
+    // 引脚名称/编号，但不会将该记录作为可连接的 Pin 对象处理。
+    writer.writeUInt8(1);  // FormalType: normal pin
     writer.writeUInt8(static_cast<uint8_t>(pin.electricalType));  // ElectricalType
 
     // PinConglomerate 字节

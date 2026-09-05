@@ -6,6 +6,7 @@
 #include <QDebug>
 #include <QSet>
 
+#include <algorithm>
 #include <climits>
 
 namespace EasyKiConverter {
@@ -101,6 +102,50 @@ void quantizePinConnectionPoint(AltiumSchPin& pin) {
             pin.locationX = quantizedConnX;
             pin.locationY = quantizedConnY + pin.length;
             break;
+    }
+}
+
+/**
+ * @brief 按引脚侧分组量化连接点，避免独立吸附造成连接点重合
+ */
+void quantizePinConnectionGroups(QList<AltiumSchPin>& pins) {
+    constexpr int kSnapGrid = 100000;
+    for (int side = 0; side < 4; ++side) {
+        QList<int> indices;
+        for (int i = 0; i < pins.size(); ++i) {
+            if (static_cast<int>(pins[i].orientation) == side)
+                indices.append(i);
+        }
+        std::sort(indices.begin(), indices.end(), [&](int lhs, int rhs) {
+            const QPointF a = computePinConnectionPoint(pins[lhs]);
+            const QPointF b = computePinConnectionPoint(pins[rhs]);
+            const bool horizontal = side == static_cast<int>(AltiumModels::PinOrientation::Right) ||
+                                    side == static_cast<int>(AltiumModels::PinOrientation::Left);
+            return horizontal ? (a.y() < b.y()) : (a.x() < b.x());
+        });
+
+        int previousTangent = INT_MIN;
+        for (int index : indices) {
+            quantizePinConnectionPoint(pins[index]);
+            QPointF conn = computePinConnectionPoint(pins[index]);
+            const bool horizontal = side == static_cast<int>(AltiumModels::PinOrientation::Right) ||
+                                    side == static_cast<int>(AltiumModels::PinOrientation::Left);
+            int tangent = horizontal ? static_cast<int>(conn.y()) : static_cast<int>(conn.x());
+            if (previousTangent != INT_MIN && tangent <= previousTangent) {
+                tangent = previousTangent + kSnapGrid;
+                switch (pins[index].orientation) {
+                    case AltiumModels::PinOrientation::Right:
+                    case AltiumModels::PinOrientation::Left:
+                        pins[index].locationY = tangent;
+                        break;
+                    case AltiumModels::PinOrientation::Up:
+                    case AltiumModels::PinOrientation::Down:
+                        pins[index].locationX = tangent;
+                        break;
+                }
+            }
+            previousTangent = tangent;
+        }
     }
 }
 
@@ -538,9 +583,7 @@ void ExporterAltiumSymbol::centerComponent(AltiumSchComponent& component) {
         }
 
         // 将引脚连接端量化到 10 mil 吸附网格，保持引脚长度不变。
-        for (auto& pin : component.pins) {
-            quantizePinConnectionPoint(pin);
-        }
+        quantizePinConnectionGroups(component.pins);
 
         // EasyEDA 的 Value/Comment 字段有时共享同一个锚点，并携带 270°
         // 的画布旋转值。直接写入 Altium 后，两个字段会被放到符号外部或
