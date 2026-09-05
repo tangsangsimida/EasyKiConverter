@@ -121,7 +121,7 @@ Cache requirements:
 - `src/services/ComponentCacheService.cpp` - Implementation
 - `src/services/LcscImageService.h` - Preview image service
 - `src/services/export/ComponentDataCache.h` - Unused cache class
-- `docs/developer/WEAK_NETWORK_UPGRADE_REPORT.md` - Weak network report
+- `docs/project/archive/WEAK_NETWORK_ANALYSIS_en.md` - Historical weak-network analysis
 
 ## Follow-up Recommendations
 

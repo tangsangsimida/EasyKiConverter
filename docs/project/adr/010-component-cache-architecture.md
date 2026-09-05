@@ -120,7 +120,7 @@
 - `src/services/ComponentCacheService.cpp` - 实现
 - `src/services/LcscImageService.h` - 预览图服务
 - `src/services/export/ComponentDataCache.h` - 未使用的缓存类
-- `docs/developer/WEAK_NETWORK_UPGRADE_REPORT.md` - 弱网报告
+- `docs/project/archive/WEAK_NETWORK_ANALYSIS.md` - 弱网历史分析报告
 
 ## 后续建议
 

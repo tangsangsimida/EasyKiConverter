@@ -67,7 +67,7 @@
 2. **搬迁原 ExportSettings 卡**：
    - 将原有通用 UI 迁入 `ExportSettingsBaseCard.qml`。
    - 为 KiCad 创建 `KiCadSettingsCard.qml`（复制原有 KiCad 开关）。
-   - 为 Altium 创建 `AltiumSettingsCard.qml`（后期实现）。
+   - 已创建并维护 `AltiumSettingsCard.qml`，其可用能力以当前 Altium 导出器为准。
 3. **改造 `ExportSettingsViewModel`**：加入 `targetOptions` 管理逻辑并响应 `ExportTargetModel` 信号。
 4. **在 `MainWindow.qml`** 用 `<ExportSettingsBaseCard>` 替换原 `<ExportSettingsCard>`，注入 `exportTargetModel` 与 `exportSettingsViewModel`。
 5. **编写 `export_plugins.json`** 并放置在 `resources/`。确保构建系统把它打包为资源（`qrc`）。
