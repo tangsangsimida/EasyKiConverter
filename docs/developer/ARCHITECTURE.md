@@ -329,7 +329,7 @@ NetworkResult result = NetworkClient::instance().get(
 
 // 异步请求（返回 AsyncNetworkRequest*，调用方管理生命周期）
 AsyncNetworkRequest* req = NetworkClient::instance().getAsync(url, ResourceType::PreviewImage);
-connect(req, &AsyncNetworkRequest::finished, this, [req](const NetworkResult& r) {
+connect(req, &AsyncNetworkRequest::finished, this, [req] /* capture */ (const NetworkResult& r) {
     if (r.success) { /* ... */ }
     req->deleteLater();  // 必须在完成后删除
 });
