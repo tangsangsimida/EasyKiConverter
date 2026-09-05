@@ -261,8 +261,12 @@ Rectangle {
                         if (card) {
                             hideDelayTimer.stop();
                             var sources = rootItem.previewImageSources();
-                            var thumbPos = previewBackground.mapToItem(null, 0, 0);
-                            var cursorPos = previewMouseArea.mapToItem(null, previewMouseArea.mouseX, previewMouseArea.mouseY);
+                            // Popup 挂载在 Window.contentItem，必须使用同一坐标系。
+                            // mapToItem(null) 返回场景坐标，在 Windows DPI 缩放或多屏切换时
+                            // 与 contentItem 坐标可能产生细小偏移。
+                            var popupParent = card.previewPopup ? card.previewPopup.parent : card;
+                            var thumbPos = previewBackground.mapToItem(popupParent, 0, 0);
+                            var cursorPos = previewMouseArea.mapToItem(popupParent, previewMouseArea.mouseX, previewMouseArea.mouseY);
                             card.showPreviewPopup(sources, itemData, thumbPos.x, thumbPos.y, previewBackground.width, previewBackground.height, cursorPos.x, cursorPos.y);
                         }
                     }
