@@ -16,95 +16,15 @@ EasyKiConverter 采用 MVVM (Model-View-ViewModel) 架构模式，支持 GUI 和
 
 项目使用 MVVM 架构模式，将应用程序分为四个主要层次：
 
-```
-┌─────────────────────────────────────────┐
-│              View Layer                  │
-│         (QML Components)                 │
-│  - src/ui/qml/Main.qml                  │
-│  - MainWindow.qml                        │
-│  - Components (Card, Button, etc.)       │
-│  - Styles (AppStyle)                     │
-└──────────────┬──────────────────────────┘
-               │
-┌──────────────▼──────────────────────────┐
-│          ViewModel Layer                │
-│  ┌──────────────────────────────────┐   │
-│  │ ComponentListViewModel          │   │
-│  │ - 管理元件列表状态                │   │
-│  │ - 处理用户输入                    │   │
-│  │ - 调用 ComponentService          │   │
-│  └──────────────────────────────────┘   │
-│  ┌──────────────────────────────────┐   │
-│  │ ExportSettingsViewModel         │   │
-│  │ - 管理导出设置状态                │   │
-│  │ - 处理配置更改                    │   │
-│  │ - 调用 ConfigService             │   │
-│  └──────────────────────────────────┘   │
-│  ┌──────────────────────────────────┐   │
-│  │ ExportProgressViewModel         │   │
-│  │ - 管理导出进度状态                │   │
-│  │ - 显示转换结果                    │   │
-│  │ - 调用 ExportService             │   │
-│  └──────────────────────────────────┘   │
-│  ┌──────────────────────────────────┐   │
-│  │ ThemeSettingsViewModel          │   │
-│  │ - 管理主题设置状态                │   │
-│  │ - 处理深色/浅色模式切换           │   │
-│  │ - 调用 ConfigService             │   │
-│  └──────────────────────────────────┘   │
-└──────────────┬──────────────────────────┘
-               │
-┌──────────────▼──────────────────────────┐
-│           Service Layer                  │
-│  ┌──────────────────────────────────┐   │
-│  │ ComponentService                 │   │
-│  │ - 元件数据获取                    │   │
-│  │ - 元件验证                        │   │
-│  │ - 调用 EasyedaApi                │   │
-│  └──────────────────────────────────┘   │
-│  ┌──────────────────────────────────┐   │
-│  │ ExportService                    │   │
-│  │ - 符号/封装/3D模型导出            │   │
-│  │ - 并行转换管理                    │   │
-│  │ - 调用 Exporter*                 │   │
-│  └──────────────────────────────────┘   │
-│  ┌──────────────────────────────────┐   │
-│  │ ConfigService                    │   │
-│  │ - 配置加载/保存                   │   │
-│  │ - 主题管理                        │   │
-│  │ - 调用 ConfigManager             │   │
-│  └──────────────────────────────────┘   │
-│  ┌──────────────────────────────────┐   │
-│  │ ParallelExportService            │   │
-│  │ - 预加载与导出编排                │   │
-│  │ - 多导出类型并行管理              │   │
-│  │ - 统一进度聚合                    │   │
-│  └──────────────────────────────────┘   │
-└──────────────┬──────────────────────────┘
-               │
-┌──────────────▼──────────────────────────┐
-│            Model Layer                   │
-│  ┌──────────────────────────────────┐   │
-│  │ ComponentData                    │   │
-│  │ - 元件基本信息                    │   │
-│  │ - 符号/封装/3D模型数据            │   │
-│  └──────────────────────────────────┘   │
-│  ┌──────────────────────────────────┐   │
-│  │ SymbolData                       │   │
-│  │ - 符号几何数据                    │   │
-│  │ - 引脚信息                        │   │
-│  └──────────────────────────────────┘   │
-│  ┌──────────────────────────────────┐   │
-│  │ FootprintData                    │   │
-│  │ - 封装几何数据                    │   │
-│  │ - 焊盘信息                        │   │
-│  └──────────────────────────────────┘   │
-│  ┌──────────────────────────────────┐   │
-│  │ Model3DData                      │   │
-│  │ - 3D模型数据                      │   │
-│  │ - 模型UUID                        │   │
-│  └──────────────────────────────────┘   │
-└─────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    View["View 层<br/>QML Components"] --> ViewModel["ViewModel 层<br/>ComponentList / ExportSettings / ExportProgress / ThemeSettings"]
+    ViewModel --> Service["Service 层<br/>ComponentService / ExportService / ConfigService / ParallelExportService"]
+    Service --> Model["Model 层<br/>ComponentData / SymbolData / FootprintData / Model3DData"]
+    Service --> Core["Core 转换引擎<br/>Importers + IR Builders + Exporters"]
+    Model --> Core
+    Core --> KiCad["KiCad 输出<br/>.kicad_sym / .kicad_mod / 3D"]
+    Core --> Altium["Altium 输出<br/>.SchLib / .PcbLib / 嵌入 STEP"]
 ```
 
 ## 层次职责

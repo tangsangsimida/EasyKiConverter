@@ -31,33 +31,16 @@ This prevents:
 
 #### Target Architecture
 
-```
-┌──────────────┐     ┌──────────────┐     ┌──────────────┐
-│  EasyEDA API │     │  Altium Lib  │     │  Future      │
-│  (JSON)      │     │  (.SchLib)   │     │  Source      │
-└──────┬───────┘     └──────┬───────┘     └──────┬───────┘
-       │                    │                    │
-       ▼                    ▼                    ▼
-┌──────────────┐     ┌──────────────┐     ┌──────────────┐
-│ EasyEDA      │     │ Altium       │     │ Xxx          │
-│ Importer     │     │ Importer     │     │ Importer     │
-└──────┬───────┘     └──────┬───────┘     └──────┬───────┘
-       │                    │                    │
-       └────────────┬───────┴────────────────────┘
-                    ▼
-         ┌─────────────────────┐
-         │   Generic IR Layer  │
-         │   ComponentIR       │
-         │   SymbolIR          │
-         │   FootprintIR       │
-         │   Model3DIR         │
-         └─────────┬───────────┘
-                   │
-         ┌─────────┴───────────┐
-         ▼                     ▼
-┌─────────────────┐   ┌─────────────────┐
-│  KiCad Exporter │   │  Altium Exporter│
-└─────────────────┘   └─────────────────┘
+```mermaid
+flowchart TD
+    EasyEDA[EasyEDA API JSON] --> EasyImporter[EasyEDA Importer]
+    AltiumSource[Altium Library] --> AltiumImporter[Altium Importer]
+    Future[Future Data Source] --> FutureImporter[Corresponding Importer]
+    EasyImporter --> IR[Generic IR Layer<br/>ComponentIR / SymbolIR / FootprintIR / Model3DIR]
+    AltiumImporter --> IR
+    FutureImporter --> IR
+    IR --> KiCad[KiCad Exporter]
+    IR --> Altium[Altium Exporter]
 ```
 
 #### Core Principles

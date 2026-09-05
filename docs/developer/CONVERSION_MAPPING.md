@@ -6,20 +6,13 @@
 
 转换流程分为四层：
 
-```text
-EasyEDA API JSON
-      │
-      ▼
-EasyedaImporter / EasyedaSymbolImporter / EasyedaFootprintImporter
-      │  解析来源字段，构造旧模型
-      ▼
-IR Builder（IrBuilder、FootprintDataConverter、Model3DDataConverter）
-      │  单位、坐标、枚举、几何归一化
-      ▼
-EDA 无关 IR（SymbolComponentIR、FootprintComponentIR、Model3DIR）
-      │
-      ├── KiCad Exporter（.kicad_sym、.kicad_mod、STEP/WRL）
-      └── Altium Exporter（SchLib、PcbLib、嵌入式 3D）
+```mermaid
+flowchart TD
+    API[EasyEDA API JSON] --> Importer[EasyedaImporter<br/>Symbol / Footprint Importer]
+    Importer --> Builder[IR Builder<br/>IrBuilder / FootprintDataConverter / Model3DDataConverter]
+    Builder --> IR[EDA 无关 IR<br/>SymbolComponentIR / FootprintComponentIR / Model3DIR]
+    IR --> KiCad[KiCad Exporter<br/>.kicad_sym / .kicad_mod / 3D]
+    IR --> Altium[Altium Exporter<br/>SchLib / PcbLib / 嵌入 STEP]
 ```
 
 Importer 只负责理解 EasyEDA 数据；IR Builder 负责语义统一；Exporter 只负责目标格式语法和能力差异。新增格式时应复用 IR，不应重新解析 EasyEDA JSON。

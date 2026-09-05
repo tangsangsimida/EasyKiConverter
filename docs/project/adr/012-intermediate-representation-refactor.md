@@ -31,34 +31,16 @@ EasyEDA JSON  -->  SymbolData / FootprintData / Model3DData  -->  KiCad / Altium
 
 #### 目标架构
 
-```
-┌──────────────┐     ┌──────────────┐     ┌──────────────┐
-│  EasyEDA API │     │  Altium 库   │     │  未来数据源   │
-│  (JSON)      │     │  (.SchLib 等)│     │  (...)       │
-└──────┬───────┘     └──────┬───────┘     └──────┬───────┘
-       │                    │                    │
-       ▼                    ▼                    ▼
-┌──────────────┐     ┌──────────────┐     ┌──────────────┐
-│ EasyEDA      │     │ Altium       │     │ Xxx          │
-│ Importer     │     │ Importer     │     │ Importer     │
-└──────┬───────┘     └──────┬───────┘     └──────┬───────┘
-       │                    │                    │
-       └────────────┬───────┴────────────────────┘
-                    ▼
-         ┌─────────────────────┐
-         │   通用 IR 层         │
-         │   ComponentIR       │
-         │   SymbolIR          │
-         │   FootprintIR       │
-         │   Model3DIR         │
-         └─────────┬───────────┘
-                   │
-         ┌─────────┴───────────┐
-         ▼                     ▼
-┌─────────────────┐   ┌─────────────────┐
-│  KiCad Exporter │   │  Altium Exporter│
-│  (IR -> .kicad) │   │  (IR -> .SchLib)│
-└─────────────────┘   └─────────────────┘
+```mermaid
+flowchart TD
+    EasyEDA[EasyEDA API JSON] --> EasyImporter[EasyEDA Importer]
+    AltiumSource[Altium 库] --> AltiumImporter[Altium Importer]
+    Future[未来数据源] --> FutureImporter[对应 Importer]
+    EasyImporter --> IR[通用 IR 层<br/>ComponentIR / SymbolIR / FootprintIR / Model3DIR]
+    AltiumImporter --> IR
+    FutureImporter --> IR
+    IR --> KiCad[KiCad Exporter]
+    IR --> Altium[Altium Exporter]
 ```
 
 #### 核心原则

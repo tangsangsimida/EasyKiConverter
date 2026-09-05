@@ -154,22 +154,12 @@ private:
 
 #### 1.2 渐进式迁移策略
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│  阶段 1 迁移策略                                             │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│  第1步：NetworkClient 实现基本 get/post（保留旧实现）         │
-│     ↓                                                       │
-│  第2步：PreviewImageExporter 切换到 NetworkClient（测试）    │
-│     ↓                                                       │
-│  第3步：DatasheetExporter 切换（无超时最危险，优先）         │
-│     ↓                                                       │
-│  第4步：FetchWorker 切换（核心组件，最后）                    │
-│     ↓                                                       │
-│  第5步：移除旧实现（确认无回退需求后）                       │
-│                                                             │
-└─────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    A[NetworkClient 实现 get/post] --> B[PreviewImageExporter 切换]
+    B --> C[DatasheetExporter 切换]
+    C --> D[FetchWorker 切换]
+    D --> E[确认无回退需求后移除旧实现]
 ```
 
 #### 1.3 迁移优先级
@@ -203,17 +193,10 @@ grep -r "ComponentDataCollector" src/ --include="*.cpp" | grep -v "ComponentData
 
 #### 3.1 明确职责边界
 
-```
-直接服务层 (ComponentService):
-├── 用途：UI 实时预览、单个组件验证
-├── 特点：快速响应、无需复杂流水线
-└── 实现：直接调用 NetworkClient
-
-流水线层 (ExportServicePipeline):
-├── 用途：批量导出、大规模转换
-├── 特点：高性能、多阶段并行
-└── 实现：Fetch → Process → Write
-       └── 内部使用 NetworkClient
+```mermaid
+flowchart LR
+    Direct[ComponentService<br/>实时预览 / 单个组件验证<br/>直接调用 NetworkClient]
+    Pipeline[ParallelExportService<br/>批量导出 / 并行处理<br/>Fetch → Export]
 ```
 
 #### 3.2 统一错误信号

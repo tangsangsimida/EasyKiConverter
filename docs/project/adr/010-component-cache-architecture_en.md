@@ -23,24 +23,10 @@ Cache requirements:
 
 ### Adopt Two-Layer Cache Architecture (L1 + L2)
 
-```
-┌─────────────────────────────────────────────────┐
-│                 Application Layer                │
-│  ┌─────────────────────────────────────────┐   │
-│  │        ComponentCacheService             │   │
-│  │        (Singleton, Global Cache Manager) │   │
-│  └──────────────────┬──────────────────────┘   │
-│                     │                            │
-│        ┌────────────┴────────────┐               │
-│        ▼                         ▼               │
-│  ┌──────────────┐      ┌──────────────┐         │
-│  │  L1 Memory   │      │  L2 Disk     │         │
-│  │  Cache       │      │  Cache       │         │
-│  │  (QCache)    │      │  (Filesystem)│         │
-│  │  50MB Limit  │      │  5GB Quota   │         │
-│  │  LRU Evict   │      │  7-day TTL   │         │
-│  └──────────────┘      └──────────────┘         │
-└─────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    Service[ComponentCacheService<br/>Singleton cache manager] --> Memory[L1 memory cache<br/>QCache / 50 MB / LRU]
+    Service --> Disk[L2 disk cache<br/>Filesystem / quota / expiration policy]
 ```
 
 ### L1 Memory Cache

@@ -150,23 +150,12 @@ private:
 
 #### 1.2 Gradual Migration Strategy
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│  Phase 1 Migration Strategy                                  │
-├─────────────────────────────────────────────────────────────┤
-│                                                              │
-│  Step 1: NetworkClient implements basic get/post (keep old)  │
-│     ↓                                                        │
-│  Step 2: PreviewImageExporter switches to NetworkClient     │
-│     ↓                                                        │
-│  Step 3: DatasheetExporter switches (no timeout=most danger) │
-│     ↓                                                        │
-│  Step 4: FetchWorker switches (core component, last)          │
-│     ↓                                                        │
-│  Step 5: Remove old implementation (after confirming no      │
-│          rollback needed)                                    │
-│                                                              │
-└─────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    A[NetworkClient implements get/post] --> B[PreviewImageExporter switches]
+    B --> C[DatasheetExporter switches]
+    C --> D[FetchWorker switches]
+    D --> E[Remove old implementation after rollback review]
 ```
 
 #### 1.3 Migration Priority
@@ -200,17 +189,10 @@ grep -r "ComponentDataCollector" src/ --include="*.cpp" | grep -v "ComponentData
 
 #### 3.1 Define Clear Responsibility Boundaries
 
-```
-Direct Service Layer (ComponentService):
-├── Use: UI real-time preview, single component validation
-├── Characteristics: Fast response, no complex pipeline needed
-└── Implementation: Direct NetworkClient calls
-
-Pipeline Layer (ExportServicePipeline):
-├── Use: Batch export, large-scale conversion
-├── Characteristics: High performance, multi-stage parallel
-└── Implementation: Fetch → Process → Write
-                └── Internally uses NetworkClient
+```mermaid
+flowchart LR
+    Direct[ComponentService<br/>Real-time preview / single-component validation<br/>Direct NetworkClient calls]
+    Pipeline[ParallelExportService<br/>Batch export / parallel processing<br/>Fetch → Export]
 ```
 
 #### 3.2 Unified Error Signals
