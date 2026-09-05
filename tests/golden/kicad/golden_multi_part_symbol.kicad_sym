@@ -1,4 +1,3 @@
-; (generator_version "3.1.8")
 (kicad_symbol_lib
   (version 20211014)
   (generator EasyKiConverter)
@@ -42,16 +41,16 @@
     (text
       "A"
       (at 1.27 -1.27 0)
-      (effects (font (size 1.27 1.27) (thickness 0.000) bold))
+      (effects (font (size 1.76 1.76) (thickness 0.1) normal) )
     )
-    (pin unspecified line
+    (pin input inverted
       (at 0.00 -1.27 180)
       (length 2.54)
-      (name "IN A" (effects (font (size 1.27 1.27) (thickness 0) )))
+      (name "INA" (effects (font (size 1.27 1.27) (thickness 0) )))
       (number "1" (effects (font (size 1.27 1.27) (thickness 0) )))
     )
-    (pin unspecified line
-      (at 5.08 -1.27 0)
+    (pin input clock
+      (at 7.62 -1.27 0)
       (length 2.54)
       (name "CLK" (effects (font (size 1.27 1.27) (thickness 0) )))
       (number "2" (effects (font (size 1.27 1.27) (thickness 0) )))
@@ -59,18 +58,18 @@
     )
     (symbol "MULTI_PART_LOGIC_2_1"
     (polyline
-      (pts (xy 0.00 0.00) (xy 2.54 0.00) (xy 2.54 -2.54) (xy 0.00 -2.54) (xy 0.00 0.00))
+      (pts (xy 0.00 -5.08) (xy 2.54 -5.08) (xy 2.54 -7.62) (xy 0.00 -7.62) (xy 0.00 -5.08))
       (stroke (width 0.000) (type default))
-      (fill (type background))
+      (fill (type none))
     )
-    (pin unspecified line
-      (at 0.00 -1.27 180)
+    (pin bidirectional inverted_clock
+      (at 0.00 -6.35 180)
       (length 2.54)
-      (name "IN B" (effects (font (size 1.27 1.27) (thickness 0) )))
+      (name "INB" (effects (font (size 1.27 1.27) (thickness 0) )))
       (number "3" (effects (font (size 1.27 1.27) (thickness 0) )))
     )
-    (pin unspecified line
-      (at 5.08 -1.27 0)
+    (pin output line
+      (at 7.62 -6.35 0)
       (length 2.54)
       (name "OUT" (effects (font (size 1.27 1.27) (thickness 0) )))
       (number "4" (effects (font (size 1.27 1.27) (thickness 0) )))

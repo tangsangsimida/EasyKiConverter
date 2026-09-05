@@ -259,7 +259,11 @@ inline SymbolComponentIR toSymbolIR(const SymbolData& data) {
         ir.partCount = data.parts().size();
         int partIdx = 0;
         for (const auto& part : data.parts()) {
-            // 计算该 part 的几何边界框原点
+            // 图形使用 part 的显式原点（通常为 0,0）
+            const double gox = part.originX;
+            const double goy = part.originY;
+
+            // 引脚使用 part 的几何边界框原点（与旧代码的 calculatePartBBox 一致）
             double pox = part.originX;
             double poy = part.originY;
             {
@@ -303,15 +307,17 @@ inline SymbolComponentIR toSymbolIR(const SymbolData& data) {
                     poy = minY;
             }
 
+            // 引脚使用几何边界框原点
             convertPins(part.pins, pox, poy, partIdx);
-            convertRectangles(part.rectangles, pox, poy, partIdx);
-            convertCircles(part.circles, pox, poy, partIdx);
-            convertEllipses(part.ellipses, pox, poy, partIdx);
-            convertArcs(part.arcs, pox, poy, partIdx);
-            convertPolylines(part.polylines, pox, poy, partIdx);
-            convertPolygons(part.polygons, pox, poy, partIdx);
-            convertPaths(part.paths, pox, poy, partIdx);
-            convertTexts(part.texts, pox, poy, partIdx);
+            // 图形使用 part 显式原点
+            convertRectangles(part.rectangles, gox, goy, partIdx);
+            convertCircles(part.circles, gox, goy, partIdx);
+            convertEllipses(part.ellipses, gox, goy, partIdx);
+            convertArcs(part.arcs, gox, goy, partIdx);
+            convertPolylines(part.polylines, gox, goy, partIdx);
+            convertPolygons(part.polygons, gox, goy, partIdx);
+            convertPaths(part.paths, gox, goy, partIdx);
+            convertTexts(part.texts, gox, goy, partIdx);
             ++partIdx;
         }
     } else {
