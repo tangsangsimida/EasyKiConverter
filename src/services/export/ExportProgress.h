@@ -4,6 +4,7 @@
 #include <QMap>
 #include <QMetaType>
 #include <QString>
+#include <QStringList>
 
 namespace EasyKiConverter {
 
@@ -99,6 +100,7 @@ struct ExportItemStatus {
 
     Status status = Status::Pending;  ///< 当前状态
     QString errorMessage;  ///< 错误信息（当status为Failed时有效）
+    QStringList diagnostics;  ///< 非致命输入诊断（不阻断导出）
     QString filePath;  ///< 导出文件路径（当status为Success时有效）
     qint64 bytesProcessed = 0;  ///< 已处理的字节数（用于大文件导出进度）
     qint64 totalBytes = 0;  ///< 总字节数（用于计算进度百分比）

@@ -138,6 +138,10 @@ void SymbolExportStage::doLibraryExport(const QStringList& componentIds,
 
         ExportItemStatus status;
         status.status = ExportItemStatus::Status::Success;
+        status.diagnostics = data->symbolData()->validationErrors();
+        if (!status.diagnostics.isEmpty()) {
+            qWarning() << "SymbolExportStage: Input diagnostics for" << componentId << status.diagnostics;
+        }
         emit itemStatusChanged(componentId, status);
 
         if (m_options.debugMode) {

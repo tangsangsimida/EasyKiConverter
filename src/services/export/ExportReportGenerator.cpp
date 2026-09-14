@@ -89,6 +89,24 @@ void ExportReportGenerator::writeDetailedReport(const QString& reason,
         out << "- Failed: " << typeProgress.failedCount << "\n";
         out << "- Skipped: " << typeProgress.skippedCount << "\n";
         out << "- In progress: " << typeProgress.inProgressCount << "\n";
+        bool hasDiagnostics = false;
+        for (auto statusIt = typeProgress.itemStatus.cbegin(); statusIt != typeProgress.itemStatus.cend(); ++statusIt) {
+            if (!statusIt.value().diagnostics.isEmpty()) {
+                hasDiagnostics = true;
+                break;
+            }
+        }
+        if (hasDiagnostics) {
+            out << "\n#### Input Diagnostics\n\n";
+            for (auto statusIt = typeProgress.itemStatus.cbegin(); statusIt != typeProgress.itemStatus.cend();
+                 ++statusIt) {
+                if (statusIt.value().diagnostics.isEmpty())
+                    continue;
+                out << "- `" << statusIt.key() << "`:\n";
+                for (const QString& diagnostic : statusIt.value().diagnostics)
+                    out << "  - " << diagnostic << "\n";
+            }
+        }
     }
 
     out << "\n## Weak Network Diagnostics\n\n";

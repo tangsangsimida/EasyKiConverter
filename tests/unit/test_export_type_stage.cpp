@@ -306,6 +306,36 @@ private slots:
         QVERIFY(!QDir(tempDir.path() + QDir::separator() + QStringLiteral(".tmp")).exists());
     }
 
+    void symbolLibraryExportEmitsInputDiagnostics() {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        SymbolExportStage stage;
+        ExportOptions options;
+        options.outputPath = tempDir.path();
+        options.libName = QStringLiteral("DiagnosticSymbols");
+        options.overwriteExistingFiles = true;
+        stage.setOptions(options);
+
+        QMap<QString, QSharedPointer<ComponentData>> cachedData;
+        cachedData[QStringLiteral("C5101")] = makeSymbolComponent(QStringLiteral("C5101"), QStringLiteral("SYM_DIAG"));
+
+        QSignalSpy itemSpy(&stage, &SymbolExportStage::itemStatusChanged);
+        QSignalSpy completedSpy(&stage, &SymbolExportStage::completed);
+        stage.start({QStringLiteral("C5101")}, cachedData);
+
+        QVERIFY2(completedSpy.wait(3000), "Diagnostic symbol export should complete");
+        bool foundDiagnostics = false;
+        for (const QList<QVariant>& arguments : itemSpy) {
+            const ExportItemStatus status = qvariant_cast<ExportItemStatus>(arguments.at(1));
+            if (status.status == ExportItemStatus::Status::Success) {
+                QVERIFY(!status.diagnostics.isEmpty());
+                foundDiagnostics = true;
+            }
+        }
+        QVERIFY(foundDiagnostics);
+    }
+
     void symbolLibraryExportReportsMissingSymbolData() {
         QTemporaryDir tempDir;
         QVERIFY(tempDir.isValid());

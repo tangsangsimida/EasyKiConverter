@@ -79,6 +79,10 @@ private slots:
         QVERIFY(content.contains(QStringLiteral("### Symbol")));
         QVERIFY(content.contains(QStringLiteral("- Completed: 3/3")));
         QVERIFY(content.contains(QStringLiteral("- Skipped: 1")));
+        QVERIFY(content.contains(QStringLiteral("#### Input Diagnostics")));
+        QVERIFY(content.contains(QStringLiteral("- `C123`:")));
+        QVERIFY(content.contains(QStringLiteral("  - Rectangle 0 has a non-positive size")));
+        QVERIFY(content.contains(QStringLiteral("  - Path 0 has no commands")));
         QVERIFY(content.contains(QStringLiteral("### Footprint")));
         QVERIFY(content.contains(QStringLiteral("- Completed: 2/3")));
 
@@ -125,6 +129,11 @@ private:
         symbolProgress.failedCount = 0;
         symbolProgress.skippedCount = 1;
         symbolProgress.inProgressCount = 0;
+        ExportItemStatus symbolStatus;
+        symbolStatus.status = ExportItemStatus::Status::Success;
+        symbolStatus.diagnostics = {QStringLiteral("Rectangle 0 has a non-positive size"),
+                                    QStringLiteral("Path 0 has no commands")};
+        symbolProgress.itemStatus.insert(QStringLiteral("C123"), symbolStatus);
         progress.exportTypeProgress.insert(QStringLiteral("Symbol"), symbolProgress);
 
         ExportTypeProgress footprintProgress;
