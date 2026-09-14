@@ -194,11 +194,13 @@ private slots:
         text.text = QStringLiteral("LABEL");
         text.visible = true;
         text.textSize = 0.0;
+        text.anchor = QStringLiteral("baseline");
         symbol.addText(text);
 
         const QStringList errors = symbol.validationErrors();
         QVERIFY(errors.contains(QStringLiteral("Text 0 has a non-finite position or rotation")));
         QVERIFY(errors.contains(QStringLiteral("Text 0 has a non-positive font size")));
+        QVERIFY(errors.contains(QStringLiteral("Text 0 has an unsupported anchor baseline")));
         QVERIFY(!symbol.isValid());
     }
 

@@ -66,6 +66,10 @@ QStringList SymbolData::validationErrors() const {
             addError(QString("%1Text %2 has a non-positive font size").arg(prefix).arg(index));
         if (text.text.trimmed().isEmpty())
             addError(QString("%1Text %2 is empty").arg(prefix).arg(index));
+        const QString anchor = text.anchor.trimmed().toLower();
+        if (!anchor.isEmpty() &&
+            !QStringList{QStringLiteral("start"), QStringLiteral("middle"), QStringLiteral("end")}.contains(anchor))
+            addError(QString("%1Text %2 has an unsupported anchor %3").arg(prefix).arg(index).arg(text.anchor));
     };
     const auto validateGraphicOrder =
         [&](const QList<SymbolGraphicOrder>& order, const QString& prefix, const auto& countForType) {
