@@ -545,6 +545,12 @@ private slots:
         QByteArray roundTrip;
         QVERIFY(readCfbStream(filePath, QStringLiteral("LargeModel"), roundTrip));
         QCOMPARE(roundTrip, payload);
+
+        OLECompoundReader reader;
+        QVERIFY(reader.open(filePath));
+        QVERIFY(reader.containsStream(QStringLiteral("LargeModel")));
+        QVERIFY(reader.readStream(QStringLiteral("LargeModel"), &roundTrip));
+        QCOMPARE(roundTrip, payload);
     }
 
     /**

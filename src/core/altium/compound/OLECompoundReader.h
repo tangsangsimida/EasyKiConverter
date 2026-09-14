@@ -55,7 +55,7 @@ public:
      * @brief 读取指定流
      * @param streamPath 相对于 Root Entry 的流路径
      * @param data 输出流数据
-     * @return 流存在且 data 非空时返回 true
+     * @return 流存在且 data 指针有效时返回 true
      */
     bool readStream(const QString& streamPath, QByteArray* data) const;
 
