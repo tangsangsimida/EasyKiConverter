@@ -1341,6 +1341,9 @@ private slots:
         IR::SymbolCircleIR invalidCircle;
         invalidCircle.radius = -1.0;
         invalidGeometrySymbol.circles.append(invalidCircle);
+        IR::SymbolCircleIR invalidStrokeCircle;
+        invalidStrokeCircle.strokeWidth = std::numeric_limits<double>::quiet_NaN();
+        invalidGeometrySymbol.circles.append(invalidStrokeCircle);
         IR::SymbolArcIR degenerateArc;
         degenerateArc.startPoint = QPointF(0.0, 0.0);
         degenerateArc.midPoint = QPointF(1.0, 1.0);
@@ -1351,6 +1354,8 @@ private slots:
         QVERIFY(invalidGeometryExporter.exportSymbol(invalidGeometrySymbol, invalidGeometryPath));
         QVERIFY(invalidGeometryExporter.diagnostics().contains(
             QStringLiteral("符号 INVALID_GEOMETRY 圆图元 0 的半径无效，已钳制为非负值")));
+        QVERIFY(invalidGeometryExporter.diagnostics().contains(
+            QStringLiteral("符号 INVALID_GEOMETRY 圆图元 1 的中心或线宽无效，已跳过")));
         QVERIFY(invalidGeometryExporter.diagnostics().contains(
             QStringLiteral("符号 INVALID_GEOMETRY 圆弧图元 0 三点退化，已使用安全回退圆心")));
 

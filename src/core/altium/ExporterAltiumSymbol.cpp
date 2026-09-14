@@ -255,6 +255,7 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
             return false;
         return std::all_of(points.cbegin(), points.cend(), isFinitePoint);
     };
+    const auto isValidStrokeWidth = [](double width) { return std::isfinite(width) && width >= 0.0; };
 
     for (const IR::SymbolParameterIR& parameter : data.parameters) {
         if (!isFinitePoint(parameter.position) || !std::isfinite(parameter.rotation) ||
@@ -335,6 +336,10 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
             m_diagnostics.append(
                 QStringLiteral("符号 %1 矩形图元 %2 的圆角半径无效，已钳制为非负值").arg(data.name).arg(i));
         }
+        if (!isValidStrokeWidth(r.strokeWidth)) {
+            m_diagnostics.append(QStringLiteral("符号 %1 矩形图元 %2 的线宽无效，已跳过").arg(data.name).arg(i));
+            continue;
+        }
         if (r.cornerRadiusX > 0.0 || r.cornerRadiusY > 0.0) {
             AltiumSchRoundRectangle rectangle = convertRoundRectangle(r);
             rectangle.sourceGraphicIndex = sourceIndexForPart(data.rectangles, i, r.partIndex);
@@ -349,6 +354,10 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
     }
     for (int i = 0; i < data.circles.size(); ++i) {
         const IR::SymbolCircleIR& circle = data.circles.at(i);
+        if (!isFinitePoint(circle.center) || !isValidStrokeWidth(circle.strokeWidth)) {
+            m_diagnostics.append(QStringLiteral("符号 %1 圆图元 %2 的中心或线宽无效，已跳过").arg(data.name).arg(i));
+            continue;
+        }
         if (!std::isfinite(circle.radius) || circle.radius < 0.0) {
             m_diagnostics.append(QStringLiteral("符号 %1 圆图元 %2 的半径无效，已钳制为非负值").arg(data.name).arg(i));
         }
@@ -385,6 +394,10 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
             m_diagnostics.append(QStringLiteral("符号 %1 多边形图元 %2 的点列无效，已跳过").arg(data.name).arg(i));
             continue;
         }
+        if (!isValidStrokeWidth(sourcePolygon.strokeWidth)) {
+            m_diagnostics.append(QStringLiteral("符号 %1 多边形图元 %2 的线宽无效，已跳过").arg(data.name).arg(i));
+            continue;
+        }
         AltiumSchPolygon polygon = convertPolygon(sourcePolygon);
         polygon.sourceGraphicIndex = sourceIndexForPart(data.polygons, i, sourcePolygon.partIndex);
         polygon.sourcePartIndex = sourcePolygon.partIndex;
@@ -396,6 +409,10 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
             m_diagnostics.append(QStringLiteral("符号 %1 折线图元 %2 的点列无效，已跳过").arg(data.name).arg(i));
             continue;
         }
+        if (!isValidStrokeWidth(sourcePolyline.strokeWidth)) {
+            m_diagnostics.append(QStringLiteral("符号 %1 折线图元 %2 的线宽无效，已跳过").arg(data.name).arg(i));
+            continue;
+        }
         AltiumSchPolyline polyline = convertPolyline(sourcePolyline);
         polyline.sourceGraphicIndex = sourceIndexForPart(data.polylines, i, sourcePolyline.partIndex);
         polyline.sourcePartIndex = sourcePolyline.partIndex;
@@ -403,6 +420,11 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
     }
     for (int pathIndex = 0; pathIndex < data.paths.size(); ++pathIndex) {
         const IR::SymbolPathIR& p = data.paths.at(pathIndex);
+        if (!isValidStrokeWidth(p.strokeWidth)) {
+            m_diagnostics.append(
+                QStringLiteral("符号 %1 路径图元 %2 的线宽无效，已跳过").arg(data.name).arg(pathIndex));
+            continue;
+        }
         // 非填充路径可直接拆分为 Altium 原生线段和 Bézier 记录，避免曲线被
         // 强制膨胀为大量折线；填充路径仍使用闭合点列以保留填充语义。
         if (!p.isFilled && !p.segments.isEmpty()) {
@@ -525,13 +547,16 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
     }
     for (int bezierIndex = 0; bezierIndex < data.beziers.size(); ++bezierIndex) {
         const IR::SymbolBezierIR& b = data.beziers.at(bezierIndex);
-        if (b.controlPoints.size() == 4 && hasFinitePoints(b.controlPoints, 4)) {
+        if (b.controlPoints.size() == 4 && hasFinitePoints(b.controlPoints, 4) && isValidStrokeWidth(b.strokeWidth)) {
             component.beziers.append(convertBezier(b));
-        } else {
+        } else if (b.controlPoints.size() != 4 || !hasFinitePoints(b.controlPoints, 4)) {
             m_diagnostics.append(QStringLiteral("符号 %1 Bézier 图元 %2 的控制点参数无效（数量为 %3），已跳过")
                                      .arg(data.name)
                                      .arg(bezierIndex)
                                      .arg(b.controlPoints.size()));
+        } else {
+            m_diagnostics.append(
+                QStringLiteral("符号 %1 Bézier 图元 %2 的线宽无效，已跳过").arg(data.name).arg(bezierIndex));
         }
     }
     for (int i = 0; i < data.ieeeSymbols.size(); ++i) {
@@ -559,7 +584,8 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
     for (int i = 0; i < data.textFrames.size(); ++i) {
         const IR::SymbolTextFrameIR& frame = data.textFrames.at(i);
         if (!std::isfinite(frame.x0) || !std::isfinite(frame.y0) || !std::isfinite(frame.x1) ||
-            !std::isfinite(frame.y1) || !std::isfinite(frame.textMargin) || frame.textMargin < 0.0) {
+            !std::isfinite(frame.y1) || !std::isfinite(frame.textMargin) || frame.textMargin < 0.0 ||
+            !isValidStrokeWidth(frame.strokeWidth)) {
             m_diagnostics.append(QStringLiteral("符号 %1 文本框图元 %2 的几何参数无效，已跳过").arg(data.name).arg(i));
             continue;
         }
@@ -580,7 +606,8 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
     for (int i = 0; i < data.ellipses.size(); ++i) {
         const IR::SymbolEllipseIR& sourceEllipse = data.ellipses.at(i);
         if (!isFinitePoint(sourceEllipse.center) || !std::isfinite(sourceEllipse.radiusX) ||
-            !std::isfinite(sourceEllipse.radiusY) || sourceEllipse.radiusX <= 0.0 || sourceEllipse.radiusY <= 0.0) {
+            !std::isfinite(sourceEllipse.radiusY) || sourceEllipse.radiusX <= 0.0 || sourceEllipse.radiusY <= 0.0 ||
+            !isValidStrokeWidth(sourceEllipse.strokeWidth)) {
             m_diagnostics.append(QStringLiteral("符号 %1 椭圆图元 %2 的几何参数无效，已跳过").arg(data.name).arg(i));
             continue;
         }
@@ -593,7 +620,8 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
     for (int i = 0; i < data.pies.size(); ++i) {
         const IR::SymbolPieIR& sourcePie = data.pies.at(i);
         if (!isFinitePoint(sourcePie.center) || !std::isfinite(sourcePie.radius) || sourcePie.radius <= 0.0 ||
-            !std::isfinite(sourcePie.startAngle) || !std::isfinite(sourcePie.endAngle)) {
+            !std::isfinite(sourcePie.startAngle) || !std::isfinite(sourcePie.endAngle) ||
+            !isValidStrokeWidth(sourcePie.strokeWidth)) {
             m_diagnostics.append(QStringLiteral("符号 %1 扇形图元 %2 的几何参数无效，已跳过").arg(data.name).arg(i));
             continue;
         }
@@ -603,7 +631,8 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
         const IR::SymbolEllipticalArcIR& sourceArc = data.ellipticalArcs.at(i);
         if (!isFinitePoint(sourceArc.center) || !std::isfinite(sourceArc.radiusX) ||
             !std::isfinite(sourceArc.radiusY) || sourceArc.radiusX <= 0.0 || sourceArc.radiusY <= 0.0 ||
-            !std::isfinite(sourceArc.startAngle) || !std::isfinite(sourceArc.endAngle)) {
+            !std::isfinite(sourceArc.startAngle) || !std::isfinite(sourceArc.endAngle) ||
+            !isValidStrokeWidth(sourceArc.strokeWidth)) {
             m_diagnostics.append(QStringLiteral("符号 %1 椭圆弧图元 %2 的几何参数无效，已跳过").arg(data.name).arg(i));
             continue;
         }
