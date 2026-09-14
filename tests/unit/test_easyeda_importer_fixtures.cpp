@@ -95,6 +95,32 @@ private slots:
     }
 
     /**
+     * @brief 验证未支持的 EasyEDA 图元不会静默丢失诊断信息。
+     * @details 未知 designator 以无效顺序引用保留，供模型校验和下游导出报告使用。
+     */
+    void testUnsupportedShapeIsReportedInGraphicOrder() {
+        QString error;
+        QJsonObject fixture = loadFixtureObject(QStringLiteral("easyeda/symbol_basic.json"), &error);
+        QVERIFY2(error.isEmpty(), qPrintable(error));
+
+        QJsonObject dataStr = fixture.value(QStringLiteral("dataStr")).toObject();
+        QJsonArray shapes = dataStr.value(QStringLiteral("shape")).toArray();
+        shapes.append(QStringLiteral("UNKNOWN~payload"));
+        dataStr[QStringLiteral("shape")] = shapes;
+        fixture[QStringLiteral("dataStr")] = dataStr;
+
+        EasyedaSymbolImporter importer;
+        const QSharedPointer<SymbolData> symbol = importer.importSymbolData(fixture);
+        QVERIFY(symbol);
+        QCOMPARE(symbol->graphicOrder().size(), 5);
+        QCOMPARE(symbol->graphicOrder().last().type, QStringLiteral("UNKNOWN"));
+        QCOMPARE(symbol->graphicOrder().last().index, -1);
+
+        const QStringList validationErrors = symbol->validationErrors();
+        QVERIFY(validationErrors.join('\n').contains(QStringLiteral("unknown type UNKNOWN")));
+    }
+
+    /**
      * @brief 验证真实 EasyEDA 源数据能够完整写出为 Altium SchLib
      * @details 覆盖源 JSON、SymbolData、通用 IR 和 SchLib 导出之间的完整链路。
      */

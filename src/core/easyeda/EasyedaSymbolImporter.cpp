@@ -208,6 +208,15 @@ QSharedPointer<SymbolData> EasyedaSymbolImporter::importSymbolData(const QJsonOb
                                     SymbolEllipse ellipse = importEllipseData(shapeString);
                                     part.graphicOrder.append({designator, static_cast<int>(part.ellipses.size())});
                                     part.ellipses.append(ellipse);
+                                } else {
+                                    const QString diagnostic =
+                                        QStringLiteral("EasyEDA 符号 Part %1 包含不支持的图元类型 %2")
+                                            .arg(i)
+                                            .arg(designator);
+                                    qWarning().noquote() << diagnostic;
+                                    // 保留无效顺序引用，使后续 validationErrors() 和导出诊断能够指出
+                                    // 被忽略的源图元，而不是让它静默消失。
+                                    part.graphicOrder.append({designator, -1});
                                 }
                             }
                         }
@@ -294,7 +303,11 @@ QSharedPointer<SymbolData> EasyedaSymbolImporter::importSymbolData(const QJsonOb
                     symbolData->addEllipse(ellipse);
                     qDebug() << "  -> Added ellipse";
                 } else {
-                    qDebug() << "  -> Unknown designator:" << designator;
+                    const QString diagnostic = QStringLiteral("EasyEDA 符号包含不支持的图元类型 %1").arg(designator);
+                    qWarning().noquote() << diagnostic;
+                    // 保留无效顺序引用，使后续 validationErrors() 和导出诊断能够指出
+                    // 被忽略的源图元，而不是让它静默消失。
+                    symbolData->addGraphicOrder({designator, -1});
                 }
             }
 
