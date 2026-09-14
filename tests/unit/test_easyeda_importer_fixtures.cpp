@@ -212,6 +212,15 @@ private slots:
         QVERIFY2(reader.open(outputPath), qPrintable(reader.errorString()));
         QCOMPARE(reader.components().size(), 1);
         QCOMPARE(reader.components().first().name, QStringLiteral("FIXTURE_SYMBOL"));
+        const QVector<AltiumSchLibReader::FontInfo> fonts = reader.fonts();
+        bool foundArialFont = false;
+        for (const auto& font : fonts) {
+            if (font.name == QStringLiteral("Arial") && font.size == 7 && font.bold) {
+                foundArialFont = true;
+                break;
+            }
+        }
+        QVERIFY(foundArialFont);
         QVector<AltiumSchLibReader::Record> records;
         QVERIFY(reader.readComponentRecords(QStringLiteral("FIXTURE_SYMBOL"), &records));
         QVERIFY(records.size() >= 7);
@@ -241,6 +250,11 @@ private slots:
             foundLine |= recordType == QStringLiteral("6");
             foundText |= recordType == QStringLiteral("4") &&
                          record.parameters.value(QStringLiteral("Text")) == QStringLiteral("LABEL");
+            if (recordType == QStringLiteral("4") &&
+                record.parameters.value(QStringLiteral("Text")) == QStringLiteral("LABEL")) {
+                QVERIFY(record.fontId > 0);
+                QCOMPARE(fonts.at(record.fontId - 1).name, QStringLiteral("Arial"));
+            }
             if (recordType == QStringLiteral("41")) {
                 const QString name = record.parameters.value(QStringLiteral("NAME"));
                 const QString text = record.parameters.value(QStringLiteral("TEXT"));
