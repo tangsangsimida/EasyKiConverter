@@ -519,6 +519,12 @@ private slots:
         path.vertices = {QPointF(0, 0), QPointF(100000, 100000), QPointF(200000, 0)};
         path.ownerPartId = 1;
         symbol.paths.append(path);
+        AltiumSchIeee ieee;
+        ieee.symbol = 18;  // Pi
+        ieee.locationX = 300000;
+        ieee.locationY = 300000;
+        ieee.mirrored = true;
+        symbol.ieeeSymbols.append(ieee);
 
         AltiumSchComponent::Implementation impl;
         impl.modelName = QStringLiteral("LQFN-56_L7.0-W7.0-P0.4-EP");
@@ -538,7 +544,7 @@ private slots:
         QByteArray schHeader;
         QVERIFY(readCfbStream(schPath, QStringLiteral("FileHeader"), schHeader));
         QVERIFY(schHeader.contains("COMPCOUNT=1"));
-        QVERIFY(schHeader.contains("WEIGHT=19"));
+        QVERIFY(schHeader.contains("WEIGHT=20"));
         QVERIFY(schHeader.contains("LIBREF0=C2040"));
         QVERIFY(schHeader.contains("PARTCOUNT0=2"));
         QVERIFY(schHeader.mid(4).startsWith("|HEADER="));
@@ -554,6 +560,9 @@ private slots:
         QVERIFY(schData.contains("DATAFILECOUNT=0"));
         QVERIFY(schData.contains("THERMAL_MODEL=default"));
         QVERIFY(schData.contains("RECORD=6"));
+        QVERIFY(schData.contains("RECORD=3"));
+        QVERIFY(schData.contains("Symbol=18"));
+        QVERIFY(schData.contains("Mirror=T"));
         QVERIFY(schData.contains("OWNERPARTID=1"));
         QVERIFY(schData.contains("PartCount=2"));
         QVERIFY(schData.contains("RECORD=34"));

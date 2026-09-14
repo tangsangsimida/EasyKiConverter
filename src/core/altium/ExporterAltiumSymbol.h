@@ -83,6 +83,11 @@ private:
     AltiumSchBezier convertBezier(const IR::SymbolBezierIR& bezier);
 
     /**
+     * @brief SymbolIeeeIR → AltiumSchIeee
+     */
+    AltiumSchIeee convertIeee(const IR::SymbolIeeeIR& ieee);
+
+    /**
      * @brief SymbolTextIR → AltiumSchText 转换
      */
     AltiumSchText convertText(const IR::SymbolTextIR& text);

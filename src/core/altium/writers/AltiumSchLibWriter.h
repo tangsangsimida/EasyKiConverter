@@ -56,6 +56,7 @@ private:
     void writePolylineRecord(AltiumBinaryWriter& writer, const AltiumSchPolyline& polyline);
     void writePathRecord(AltiumBinaryWriter& writer, const AltiumSchPath& path);
     void writeBezierRecord(AltiumBinaryWriter& writer, const AltiumSchBezier& bezier);
+    void writeIeeeRecord(AltiumBinaryWriter& writer, const AltiumSchIeee& ieee);
     void writeTextRecord(AltiumBinaryWriter& writer, const AltiumSchText& text);
     void writeComponentParameterRecords(AltiumBinaryWriter& writer, const AltiumSchComponent& component);
     void writeImplementationRecords(AltiumBinaryWriter& writer, const AltiumSchComponent& component);

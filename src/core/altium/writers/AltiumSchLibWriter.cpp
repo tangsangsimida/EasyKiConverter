@@ -398,6 +398,11 @@ void AltiumSchLibWriter::writeComponentStorage(OLECompoundWriter& ole,
         writeBezierRecord(writer, bezier);
     }
 
+    // 写入 IEEE 图形
+    for (const AltiumSchIeee& ieee : component.ieeeSymbols) {
+        writeIeeeRecord(writer, ieee);
+    }
+
     // 写入文本
     for (const AltiumSchText& text : component.texts) {
         writeTextRecord(writer, text);
@@ -689,6 +694,26 @@ void AltiumSchLibWriter::writeBezierRecord(AltiumBinaryWriter& writer, const Alt
 }
 
 /**
+ * @brief 写入 IEEE 图形记录 (RECORD=3)
+ */
+void AltiumSchLibWriter::writeIeeeRecord(AltiumBinaryWriter& writer, const AltiumSchIeee& ieee) {
+    QMap<QString, QString> params;
+    params["RECORD"] = "3";
+    addOwnerParams(params, ieee.ownerPartId);
+    params["Symbol"] = QString::number(ieee.symbol);
+    addCoordParam(params, "Location.X", ieee.locationX);
+    addCoordParam(params, "Location.Y", ieee.locationY);
+    params["ScaleFactor"] = QString::number(qMax(1, ieee.scaleFactor));
+    if (ieee.orientation != 0)
+        params["Orientation"] = QString::number(ieee.orientation);
+    params["LineWidth"] = QString::number(qMax(0, ieee.lineWidth));
+    if (ieee.mirrored)
+        params["Mirror"] = "T";
+    addColorParam(params, "Color", ieee.color);
+    writer.writeCStringParameterBlock(params);
+}
+
+/**
  * @brief 写入文本记录 (RECORD=4, Label)
  */
 void AltiumSchLibWriter::writeTextRecord(AltiumBinaryWriter& writer, const AltiumSchText& text) {
@@ -861,7 +886,7 @@ int AltiumSchLibWriter::componentRecordCount(const AltiumSchComponent& component
     const int graphics = component.pins.size() + component.rectangles.size() + component.lines.size() +
                          component.arcs.size() + component.polygons.size() + component.ellipses.size() +
                          component.polylines.size() + component.paths.size() + validBezierCount +
-                         component.texts.size();
+                         component.ieeeSymbols.size() + component.texts.size();
     // Component + graphics + 参数字段 + ImplementationList + implementation records.
     // 每个实现包含 RECORD=45、46、48，以及每个符号引脚对应的 RECORD=47。
     return 1 + graphics + componentParameterRecordCount(component) + 1 +

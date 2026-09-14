@@ -256,6 +256,8 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
         if (b.controlPoints.size() == 4)
             component.beziers.append(convertBezier(b));
     }
+    for (const IR::SymbolIeeeIR& ieee : data.ieeeSymbols)
+        component.ieeeSymbols.append(convertIeee(ieee));
     for (const IR::SymbolTextIR& t : data.texts)
         component.texts.append(convertText(t));
     for (const IR::SymbolEllipseIR& e : data.ellipses)
@@ -628,6 +630,22 @@ AltiumSchBezier ExporterAltiumSymbol::convertBezier(const IR::SymbolBezierIR& be
 }
 
 /**
+ * @brief SymbolIeeeIR → AltiumSchIeee
+ */
+AltiumSchIeee ExporterAltiumSymbol::convertIeee(const IR::SymbolIeeeIR& ieee) {
+    AltiumSchIeee altiumIeee;
+    altiumIeee.symbol = qBound(0, ieee.symbol, 34);
+    altiumIeee.locationX = AltiumCoord::mmToRaw(ieee.position.x());
+    altiumIeee.locationY = AltiumCoord::mmToRaw(ieee.position.y());
+    altiumIeee.scaleFactor = qMax(1, ieee.scaleFactor);
+    altiumIeee.orientation = ((ieee.orientation % 4) + 4) % 4;
+    altiumIeee.mirrored = ieee.mirrored;
+    altiumIeee.color = toAltiumColor(ieee.color);
+    altiumIeee.ownerPartId = qMax(1, ieee.partIndex + 1);
+    return altiumIeee;
+}
+
+/**
  * @brief SymbolTextIR → AltiumSchText
  */
 AltiumSchText ExporterAltiumSymbol::convertText(const IR::SymbolTextIR& text) {
@@ -709,6 +727,8 @@ void ExporterAltiumSymbol::centerComponent(AltiumSchComponent& component) {
     for (const auto& bezier : component.beziers)
         for (const QPointF& point : bezier.controlPoints)
             includeSchematicPoint(point);
+    for (const auto& ieee : component.ieeeSymbols)
+        include(ieee.locationX, ieee.locationY);
     for (const auto& text : component.texts)
         include(text.locationX, text.locationY);
     for (const auto& parameter : component.parameters)
@@ -777,6 +797,10 @@ void ExporterAltiumSymbol::centerComponent(AltiumSchComponent& component) {
         for (QPointF& v : bezier.controlPoints) {
             v = QPointF(v.x() - offsetPolyX, v.y() - offsetPolyY);
         }
+    }
+    for (auto& ieee : component.ieeeSymbols) {
+        ieee.locationX -= offsetX;
+        ieee.locationY -= offsetY;
     }
     // 平移文本
     for (auto& text : component.texts) {

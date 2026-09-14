@@ -217,6 +217,20 @@ struct SymbolBezierIR {
 };
 
 /**
+ * @brief 通用 Altium IEEE 图形
+ * @details `symbol` 使用 Altium RECORD=3 的 TIeeeSymbol 编号，位置单位为 mm。
+ */
+struct SymbolIeeeIR {
+    int symbol = 0;  ///< Altium IEEE 图形编号（0-34）
+    QPointF position;  ///< 图形锚点（mm）
+    int scaleFactor = 10;  ///< Altium 图形缩放因子
+    int orientation = 0;  ///< 0-3，表示 0°/90°/180°/270°
+    bool mirrored = false;  ///< 是否镜像
+    QColor color = Qt::black;
+    int partIndex = 0;  ///< 所属部件索引（多部件符号使用）
+};
+
+/**
  * @brief 通用符号文本
  * @note 颜色、字体大小已标准化
  */
@@ -287,6 +301,7 @@ struct SymbolComponentIR {
     QList<SymbolPolygonIR> polygons;
     QList<SymbolPathIR> paths;
     QList<SymbolBezierIR> beziers;
+    QList<SymbolIeeeIR> ieeeSymbols;
     QList<SymbolTextIR> texts;
     QList<SymbolParameterIR> parameters;
     QList<SymbolModelIR> models;
@@ -311,7 +326,7 @@ struct SymbolComponentIR {
     bool hasGraphics() const {
         return !pins.isEmpty() || !rectangles.isEmpty() || !circles.isEmpty() || !arcs.isEmpty() ||
                !ellipses.isEmpty() || !polylines.isEmpty() || !polygons.isEmpty() || !paths.isEmpty() ||
-               !beziers.isEmpty() || !texts.isEmpty();
+               !beziers.isEmpty() || !ieeeSymbols.isEmpty() || !texts.isEmpty();
     }
 
     void clear() {
@@ -329,6 +344,7 @@ struct SymbolComponentIR {
         polygons.clear();
         paths.clear();
         beziers.clear();
+        ieeeSymbols.clear();
         texts.clear();
         parameters.clear();
         models.clear();

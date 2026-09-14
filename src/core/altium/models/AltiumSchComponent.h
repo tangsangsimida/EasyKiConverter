@@ -126,6 +126,21 @@ struct AltiumSchBezier {
 };
 
 /**
+ * @brief Altium 符号 IEEE 图形
+ * @details 写入 RECORD=3，支持独立逻辑和数学图形。
+ */
+struct AltiumSchIeee {
+    int symbol = 0;  ///< TIeeeSymbol 编号
+    int locationX = 0, locationY = 0;  ///< 锚点位置（原始单位）
+    int scaleFactor = 10;
+    int orientation = 0;
+    bool mirrored = false;
+    int lineWidth = 1;
+    uint32_t color = 0x000000;
+    int ownerPartId = 1;
+};
+
+/**
  * @brief Altium 符号文本
  */
 struct AltiumSchText {
@@ -184,6 +199,7 @@ struct AltiumSchComponent {
     QList<AltiumSchPolyline> polylines;
     QList<AltiumSchPath> paths;
     QList<AltiumSchBezier> beziers;
+    QList<AltiumSchIeee> ieeeSymbols;
     QList<AltiumSchText> texts;
 
     /** @brief 封装链接（实现记录） */
