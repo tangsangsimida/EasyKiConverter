@@ -268,11 +268,17 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
                                      .arg(parameter.name));
             continue;
         }
+        if (!std::isfinite(parameter.fontSizeMm) || parameter.fontSizeMm < 0.0) {
+            m_diagnostics.append(
+                QStringLiteral("符号 %1 参数 %2 的字体大小无效，已跳过").arg(data.name).arg(parameter.name));
+            continue;
+        }
         AltiumSchParameter altiumParameter;
         altiumParameter.name = parameter.name;
         altiumParameter.value = parameter.value;
         altiumParameter.locationX = AltiumCoord::mmToRaw(parameter.position.x());
         altiumParameter.locationY = AltiumCoord::mmToRaw(parameter.position.y());
+        altiumParameter.fontSizeMm = parameter.fontSizeMm;
         altiumParameter.isHidden = !parameter.visible;
         altiumParameter.readOnly = parameter.readOnly;
         altiumParameter.orientation = toAltiumOrientation(parameter.rotation);

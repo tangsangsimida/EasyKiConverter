@@ -1050,6 +1050,7 @@ private slots:
         rotatedParameter.name = QStringLiteral("角度参数");
         rotatedParameter.value = QStringLiteral("值");
         rotatedParameter.rotation = -90.0;
+        rotatedParameter.fontSizeMm = 2.5;
         rotatedTextSymbol.parameters.append(rotatedParameter);
         IR::SymbolParameterIR firstPartParameter;
         firstPartParameter.name = QStringLiteral("第一部件参数");
@@ -1071,6 +1072,11 @@ private slots:
         QVERIFY(rotatedTextData.contains("Orientation=3"));
         QVERIFY(rotatedTextData.contains("NAME=第一部件参数"));
         QVERIFY(rotatedTextData.contains("NAME=公共参数"));
+        const int rotatedParameterOffset = rotatedTextData.indexOf("NAME=角度参数");
+        const int rotatedParameterRecordOffset = rotatedTextData.lastIndexOf("|RECORD=41|", rotatedParameterOffset);
+        QVERIFY(rotatedParameterOffset > rotatedParameterRecordOffset);
+        QVERIFY(rotatedTextData.mid(rotatedParameterRecordOffset, rotatedParameterOffset - rotatedParameterRecordOffset)
+                    .contains("FONTID=2"));
         QVERIFY(rotatedTextData.contains("OWNERPARTID=1"));
         QVERIFY(rotatedTextData.contains("OWNERPARTID=-1"));
     }
@@ -1400,6 +1406,16 @@ private slots:
             QStringLiteral("符号 INVALID_TEXT_DATA 文本框图元 0 的几何参数无效，已跳过")));
         QVERIFY(invalidTextExporter.diagnostics().contains(
             QStringLiteral("符号 INVALID_TEXT_DATA 参数 Custom 的位置、旋转角度或名称无效，已跳过")));
+        IR::SymbolParameterIR invalidParameterFont;
+        invalidParameterFont.name = QStringLiteral("FontInvalid");
+        invalidParameterFont.fontSizeMm = std::numeric_limits<double>::quiet_NaN();
+        invalidTextSymbol.parameters.append(invalidParameterFont);
+        ExporterAltiumSymbol invalidParameterFontExporter;
+        const QString invalidParameterFontPath =
+            QDir(tempDir.path()).filePath(QStringLiteral("invalid-parameter-font.SchLib"));
+        QVERIFY(invalidParameterFontExporter.exportSymbol(invalidTextSymbol, invalidParameterFontPath));
+        QVERIFY(invalidParameterFontExporter.diagnostics().contains(
+            QStringLiteral("符号 INVALID_TEXT_DATA 参数 FontInvalid 的字体大小无效，已跳过")));
 
         IR::SymbolComponentIR invalidBoundsSymbol;
         invalidBoundsSymbol.name = QStringLiteral("INVALID_BOUNDS_DATA");

@@ -10,8 +10,8 @@
 - 引脚电气类型：输入、输出、双向、无源、电源、开集电极和开集发射极。
 - 引脚装饰：覆盖 Altium IEEE 图形集合，包括取反圆点、时钟、低电平有效、开集电极/发射极、高阻、脉冲、延迟、移位、模拟/数字输入、总线、逻辑关系和信号方向标志。
 - 符号参数：Value、Description、Manufacturer、Manufacturer Part Number、Datasheet、LCSC、JLCPCB、供应商及自定义参数。
-- 参数控制：参数值、名称、显示/隐藏、只读、位置、旋转角度、字体编号和所属部件。
-- 文本字体：普通文本支持字体族、字号、粗体和斜体，并在 SchLib `FileHeader` 中动态登记字体表；无法解析到当前字体表的显式编号回退到默认字体 1；旋转角度按最近的 90° 方向归一化为 Altium `Orientation=0..3`。
+- 参数控制：参数值、名称、显示/隐藏、只读、位置、旋转角度、字体编号、字体大小和所属部件。
+- 文本字体：普通文本支持字体族、字号、粗体和斜体，并在 SchLib `FileHeader` 中动态登记字体表；参数的 `fontSizeMm` 会映射到参数记录的 `FONTID`；无法解析到当前字体表的显式编号回退到默认字体 1；旋转角度按最近的 90° 方向归一化为 Altium `Orientation=0..3`。
 - 多部件符号：图形、文本、参数和引脚按 `partIndex` 写入对应部件。
 - 公共图元：`SymbolPart::commonToAllParts` 会在缓存序列化和 `IrBuilder` 阶段保留，转换为 IR 的负 `partIndex`；最终写入 Altium Part Zero（`OWNERPARTID=-1`）。公共部件中的引脚会设置 `SymbolPinIR::commonToAllParts`，其名称、编号文字也会继承该归属。文本图元同时写出 `OWNERPARTDISPLAYMODE=1`，与当前单显示模式的引脚记录保持一致。
 - `IndexInSheet`：图元、二进制引脚和归属于具体部件的用户参数共享组件内从 `0` 开始的内容记录计数；首条内容记录隐含索引 `0`，后续文本记录和用户参数写出 `IndexInSheet`。二进制引脚虽然没有文本字段，但会推进同一计数器；组件记录、Designator、公共参数和实现记录不占用该计数。

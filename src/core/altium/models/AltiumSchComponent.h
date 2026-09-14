@@ -308,6 +308,7 @@ struct AltiumSchParameter {
     int locationX = 0;  ///< 参数位置 X（原始单位）
     int locationY = 0;  ///< 参数位置 Y（原始单位）
     int fontId = 1;  ///< Altium 字体编号
+    double fontSizeMm = 0.0;  ///< 参数字体大小（mm，0 表示默认）
     uint32_t color = 0x000000;  ///< 颜色（0x00BBGGRR）
     bool isHidden = true;  ///< 是否隐藏
     bool readOnly = false;  ///< 是否只读

@@ -11,6 +11,8 @@
 #include <QRandomGenerator>
 #include <QSet>
 
+#include <cmath>
+
 namespace EasyKiConverter {
 
 namespace {
@@ -28,6 +30,7 @@ struct ParameterField {
     bool readOnly = false;
     int orientation = 0;
     int ownerPartId = -1;
+    double fontSizeMm = 0.0;
 };
 
 /**
@@ -63,7 +66,8 @@ QList<ParameterField> componentParameterFields(const AltiumSchComponent& compone
                                  int orientation = 0,
                                  int ownerPartId = -1,
                                  int fontId = 1,
-                                 uint32_t color = 0x000000) {
+                                 uint32_t color = 0x000000,
+                                 double fontSizeMm = 0.0) {
         if (name.trimmed().isEmpty() || value.trimmed().isEmpty() || names.contains(name))
             return;
         ParameterField field;
@@ -79,6 +83,7 @@ QList<ParameterField> componentParameterFields(const AltiumSchComponent& compone
         field.ownerPartId = ownerPartId;
         field.fontId = fontId;
         field.color = color;
+        field.fontSizeMm = fontSizeMm;
         fields.append(field);
         names.insert(field.name);
     };
@@ -124,7 +129,8 @@ QList<ParameterField> componentParameterFields(const AltiumSchComponent& compone
                     parameter.orientation,
                     parameter.ownerPartId,
                     parameter.fontId,
-                    parameter.color);
+                    parameter.color,
+                    parameter.fontSizeMm);
     }
     return fields;
 }
@@ -172,6 +178,13 @@ void AltiumSchLibWriter::registerTextFonts(const QList<AltiumSchComponent>& comp
             const QString fontName = text.fontName.isEmpty() ? QStringLiteral("Times New Roman") : text.fontName;
             const int fontSize = text.fontSizeMm > 0.0 ? qMax(1, qRound(text.fontSizeMm / MILLIMETERS_PER_POINT)) : 10;
             getOrAddFont(fontName, fontSize, text.bold, text.italic);
+        }
+        for (const AltiumSchParameter& parameter : component.parameters) {
+            if (!std::isfinite(parameter.fontSizeMm) || parameter.fontSizeMm <= 0.0)
+                continue;
+            constexpr double MILLIMETERS_PER_POINT = 25.4 / 72.0;
+            const int fontSize = qMax(1, qRound(parameter.fontSizeMm / MILLIMETERS_PER_POINT));
+            getOrAddFont(QStringLiteral("Times New Roman"), fontSize);
         }
     }
 }
@@ -1432,7 +1445,13 @@ void AltiumSchLibWriter::writeComponentParameterRecords(AltiumBinaryWriter& writ
         }
         if (field.color != 0)
             parameterParams["COLOR"] = QString::number(field.color);
-        parameterParams["FONTID"] = QString::number(field.fontId);
+        int fontId = field.fontId;
+        if (std::isfinite(field.fontSizeMm) && field.fontSizeMm > 0.0) {
+            constexpr double MILLIMETERS_PER_POINT = 25.4 / 72.0;
+            fontId = getOrAddFont(QStringLiteral("Times New Roman"),
+                                  qMax(1, qRound(field.fontSizeMm / MILLIMETERS_PER_POINT)));
+        }
+        parameterParams["FONTID"] = QString::number(fontId);
         parameterParams["TEXT"] = field.value;
         parameterParams["NAME"] = field.name;
         if (field.orientation != 0)
