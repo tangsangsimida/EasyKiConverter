@@ -14,6 +14,21 @@ int parameterInt(const QMap<QString, QString>& parameters, const QString& name, 
     return ok ? value : fallback;
 }
 
+bool readOptionalParameterInt(const QMap<QString, QString>& parameters, const QString& name, int fallback, int* value) {
+    if (value == nullptr)
+        return false;
+    if (!parameters.contains(name)) {
+        *value = fallback;
+        return true;
+    }
+    bool ok = false;
+    const int parsed = parameters.value(name).toInt(&ok);
+    if (!ok)
+        return false;
+    *value = parsed;
+    return true;
+}
+
 bool readBinaryRecordMetadata(const QByteArray& payload, int* recordType, int* ownerPartId) {
     if (recordType == nullptr || ownerPartId == nullptr || payload.size() < 7)
         return false;
@@ -175,11 +190,22 @@ bool AltiumSchLibReader::readComponentRecords(int componentIndexValue, QVector<R
                                     .arg(parameterReader.errorString()));
             }
             record.hasParameters = true;
-            record.recordType = parameterInt(record.parameters, QStringLiteral("RECORD"), -1);
-            record.ownerPartId = parameterInt(record.parameters, QStringLiteral("OWNERPARTID"), -1);
-            record.indexInSheet = parameterInt(record.parameters, QStringLiteral("IndexInSheet"), -1);
+            if (!readOptionalParameterInt(record.parameters, QStringLiteral("RECORD"), -1, &record.recordType) ||
+                !readOptionalParameterInt(record.parameters, QStringLiteral("OWNERPARTID"), -1, &record.ownerPartId) ||
+                !readOptionalParameterInt(
+                    record.parameters, QStringLiteral("IndexInSheet"), -1, &record.indexInSheet)) {
+                return failRead(QStringLiteral("SchLib 组件参数记录的数值字段无效，偏移量 %1").arg(startPosition));
+            }
+            if (record.ownerPartId >= 0 && record.ownerPartId > m_components.at(componentIndexValue).partCount) {
+                return failRead(
+                    QStringLiteral("SchLib 组件参数记录的 OWNERPARTID 超出部件范围，偏移量 %1").arg(startPosition));
+            }
         } else {
             readBinaryRecordMetadata(payload, &record.recordType, &record.ownerPartId);
+            if (record.ownerPartId >= 0 && record.ownerPartId > m_components.at(componentIndexValue).partCount) {
+                return failRead(
+                    QStringLiteral("SchLib 二进制记录的 OWNERPARTID 超出部件范围，偏移量 %1").arg(startPosition));
+            }
         }
         records->append(record);
     }

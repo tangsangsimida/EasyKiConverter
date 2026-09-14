@@ -1212,6 +1212,41 @@ private slots:
     }
 
     /**
+     * @brief 验证 SchLib 参数数值字段损坏时不会静默回退
+     */
+    void rejectsMalformedSchLibRecordMetadata() {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        OLECompoundWriter writer;
+        QVERIFY(writer.create());
+        QByteArray headerData;
+        AltiumBinaryWriter headerWriter(headerData);
+        headerWriter.writeCStringParameterBlock(
+            {{QStringLiteral("COMPCOUNT"), QStringLiteral("1")}, {QStringLiteral("PARTCOUNT0"), QStringLiteral("2")}});
+        headerWriter.writeInt32(1);
+        headerWriter.writeStringBlock(QStringLiteral("BROKEN_METADATA"));
+        QVERIFY(writer.writeStream(QStringLiteral("FileHeader"), headerData));
+        QVERIFY(writer.addStorage(QStringLiteral("BROKEN_METADATA")));
+        QByteArray componentData;
+        AltiumBinaryWriter componentWriter(componentData);
+        componentWriter.writeCStringParameterBlock({{QStringLiteral("RECORD"), QStringLiteral("not-a-number")}});
+        QVERIFY(writer.writeStream(QStringLiteral("BROKEN_METADATA"), QStringLiteral("Data"), componentData));
+        const QString path = QDir(tempDir.path()).filePath(QStringLiteral("malformed-record-metadata.SchLib"));
+        QVERIFY(writer.saveToFile(path));
+
+        AltiumSchLibReader reader;
+        QVERIFY2(reader.open(path), qPrintable(reader.errorString()));
+        QVector<AltiumSchLibReader::Record> records;
+        QVERIFY(!reader.readComponentRecords(QStringLiteral("BROKEN_METADATA"), &records));
+        QVERIFY(records.isEmpty());
+        QVERIFY(reader.errorString().contains(QStringLiteral("数值字段无效")));
+        QByteArray rawData;
+        QVERIFY(reader.readComponentData(QStringLiteral("BROKEN_METADATA"), &rawData));
+        QCOMPARE(rawData, componentData);
+    }
+
+    /**
      * @brief 验证 PcbLib 封装写入 UniqueIdPrimitiveInformation 流
      * @details 验证 Header 中的图元计数和 Data 中的 PRIMITIVEOBJECTID 条目
      */
