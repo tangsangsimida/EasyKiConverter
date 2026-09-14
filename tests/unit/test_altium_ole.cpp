@@ -697,6 +697,18 @@ private slots:
         QVERIFY(pcbWriter.diagnostics().join('\n').contains(QStringLiteral("PCB 弧线起始角度无效")));
         QVERIFY(pcbWriter.diagnostics().join('\n').contains(QStringLiteral("PCB 弧线结束角度无效")));
         QVERIFY(pcbWriter.diagnostics().join('\n').contains(QStringLiteral("3D 元件体不透明度无效")));
+
+        IR::FootprintComponentIR invalidFootprint;
+        invalidFootprint.name = QStringLiteral("INVALID_FOOTPRINT_FLOATS");
+        IR::FootprintPadIR invalidFootprintPad;
+        invalidFootprintPad.number = QStringLiteral("1");
+        invalidFootprintPad.size = QSizeF(1.0, 1.0);
+        invalidFootprintPad.rotation = std::numeric_limits<double>::quiet_NaN();
+        invalidFootprint.pads.append(invalidFootprintPad);
+        ExporterAltiumFootprint footprintExporter;
+        const QString footprintOutputPath = QDir(tempDir.path()).filePath(QStringLiteral("invalid-footprint.PcbLib"));
+        QVERIFY(footprintExporter.exportFootprint(invalidFootprint, footprintOutputPath));
+        QVERIFY(footprintExporter.diagnostics().join('\n').contains(QStringLiteral("焊盘旋转角度无效")));
     }
 
     /**

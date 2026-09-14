@@ -29,6 +29,11 @@ public:
         return false;
     }
 
+    /** @brief 获取最近一次 PcbLib 导出的非致命诊断 */
+    QStringList diagnostics() const override {
+        return m_diagnostics;
+    }
+
     /**
      * @brief 导出单个封装到 PcbLib 文件
      */
@@ -106,6 +111,7 @@ private:
     void generateComponentBody(AltiumPcbComponent& component);
 
     AltiumPcbLibWriter m_writer;
+    QStringList m_diagnostics;
 };
 
 }  // namespace EasyKiConverter

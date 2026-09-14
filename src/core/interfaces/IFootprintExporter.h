@@ -61,6 +61,14 @@ public:
                                         const QString& libraryKeywords = QString(),
                                         bool useAbsolutePaths = false,
                                         const QString& model3DBaseDir = QString()) = 0;
+
+    /**
+     * @brief 获取最近一次导出的非致命诊断
+     * @return 目标格式写入器产生的诊断列表
+     */
+    virtual QStringList diagnostics() const {
+        return {};
+    }
 };
 
 }  // namespace EasyKiConverter

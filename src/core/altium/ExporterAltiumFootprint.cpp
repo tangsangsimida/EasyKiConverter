@@ -17,9 +17,11 @@ namespace EasyKiConverter {
 bool ExporterAltiumFootprint::exportFootprint(const IR::FootprintComponentIR& footprint,
                                               const QString& filePath,
                                               const QString& model3DPath) {
+    m_diagnostics.clear();
     QList<AltiumPcbComponent> components;
     components.append(convertFootprint(footprint, model3DPath));
     bool ok = m_writer.write(components, filePath);
+    m_diagnostics = m_writer.diagnostics();
     if (!ok) {
         qWarning() << "ExporterAltiumFootprint: Failed to write footprint to" << filePath;
     }
@@ -38,12 +40,14 @@ bool ExporterAltiumFootprint::exportFootprintLibrary(const QList<IR::FootprintCo
                                                      const QString& libraryKeywords,
                                                      bool useAbsolutePaths,
                                                      const QString& model3DBaseDir) {
+    m_diagnostics.clear();
     QList<AltiumPcbComponent> components;
     for (const IR::FootprintComponentIR& fp : footprints) {
         // 对于库级别导出，3D 模型路径在后续处理
         components.append(convertFootprint(fp));
     }
     bool ok = m_writer.write(components, filePath, libName);
+    m_diagnostics = m_writer.diagnostics();
     if (!ok) {
         qWarning() << "ExporterAltiumFootprint: Failed to write footprint library to" << filePath;
     }

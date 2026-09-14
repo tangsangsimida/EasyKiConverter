@@ -34,6 +34,7 @@
 - SchLib 圆弧、扇形和椭圆弧的非有限起止角度会回退为 `0/360` 度并记录诊断，避免底层直接调用时把 `NaN/Infinity` 序列化到 `Data` 流。
 - SchLib 底层写入器遇到空文本时会保留记录以维持 `WEIGHT` 和 `IndexInSheet` 一致，同时通过诊断提示调用方；上层 IR 校验仍会优先跳过空文本。
 - PcbLib 写入器对旋转角度、区域/元件体轮廓坐标、3D 模型姿态和不透明度执行有限值校验；异常值回退到安全默认值并通过 `diagnostics()` 报告。
+- PcbLib 写入器诊断会经由 `ExporterAltiumFootprint` 和 `FootprintExportStage` 汇总到导出进度及详细报告，不再只输出到日志。
 - 符号导出阶段会将这些非致命诊断附加到导出项状态；写出器直接调用和上层导出都会保留非法 Bézier 等被跳过图元的诊断。启用调试模式时，`easykiconverter_export_detailed_report.md` 会按元件列出诊断，不会因可回退的图元问题静默丢失信息。
 
 ## 数据流

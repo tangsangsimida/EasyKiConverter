@@ -551,6 +551,14 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
                                              libraryKeywords,
                                              m_options.exportModel3DPathMode == ExportOptions::MODEL_3D_PATH_ABSOLUTE,
                                              outputDir);
+        const QStringList exporterDiagnostics = exporter->diagnostics();
+        if (!exporterDiagnostics.isEmpty()) {
+            QMutexLocker locker(&m_progressMutex);
+            m_progress.diagnostics = exporterDiagnostics;
+            const ExportTypeProgress progressSnapshot = m_progress;
+            locker.unlock();
+            emit progressChanged(progressSnapshot);
+        }
         qDebug() << "FootprintExportStage: exportFootprintLibrary result:" << exportSuccess;
     }
 
