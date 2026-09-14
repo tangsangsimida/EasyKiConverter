@@ -957,7 +957,8 @@ void AltiumSchLibWriter::writePinRecord(AltiumBinaryWriter& writer, const Altium
     writer.writeUInt8(0);  // Unknown
     writer.writeInt16(static_cast<int16_t>(normalizeOwnerPartId(pin.ownerPartId, QStringLiteral("引脚"))));
     // OwnerPartId 为 -1 表示公共 Part Zero。
-    writer.writeUInt8(0);  // OwnerPartDisplayMode
+    // 当前每个符号只有一个显示模式；与文本图元的 OWNERPARTDISPLAYMODE=1 保持一致。
+    writer.writeUInt8(1);  // OwnerPartDisplayMode
 
     // Symbol edges / IEEE 装饰。四个字节必须位于描述字符串之前。
     writer.writeUInt8(pin.symbolInnerEdge);

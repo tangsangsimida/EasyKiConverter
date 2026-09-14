@@ -243,6 +243,7 @@ private slots:
                 ++partTwoRecordCount;
             if (!record.hasParameters && record.payload.size() >= 4 &&
                 static_cast<unsigned char>(record.payload.at(0)) == static_cast<unsigned char>(2)) {
+                QCOMPARE(record.ownerPartDisplayMode, 1);
                 ++binaryPinCount;
             }
         }
