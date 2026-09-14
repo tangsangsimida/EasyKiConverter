@@ -418,9 +418,12 @@ void AltiumSchLibWriter::writeOrderedGraphic(AltiumBinaryWriter& writer,
         return;
     }
     if (order.type == QStringLiteral("PG")) {
-        if (order.index >= 0 && order.index < component.polygons.size() &&
-            matchesPart(component.polygons.at(order.index).sourcePartIndex))
-            writePolygonRecord(writer, component.polygons.at(order.index));
+        for (const AltiumSchPolygon& polygon : component.polygons) {
+            if (polygon.sourceGraphicIndex == order.index && matchesPart(polygon.sourcePartIndex)) {
+                writePolygonRecord(writer, polygon);
+                return;
+            }
+        }
         return;
     }
     if (order.type == QStringLiteral("T")) {

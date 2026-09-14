@@ -1068,6 +1068,14 @@ private slots:
         secondPartRectangle.y1 = 4.0;
         secondPartRectangle.partIndex = 0;
         symbol.rectangles.append(secondPartRectangle);
+        IR::SymbolPolygonIR firstPartPolygon;
+        firstPartPolygon.points = {QPointF(10.0, 10.0), QPointF(11.0, 10.0), QPointF(10.0, 11.0)};
+        firstPartPolygon.partIndex = 1;
+        symbol.polygons.append(firstPartPolygon);
+        IR::SymbolPolygonIR secondPartPolygon;
+        secondPartPolygon.points = {QPointF(20.0, 20.0), QPointF(21.0, 20.0), QPointF(20.0, 21.0)};
+        secondPartPolygon.partIndex = 0;
+        symbol.polygons.append(secondPartPolygon);
         IR::SymbolImageIR image;
         image.x0 = -1.0;
         image.y0 = -0.5;
@@ -1087,6 +1095,8 @@ private slots:
             {QStringLiteral("P"), 1, -1},
             {QStringLiteral("R"), 0, -1},
             {QStringLiteral("R"), 0, 0},
+            {QStringLiteral("PG"), 0, 1},
+            {QStringLiteral("PG"), 0, 0},
         };
 
         const QString schPath = QDir(tempDir.path()).filePath(QStringLiteral("multipart.SchLib"));
@@ -1105,6 +1115,12 @@ private slots:
         QVERIFY(symbolData.contains("RECORD=5"));
         QVERIFY(symbolData.contains("LocationCount=4"));
         QVERIFY(symbolData.contains("RECORD=10"));
+        const int firstPolygonRecord = symbolData.indexOf("RECORD=7");
+        const int secondPolygonRecord = symbolData.indexOf("RECORD=7", firstPolygonRecord + 1);
+        QVERIFY(firstPolygonRecord > 0);
+        QVERIFY(secondPolygonRecord > firstPolygonRecord);
+        QVERIFY(symbolData.mid(firstPolygonRecord, secondPolygonRecord - firstPolygonRecord).contains("OWNERPARTID=2"));
+        QVERIFY(symbolData.mid(secondPolygonRecord).contains("OWNERPARTID=1"));
         QVERIFY(symbolData.contains("RECORD=30"));
         const int roundedRectangleRecord = symbolData.indexOf("RECORD=10");
         const int pathRecord = symbolData.indexOf("RECORD=6");
