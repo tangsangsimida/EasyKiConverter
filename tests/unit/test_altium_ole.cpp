@@ -932,6 +932,13 @@ private slots:
         fallbackFontText.text = QStringLiteral("Fallback font");
         fallbackFontText.fontId = 99;
         symbol.texts.append(fallbackFontText);
+        AltiumSchText sizeOnlyText;
+        sizeOnlyText.locationX = 1650000;
+        sizeOnlyText.locationY = 700000;
+        sizeOnlyText.text = QStringLiteral("Size-only font");
+        sizeOnlyText.fontId = 1;
+        sizeOnlyText.fontSizeMm = 25.4 / 72.0 * 12.0;
+        symbol.texts.append(sizeOnlyText);
         AltiumSchImage image;
         image.locationX = 1700000;
         image.locationY = 100000;
@@ -968,7 +975,7 @@ private slots:
         QByteArray schHeader;
         QVERIFY(readCfbStream(schPath, QStringLiteral("FileHeader"), schHeader));
         QVERIFY(schHeader.contains("COMPCOUNT=1"));
-        QVERIFY(schHeader.contains("WEIGHT=27"));
+        QVERIFY(schHeader.contains("WEIGHT=28"));
         QVERIFY(schHeader.contains("LIBREF0=C2040"));
         QVERIFY(schHeader.contains("PARTCOUNT0=2"));
         QVERIFY(schHeader.mid(4).startsWith("|HEADER="));
@@ -976,6 +983,8 @@ private slots:
         QVERIFY(schHeader.contains("Size2=8"));
         QVERIFY(schHeader.contains("Bold2=T"));
         QVERIFY(schHeader.contains("Italic2=T"));
+        QVERIFY(schHeader.contains("FontName3=Times New Roman"));
+        QVERIFY(schHeader.contains("Size3=12"));
 
         QByteArray schData;
         QVERIFY(readCfbStream(schPath, QStringLiteral("C2040/Data"), schData));
@@ -1022,6 +1031,14 @@ private slots:
         const QByteArray fallbackRecord =
             schData.mid(fallbackRecordOffset, nextFallbackRecordOffset - fallbackRecordOffset);
         QVERIFY(fallbackRecord.contains("FontID=1"));
+        const int sizeOnlyTextOffset = schData.indexOf("Text=Size-only font");
+        const int sizeOnlyRecordOffset = schData.lastIndexOf("|RECORD=4|", sizeOnlyTextOffset);
+        const int nextSizeOnlyRecordOffset = schData.indexOf("|RECORD=", sizeOnlyTextOffset + 1);
+        QVERIFY(sizeOnlyTextOffset > sizeOnlyRecordOffset);
+        QVERIFY(nextSizeOnlyRecordOffset > sizeOnlyRecordOffset);
+        const QByteArray sizeOnlyRecord =
+            schData.mid(sizeOnlyRecordOffset, nextSizeOnlyRecordOffset - sizeOnlyRecordOffset);
+        QVERIFY(sizeOnlyRecord.contains("FontID=3"));
         QVERIFY(schData.contains("FontSize=2.8222"));
         QVERIFY(schData.contains("TextAnchor=start"));
         QVERIFY(schData.contains(QStringLiteral("标签 α").toUtf8()));

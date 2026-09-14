@@ -1386,7 +1386,7 @@ void AltiumSchLibWriter::writeTextRecord(AltiumBinaryWriter& writer, const Altiu
         params["Orientation"] = QString::number(text.orientation);
     addColorParam(params, "Color", text.color);
     int fontId = text.fontId;
-    if (!text.fontName.isEmpty() || fontId <= 0) {
+    if (!text.fontName.isEmpty() || hasValidFontSize || fontId <= 0) {
         constexpr double MILLIMETERS_PER_POINT = 25.4 / 72.0;
         const QString fontName = text.fontName.isEmpty() ? QStringLiteral("Times New Roman") : text.fontName;
         const int fontSize = hasValidFontSize ? qMax(1, qRound(text.fontSizeMm / MILLIMETERS_PER_POINT)) : 10;
