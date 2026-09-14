@@ -849,8 +849,10 @@ int AltiumSchLibWriter::componentRecordCount(const AltiumSchComponent& component
                          component.arcs.size() + component.polygons.size() + component.ellipses.size() +
                          component.polylines.size() + component.paths.size() + validBezierCount +
                          component.texts.size();
-    // Component + graphics + 参数字段 + ImplementationList + implementation triplets.
-    return 1 + graphics + componentParameterRecordCount(component) + 1 + component.implementations.size() * 3;
+    // Component + graphics + 参数字段 + ImplementationList + implementation records.
+    // 每个实现包含 RECORD=45、46、48，以及每个符号引脚对应的 RECORD=47。
+    return 1 + graphics + componentParameterRecordCount(component) + 1 +
+           component.implementations.size() * (3 + component.pins.size());
 }
 
 /**
