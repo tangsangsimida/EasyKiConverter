@@ -56,6 +56,7 @@ set(QML_FILES
 )
 
 set(QML_RESOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/qmldir
     ${CMAKE_SOURCE_DIR}/src/ui/qml/styles/qmldir
     ${CMAKE_SOURCE_DIR}/src/ui/qml/components/qmldir
     ${CMAKE_SOURCE_DIR}/resources/icons/close.svg
