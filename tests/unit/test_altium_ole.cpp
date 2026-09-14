@@ -1150,6 +1150,14 @@ private slots:
         secondPartPolygon.points = {QPointF(20.0, 20.0), QPointF(21.0, 20.0), QPointF(20.0, 21.0)};
         secondPartPolygon.partIndex = 0;
         symbol.polygons.append(secondPartPolygon);
+        IR::SymbolTextIR commonText;
+        commonText.text = QStringLiteral("COMMON_TEXT");
+        commonText.partIndex = -1;
+        symbol.texts.append(commonText);
+        IR::SymbolTextIR partText;
+        partText.text = QStringLiteral("PART_TEXT");
+        partText.partIndex = 1;
+        symbol.texts.append(partText);
         IR::SymbolImageIR image;
         image.x0 = -1.0;
         image.y0 = -0.5;
@@ -1172,6 +1180,8 @@ private slots:
             {QStringLiteral("R"), 0, 0},
             {QStringLiteral("PG"), 0, 1},
             {QStringLiteral("PG"), 0, 0},
+            {QStringLiteral("T"), 0, -1},
+            {QStringLiteral("T"), 0, 1},
         };
 
         const QString schPath = QDir(tempDir.path()).filePath(QStringLiteral("multipart.SchLib"));
@@ -1217,6 +1227,15 @@ private slots:
         QVERIFY(symbolData.contains("EmbedImage=T"));
         QVERIFY(symbolData.contains("FileName=multipart.png"));
         QVERIFY(symbolData.contains("FileName=multipart_2.png"));
+        const int commonTextOffset = symbolData.indexOf("Text=COMMON_TEXT");
+        const int commonTextRecordOffset = symbolData.lastIndexOf("|RECORD=4|", commonTextOffset);
+        QVERIFY(commonTextOffset > commonTextRecordOffset);
+        QVERIFY(symbolData.mid(commonTextRecordOffset, commonTextOffset - commonTextRecordOffset)
+                    .contains("OWNERPARTID=-1"));
+        const int partTextOffset = symbolData.indexOf("Text=PART_TEXT");
+        const int partTextRecordOffset = symbolData.lastIndexOf("|RECORD=4|", partTextOffset);
+        QVERIFY(partTextOffset > partTextRecordOffset);
+        QVERIFY(symbolData.mid(partTextRecordOffset, partTextOffset - partTextRecordOffset).contains("OWNERPARTID=2"));
         QByteArray multipartStorage;
         QVERIFY(readCfbStream(schPath, QStringLiteral("Storage"), multipartStorage));
         QVERIFY(multipartStorage.contains("multipart.png"));
