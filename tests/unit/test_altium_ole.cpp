@@ -671,6 +671,11 @@ private slots:
         image.keepAspect = true;
         symbol.images.append(image);
 
+        // 无效 Bézier 不应写入 Data，也不能被 FileHeader 的 WEIGHT 计入。
+        AltiumSchBezier invalidBezier;
+        invalidBezier.controlPoints = {QPointF(0, 0), QPointF(100000, 0), QPointF(200000, 0)};
+        symbol.beziers.append(invalidBezier);
+
         AltiumSchComponent::Implementation impl;
         impl.modelName = QStringLiteral("LQFN-56_L7.0-W7.0-P0.4-EP");
         impl.modelType = QStringLiteral("PCBLIB");
