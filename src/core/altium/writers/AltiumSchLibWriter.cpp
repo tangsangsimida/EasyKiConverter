@@ -783,7 +783,8 @@ void AltiumSchLibWriter::writeImplementationRecords(AltiumBinaryWriter& writer, 
     }
 
     // 每个实现
-    for (const AltiumSchComponent::Implementation& impl : component.implementations) {
+    for (int implementationIndex = 0; implementationIndex < component.implementations.size(); ++implementationIndex) {
+        const AltiumSchComponent::Implementation& impl = component.implementations.at(implementationIndex);
         // RECORD=45: Implementation
         {
             QMap<QString, QString> params;
@@ -791,12 +792,24 @@ void AltiumSchLibWriter::writeImplementationRecords(AltiumBinaryWriter& writer, 
             params["DESCRIPTION"] = impl.modelName;
             params["MODELNAME"] = impl.modelName;
             params["MODELTYPE"] = impl.modelType;
-            params["DATAFILECOUNT"] = "1";
-            params["MODELDATAFILEKIND1"] = impl.dataFileKind.isEmpty() ? "PCBLib" : impl.dataFileKind;
-            params["MODELDATAFILEENTITY1"] = impl.dataFileEntity.isEmpty()
-                                                 ? (m_libraryName.isEmpty() ? "*" : m_libraryName + ".PcbLib")
-                                                 : impl.dataFileEntity;
-            params["ISCURRENT"] = "T";
+            const QString modelType = impl.modelType.trimmed().toUpper();
+            const bool isPcbLibrary = modelType.isEmpty() || modelType == QStringLiteral("PCBLIB");
+            const bool hasExplicitDataFileKind =
+                !impl.dataFileKind.trimmed().isEmpty() &&
+                (isPcbLibrary || impl.dataFileKind.compare(QStringLiteral("PCBLib"), Qt::CaseInsensitive) != 0);
+            const bool hasDataFile =
+                isPcbLibrary || hasExplicitDataFileKind || !impl.dataFileEntity.trimmed().isEmpty();
+            params["DATAFILECOUNT"] = hasDataFile ? "1" : "0";
+            if (hasDataFile) {
+                params["MODELDATAFILEKIND1"] = impl.dataFileKind.isEmpty() ? "PCBLib" : impl.dataFileKind;
+                params["MODELDATAFILEENTITY1"] =
+                    impl.dataFileEntity.isEmpty()
+                        ? (isPcbLibrary && !m_libraryName.isEmpty() ? m_libraryName + ".PcbLib" : "*")
+                        : impl.dataFileEntity;
+            }
+            // Altium 只允许一个默认实现，候选封装和附加模型不能全部标记为当前。
+            if (implementationIndex == 0)
+                params["ISCURRENT"] = "T";
             addUniqueID(params);
             writer.writeCStringParameterBlock(params);
         }

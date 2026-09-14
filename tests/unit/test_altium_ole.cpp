@@ -526,6 +526,10 @@ private slots:
         impl.parameters.insert(QStringLiteral("THERMAL_MODEL"), QStringLiteral("default"));
         impl.pinMappings.insert(QStringLiteral("1"), QStringLiteral("A1"));
         symbol.implementations.append(impl);
+        AltiumSchComponent::Implementation simulationImpl;
+        simulationImpl.modelName = QStringLiteral("C2040_SPICE");
+        simulationImpl.modelType = QStringLiteral("SIM");
+        symbol.implementations.append(simulationImpl);
 
         const QString schPath = QDir(tempDir.path()).filePath(QStringLiteral("easyeda_convertlib.SchLib"));
         AltiumSchLibWriter schWriter;
@@ -534,7 +538,7 @@ private slots:
         QByteArray schHeader;
         QVERIFY(readCfbStream(schPath, QStringLiteral("FileHeader"), schHeader));
         QVERIFY(schHeader.contains("COMPCOUNT=1"));
-        QVERIFY(schHeader.contains("WEIGHT=15"));
+        QVERIFY(schHeader.contains("WEIGHT=19"));
         QVERIFY(schHeader.contains("LIBREF0=C2040"));
         QVERIFY(schHeader.contains("PARTCOUNT0=2"));
         QVERIFY(schHeader.mid(4).startsWith("|HEADER="));
@@ -546,6 +550,8 @@ private slots:
         QVERIFY(schData.contains("RECORD=14"));
         QVERIFY(schData.contains("RECORD=45"));
         QVERIFY(schData.contains("DESIMP0=A1"));
+        QVERIFY(schData.contains("MODELTYPE=SIM"));
+        QVERIFY(schData.contains("DATAFILECOUNT=0"));
         QVERIFY(schData.contains("THERMAL_MODEL=default"));
         QVERIFY(schData.contains("RECORD=6"));
         QVERIFY(schData.contains("OWNERPARTID=1"));

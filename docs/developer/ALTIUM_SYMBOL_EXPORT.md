@@ -14,6 +14,7 @@
 - 公共引脚：`SymbolPinIR::commonToAllParts` 写入 Altium Part Zero（`OwnerPartId=-1`），适合电源引脚等所有部件共用的连接点。
 - 多候选封装：每个封装生成一个 SchLib implementation，并自动去重。
 - 通用模型关联：支持通过 IR 或来源元数据写入 SPICE、SIM、STEP、VRML 等模型类型、数据文件实体、参数和引脚映射。
+- 模型默认状态：仅第一个实现写入 `ISCURRENT=T`；没有数据文件实体的 SPICE/SIM 等模型不会错误生成 `.PcbLib` 路径。
 - 符号别名：从 EasyEDA 数据或 IR 中读取，写入组件记录及参数字段。
 - 来源元数据：未知键会作为自定义参数保留，避免供应商字段丢失。
 
