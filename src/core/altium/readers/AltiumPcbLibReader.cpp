@@ -224,6 +224,12 @@ bool validatePrimitiveFields(const AltiumPcbLibReader::PrimitiveRecord& object, 
         return false;
     };
 
+    if (object.hasTrackFields || object.hasArcFields || object.hasPadFields || object.hasFillFields ||
+        object.hasRegionFields || object.hasComponentBodyFields || object.hasTextFields) {
+        if (object.layer < 1 || object.layer > 74)
+            return reject(QStringLiteral("PcbLib 图元层号必须在 1..74 范围内"));
+    }
+
     if (object.hasArcFields) {
         if (object.arc.radius <= 0)
             return reject(QStringLiteral("PcbLib 弧线半径必须为正"));

@@ -71,6 +71,8 @@ bool AltiumPcbLibWriter::validateComponents(const QList<AltiumPcbComponent>& com
             return reject(QStringLiteral("Altium PcbLib 封装名称为空，已拒绝写入"));
 
         for (const AltiumPcbPad& pad : component.pads) {
+            if (pad.isSMD && (pad.layer < 1 || pad.layer > 74))
+                return reject(QStringLiteral("Altium PcbLib 封装 %1 包含无效焊盘层号，已拒绝写入").arg(component.name));
             if (pad.sizeTopX <= 0 || pad.sizeTopY <= 0 || pad.sizeMidX <= 0 || pad.sizeMidY <= 0 || pad.sizeBotX <= 0 ||
                 pad.sizeBotY <= 0) {
                 return reject(QStringLiteral("Altium PcbLib 封装 %1 包含非正焊盘尺寸，已拒绝写入").arg(component.name));
@@ -78,11 +80,27 @@ bool AltiumPcbLibWriter::validateComponents(const QList<AltiumPcbComponent>& com
             if (!pad.isSMD && pad.holeSize <= 0)
                 return reject(QStringLiteral("Altium PcbLib 封装 %1 包含非正通孔尺寸，已拒绝写入").arg(component.name));
         }
+        for (const AltiumPcbTrack& track : component.tracks) {
+            if (track.layer < 1 || track.layer > 74)
+                return reject(QStringLiteral("Altium PcbLib 封装 %1 包含无效走线层号，已拒绝写入").arg(component.name));
+        }
         for (const AltiumPcbArc& arc : component.arcs) {
+            if (arc.layer < 1 || arc.layer > 74)
+                return reject(QStringLiteral("Altium PcbLib 封装 %1 包含无效弧线层号，已拒绝写入").arg(component.name));
             if (arc.radius <= 0)
                 return reject(QStringLiteral("Altium PcbLib 封装 %1 包含非正弧线半径，已拒绝写入").arg(component.name));
         }
+        for (const AltiumPcbText& text : component.texts) {
+            if (text.layer < 1 || text.layer > 74)
+                return reject(QStringLiteral("Altium PcbLib 封装 %1 包含无效文本层号，已拒绝写入").arg(component.name));
+        }
+        for (const AltiumPcbFill& fill : component.fills) {
+            if (fill.layer < 1 || fill.layer > 74)
+                return reject(QStringLiteral("Altium PcbLib 封装 %1 包含无效填充层号，已拒绝写入").arg(component.name));
+        }
         for (const AltiumPcbRegion& region : component.regions) {
+            if (region.layer < 1 || region.layer > 74)
+                return reject(QStringLiteral("Altium PcbLib 封装 %1 包含无效区域层号，已拒绝写入").arg(component.name));
             if (region.vertices.size() < 3)
                 return reject(QStringLiteral("Altium PcbLib 封装 %1 区域顶点不足，已拒绝写入").arg(component.name));
         }

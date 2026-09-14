@@ -727,6 +727,13 @@ private slots:
         invalidPadPcb.pads.append(AltiumPcbPad());
         QVERIFY(!invalidInputWriter.write({invalidPadPcb}, pcbOutputPath));
         QVERIFY(invalidInputWriter.diagnostics().join('\n').contains(QStringLiteral("非正焊盘尺寸")));
+        AltiumPcbComponent invalidLayerPcb;
+        invalidLayerPcb.name = QStringLiteral("INVALID_LAYER");
+        AltiumPcbTrack invalidLayerTrack;
+        invalidLayerTrack.layer = 0;
+        invalidLayerPcb.tracks.append(invalidLayerTrack);
+        QVERIFY(!invalidInputWriter.write({invalidLayerPcb}, pcbOutputPath));
+        QVERIFY(invalidInputWriter.diagnostics().join('\n').contains(QStringLiteral("无效走线层号")));
     }
 
     /**
@@ -1365,6 +1372,28 @@ private slots:
         QVERIFY2(invalidRegionReader.open(invalidRegionPath), qPrintable(invalidRegionReader.errorString()));
         QVERIFY(!invalidRegionReader.readFootprintObjects(QStringLiteral("BROKEN"), &objects));
         QVERIFY(invalidRegionReader.errorString().contains(QStringLiteral("区域至少需要三个顶点")));
+
+        QByteArray invalidLayerData;
+        AltiumBinaryWriter invalidLayerWriter(invalidLayerData);
+        invalidLayerWriter.writeStringBlock(QStringLiteral("BROKEN"));
+        invalidLayerWriter.writeUInt8(AltiumConstants::PCB_OBJECT_TRACK);
+        invalidLayerWriter.beginBlock();
+        invalidLayerWriter.writeUInt8(0);
+        invalidLayerWriter.writeUInt16(0);
+        invalidLayerWriter.writeBytes(QByteArray(10, '\0'));
+        for (int i = 0; i < 4; ++i)
+            invalidLayerWriter.writeInt32(0);
+        invalidLayerWriter.writeInt32(100);
+        invalidLayerWriter.writeUInt16(0xFFFF);
+        invalidLayerWriter.writeUInt8(0);
+        invalidLayerWriter.endBlock();
+        const QString invalidLayerPath = QDir(tempDir.path()).filePath(QStringLiteral("invalid-layer.PcbLib"));
+        QVERIFY(writeMalformedLibrary(invalidLayerPath, invalidLayerData));
+
+        AltiumPcbLibReader invalidLayerReader;
+        QVERIFY2(invalidLayerReader.open(invalidLayerPath), qPrintable(invalidLayerReader.errorString()));
+        QVERIFY(!invalidLayerReader.readFootprintObjects(QStringLiteral("BROKEN"), &objects));
+        QVERIFY(invalidLayerReader.errorString().contains(QStringLiteral("图元层号必须在 1..74")));
     }
 
     /**
