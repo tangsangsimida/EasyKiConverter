@@ -314,6 +314,12 @@ if (!isOverwritten && !isOrphanedSubSymbol)
 - 混合符号库中，其他符号不受影响
 - 孤离子符号被正确删除
 
+## 当前 Altium 库增量导出限制
+
+当前追加和更新逻辑仅适用于支持文本合并的 KiCad 符号库。Altium SchLib/PcbLib 是 OLE 二进制库，项目目前尚未实现已有库的读取与增量合并，因此在追加或更新模式下检测到已有 Altium 库时会拒绝导出，并保留原文件，避免静默覆盖用户数据。
+
+后续如果实现 Altium 库读取器和增量合并，应同时补充 OLE 流、FileHeader、SectionKeys、多部件符号及图片 Storage 的回归测试，并移除当前保护性拒绝逻辑。
+
 ## 相关文档
 
 - [ADR-001: MVVM 架构](001-mvvm-architecture.md)

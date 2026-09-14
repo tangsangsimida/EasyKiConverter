@@ -314,6 +314,12 @@ if (!isOverwritten && !isOrphanedSubSymbol)
 - Other symbols in mixed library unaffected
 - Orphan sub-symbols correctly deleted
 
+## Current Altium Library Merge Limitation
+
+Append and update behavior currently applies only to KiCad symbol libraries, which support textual merging. Altium SchLib/PcbLib files are OLE-based binary libraries, and this project does not yet implement reading and incremental merging of existing libraries. Therefore, append or update requests are rejected when an existing Altium library is detected, preserving the original file instead of silently overwriting user data.
+
+If Altium library reading and incremental merging are implemented later, add regression coverage for OLE streams, FileHeader, SectionKeys, multi-part symbols, and image Storage before removing this protective rejection.
+
 ## Related Documents
 
 - [ADR-001: MVVM Architecture](001-mvvm-architecture.md)
