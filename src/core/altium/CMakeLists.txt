@@ -17,6 +17,8 @@ target_sources(EasyKiConverterAltium
         writers/AltiumPcbLibWriter.cpp
 
         # 读取器
+        readers/AltiumPcbLibReader.h
+        readers/AltiumPcbLibReader.cpp
         readers/AltiumSchLibReader.h
         readers/AltiumSchLibReader.cpp
 

@@ -324,6 +324,8 @@ if (!isOverwritten && !isOrphanedSubSymbol)
 
 当前已进一步增加 `AltiumSchLibReader`，可解析 SchLib 的 FileHeader、SectionKeys、组件名称及组件 Data 流映射，并校验目录中声明的组件是否实际存在。它仍是只读的库级读取能力，尚未覆盖所有图元记录和写回逻辑。
 
+同时已增加 `AltiumPcbLibReader`，可解析 PcbLib 的 FileHeader、Library/Data、SectionKeys 和封装 Storage 映射，并提供封装 Header、Parameters、WideStrings、Data 等流的读取入口。两种库的读取器都只做结构校验和原始流访问，尚未承担增量写回。
+
 ## 相关文档
 
 - [ADR-001: MVVM 架构](001-mvvm-architecture.md)

@@ -15,6 +15,7 @@
 #include "core/altium/ExporterAltiumSymbol.h"
 #include "core/altium/compound/OLECompoundReader.h"
 #include "core/altium/compound/OLECompoundWriter.h"
+#include "core/altium/readers/AltiumPcbLibReader.h"
 #include "core/altium/readers/AltiumSchLibReader.h"
 #include "core/altium/utils/AltiumBinaryReader.h"
 #include "core/altium/utils/AltiumBinaryWriter.h"
@@ -883,6 +884,18 @@ private slots:
         QByteArray pcbReaderData;
         QVERIFY(pcbReader.readStream(QStringLiteral("Library/Data"), &pcbReaderData));
         QVERIFY(!pcbReaderData.isEmpty());
+
+        AltiumPcbLibReader pcbLibraryReader;
+        QVERIFY2(pcbLibraryReader.open(pcbPath), qPrintable(pcbLibraryReader.errorString()));
+        const auto pcbComponents = pcbLibraryReader.components();
+        QCOMPARE(pcbComponents.size(), 1);
+        QCOMPARE(pcbComponents.first().name, QStringLiteral("LQFN-56_L7.0-W7.0-P0.4-EP"));
+        QCOMPARE(pcbComponents.first().sectionKey, pcbComponents.first().name);
+        QCOMPARE(pcbLibraryReader.fileVersion(), QStringLiteral("PCB 6.0 Binary Library File"));
+        QVERIFY(pcbLibraryReader.libraryMetadata().contains("KIND=Protel_Advanced_PCB"));
+        QByteArray footprintReaderData;
+        QVERIFY(pcbLibraryReader.readFootprintStream(0, QStringLiteral("Data"), &footprintReaderData));
+        QVERIFY(footprintReaderData.contains("LQFN-56_L7.0-W7.0-P0.4-EP"));
 
         AltiumSchLibReader schLibraryReader;
         QVERIFY2(schLibraryReader.open(schPath), qPrintable(schLibraryReader.errorString()));
@@ -1988,6 +2001,35 @@ private slots:
         QVERIFY(data.contains("LibReference=A/B"));
         QVERIFY(reader.readComponentData(QStringLiteral("A:B"), &data));
         QVERIFY(data.contains("LibReference=A:B"));
+    }
+
+    /**
+     * @brief 验证 PcbLib SectionKeys 能恢复冲突后的封装存储名称。
+     */
+    void pcbLibReaderResolvesSectionKeys() {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        AltiumPcbComponent first;
+        first.name = QStringLiteral("A/B");
+        AltiumPcbComponent second;
+        second.name = QStringLiteral("A:B");
+        const QString path = QDir(tempDir.path()).filePath(QStringLiteral("section-keys.PcbLib"));
+        AltiumPcbLibWriter writer;
+        QVERIFY(writer.write({first, second}, path, QStringLiteral("section-keys")));
+
+        AltiumPcbLibReader reader;
+        QVERIFY2(reader.open(path), qPrintable(reader.errorString()));
+        const auto components = reader.components();
+        QCOMPARE(components.size(), 2);
+        QCOMPARE(components.at(0).name, QStringLiteral("A/B"));
+        QCOMPARE(components.at(1).name, QStringLiteral("A:B"));
+        QVERIFY(components.at(0).sectionKey != components.at(1).sectionKey);
+        QByteArray data;
+        QVERIFY(reader.readFootprintStream(QStringLiteral("A/B"), QStringLiteral("Data"), &data));
+        QVERIFY(data.contains("A/B"));
+        QVERIFY(reader.readFootprintStream(QStringLiteral("A:B"), QStringLiteral("Data"), &data));
+        QVERIFY(data.contains("A:B"));
     }
 };
 

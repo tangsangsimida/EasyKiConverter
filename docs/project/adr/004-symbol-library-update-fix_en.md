@@ -324,6 +324,8 @@ The project now provides `OLECompoundReader` as a read-only CFB/OLE foundation. 
 
 The project now also provides `AltiumSchLibReader`, which parses SchLib FileHeader and SectionKeys data, resolves component names to storage keys, and validates that each declared component has a Data stream. It remains read-only and does not yet cover every graphic record or provide write-back support.
 
+The project also provides `AltiumPcbLibReader`, which parses PcbLib FileHeader, Library/Data, SectionKeys, and footprint storage mappings, with access to footprint Header, Parameters, WideStrings, and Data streams. Both readers remain limited to structural validation and raw stream access; incremental write-back is not enabled yet.
+
 ## Related Documents
 
 - [ADR-001: MVVM Architecture](001-mvvm-architecture.md)
