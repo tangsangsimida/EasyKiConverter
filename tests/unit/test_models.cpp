@@ -108,6 +108,23 @@ private slots:
         QVERIFY(errors.contains(QStringLiteral("Part 0 Path 0 has no commands")));
     }
 
+    void testSymbolValidationChecksPinGeometry() {
+        SymbolData symbol;
+        SymbolInfo info;
+        info.name = QStringLiteral("INVALID_PIN_SYMBOL");
+        symbol.setInfo(info);
+        symbol.setBbox(SymbolBBox{0.0, 0.0, 10.0, 10.0});
+
+        SymbolPin pin;
+        pin.settings.spicePinNumber = QStringLiteral("1");
+        pin.settings.posX = std::numeric_limits<double>::quiet_NaN();
+        symbol.addPin(pin);
+
+        const QStringList errors = symbol.validationErrors();
+        QVERIFY(errors.contains(QStringLiteral("Pin 0 has a non-finite position")));
+        QVERIFY(!symbol.isValid());
+    }
+
     void testSymbolValidationAcceptsOriginBasedBoundingBox() {
         SymbolData symbol;
         SymbolInfo info;

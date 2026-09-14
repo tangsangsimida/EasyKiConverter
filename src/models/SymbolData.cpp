@@ -61,9 +61,22 @@ QStringList SymbolData::validationErrors() const {
     };
     const auto validatePart = [&](const SymbolPart& part, int partIndex) {
         const QString prefix = QStringLiteral("Part %1 ").arg(partIndex);
+        if (!isFinite(part.originX) || !isFinite(part.originY))
+            addError(QString("%1origin contains a non-finite value").arg(prefix));
+        const auto validatePin = [&](const SymbolPin& pin, int pinIndex) {
+            if (!isFinite(pin.settings.posX) || !isFinite(pin.settings.posY))
+                addError(QString("%1Pin %2 has a non-finite position").arg(prefix).arg(pinIndex));
+            if (pin.name.isDisplayed && (!isFinite(pin.name.posX) || !isFinite(pin.name.posY) ||
+                                         !isFinite(pin.name.fontSize) || pin.name.fontSize <= 0.0))
+                addError(QString("%1Pin %2 has invalid name geometry").arg(prefix).arg(pinIndex));
+            if (pin.number.isDisplayed && (!isFinite(pin.number.posX) || !isFinite(pin.number.posY) ||
+                                           !isFinite(pin.number.fontSize) || pin.number.fontSize <= 0.0))
+                addError(QString("%1Pin %2 has invalid number geometry").arg(prefix).arg(pinIndex));
+        };
         for (int i = 0; i < part.pins.size(); ++i) {
             if (part.pins[i].settings.spicePinNumber.trimmed().isEmpty())
                 addError(QString("%1Pin %2 has empty number").arg(prefix).arg(i));
+            validatePin(part.pins[i], i);
         }
         for (int i = 0; i < part.rectangles.size(); ++i) {
             const SymbolRectangle& rectangle = part.rectangles[i];
@@ -101,9 +114,20 @@ QStringList SymbolData::validationErrors() const {
     else if (m_bbox.width <= 0.0 || m_bbox.height <= 0.0)
         addError(QStringLiteral("Symbol bbox is empty"));
 
+    const auto validatePin = [&](const SymbolPin& pin, int pinIndex) {
+        if (!isFinite(pin.settings.posX) || !isFinite(pin.settings.posY))
+            addError(QString("Pin %1 has a non-finite position").arg(pinIndex));
+        if (pin.name.isDisplayed && (!isFinite(pin.name.posX) || !isFinite(pin.name.posY) ||
+                                     !isFinite(pin.name.fontSize) || pin.name.fontSize <= 0.0))
+            addError(QString("Pin %1 has invalid name geometry").arg(pinIndex));
+        if (pin.number.isDisplayed && (!isFinite(pin.number.posX) || !isFinite(pin.number.posY) ||
+                                       !isFinite(pin.number.fontSize) || pin.number.fontSize <= 0.0))
+            addError(QString("Pin %1 has invalid number geometry").arg(pinIndex));
+    };
     for (int i = 0; i < m_pins.size(); ++i) {
         if (m_pins[i].settings.spicePinNumber.trimmed().isEmpty())
             addError(QString("Pin %1 has empty number").arg(i));
+        validatePin(m_pins[i], i);
     }
     for (int i = 0; i < m_rectangles.size(); ++i) {
         const SymbolRectangle& rectangle = m_rectangles[i];
