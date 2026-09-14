@@ -129,6 +129,26 @@ private slots:
         QVERIFY(!symbol.isValid());
     }
 
+    void testSymbolValidationChecksTextGeometry() {
+        SymbolData symbol;
+        SymbolInfo info;
+        info.name = QStringLiteral("INVALID_TEXT_SYMBOL");
+        symbol.setInfo(info);
+        symbol.setBbox(SymbolBBox{0.0, 0.0, 10.0, 10.0});
+
+        SymbolText text;
+        text.posX = std::numeric_limits<double>::quiet_NaN();
+        text.text = QStringLiteral("LABEL");
+        text.visible = true;
+        text.textSize = 0.0;
+        symbol.addText(text);
+
+        const QStringList errors = symbol.validationErrors();
+        QVERIFY(errors.contains(QStringLiteral("Text 0 has a non-finite position or rotation")));
+        QVERIFY(errors.contains(QStringLiteral("Text 0 has a non-positive font size")));
+        QVERIFY(!symbol.isValid());
+    }
+
     void testSymbolValidationChecksGraphicOrderReferences() {
         SymbolData symbol;
         SymbolInfo info;

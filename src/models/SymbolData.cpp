@@ -59,6 +59,14 @@ QStringList SymbolData::validationErrors() const {
             }
         }
     };
+    const auto validateText = [&](const SymbolText& text, const QString& prefix, int index) {
+        if (!isFinite(text.posX) || !isFinite(text.posY) || !isFinite(text.rotation))
+            addError(QString("%1Text %2 has a non-finite position or rotation").arg(prefix).arg(index));
+        if (!text.text.trimmed().isEmpty() && text.visible && (!isFinite(text.textSize) || text.textSize <= 0.0))
+            addError(QString("%1Text %2 has a non-positive font size").arg(prefix).arg(index));
+        if (text.text.trimmed().isEmpty())
+            addError(QString("%1Text %2 is empty").arg(prefix).arg(index));
+    };
     const auto validateGraphicOrder =
         [&](const QList<SymbolGraphicOrder>& order, const QString& prefix, const auto& countForType) {
             QStringList seen;
@@ -132,8 +140,7 @@ QStringList SymbolData::validationErrors() const {
             if (part.paths[i].paths.trimmed().isEmpty())
                 addError(QString("%1Path %2 has no commands").arg(prefix).arg(i));
         for (int i = 0; i < part.texts.size(); ++i)
-            if (part.texts[i].text.trimmed().isEmpty())
-                addError(QString("%1Text %2 is empty").arg(prefix).arg(i));
+            validateText(part.texts[i], prefix, i);
         validateGraphicOrder(part.graphicOrder, prefix, [&](const QString& type) -> int {
             if (type == QStringLiteral("P"))
                 return part.pins.size();
@@ -206,8 +213,7 @@ QStringList SymbolData::validationErrors() const {
         if (m_paths[i].paths.trimmed().isEmpty())
             addError(QString("Path %1 has no commands").arg(i));
     for (int i = 0; i < m_texts.size(); ++i)
-        if (m_texts[i].text.trimmed().isEmpty())
-            addError(QString("Text %1 is empty").arg(i));
+        validateText(m_texts[i], QString(), i);
     validateGraphicOrder(m_graphicOrder, QString(), [&](const QString& type) -> int {
         if (type == QStringLiteral("P"))
             return m_pins.size();
