@@ -866,6 +866,20 @@ private slots:
         primitiveOffset += 4 + static_cast<int>(readU32(footprintData, primitiveOffset) & 0x00FFFFFFU);
         QCOMPARE(static_cast<quint8>(footprintData.at(primitiveOffset++)), quint8(4));
         QCOMPARE(readU32(footprintData, primitiveOffset) & 0x00FFFFFFU, quint32(36));
+
+        OLECompoundReader schReader;
+        QVERIFY2(schReader.open(schPath), qPrintable(schReader.errorString()));
+        QVERIFY(schReader.containsStream(QStringLiteral("C2040/Data")));
+        QByteArray schReaderData;
+        QVERIFY(schReader.readStream(QStringLiteral("C2040/Data"), &schReaderData));
+        QVERIFY(schReaderData.contains("RECORD=41"));
+
+        OLECompoundReader pcbReader;
+        QVERIFY2(pcbReader.open(pcbPath), qPrintable(pcbReader.errorString()));
+        QVERIFY(pcbReader.containsStream(QStringLiteral("Library/Data")));
+        QByteArray pcbReaderData;
+        QVERIFY(pcbReader.readStream(QStringLiteral("Library/Data"), &pcbReaderData));
+        QVERIFY(!pcbReaderData.isEmpty());
     }
 
     /**
