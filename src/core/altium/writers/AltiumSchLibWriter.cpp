@@ -1218,6 +1218,12 @@ void AltiumSchLibWriter::writeTextRecord(AltiumBinaryWriter& writer, const Altiu
     addCoordParam(params, "Location.X", text.locationX);
     addCoordParam(params, "Location.Y", text.locationY);
 
+    if (text.text.trimmed().isEmpty()) {
+        const QString diagnostic = QStringLiteral("Altium SchLib 文本内容为空，仍保留记录以维持记录计数");
+        m_diagnostics.append(diagnostic);
+        qWarning() << "AltiumSchLibWriter:" << diagnostic;
+    }
+
     const bool hasValidFontSize = std::isfinite(text.fontSizeMm) && text.fontSizeMm > 0.0;
     if (text.fontSizeMm != 0.0 && !hasValidFontSize) {
         const QString diagnostic = QStringLiteral("Altium SchLib 文本字体大小无效，已回退为默认字体大小");
