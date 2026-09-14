@@ -963,6 +963,11 @@ private slots:
         rotatedText.rotation = -90.0;
         rotatedText.fontSizeMm = 2.5;
         rotatedTextSymbol.texts.append(rotatedText);
+        IR::SymbolParameterIR rotatedParameter;
+        rotatedParameter.name = QStringLiteral("角度参数");
+        rotatedParameter.value = QStringLiteral("值");
+        rotatedParameter.rotation = -90.0;
+        rotatedTextSymbol.parameters.append(rotatedParameter);
         const QString rotatedTextPath = QDir(tempDir.path()).filePath(QStringLiteral("rotated-text.SchLib"));
         ExporterAltiumSymbol rotatedTextExporter;
         QVERIFY(rotatedTextExporter.exportSymbolLibrary(

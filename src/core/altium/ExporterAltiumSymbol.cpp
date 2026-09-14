@@ -21,6 +21,15 @@ int toAltiumOwnerPartId(int partIndex) {
     return partIndex < 0 ? -1 : qMax(1, partIndex + 1);
 }
 
+/**
+ * @brief 将任意角度归一化为 Altium 的四向文字方向。
+ * @param rotation 角度（度）
+ * @return 0 到 3 的 90 度方向编号
+ */
+int toAltiumOrientation(double rotation) {
+    return ((qRound(rotation / 90.0) % 4) + 4) % 4;
+}
+
 }  // namespace
 
 namespace {
@@ -230,7 +239,7 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
         altiumParameter.locationY = AltiumCoord::mmToRaw(parameter.position.y());
         altiumParameter.isHidden = !parameter.visible;
         altiumParameter.readOnly = parameter.readOnly;
-        altiumParameter.orientation = static_cast<int>(parameter.rotation / 90.0) % 4;
+        altiumParameter.orientation = toAltiumOrientation(parameter.rotation);
         altiumParameter.ownerPartId = parameter.partIndex > 0 ? parameter.partIndex + 1 : -1;
         altiumParameter.color = toAltiumColor(parameter.color);
         component.parameters.append(altiumParameter);
@@ -247,7 +256,7 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
             text.fontSizeMm = pin.nameFontSizeMm;
             text.anchor = pin.nameAnchor;
             text.isDisplayed = true;
-            text.orientation = static_cast<int>(pin.nameRotation / 90.0) % 4;
+            text.orientation = toAltiumOrientation(pin.nameRotation);
             text.ownerPartId = pin.commonToAllParts ? -1 : toAltiumOwnerPartId(pin.partIndex);
             component.texts.append(text);
         }
@@ -259,7 +268,7 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
             text.fontSizeMm = pin.numberFontSizeMm;
             text.anchor = pin.numberAnchor;
             text.isDisplayed = true;
-            text.orientation = static_cast<int>(pin.numberRotation / 90.0) % 4;
+            text.orientation = toAltiumOrientation(pin.numberRotation);
             text.ownerPartId = pin.commonToAllParts ? -1 : toAltiumOwnerPartId(pin.partIndex);
             component.texts.append(text);
         }
@@ -762,7 +771,7 @@ AltiumSchText ExporterAltiumSymbol::convertText(const IR::SymbolTextIR& text) {
     altiumText.italic = text.italic;
     altiumText.color = toAltiumColor(text.color);
     altiumText.isHidden = !text.visible;
-    altiumText.orientation = ((qRound(text.rotation / 90.0) % 4) + 4) % 4;
+    altiumText.orientation = toAltiumOrientation(text.rotation);
     altiumText.ownerPartId = toAltiumOwnerPartId(text.partIndex);
     return altiumText;
 }
