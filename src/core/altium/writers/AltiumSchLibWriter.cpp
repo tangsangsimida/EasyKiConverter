@@ -840,9 +840,14 @@ void AltiumSchLibWriter::writeImplementationRecords(AltiumBinaryWriter& writer, 
  * @return 记录数（含元件记录、图元、参数和实现记录）
  */
 int AltiumSchLibWriter::componentRecordCount(const AltiumSchComponent& component) const {
+    int validBezierCount = 0;
+    for (const AltiumSchBezier& bezier : component.beziers) {
+        if (bezier.controlPoints.size() == 4)
+            ++validBezierCount;
+    }
     const int graphics = component.pins.size() + component.rectangles.size() + component.lines.size() +
                          component.arcs.size() + component.polygons.size() + component.ellipses.size() +
-                         component.polylines.size() + component.paths.size() + component.beziers.size() +
+                         component.polylines.size() + component.paths.size() + validBezierCount +
                          component.texts.size();
     // Component + graphics + 参数字段 + ImplementationList + implementation triplets.
     return 1 + graphics + componentParameterRecordCount(component) + 1 + component.implementations.size() * 3;
