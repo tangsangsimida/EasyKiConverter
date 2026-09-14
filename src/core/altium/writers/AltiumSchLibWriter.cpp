@@ -227,15 +227,28 @@ void AltiumSchLibWriter::addUniqueID(QMap<QString, QString>& params) {
 bool AltiumSchLibWriter::write(const QList<AltiumSchComponent>& components,
                                const QString& filePath,
                                const QString& libraryName) {
+    m_diagnostics.clear();
     if (components.isEmpty()) {
+        m_diagnostics.append(QStringLiteral("Altium SchLib 输入组件为空，已拒绝写入"));
         qWarning() << "AltiumSchLibWriter: Refusing to write an empty library";
         return false;
+    }
+    if (filePath.trimmed().isEmpty()) {
+        m_diagnostics.append(QStringLiteral("Altium SchLib 输出路径为空，已拒绝写入"));
+        qWarning() << "AltiumSchLibWriter: Refusing to write without an output path";
+        return false;
+    }
+    for (const AltiumSchComponent& component : components) {
+        if (component.name.trimmed().isEmpty()) {
+            m_diagnostics.append(QStringLiteral("Altium SchLib 组件名称为空，已拒绝写入"));
+            qWarning() << "AltiumSchLibWriter: Refusing to write a component without a name";
+            return false;
+        }
     }
     m_fonts.clear();
     m_embeddedImageNames.clear();
     m_uniqueIdCounter = 0;
     m_libraryName = libraryName;
-    m_diagnostics.clear();
 
     prepareImageStorageNames(components);
 

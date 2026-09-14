@@ -580,6 +580,30 @@ private slots:
     }
 
     /**
+     * @brief 验证 SchLib 写入器拒绝无效入口参数并清理旧诊断
+     */
+    void rejectsInvalidSchLibWriterInputs() {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        AltiumSchLibWriter writer;
+        const QString outputPath = QDir(tempDir.path()).filePath(QStringLiteral("invalid-input.SchLib"));
+        QVERIFY(!writer.write({}, outputPath));
+        QVERIFY(writer.diagnostics().join('\n').contains(QStringLiteral("输入组件为空")));
+
+        AltiumSchComponent unnamed;
+        QVERIFY(!writer.write({unnamed}, outputPath));
+        QVERIFY(writer.diagnostics().join('\n').contains(QStringLiteral("组件名称为空")));
+        QVERIFY(!writer.diagnostics().join('\n').contains(QStringLiteral("输入组件为空")));
+
+        AltiumSchComponent named;
+        named.name = QStringLiteral("VALID");
+        QVERIFY(!writer.write({named}, QString()));
+        QVERIFY(writer.diagnostics().join('\n').contains(QStringLiteral("输出路径为空")));
+        QVERIFY(!writer.diagnostics().join('\n').contains(QStringLiteral("组件名称为空")));
+    }
+
+    /**
      * @brief 验证 SchLib 和 PcbLib 完整写入和流结构
      * @details 写入包含引脚、矩形、路径的符号和包含焊盘、走线的封装，
      *          验证 FileHeader 参数、Data 流内容、Library 元数据和图元记录布局
