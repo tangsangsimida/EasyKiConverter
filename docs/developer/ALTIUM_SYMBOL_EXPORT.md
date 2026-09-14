@@ -14,7 +14,7 @@
 - 文本字体：普通文本支持字体族、字号、粗体和斜体，并在 SchLib `FileHeader` 中动态登记字体表；旋转角度按最近的 90° 方向归一化为 Altium `Orientation=0..3`。
 - 多部件符号：图形、文本、参数和引脚按 `partIndex` 写入对应部件。
 - 公共图元：IR 中图元的负 `partIndex` 写入 Altium Part Zero（`OWNERPARTID=-1`）；引脚仍通过 `SymbolPinIR::commonToAllParts` 表示公共连接点，且引脚名称、编号文字会继承该归属。
-- `IndexInSheet`：每个组件内由图元、二进制引脚和参数字段共享从 `1` 开始的连续计数；组件记录本身使用 `-1`，不占用内容记录计数。
+- `IndexInSheet`：当前为参数字段和 implementation 记录维护组件内从 `1` 开始的连续计数；组件记录本身使用 `-1`，不占用内容记录计数。图形和二进制引脚记录不宣称携带同一字段，不能据此推断所有内容记录共享索引。
 - 多候选封装：每个封装生成一个 SchLib implementation，并自动去重。
 - 通用模型关联：支持通过 IR 或来源元数据写入 SPICE、SIM、STEP、VRML 等模型类型、数据文件实体、参数和引脚映射。
 - 模型默认状态：仅第一个实现写入 `ISCURRENT=T`；没有数据文件实体的 SPICE/SIM 等模型不会错误生成 `.PcbLib` 路径。
@@ -55,6 +55,7 @@ SchLib OLE/Data
 - `FlagLeft` 和 `FlagRight` 使用 Altium 的左右信号流图形表达；不同 AD 版本的图形外观仍需目标版本实机确认。
 - EasyEDA 当前数据源不一定提供完整的符号级 3D/仿真模型协议字段；调用方可通过 `SymbolModelIR` 或约定的来源元数据补充模型记录。
 - EasyEDA 当前符号数据没有统一的文本框、图片、扇形和椭圆弧来源字段；这些图元可由调用方通过 IR 直接添加，圆角矩形的 `rx/ry` 会从来源数据自动保留。
+- 图元级统一 `IndexInSheet` 仍未实现；当前写出顺序在存在 `graphicOrder` 时按源顺序恢复，否则按类型列表顺序写出。需要先取得不同 Altium 版本的真实 SchLib 样本，再确认图形记录是否存在可兼容的索引字段。
 - 最终兼容性仍需使用目标版本的 Altium Designer 打开并检查引脚连接、参数编辑和多部件显示。
 
 ## 验证
