@@ -176,6 +176,7 @@ void SymbolData::clear() {
     m_polygons.clear();
     m_paths.clear();
     m_texts.clear();
+    m_graphicOrder.clear();
     m_parts.clear();
 }
 
