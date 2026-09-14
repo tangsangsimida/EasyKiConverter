@@ -77,6 +77,71 @@ bool parseArcFields(const QByteArray& payload, AltiumPcbLibReader::ArcFields* fi
            reader.readInt32(&fields->width);
 }
 
+bool parsePadMainFields(const QByteArray& payload, AltiumPcbLibReader::PadFields* fields) {
+    if (fields == nullptr)
+        return false;
+    AltiumBinaryReader reader(payload);
+    quint8 layer = 0;
+    quint16 flags = 0;
+    QByteArray reserved;
+    return readCommonPrimitiveHeader(reader, &layer, &flags) && reader.readInt32(&fields->locationX) &&
+           reader.readInt32(&fields->locationY) && reader.readInt32(&fields->sizeTopX) &&
+           reader.readInt32(&fields->sizeTopY) && reader.readInt32(&fields->sizeMidX) &&
+           reader.readInt32(&fields->sizeMidY) && reader.readInt32(&fields->sizeBotX) &&
+           reader.readInt32(&fields->sizeBotY) && reader.readInt32(&fields->holeSize) &&
+           reader.readUInt8(&fields->shapeTop) && reader.readUInt8(&fields->shapeMid) &&
+           reader.readUInt8(&fields->shapeBot) && reader.readDouble(&fields->rotation) &&
+           reader.readUInt8(&fields->isPlated) && reader.readUInt8(&fields->stackMode) &&
+           reader.readUInt8(&fields->mode) && reader.readUInt8(&fields->powerPlaneConnectStyle) &&
+           reader.readInt32(&fields->reliefAirGapRaw) && reader.readInt32(&fields->reliefConductorWidthRaw) &&
+           reader.readInt16(&fields->reliefEntries) && reader.readInt32(&fields->powerPlaneClearanceRaw) &&
+           reader.readInt32(&fields->powerPlaneReliefExpansionRaw) &&
+           reader.readInt32(&fields->pasteMaskExpansionRaw) && reader.readInt32(&fields->solderMaskExpansionRaw) &&
+           reader.readBytes(7, &reserved) && reader.readUInt8(&fields->pasteMaskExpansionMode) &&
+           reader.readUInt8(&fields->solderMaskExpansionMode) && reader.readUInt8(&fields->drillType) &&
+           reader.readBytes(2, &reserved) && reader.readBytes(4, &reserved) && reader.readBytes(2, &reserved) &&
+           reader.readBytes(2, &reserved);
+}
+
+bool parsePadExtendedFields(const QByteArray& payload, AltiumPcbLibReader::PadFields* fields) {
+    if (fields == nullptr)
+        return false;
+    AltiumBinaryReader reader(payload);
+    QByteArray reserved;
+    qint32 reservedInt32 = 0;
+    quint8 reservedByte = 0;
+    for (int i = 0; i < 29; ++i) {
+        if (!reader.readInt32(&reservedInt32))
+            return false;
+    }
+    for (int i = 0; i < 29; ++i) {
+        if (!reader.readInt32(&reservedInt32))
+            return false;
+    }
+    for (int i = 0; i < 29; ++i) {
+        if (!reader.readUInt8(&fields->extendedShapeMid))
+            return false;
+    }
+    if (!reader.readUInt8(&reservedByte))
+        return false;
+    if (!reader.readUInt8(&fields->holeType) || !reader.readInt32(&fields->holeSlotLengthRaw) ||
+        !reader.readDouble(&fields->holeRotation) || !reader.readBytes(32 * 4, &reserved) ||
+        !reader.readBytes(32 * 4, &reserved) || !reader.readUInt8(&fields->hasRoundedRect) ||
+        !reader.readUInt8(&fields->extendedShapeTop))
+        return false;
+    for (int i = 0; i < 30; ++i) {
+        if (!reader.readUInt8(&fields->extendedShapeMid))
+            return false;
+    }
+    if (!reader.readUInt8(&fields->extendedShapeBottom))
+        return false;
+    for (int i = 0; i < 32; ++i) {
+        if (!reader.readUInt8(&fields->cornerRadiusPercentage))
+            return false;
+    }
+    return true;
+}
+
 bool parseTextFields(const QByteArray& payload, AltiumPcbLibReader::TextFields* fields) {
     if (fields == nullptr)
         return false;
@@ -280,6 +345,10 @@ bool AltiumPcbLibReader::readFootprintObjects(int componentIndexValue, QVector<P
                 if (!parseArcFields(payload, &object.arc))
                     return failRead(QStringLiteral("PcbLib 弧线图元字段不完整"));
                 object.hasArcFields = true;
+            } else if (isMainBlock && objectId == AltiumConstants::PCB_OBJECT_PAD) {
+                if (!parsePadMainFields(payload, &object.pad))
+                    return failRead(QStringLiteral("PcbLib 焊盘图元主块字段不完整"));
+                object.hasPadFields = true;
             } else if (isMainBlock && objectId == AltiumConstants::PCB_OBJECT_TEXT) {
                 if (!parseTextFields(payload, &object.textFields))
                     return failRead(QStringLiteral("PcbLib 文本图元字段不完整"));
@@ -290,6 +359,11 @@ bool AltiumPcbLibReader::readFootprintObjects(int componentIndexValue, QVector<P
             block.payload = payload;
             block.encoded = data.mid(blockStart, reader.position() - blockStart);
             object.blocks.append(block);
+        }
+        if (objectId == AltiumConstants::PCB_OBJECT_PAD) {
+            if (!readStringBlockPayload(object.blocks.at(0).payload, &object.designator) ||
+                !parsePadExtendedFields(object.blocks.at(5).payload, &object.pad))
+                return failRead(QStringLiteral("PcbLib 焊盘图元扩展字段不完整"));
         }
         if (objectId == AltiumConstants::PCB_OBJECT_TEXT &&
             !readStringBlockPayload(object.blocks.at(1).payload, &object.text))

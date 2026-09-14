@@ -913,6 +913,11 @@ private slots:
         QCOMPARE(footprintObjects.at(0).objectId, quint8(AltiumConstants::PCB_OBJECT_PAD));
         QCOMPARE(footprintObjects.at(0).layer, quint8(1));
         QVERIFY(footprintObjects.at(0).primitiveFlags != 0);
+        QVERIFY(footprintObjects.at(0).hasPadFields);
+        QCOMPARE(footprintObjects.at(0).designator, QStringLiteral("1"));
+        QCOMPARE(footprintObjects.at(0).pad.locationX, qint32(10000));
+        QCOMPARE(footprintObjects.at(0).pad.sizeTopX, qint32(20000));
+        QCOMPARE(footprintObjects.at(0).pad.holeType, quint8(0));
         QCOMPARE(footprintObjects.at(0).blocks.size(), 6);
         QCOMPARE(footprintObjects.at(1).objectId, quint8(AltiumConstants::PCB_OBJECT_TRACK));
         QCOMPARE(footprintObjects.at(1).layer, quint8(33));
@@ -1034,6 +1039,11 @@ private slots:
         QCOMPARE(objects.at(0).objectId, quint8(AltiumConstants::PCB_OBJECT_PAD));
         QCOMPARE(objects.at(0).layer, quint8(74));
         QCOMPARE(objects.at(0).primitiveFlags, quint16(0x0C));
+        QVERIFY(objects.at(0).hasPadFields);
+        QCOMPARE(objects.at(0).designator, QStringLiteral("1"));
+        QCOMPARE(objects.at(0).pad.holeType, quint8(2));
+        QCOMPARE(objects.at(0).pad.holeSlotLengthRaw, qint32(590550));
+        QCOMPARE(objects.at(0).pad.cornerRadiusPercentage, quint8(50));
         QCOMPARE(objects.at(0).blocks.size(), 6);
         QCOMPARE(objects.at(1).objectId, quint8(AltiumConstants::PCB_OBJECT_TEXT));
         QCOMPARE(objects.at(1).layer, quint8(33));

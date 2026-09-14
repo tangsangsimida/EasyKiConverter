@@ -68,6 +68,45 @@ public:
         quint32 v7LayerId = 0;
     };
 
+    /** @brief PcbLib 焊盘主块和扩展块的结构化数据 */
+    struct PadFields {
+        qint32 locationX = 0;
+        qint32 locationY = 0;
+        qint32 sizeTopX = 0;
+        qint32 sizeTopY = 0;
+        qint32 sizeMidX = 0;
+        qint32 sizeMidY = 0;
+        qint32 sizeBotX = 0;
+        qint32 sizeBotY = 0;
+        qint32 holeSize = 0;
+        quint8 shapeTop = 0;
+        quint8 shapeMid = 0;
+        quint8 shapeBot = 0;
+        double rotation = 0.0;
+        quint8 isPlated = 0;
+        quint8 stackMode = 0;
+        quint8 mode = 0;
+        quint8 powerPlaneConnectStyle = 0;
+        qint32 reliefAirGapRaw = 0;
+        qint32 reliefConductorWidthRaw = 0;
+        qint16 reliefEntries = 0;
+        qint32 powerPlaneClearanceRaw = 0;
+        qint32 powerPlaneReliefExpansionRaw = 0;
+        qint32 pasteMaskExpansionRaw = 0;
+        qint32 solderMaskExpansionRaw = 0;
+        quint8 pasteMaskExpansionMode = 0;
+        quint8 solderMaskExpansionMode = 0;
+        quint8 drillType = 0;
+        quint8 holeType = 0;
+        qint32 holeSlotLengthRaw = 0;
+        double holeRotation = 0.0;
+        quint8 hasRoundedRect = 0;
+        quint8 extendedShapeTop = 0;
+        quint8 extendedShapeMid = 0;
+        quint8 extendedShapeBottom = 0;
+        quint8 cornerRadiusPercentage = 0;
+    };
+
     /**
      * @brief PcbLib Data 中的图元对象
      * @details 保留对象 ID、所有子块和完整编码；未知对象类型不会被猜测解析。
@@ -80,8 +119,11 @@ public:
         TrackFields track;
         bool hasArcFields = false;
         ArcFields arc;
+        bool hasPadFields = false;
+        PadFields pad;
         bool hasTextFields = false;
         TextFields textFields;
+        QString designator;
         QString text;
         QVector<PrimitiveBlock> blocks;
         QByteArray encoded;
