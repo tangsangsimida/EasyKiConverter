@@ -634,6 +634,7 @@ private slots:
         styledText.fontSizeMm = 25.4 / 72.0 * 8.0;
         styledText.bold = true;
         styledText.italic = true;
+        styledText.anchor = QStringLiteral("start");
         symbol.texts.append(styledText);
         AltiumSchImage image;
         image.locationX = 1700000;
@@ -698,6 +699,7 @@ private slots:
         QVERIFY(schData.contains(QStringLiteral("第二行").toUtf8()));
         QVERIFY(schData.contains("FontID=2"));
         QVERIFY(schData.contains("FontSize=2.8222"));
+        QVERIFY(schData.contains("TextAnchor=start"));
         QVERIFY(schData.contains("Styled label"));
         QVERIFY(schData.contains("RECORD=30"));
         QVERIFY(schData.contains("EmbedImage=T"));

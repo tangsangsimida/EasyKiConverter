@@ -154,6 +154,11 @@ private slots:
         visiblePin.settings.posX = 10.0;
         visiblePin.settings.posY = 0.0;
         visiblePart.pins.append(visiblePin);
+        SymbolText visibleText;
+        visibleText.text = QStringLiteral("LABEL");
+        visibleText.anchor = QStringLiteral("end");
+        visibleText.textSize = 8.0;
+        visiblePart.texts.append(visibleText);
         visiblePart.graphicOrder.append({QStringLiteral("P"), 0});
 
         symbol.addPart(commonPart);
@@ -171,6 +176,8 @@ private slots:
         QCOMPARE(ir.pins.at(0).partIndex, -1);
         QVERIFY(!ir.pins.at(1).commonToAllParts);
         QCOMPARE(ir.pins.at(1).partIndex, 0);
+        QCOMPARE(ir.texts.size(), 1);
+        QCOMPARE(ir.texts.first().anchor, QStringLiteral("end"));
         QCOMPARE(ir.graphicOrder.at(0).partIndex, -1);
         QCOMPARE(ir.graphicOrder.at(1).partIndex, 0);
     }

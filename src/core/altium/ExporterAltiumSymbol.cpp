@@ -898,6 +898,7 @@ AltiumSchText ExporterAltiumSymbol::convertText(const IR::SymbolTextIR& text) {
     altiumText.fontSizeMm = text.fontSizeMm;
     altiumText.bold = text.bold;
     altiumText.italic = text.italic;
+    altiumText.anchor = text.anchor.trimmed().isEmpty() ? QStringLiteral("middle") : text.anchor.trimmed();
     altiumText.color = toAltiumColor(text.color);
     altiumText.isHidden = !text.visible;
     altiumText.orientation = toAltiumOrientation(text.rotation);

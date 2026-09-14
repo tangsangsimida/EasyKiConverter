@@ -312,6 +312,7 @@ struct SymbolTextIR {
     bool bold = false;  ///< 是否粗体
     bool italic = false;  ///< 是否斜体（替代原始字符串 "1"/"Italic"）
     bool visible = true;  ///< 是否可见
+    QString anchor = QStringLiteral("middle");  ///< 文本锚点（如 start、middle、end）
     int partIndex = 0;  ///< 所属部件索引（多部件符号使用）
 };
 

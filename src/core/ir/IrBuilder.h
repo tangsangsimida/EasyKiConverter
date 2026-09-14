@@ -297,6 +297,7 @@ inline SymbolComponentIR toSymbolIR(const SymbolData& data) {
             tir.bold = text.bold;
             tir.italic = (text.italic == "1" || text.italic == "Italic" || text.italic == "italic");
             tir.visible = text.visible;
+            tir.anchor = text.anchor.trimmed().isEmpty() ? QStringLiteral("middle") : text.anchor.trimmed();
             tir.partIndex = partIdx;
             ir.texts.append(tir);
         }
