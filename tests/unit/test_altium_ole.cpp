@@ -1334,6 +1334,24 @@ private slots:
         QVERIFY(invalidGeometryExporter.diagnostics().contains(
             QStringLiteral("符号 INVALID_GEOMETRY 圆弧图元 0 三点退化，已使用安全回退圆心")));
 
+        IR::SymbolComponentIR invalidPathSymbol;
+        invalidPathSymbol.name = QStringLiteral("INVALID_PATH_SEGMENT");
+        IR::SymbolPathIR invalidPath;
+        IR::SymbolPathSegmentIR invalidEllipseArc;
+        invalidEllipseArc.type = IR::SymbolPathSegmentIR::Type::EllipticalArc;
+        invalidEllipseArc.arcCenter = QPointF(0.0, 0.0);
+        invalidEllipseArc.radiusX = 0.0;
+        invalidEllipseArc.radiusY = 1.0;
+        invalidEllipseArc.arcStartAngle = 0.0;
+        invalidEllipseArc.arcEndAngle = 90.0;
+        invalidPath.segments.append(invalidEllipseArc);
+        invalidPathSymbol.paths.append(invalidPath);
+        ExporterAltiumSymbol invalidPathExporter;
+        const QString invalidPathFile = QDir(tempDir.path()).filePath(QStringLiteral("invalid-path-segment.SchLib"));
+        QVERIFY(invalidPathExporter.exportSymbol(invalidPathSymbol, invalidPathFile));
+        QVERIFY(invalidPathExporter.diagnostics().contains(
+            QStringLiteral("符号 INVALID_PATH_SEGMENT 路径图元 0 的段 0 参数无效，已跳过")));
+
         IR::SymbolComponentIR nativeArcSymbol;
         nativeArcSymbol.name = QStringLiteral("NATIVE_ARC");
         IR::SymbolPathIR nativeArcPath;

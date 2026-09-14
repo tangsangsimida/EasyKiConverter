@@ -247,6 +247,9 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
         }
         return localIndex;
     };
+    const auto isFinitePoint = [](const QPointF& point) {
+        return std::isfinite(point.x()) && std::isfinite(point.y());
+    };
 
     for (const IR::SymbolParameterIR& parameter : data.parameters) {
         AltiumSchParameter altiumParameter;
@@ -360,6 +363,35 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
         if (!p.isFilled && !p.segments.isEmpty()) {
             int segmentIndex = 0;
             for (const IR::SymbolPathSegmentIR& segment : p.segments) {
+                bool validSegment = isFinitePoint(segment.start) && isFinitePoint(segment.end);
+                switch (segment.type) {
+                    case IR::SymbolPathSegmentIR::Type::QuadraticBezier:
+                        validSegment = validSegment && isFinitePoint(segment.control1);
+                        break;
+                    case IR::SymbolPathSegmentIR::Type::CubicBezier:
+                        validSegment =
+                            validSegment && isFinitePoint(segment.control1) && isFinitePoint(segment.control2);
+                        break;
+                    case IR::SymbolPathSegmentIR::Type::CircularArc:
+                        validSegment = validSegment && isFinitePoint(segment.arcMid);
+                        break;
+                    case IR::SymbolPathSegmentIR::Type::EllipticalArc:
+                        validSegment = validSegment && isFinitePoint(segment.arcCenter) &&
+                                       std::isfinite(segment.radiusX) && std::isfinite(segment.radiusY) &&
+                                       segment.radiusX > 0.0 && segment.radiusY > 0.0 &&
+                                       std::isfinite(segment.arcStartAngle) && std::isfinite(segment.arcEndAngle);
+                        break;
+                    case IR::SymbolPathSegmentIR::Type::Line:
+                        break;
+                }
+                if (!validSegment) {
+                    m_diagnostics.append(QStringLiteral("符号 %1 路径图元 %2 的段 %3 参数无效，已跳过")
+                                             .arg(data.name)
+                                             .arg(pathIndex)
+                                             .arg(segmentIndex));
+                    ++segmentIndex;
+                    continue;
+                }
                 if (segment.type == IR::SymbolPathSegmentIR::Type::Line) {
                     AltiumSchPath path;
                     path.lineWidth = AltiumCoord::lineWidthMmToIndex(p.strokeWidth);
