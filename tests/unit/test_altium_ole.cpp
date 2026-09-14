@@ -1483,6 +1483,11 @@ private slots:
         text.fontId = 1;
         text.color = 0;
         symbol.texts.append(text);
+        AltiumSchParameter invalidFontParameter;
+        invalidFontParameter.name = QStringLiteral("InvalidFont");
+        invalidFontParameter.value = QStringLiteral("回退字体");
+        invalidFontParameter.fontId = 99;
+        symbol.parameters.append(invalidFontParameter);
 
         const QString schPath = QDir(tempDir.path()).filePath(QStringLiteral("test_utf8.SchLib"));
         AltiumSchLibWriter schWriter;
@@ -1503,13 +1508,19 @@ private slots:
         QVector<AltiumSchLibReader::Record> records;
         QVERIFY2(reader.readComponentRecords(QStringLiteral("TEST_UTF8"), &records), qPrintable(reader.errorString()));
         bool sawFontReference = false;
+        bool sawParameterFontReference = false;
         for (const auto& record : records) {
             if (record.parameters.value(QStringLiteral("RECORD")) == QStringLiteral("4")) {
                 sawFontReference = true;
                 QCOMPARE(record.fontId, 1);
             }
+            if (record.parameters.value(QStringLiteral("NAME")) == QStringLiteral("InvalidFont")) {
+                sawParameterFontReference = true;
+                QCOMPARE(record.fontId, 1);
+            }
         }
         QVERIFY(sawFontReference);
+        QVERIFY(sawParameterFontReference);
 
         IR::SymbolComponentIR rotatedTextSymbol;
         rotatedTextSymbol.name = QStringLiteral("ROTATED_TEXT");

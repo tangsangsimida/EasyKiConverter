@@ -1457,6 +1457,8 @@ void AltiumSchLibWriter::writeComponentParameterRecords(AltiumBinaryWriter& writ
             constexpr double MILLIMETERS_PER_POINT = 25.4 / 72.0;
             fontId = getOrAddFont(QStringLiteral("Times New Roman"),
                                   qMax(1, qRound(field.fontSizeMm / MILLIMETERS_PER_POINT)));
+        } else if (fontId < 1 || fontId > m_fonts.size()) {
+            fontId = 1;
         }
         parameterParams["FONTID"] = QString::number(fontId);
         parameterParams["TEXT"] = field.value;
