@@ -2640,8 +2640,18 @@ private slots:
         AltiumSchParameter parameter;
         parameter.name = QStringLiteral("Custom");
         parameter.value = QStringLiteral("value");
-        parameter.ownerPartId = 0;
+        parameter.ownerPartId = 1;
         symbol.parameters.append(parameter);
+        AltiumSchParameter commonParameter;
+        commonParameter.name = QStringLiteral("Common");
+        commonParameter.value = QStringLiteral("shared");
+        commonParameter.ownerPartId = -1;
+        symbol.parameters.append(commonParameter);
+        AltiumSchParameter secondPartParameter;
+        secondPartParameter.name = QStringLiteral("PartSpecific");
+        secondPartParameter.value = QStringLiteral("part");
+        secondPartParameter.ownerPartId = 1;
+        symbol.parameters.append(secondPartParameter);
 
         AltiumSchLibWriter writer;
         const QString path = QDir(tempDir.path()).filePath(QStringLiteral("content-index.SchLib"));
@@ -2666,6 +2676,27 @@ private slots:
         QVERIFY(parameterRecord.contains("OWNERPARTID=1"));
         QVERIFY(!parameterRecord.contains("ISNOTACCESIBLE"));
 
+        const int commonParameterOffset = data.indexOf("NAME=Common");
+        const int commonRecordOffset = data.lastIndexOf("|RECORD=41|", commonParameterOffset);
+        const int nextCommonRecordOffset = data.indexOf("|RECORD=", commonParameterOffset + 1);
+        QVERIFY(commonRecordOffset >= 0);
+        QVERIFY(commonParameterOffset > commonRecordOffset);
+        QVERIFY(nextCommonRecordOffset > commonRecordOffset);
+        const QByteArray commonRecord = data.mid(commonRecordOffset, nextCommonRecordOffset - commonRecordOffset);
+        QVERIFY(commonRecord.contains("OWNERPARTID=-1"));
+        QVERIFY(!commonRecord.contains("IndexInSheet="));
+
+        const int partSpecificOffset = data.indexOf("NAME=PartSpecific");
+        const int partSpecificRecordOffset = data.lastIndexOf("|RECORD=41|", partSpecificOffset);
+        const int nextPartSpecificRecordOffset = data.indexOf("|RECORD=", partSpecificOffset + 1);
+        QVERIFY(partSpecificRecordOffset >= 0);
+        QVERIFY(partSpecificOffset > partSpecificRecordOffset);
+        QVERIFY(nextPartSpecificRecordOffset > partSpecificRecordOffset);
+        const QByteArray partSpecificRecord =
+            data.mid(partSpecificRecordOffset, nextPartSpecificRecordOffset - partSpecificRecordOffset);
+        QVERIFY(partSpecificRecord.contains("OWNERPARTID=1"));
+        QVERIFY(partSpecificRecord.contains("IndexInSheet=3"));
+
         AltiumSchLibReader reader;
         QVERIFY2(reader.open(path), qPrintable(reader.errorString()));
         QVector<AltiumSchLibReader::Record> records;
@@ -2673,6 +2704,8 @@ private slots:
                  qPrintable(reader.errorString()));
         bool foundGraphic = false;
         bool foundParameter = false;
+        bool foundCommonParameter = false;
+        bool foundPartSpecificParameter = false;
         for (const AltiumSchLibReader::Record& record : records) {
             if (!record.hasParameters)
                 continue;
@@ -2685,10 +2718,22 @@ private slots:
                 QCOMPARE(record.ownerPartId, 1);
                 QCOMPARE(record.ownerPartDisplayMode, -1);
                 foundParameter = true;
+            } else if (record.recordType == 41 &&
+                       record.parameters.value(QStringLiteral("NAME")) == QStringLiteral("Common")) {
+                QCOMPARE(record.ownerPartId, -1);
+                QCOMPARE(record.indexInSheet, -1);
+                foundCommonParameter = true;
+            } else if (record.recordType == 41 &&
+                       record.parameters.value(QStringLiteral("NAME")) == QStringLiteral("PartSpecific")) {
+                QCOMPARE(record.ownerPartId, 1);
+                QCOMPARE(record.indexInSheet, 3);
+                foundPartSpecificParameter = true;
             }
         }
         QVERIFY(foundGraphic);
         QVERIFY(foundParameter);
+        QVERIFY(foundCommonParameter);
+        QVERIFY(foundPartSpecificParameter);
     }
 
     /**
