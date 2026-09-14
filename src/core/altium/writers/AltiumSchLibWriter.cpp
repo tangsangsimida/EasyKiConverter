@@ -489,6 +489,10 @@ void AltiumSchLibWriter::writeComponentStorage(OLECompoundWriter& ole,
             if (text.isPinLabel)
                 writeTextRecord(writer, text);
         }
+        for (const AltiumSchText& text : component.texts) {
+            if (!text.isPinLabel && text.sourceGraphicIndex < 0)
+                writeTextRecord(writer, text);
+        }
         // 兼容没有来源顺序引用的扩展图元（例如手工构造的 Bézier）。
         for (const AltiumSchLine& line : component.lines)
             writeLineRecord(writer, line);
