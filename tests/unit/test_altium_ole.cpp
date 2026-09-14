@@ -681,6 +681,17 @@ private slots:
         QVERIFY(!writer.write({invalidPolygon}, outputPath));
         QVERIFY(writer.diagnostics().join('\n').contains(QStringLiteral("多边形顶点数量不足")));
 
+        AltiumSchComponent invalidPartOwner;
+        invalidPartOwner.name = QStringLiteral("INVALID_PART_OWNER");
+        invalidPartOwner.partCount = 2;
+        AltiumSchRectangle outOfRangeRectangle;
+        outOfRangeRectangle.cornerX = 100000;
+        outOfRangeRectangle.cornerY = 100000;
+        outOfRangeRectangle.ownerPartId = 3;
+        invalidPartOwner.rectangles.append(outOfRangeRectangle);
+        QVERIFY(!writer.write({invalidPartOwner}, outputPath));
+        QVERIFY(writer.diagnostics().join('\n').contains(QStringLiteral("矩形图元 OWNERPARTID=3 超出部件范围")));
+
         AltiumPcbComponent invalidPcb;
         invalidPcb.name = QStringLiteral("INVALID_PCB_FLOATS");
         AltiumPcbPad invalidPad;
