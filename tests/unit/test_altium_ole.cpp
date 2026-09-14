@@ -2116,6 +2116,11 @@ private slots:
         partText.text = QStringLiteral("PART_TEXT");
         partText.partIndex = 1;
         symbol.texts.append(partText);
+        AltiumSchParameter partParameter;
+        partParameter.name = QStringLiteral("PartOnly");
+        partParameter.value = QStringLiteral("Part 1 value");
+        partParameter.ownerPartId = 1;
+        symbol.parameters.append(partParameter);
         IR::SymbolImageIR image;
         image.x0 = -1.0;
         image.y0 = -0.5;
@@ -2194,6 +2199,13 @@ private slots:
         const int partTextRecordOffset = symbolData.lastIndexOf("|RECORD=4|", partTextOffset);
         QVERIFY(partTextOffset > partTextRecordOffset);
         QVERIFY(symbolData.mid(partTextRecordOffset, partTextOffset - partTextRecordOffset).contains("OWNERPARTID=2"));
+        const int partParameterOffset = symbolData.indexOf("NAME=PartOnly");
+        const int partParameterRecordOffset = symbolData.lastIndexOf("|RECORD=41|", partParameterOffset);
+        QVERIFY(partParameterOffset > partParameterRecordOffset);
+        const QByteArray partParameterRecord =
+            symbolData.mid(partParameterRecordOffset, partParameterOffset - partParameterRecordOffset);
+        QVERIFY(partParameterRecord.contains("OWNERPARTID=1"));
+        QVERIFY(partParameterRecord.contains("OWNERPARTDISPLAYMODE=1"));
         QByteArray multipartStorage;
         QVERIFY(readCfbStream(schPath, QStringLiteral("Storage"), multipartStorage));
         QVERIFY(multipartStorage.contains("multipart.png"));

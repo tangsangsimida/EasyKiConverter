@@ -1598,8 +1598,10 @@ void AltiumSchLibWriter::writeComponentParameterRecords(AltiumBinaryWriter& writ
         parameterParams["RECORD"] = "41";
         const int ownerPartId = normalizeOwnerPartId(field.ownerPartId, QStringLiteral("参数"));
         parameterParams["OWNERPARTID"] = QString::number(ownerPartId);
-        if (ownerPartId >= 1)
+        if (ownerPartId >= 1) {
+            parameterParams["OWNERPARTDISPLAYMODE"] = "1";
             addContentIndex(parameterParams);
+        }
         if (field.hasLocation) {
             addCoordParam(parameterParams, "LOCATION.X", field.locationX);
             addCoordParam(parameterParams, "LOCATION.Y", field.locationY);
