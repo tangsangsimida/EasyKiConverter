@@ -132,8 +132,7 @@ LoongArch64 暂未提供可执行的 GitHub Actions 构建工作流或正式发�
 # 安装 Homebrew（如果尚未安装）
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
-# 安装 Qt
-brew install qt@6
+# Qt 不通过 Homebrew 安装；请使用下方的项目专用 Qt 安装方式
 
 # 安装 CMake
 brew install cmake
@@ -147,7 +146,8 @@ xcode-select --install
 1. 访问 [Qt 官网](https://www.qt.io/download)
 2. 下载 macOS 安装包
 3. 运行安装程序
-4. 安装 Qt 6.10.2 或更高版本
+4. 将 Qt 6.10.2 或更高版本安装到项目专用目录，不要使用 `/usr/local/Qt`、Homebrew 或系统自带 Qt
+5. 设置 `Qt6_DIR`、`CMAKE_PREFIX_PATH` 和 `PATH` 指向该目录
 
 ### Linux
 
@@ -175,11 +175,8 @@ sudo apt-get install libxkbcommon-dev libxkbcommon-x11-dev
 **Fedora**
 
 ```bash
-# 安装 Qt 6
-sudo dnf install qt6-qtbase-devel qt6-qtdeclarative-devel qt6-qttools-devel qt6-qtnetworkauth-devel
-
 # 安装 CMake
-sudo dnf install cmake
+sudo dnf install cmake ninja-build
 
 # 安装编译器
 sudo dnf install gcc-c++
@@ -191,9 +188,11 @@ sudo dnf install zlib-devel
 **Arch Linux**
 
 ```bash
-# 安装所有依赖
-sudo pacman -S --needed base-devel cmake ninja qt6-base qt6-declarative qt6-svg qt6-shadertools qt6-tools zlib
+# 安装编译依赖；Qt 必须使用上文配置的项目专用安装，不要使用系统 Qt
+sudo pacman -S --needed base-devel cmake ninja zlib
 ```
+
+Fedora 和 Arch Linux 的系统包管理器仅用于安装编译器、CMake、Ninja、zlib 等基础依赖。Qt 必须通过独立安装目录提供，并在配置前确认 `qmake -query QT_VERSION` 输出项目要求的版本。
 
 ## 获取源代码
 
@@ -304,12 +303,18 @@ cmake --build . --config Release
 ### macOS
 
 ```bash
+# 设置项目专用 Qt 根目录（替换为实际安装路径）
+export PROJECT_QT_ROOT=/path/to/project/Qt/6.10.2/macos
+export Qt6_DIR="$PROJECT_QT_ROOT/lib/cmake/Qt6"
+export CMAKE_PREFIX_PATH="$PROJECT_QT_ROOT"
+export PATH="$PROJECT_QT_ROOT/bin:$PATH"
+
 # 创建构建目录
 mkdir build
 cd build
 
 # 配置项目
-cmake .. -DCMAKE_PREFIX_PATH="/usr/local/Qt-6.10.2"
+cmake .. -DCMAKE_PREFIX_PATH="$PROJECT_QT_ROOT"
 
 # 编译项目（Debug 版本）
 cmake --build . --config Debug
@@ -539,18 +544,20 @@ CMake Error: The link interface of target "Qt6::GuiPrivate" contains XKB::XKB bu
 
 **Ubuntu/Debian：**
 ```bash
-sudo apt-get install libxkbcommon-dev libxkbcommon-x11-dev qt6-base-private-dev
+sudo apt-get install libxkbcommon-dev libxkbcommon-x11-dev
 ```
 
 **Fedora：**
 ```bash
-sudo dnf install libxkbcommon-devel libxkbcommon-x11-devel qt6-qtbase-private-devel
+sudo dnf install libxkbcommon-devel libxkbcommon-x11-devel
 ```
 
 **Arch Linux：**
 ```bash
-sudo pacman -S libxkbcommon qt6-base
+sudo pacman -S libxkbcommon
 ```
+
+`Qt6::GuiPrivate` 的头文件和 CMake 配置必须来自项目专用 Qt 安装，不要通过系统 Qt 私有开发包补齐版本不一致的依赖。
 
 ### 找不到 Qt 动态库
 
