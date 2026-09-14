@@ -1047,6 +1047,7 @@ void AltiumSchLibWriter::writePieRecord(AltiumBinaryWriter& writer, const Altium
         params["AreaColor"] = QString::number(pie.areaColor);
     if (pie.isSolid)
         params["IsSolid"] = "T";
+    addUniqueID(params);
     writer.writeCStringParameterBlock(params);
 }
 
@@ -1159,6 +1160,7 @@ void AltiumSchLibWriter::writeIeeeRecord(AltiumBinaryWriter& writer, const Altiu
     if (ieee.mirrored)
         params["Mirror"] = "T";
     addColorParam(params, "Color", ieee.color);
+    addUniqueID(params);
     writer.writeCStringParameterBlock(params);
 }
 

@@ -1476,6 +1476,38 @@ private slots:
         QVERIFY(readCfbStream(path, QStringLiteral("GAPPED_PATH/Data"), data));
         QCOMPARE(data.count(QByteArrayLiteral("RECORD=6")), 2);
     }
+
+    /**
+     * @brief 验证 Pie 和 IEEE 图元同样带有可编辑记录所需的唯一标识。
+     */
+    void pieAndIeeeRecordsHaveUniqueIds() {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        AltiumSchComponent symbol;
+        symbol.name = QStringLiteral("UNIQUE_ID_GRAPHICS");
+        AltiumSchPie pie;
+        pie.centerX = 100000;
+        pie.radius = 200000;
+        symbol.pies.append(pie);
+        AltiumSchIeee ieee;
+        ieee.locationX = 300000;
+        ieee.locationY = 400000;
+        symbol.ieeeSymbols.append(ieee);
+
+        AltiumSchLibWriter writer;
+        const QString path = QDir(tempDir.path()).filePath(QStringLiteral("unique-id-graphics.SchLib"));
+        QVERIFY(writer.write({symbol}, path, QStringLiteral("unique-id-graphics")));
+
+        QByteArray data;
+        QVERIFY(readCfbStream(path, QStringLiteral("UNIQUE_ID_GRAPHICS/Data"), data));
+        const int pieOffset = data.indexOf("RECORD=9");
+        const int ieeeOffset = data.indexOf("RECORD=3");
+        QVERIFY(pieOffset >= 0);
+        QVERIFY(ieeeOffset >= 0);
+        QVERIFY(data.mid(pieOffset, 256).contains("UniqueID="));
+        QVERIFY(data.mid(ieeeOffset, 256).contains("UniqueID="));
+    }
 };
 
 QTEST_GUILESS_MAIN(TestAltiumOle)
