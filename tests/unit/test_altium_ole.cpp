@@ -1258,6 +1258,23 @@ private slots:
         body.outline = {QPointF(-50000, -50000), QPointF(50000, -50000), QPointF(50000, 50000), QPointF(-50000, 50000)};
         footprint.bodies.append(body);
 
+        AltiumPcbFill fill;
+        fill.corner1X = -20000;
+        fill.corner1Y = -10000;
+        fill.corner2X = 20000;
+        fill.corner2Y = 10000;
+        fill.rotation = 15.0;
+        fill.layer = 33;
+        footprint.fills.append(fill);
+
+        AltiumPcbRegion region;
+        region.layer = 33;
+        region.kind = 2;
+        region.name = QStringLiteral("COURTYARD");
+        region.vertices = {
+            QPointF(-30000, -30000), QPointF(30000, -30000), QPointF(30000, 30000), QPointF(-30000, 30000)};
+        footprint.regions.append(region);
+
         const QString pcbPath = QDir(tempDir.path()).filePath(QStringLiteral("test_body.PcbLib"));
         AltiumPcbLibWriter pcbWriter;
         QVERIFY(pcbWriter.write({footprint}, pcbPath));
@@ -1274,6 +1291,39 @@ private slots:
             }
         }
         QVERIFY(foundBody);
+
+        AltiumPcbLibReader reader;
+        QVERIFY2(reader.open(pcbPath), qPrintable(reader.errorString()));
+        QVector<AltiumPcbLibReader::PrimitiveRecord> objects;
+        QVERIFY2(reader.readFootprintObjects(QStringLiteral("TEST_BODY"), &objects), qPrintable(reader.errorString()));
+
+        bool foundFill = false;
+        bool foundRegion = false;
+        bool foundStructuredBody = false;
+        for (const auto& object : objects) {
+            if (object.objectId == AltiumConstants::PCB_OBJECT_FILL) {
+                foundFill = true;
+                QVERIFY(object.hasFillFields);
+                QCOMPARE(object.fill.corner1X, fill.corner1X);
+                QCOMPARE(object.fill.corner2Y, fill.corner2Y);
+                QCOMPARE(object.fill.rotation, fill.rotation);
+            } else if (object.objectId == AltiumConstants::PCB_OBJECT_REGION) {
+                foundRegion = true;
+                QVERIFY(object.hasRegionFields);
+                QCOMPARE(object.region.parameters.value(QStringLiteral("NAME")), region.name);
+                QCOMPARE(object.region.vertices.size(), region.vertices.size());
+                QCOMPARE(object.region.vertices.first(), region.vertices.first());
+            } else if (object.objectId == AltiumConstants::PCB_OBJECT_COMPONENT_BODY) {
+                foundStructuredBody = true;
+                QVERIFY(object.hasComponentBodyFields);
+                QCOMPARE(object.componentBody.parameters.value(QStringLiteral("MODEL.NAME")), body.modelName);
+                QCOMPARE(object.componentBody.outline.size(), body.outline.size());
+                QCOMPARE(object.componentBody.outline.last(), body.outline.last());
+            }
+        }
+        QVERIFY(foundFill);
+        QVERIFY(foundRegion);
+        QVERIFY(foundStructuredBody);
     }
 
     /**

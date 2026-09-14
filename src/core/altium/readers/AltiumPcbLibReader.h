@@ -4,6 +4,7 @@
 
 #include <QByteArray>
 #include <QMap>
+#include <QPointF>
 #include <QString>
 #include <QVector>
 
@@ -107,6 +108,35 @@ public:
         quint8 cornerRadiusPercentage = 0;
     };
 
+    /** @brief PcbLib 填充图元的结构化数据 */
+    struct FillFields {
+        qint32 corner1X = 0;
+        qint32 corner1Y = 0;
+        qint32 corner2X = 0;
+        qint32 corner2Y = 0;
+        double rotation = 0.0;
+        qint32 solderMaskExpansionRaw = 0;
+        quint8 pasteMaskExpansion = 0;
+        quint32 v7LayerId = 0;
+        quint8 keepoutRestrictions = 0;
+    };
+
+    /** @brief PcbLib 区域图元的结构化数据 */
+    struct RegionFields {
+        quint32 reserved = 0;
+        quint8 reservedByte = 0;
+        QMap<QString, QString> parameters;
+        QVector<QPointF> vertices;
+    };
+
+    /** @brief PcbLib 三维元件体图元的结构化数据 */
+    struct ComponentBodyFields {
+        quint32 reserved = 0;
+        quint8 reservedByte = 0;
+        QMap<QString, QString> parameters;
+        QVector<QPointF> outline;
+    };
+
     /**
      * @brief PcbLib Data 中的图元对象
      * @details 保留对象 ID、所有子块和完整编码；未知对象类型不会被猜测解析。
@@ -121,6 +151,12 @@ public:
         ArcFields arc;
         bool hasPadFields = false;
         PadFields pad;
+        bool hasFillFields = false;
+        FillFields fill;
+        bool hasRegionFields = false;
+        RegionFields region;
+        bool hasComponentBodyFields = false;
+        ComponentBodyFields componentBody;
         bool hasTextFields = false;
         TextFields textFields;
         QString designator;

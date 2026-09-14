@@ -142,6 +142,61 @@ bool parsePadExtendedFields(const QByteArray& payload, AltiumPcbLibReader::PadFi
     return true;
 }
 
+bool readVertexList(AltiumBinaryReader& reader, QVector<QPointF>* vertices) {
+    if (vertices == nullptr)
+        return false;
+    quint32 count = 0;
+    if (!reader.readUInt32(&count) || count > static_cast<quint32>(reader.remaining() / 16))
+        return false;
+    vertices->clear();
+    vertices->reserve(static_cast<int>(count));
+    for (quint32 i = 0; i < count; ++i) {
+        double x = 0.0;
+        double y = 0.0;
+        if (!reader.readDouble(&x) || !reader.readDouble(&y))
+            return false;
+        vertices->append(QPointF(x, y));
+    }
+    return reader.remaining() == 0;
+}
+
+bool parseFillFields(const QByteArray& payload, AltiumPcbLibReader::FillFields* fields) {
+    if (fields == nullptr)
+        return false;
+    AltiumBinaryReader reader(payload);
+    quint8 layer = 0;
+    quint16 flags = 0;
+    QByteArray reserved;
+    return readCommonPrimitiveHeader(reader, &layer, &flags) && reader.readInt32(&fields->corner1X) &&
+           reader.readInt32(&fields->corner1Y) && reader.readInt32(&fields->corner2X) &&
+           reader.readInt32(&fields->corner2Y) && reader.readDouble(&fields->rotation) &&
+           reader.readInt32(&fields->solderMaskExpansionRaw) && reader.readUInt8(&fields->pasteMaskExpansion) &&
+           reader.readUInt32(&fields->v7LayerId) && reader.readUInt8(&fields->keepoutRestrictions) &&
+           reader.readBytes(3, &reserved) && reader.remaining() == 0;
+}
+
+bool parseRegionFields(const QByteArray& payload, AltiumPcbLibReader::RegionFields* fields) {
+    if (fields == nullptr)
+        return false;
+    AltiumBinaryReader reader(payload);
+    quint8 layer = 0;
+    quint16 flags = 0;
+    return readCommonPrimitiveHeader(reader, &layer, &flags) && reader.readUInt32(&fields->reserved) &&
+           reader.readUInt8(&fields->reservedByte) && reader.readCStringParameterBlock(&fields->parameters) &&
+           readVertexList(reader, &fields->vertices);
+}
+
+bool parseComponentBodyFields(const QByteArray& payload, AltiumPcbLibReader::ComponentBodyFields* fields) {
+    if (fields == nullptr)
+        return false;
+    AltiumBinaryReader reader(payload);
+    quint8 layer = 0;
+    quint16 flags = 0;
+    return readCommonPrimitiveHeader(reader, &layer, &flags) && reader.readUInt32(&fields->reserved) &&
+           reader.readUInt8(&fields->reservedByte) && reader.readCStringParameterBlock(&fields->parameters) &&
+           readVertexList(reader, &fields->outline);
+}
+
 bool parseTextFields(const QByteArray& payload, AltiumPcbLibReader::TextFields* fields) {
     if (fields == nullptr)
         return false;
@@ -349,6 +404,18 @@ bool AltiumPcbLibReader::readFootprintObjects(int componentIndexValue, QVector<P
                 if (!parsePadMainFields(payload, &object.pad))
                     return failRead(QStringLiteral("PcbLib 焊盘图元主块字段不完整"));
                 object.hasPadFields = true;
+            } else if (isMainBlock && objectId == AltiumConstants::PCB_OBJECT_FILL) {
+                if (!parseFillFields(payload, &object.fill))
+                    return failRead(QStringLiteral("PcbLib 填充图元字段不完整"));
+                object.hasFillFields = true;
+            } else if (isMainBlock && objectId == AltiumConstants::PCB_OBJECT_REGION) {
+                if (!parseRegionFields(payload, &object.region))
+                    return failRead(QStringLiteral("PcbLib 区域图元字段不完整"));
+                object.hasRegionFields = true;
+            } else if (isMainBlock && objectId == AltiumConstants::PCB_OBJECT_COMPONENT_BODY) {
+                if (!parseComponentBodyFields(payload, &object.componentBody))
+                    return failRead(QStringLiteral("PcbLib 三维元件体图元字段不完整"));
+                object.hasComponentBodyFields = true;
             } else if (isMainBlock && objectId == AltiumConstants::PCB_OBJECT_TEXT) {
                 if (!parseTextFields(payload, &object.textFields))
                     return failRead(QStringLiteral("PcbLib 文本图元字段不完整"));
