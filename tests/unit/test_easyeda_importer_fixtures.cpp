@@ -1,5 +1,6 @@
 #include "core/easyeda/EasyedaFootprintImporter.h"
 #include "core/easyeda/EasyedaSymbolImporter.h"
+#include "core/ir/SymbolDataConverter.h"
 #include "tests/common/TestPaths.hpp"
 
 #include <QJsonDocument>
@@ -35,6 +36,13 @@ private slots:
         QCOMPARE(symbol->rectangles().size(), 1);
         QCOMPARE(symbol->rectangles().first().width, 60.0);
         QCOMPARE(symbol->rectangles().first().height, 40.0);
+        QCOMPARE(symbol->rectangles().first().rx, 4.0);
+        QCOMPARE(symbol->rectangles().first().ry, 6.0);
+        const IR::SymbolComponentIR symbolIr = IR::toSymbolIR(*symbol);
+        QCOMPARE(symbolIr.rectangles.size(), 1);
+        QVERIFY(symbolIr.rectangles.first().cornerRadiusX > 0.0);
+        QVERIFY(symbolIr.rectangles.first().cornerRadiusY > 0.0);
+        QCOMPARE(symbolIr.rectangles.first().strokeStyle, IR::StrokeStyle::Dashed);
 
         QCOMPARE(symbol->pins().size(), 1);
         const SymbolPin pin = symbol->pins().first();

@@ -439,6 +439,7 @@ add_executable(test_easyeda_importer_fixtures
 )
 target_link_libraries(test_easyeda_importer_fixtures PRIVATE
     Qt6::Test
+    Qt6::Gui
     EasyKiConverterLib
 )
 target_include_directories(test_easyeda_importer_fixtures PRIVATE
