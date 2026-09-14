@@ -1052,6 +1052,7 @@ private slots:
         QCOMPARE(readU16(symbolData, secondPinOffset + 9), quint16(0xFFFF));
         QVERIFY(symbolData.contains("OWNERPARTID=2"));
         QVERIFY(symbolData.contains("OWNERPARTID=-1"));
+        QVERIFY(symbolData.contains("IndexInSheet=1"));
         QVERIFY(symbolData.contains("IndexInSheet=2"));
         QVERIFY(symbolData.contains("RECORD=5"));
         QVERIFY(symbolData.contains("LocationCount=4"));

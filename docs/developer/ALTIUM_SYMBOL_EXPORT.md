@@ -14,7 +14,7 @@
 - 文本字体：普通文本支持字体族、字号、粗体和斜体，并在 SchLib `FileHeader` 中动态登记字体表。
 - 多部件符号：图形、文本、参数和引脚按 `partIndex` 写入对应部件。
 - 公共图元：IR 中图元的负 `partIndex` 写入 Altium Part Zero（`OWNERPARTID=-1`）；引脚仍通过 `SymbolPinIR::commonToAllParts` 表示公共连接点，且引脚名称、编号文字会继承该归属。
-- `IndexInSheet`：每个组件内由图元和二进制引脚共享连续计数；首个内容记录省略值 `0`，引脚虽然没有文本字段但仍占用一个计数槽。
+- `IndexInSheet`：每个组件内由图元、二进制引脚和参数字段共享从 `1` 开始的连续计数；组件记录本身使用 `-1`，不占用内容记录计数。
 - 多候选封装：每个封装生成一个 SchLib implementation，并自动去重。
 - 通用模型关联：支持通过 IR 或来源元数据写入 SPICE、SIM、STEP、VRML 等模型类型、数据文件实体、参数和引脚映射。
 - 模型默认状态：仅第一个实现写入 `ISCURRENT=T`；没有数据文件实体的 SPICE/SIM 等模型不会错误生成 `.PcbLib` 路径。

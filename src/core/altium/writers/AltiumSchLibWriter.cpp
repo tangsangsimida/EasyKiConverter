@@ -368,7 +368,7 @@ void AltiumSchLibWriter::writeComponentStorage(OLECompoundWriter& ole,
     // 构建 Data 流
     QByteArray data;
     AltiumBinaryWriter writer(data);
-    m_nextIndexInSheet = 0;
+    m_nextIndexInSheet = 1;
 
     // 写入元件记录
     writeComponentRecord(writer, component);
@@ -376,7 +376,6 @@ void AltiumSchLibWriter::writeComponentStorage(OLECompoundWriter& ole,
     // 写入引脚
     for (const AltiumSchPin& pin : component.pins) {
         writePinRecord(writer, pin);
-        ++m_nextIndexInSheet;
     }
 
     // 写入矩形
@@ -1087,8 +1086,7 @@ void AltiumSchLibWriter::writeComponentParameterRecords(AltiumBinaryWriter& writ
         parameterParams["RECORD"] = "41";
         parameterParams["OWNERPARTID"] = QString::number(field.ownerPartId);
         if (field.ownerPartId >= 1) {
-            if (m_nextIndexInSheet > 0)
-                parameterParams["IndexInSheet"] = QString::number(m_nextIndexInSheet);
+            parameterParams["IndexInSheet"] = QString::number(m_nextIndexInSheet);
             ++m_nextIndexInSheet;
         }
         if (field.hasLocation) {
@@ -1232,8 +1230,7 @@ int AltiumSchLibWriter::componentParameterRecordCount(const AltiumSchComponent& 
  */
 void AltiumSchLibWriter::addOwnerParams(QMap<QString, QString>& params, int ownerPartId) {
     params["ISNOTACCESIBLE"] = "T";
-    if (m_nextIndexInSheet > 0)
-        params["IndexInSheet"] = QString::number(m_nextIndexInSheet);
+    params["IndexInSheet"] = QString::number(m_nextIndexInSheet);
     params["OWNERPARTID"] = QString::number(ownerPartId < 0 ? -1 : qMax(1, ownerPartId));
     ++m_nextIndexInSheet;
 }
