@@ -367,7 +367,7 @@ Card {
                 anchors.left: parent.left
                 anchors.right: parent.right
                 anchors.top: parent.top
-                active: baseCard.exportTargetModel !== null && baseCard.exportTargetModel.currentOptionsComponent !== ""
+                active: !!baseCard.exportTargetModel && baseCard.exportTargetModel.currentOptionsComponent !== ""
                 source: {
                     if (!baseCard.exportTargetModel)
                         return "";

@@ -529,7 +529,7 @@ Rectangle {
             Layout.preferredWidth: 28
             Layout.preferredHeight: 28
             Layout.alignment: Qt.AlignVCenter
-            visible: itemData && itemData.isValid
+            visible: !!(itemData && itemData.isValid)
             background: Rectangle {
                 color: parent.pressed ? AppStyle.colors.primaryPressed : parent.hovered ? "#dbeafe" : "transparent"
                 radius: AppStyle.radius.sm

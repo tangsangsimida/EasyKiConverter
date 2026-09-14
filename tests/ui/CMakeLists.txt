@@ -58,6 +58,20 @@ set(QML_FILES
 set(QML_RESOURCES
     ${CMAKE_SOURCE_DIR}/src/ui/qml/styles/qmldir
     ${CMAKE_SOURCE_DIR}/src/ui/qml/components/qmldir
+    ${CMAKE_SOURCE_DIR}/resources/icons/close.svg
+    ${CMAKE_SOURCE_DIR}/resources/icons/folder.svg
+    ${CMAKE_SOURCE_DIR}/resources/icons/play.svg
+    ${CMAKE_SOURCE_DIR}/resources/icons/trash.svg
+    ${CMAKE_SOURCE_DIR}/resources/icons/upload.svg
+    ${CMAKE_SOURCE_DIR}/resources/icons/add.svg
+    ${CMAKE_SOURCE_DIR}/resources/icons/loading.svg
+    ${CMAKE_SOURCE_DIR}/resources/icons/minimize.svg
+    ${CMAKE_SOURCE_DIR}/resources/icons/maximize.svg
+    ${CMAKE_SOURCE_DIR}/resources/icons/github-mark.svg
+    ${CMAKE_SOURCE_DIR}/resources/icons/github-mark-white.svg
+    ${CMAKE_SOURCE_DIR}/resources/icons/Blue_light_bulb.svg
+    ${CMAKE_SOURCE_DIR}/resources/icons/Grey_light_bulb.svg
+    ${CMAKE_SOURCE_DIR}/resources/imgs/background.jpg
 )
 
 # 为每个 QML 文件和资源文件设置资源别名
@@ -68,11 +82,17 @@ foreach(FILE ${QML_FILES} ${QML_RESOURCES})
         file(RELATIVE_PATH REL_PATH "${CMAKE_SOURCE_DIR}" "${FILE}")
         set_source_files_properties("${FILE}" PROPERTIES QT_RESOURCE_ALIAS "${REL_PATH}")
     else()
-        # 对于当前目录的测试文件
-        string(FIND "${FILE}" "${CMAKE_CURRENT_SOURCE_DIR}" POS_TEST)
-        if(POS_TEST EQUAL 0)
-            file(RELATIVE_PATH REL_PATH "${CMAKE_CURRENT_SOURCE_DIR}" "${FILE}")
+        string(FIND "${FILE}" "${CMAKE_SOURCE_DIR}/resources/" POS_RESOURCES)
+        if(POS_RESOURCES EQUAL 0)
+            file(RELATIVE_PATH REL_PATH "${CMAKE_SOURCE_DIR}" "${FILE}")
             set_source_files_properties("${FILE}" PROPERTIES QT_RESOURCE_ALIAS "${REL_PATH}")
+        else()
+            # 对于当前目录的测试文件
+            string(FIND "${FILE}" "${CMAKE_CURRENT_SOURCE_DIR}" POS_TEST)
+            if(POS_TEST EQUAL 0)
+                file(RELATIVE_PATH REL_PATH "${CMAKE_CURRENT_SOURCE_DIR}" "${FILE}")
+                set_source_files_properties("${FILE}" PROPERTIES QT_RESOURCE_ALIAS "${REL_PATH}")
+            endif()
         endif()
     endif()
 endforeach()
