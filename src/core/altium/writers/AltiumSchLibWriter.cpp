@@ -654,6 +654,8 @@ void AltiumSchLibWriter::writeComponentStorage(OLECompoundWriter& ole,
 bool AltiumSchLibWriter::hasCompleteGraphicOrder(const AltiumSchComponent& component) const {
     QSet<QString> expected;
     QSet<QString> actual;
+    QMap<QString, QSet<int>> pathSegments;
+    QSet<QString> unsplitPaths;
     const auto key = [](const QString& type, int index, int partIndex) {
         return QStringLiteral("%1:%2:%3").arg(type).arg(index).arg(partIndex);
     };
@@ -687,12 +689,33 @@ bool AltiumSchLibWriter::hasCompleteGraphicOrder(const AltiumSchComponent& compo
         if (!text.isPinLabel)
             addIndexed(QStringLiteral("T"), text.sourceGraphicIndex, text.sourcePartIndex);
     }
-    for (const AltiumSchPath& path : component.paths)
+    const auto addPathSegment = [&pathSegments, &unsplitPaths, &key](
+                                    const QString& type, int index, int segmentIndex, int partIndex) {
+        if (type != QStringLiteral("PT") || index < 0)
+            return;
+        const QString pathKey = key(type, index, partIndex);
+        if (segmentIndex < 0)
+            unsplitPaths.insert(pathKey);
+        else
+            pathSegments[pathKey].insert(segmentIndex);
+    };
+    for (const AltiumSchPath& path : component.paths) {
         addIndexed(path.sourceGraphicType, path.sourceGraphicIndex, path.sourcePartIndex);
-    for (const AltiumSchBezier& bezier : component.beziers)
-        addIndexed(bezier.sourceGraphicType, bezier.sourceGraphicIndex, bezier.sourcePartIndex);
-    for (const AltiumSchEllipticalArc& arc : component.ellipticalArcs)
+        addPathSegment(path.sourceGraphicType, path.sourceGraphicIndex, path.sourceSegmentIndex, path.sourcePartIndex);
+    }
+    for (const AltiumSchBezier& bezier : component.beziers) {
+        if (bezier.controlPoints.size() == 4) {
+            addIndexed(bezier.sourceGraphicType, bezier.sourceGraphicIndex, bezier.sourcePartIndex);
+            addPathSegment(
+                bezier.sourceGraphicType, bezier.sourceGraphicIndex, bezier.sourceSegmentIndex, bezier.sourcePartIndex);
+        }
+    }
+    for (const AltiumSchEllipticalArc& arc : component.ellipticalArcs) {
         addIndexed(arc.sourceGraphicType, arc.sourceGraphicIndex, arc.sourcePartIndex);
+        addPathSegment(arc.sourceGraphicType, arc.sourceGraphicIndex, arc.sourceSegmentIndex, arc.sourcePartIndex);
+    }
+    for (const AltiumSchArc& arc : component.arcs)
+        addPathSegment(arc.sourceGraphicType, arc.sourceGraphicIndex, arc.sourceSegmentIndex, arc.sourcePartIndex);
 
     for (const AltiumSchGraphicOrder& order : component.graphicOrder) {
         if (order.index < 0 || order.type.isEmpty())
@@ -725,6 +748,22 @@ bool AltiumSchLibWriter::hasCompleteGraphicOrder(const AltiumSchComponent& compo
     }
     if (emittedPins.size() != component.pins.size())
         return false;
+
+    for (const QString& pathKey : unsplitPaths) {
+        if (pathSegments.contains(pathKey))
+            return false;
+    }
+    for (auto it = pathSegments.cbegin(); it != pathSegments.cend(); ++it) {
+        if (it.value().isEmpty() || !it.value().contains(0))
+            return false;
+        int maxSegmentIndex = 0;
+        for (const int segmentIndex : it.value())
+            maxSegmentIndex = qMax(maxSegmentIndex, segmentIndex);
+        for (int segmentIndex = 1; segmentIndex <= maxSegmentIndex; ++segmentIndex) {
+            if (!it.value().contains(segmentIndex))
+                return false;
+        }
+    }
 
     for (const QString& expectedKey : expected) {
         if (expectedKey.startsWith(QStringLiteral("P:")))

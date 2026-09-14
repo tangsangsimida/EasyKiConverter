@@ -1445,6 +1445,37 @@ private slots:
         QVERIFY(data.contains("Location.X=1"));
         QVERIFY(data.contains("Location.X=3"));
     }
+
+    /**
+     * @brief 路径分段编号出现缺口时回退，避免顺序写出提前终止。
+     */
+    void gappedPathSegmentsFallBackWithoutDroppingGraphics() {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        AltiumSchComponent symbol;
+        symbol.name = QStringLiteral("GAPPED_PATH");
+        for (const int segmentIndex : {0, 2}) {
+            AltiumSchPath path;
+            path.sourceGraphicType = QStringLiteral("PT");
+            path.sourceGraphicIndex = 0;
+            path.sourceSegmentIndex = segmentIndex;
+            path.sourcePartIndex = 0;
+            path.vertices = {QPointF(segmentIndex * 1000, 0), QPointF(segmentIndex * 1000 + 1000, 0)};
+            symbol.paths.append(path);
+        }
+        symbol.graphicOrder = {{QStringLiteral("PT"), 0, 0}};
+
+        AltiumSchLibWriter writer;
+        const QString path = QDir(tempDir.path()).filePath(QStringLiteral("gapped-path.SchLib"));
+        QVERIFY(writer.write({symbol}, path, QStringLiteral("gapped-path")));
+        QVERIFY(writer.diagnostics().contains(
+            QStringLiteral("符号 GAPPED_PATH 的 graphicOrder 不完整或包含无效引用，已回退到默认图元顺序")));
+
+        QByteArray data;
+        QVERIFY(readCfbStream(path, QStringLiteral("GAPPED_PATH/Data"), data));
+        QCOMPARE(data.count(QByteArrayLiteral("RECORD=6")), 2);
+    }
 };
 
 QTEST_GUILESS_MAIN(TestAltiumOle)
