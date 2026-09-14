@@ -36,6 +36,7 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <limits>
 
 using namespace EasyKiConverter;
 
@@ -1316,6 +1317,54 @@ private slots:
         QVERIFY(malformedStringReader.errorString().contains(QStringLiteral("字符串子块")));
         QVERIFY(malformedStringReader.readFootprintStream(0, QStringLiteral("Data"), &rawData));
         QCOMPARE(rawData, malformedStringData);
+
+        QByteArray invalidArcData;
+        AltiumBinaryWriter invalidArcWriter(invalidArcData);
+        invalidArcWriter.writeStringBlock(QStringLiteral("BROKEN"));
+        invalidArcWriter.writeUInt8(AltiumConstants::PCB_OBJECT_ARC);
+        invalidArcWriter.beginBlock();
+        invalidArcWriter.writeUInt8(1);
+        invalidArcWriter.writeUInt16(0);
+        invalidArcWriter.writeBytes(QByteArray(10, '\0'));
+        invalidArcWriter.writeInt32(0);
+        invalidArcWriter.writeInt32(0);
+        invalidArcWriter.writeInt32(0);
+        invalidArcWriter.writeDouble(std::numeric_limits<double>::quiet_NaN());
+        invalidArcWriter.writeDouble(360.0);
+        invalidArcWriter.writeInt32(0);
+        invalidArcWriter.endBlock();
+        const QString invalidArcPath = QDir(tempDir.path()).filePath(QStringLiteral("invalid-arc-fields.PcbLib"));
+        QVERIFY(writeMalformedLibrary(invalidArcPath, invalidArcData));
+
+        AltiumPcbLibReader invalidArcReader;
+        QVERIFY2(invalidArcReader.open(invalidArcPath), qPrintable(invalidArcReader.errorString()));
+        QVERIFY(!invalidArcReader.readFootprintObjects(QStringLiteral("BROKEN"), &objects));
+        QVERIFY(invalidArcReader.errorString().contains(QStringLiteral("弧线半径必须为正")));
+
+        QByteArray invalidRegionData;
+        AltiumBinaryWriter invalidRegionWriter(invalidRegionData);
+        invalidRegionWriter.writeStringBlock(QStringLiteral("BROKEN"));
+        invalidRegionWriter.writeUInt8(AltiumConstants::PCB_OBJECT_REGION);
+        invalidRegionWriter.beginBlock();
+        invalidRegionWriter.writeUInt8(1);
+        invalidRegionWriter.writeUInt16(0);
+        invalidRegionWriter.writeBytes(QByteArray(10, '\0'));
+        invalidRegionWriter.writeUInt32(0);
+        invalidRegionWriter.writeUInt8(0);
+        invalidRegionWriter.writeCStringParameterBlock({});
+        invalidRegionWriter.writeUInt32(2);
+        invalidRegionWriter.writeDouble(0.0);
+        invalidRegionWriter.writeDouble(0.0);
+        invalidRegionWriter.writeDouble(1.0);
+        invalidRegionWriter.writeDouble(1.0);
+        invalidRegionWriter.endBlock();
+        const QString invalidRegionPath = QDir(tempDir.path()).filePath(QStringLiteral("invalid-region-fields.PcbLib"));
+        QVERIFY(writeMalformedLibrary(invalidRegionPath, invalidRegionData));
+
+        AltiumPcbLibReader invalidRegionReader;
+        QVERIFY2(invalidRegionReader.open(invalidRegionPath), qPrintable(invalidRegionReader.errorString()));
+        QVERIFY(!invalidRegionReader.readFootprintObjects(QStringLiteral("BROKEN"), &objects));
+        QVERIFY(invalidRegionReader.errorString().contains(QStringLiteral("区域至少需要三个顶点")));
     }
 
     /**

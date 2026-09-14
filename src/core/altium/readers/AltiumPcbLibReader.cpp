@@ -3,6 +3,8 @@
 #include "core/altium/utils/AltiumBinaryReader.h"
 #include "core/altium/utils/AltiumConstants.h"
 
+#include <cmath>
+
 namespace EasyKiConverter {
 
 namespace {
@@ -213,6 +215,50 @@ bool parseTextFields(const QByteArray& payload, AltiumPcbLibReader::TextFields* 
            reader.readBytes(71, &padding) && reader.readUInt32(&fields->wideStringIndex) &&
            reader.readBytes(41, &padding) && reader.readUInt8(&fields->kind) && reader.readBytes(65, &padding) &&
            reader.readUInt32(&fields->v7LayerId);
+}
+
+bool validatePrimitiveFields(const AltiumPcbLibReader::PrimitiveRecord& object, QString* error) {
+    auto reject = [error](const QString& message) {
+        if (error != nullptr)
+            *error = message;
+        return false;
+    };
+
+    if (object.hasArcFields) {
+        if (object.arc.radius <= 0)
+            return reject(QStringLiteral("PcbLib 弧线半径必须为正"));
+        if (!std::isfinite(object.arc.startAngle) || !std::isfinite(object.arc.endAngle))
+            return reject(QStringLiteral("PcbLib 弧线角度必须为有限值"));
+    }
+    if (object.hasPadFields) {
+        const auto& pad = object.pad;
+        if (pad.sizeTopX <= 0 || pad.sizeTopY <= 0 || pad.sizeMidX <= 0 || pad.sizeMidY <= 0 || pad.sizeBotX <= 0 ||
+            pad.sizeBotY <= 0)
+            return reject(QStringLiteral("PcbLib 焊盘尺寸必须为正"));
+        if (pad.holeSize < 0 || pad.holeSlotLengthRaw < 0)
+            return reject(QStringLiteral("PcbLib 焊盘孔尺寸不能为负"));
+        if (!std::isfinite(pad.rotation) || !std::isfinite(pad.holeRotation))
+            return reject(QStringLiteral("PcbLib 焊盘旋转角度必须为有限值"));
+    }
+    if (object.hasFillFields && !std::isfinite(object.fill.rotation))
+        return reject(QStringLiteral("PcbLib 填充旋转角度必须为有限值"));
+    if (object.hasTextFields && !std::isfinite(object.textFields.rotation))
+        return reject(QStringLiteral("PcbLib 文本旋转角度必须为有限值"));
+    if (object.hasRegionFields) {
+        if (object.region.vertices.size() < 3)
+            return reject(QStringLiteral("PcbLib 区域至少需要三个顶点"));
+        for (const QPointF& vertex : object.region.vertices) {
+            if (!std::isfinite(vertex.x()) || !std::isfinite(vertex.y()))
+                return reject(QStringLiteral("PcbLib 区域顶点必须为有限值"));
+        }
+    }
+    if (object.hasComponentBodyFields) {
+        for (const QPointF& vertex : object.componentBody.outline) {
+            if (!std::isfinite(vertex.x()) || !std::isfinite(vertex.y()))
+                return reject(QStringLiteral("PcbLib 三维元件体轮廓顶点必须为有限值"));
+        }
+    }
+    return true;
 }
 
 }  // namespace
@@ -435,6 +481,9 @@ bool AltiumPcbLibReader::readFootprintObjects(int componentIndexValue, QVector<P
         if (objectId == AltiumConstants::PCB_OBJECT_TEXT &&
             !readStringBlockPayload(object.blocks.at(1).payload, &object.text))
             return failRead(QStringLiteral("PcbLib 文本图元字符串内容无效"));
+        QString semanticError;
+        if (!validatePrimitiveFields(object, &semanticError))
+            return failRead(semanticError);
         object.encoded = data.mid(objectStart, reader.position() - objectStart);
         objects->append(object);
     }
