@@ -188,10 +188,11 @@ void quantizePinConnectionGroups(QList<AltiumSchPin>& pins) {
  * @brief 导出单个符号
  */
 bool ExporterAltiumSymbol::exportSymbol(const IR::SymbolComponentIR& symbol, const QString& filePath) {
+    m_diagnostics.clear();
     QList<AltiumSchComponent> components;
     components.append(convertSymbol(symbol));
     bool ok = m_writer.write(components, filePath);
-    m_diagnostics = m_writer.diagnostics();
+    m_diagnostics.append(m_writer.diagnostics());
     if (!ok) {
         qWarning() << "ExporterAltiumSymbol: Failed to write symbol to" << filePath;
     }
@@ -207,12 +208,13 @@ bool ExporterAltiumSymbol::exportSymbolLibrary(const QList<IR::SymbolComponentIR
                                                bool appendMode,
                                                bool updateMode,
                                                const QString& libraryDescription) {
+    m_diagnostics.clear();
     QList<AltiumSchComponent> components;
     for (const IR::SymbolComponentIR& symbol : symbols) {
         components.append(convertSymbol(symbol));
     }
     bool ok = m_writer.write(components, filePath, libName);
-    m_diagnostics = m_writer.diagnostics();
+    m_diagnostics.append(m_writer.diagnostics());
     if (!ok) {
         qWarning() << "ExporterAltiumSymbol: Failed to write symbol library to" << filePath;
     }
@@ -416,9 +418,16 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
             component.paths.append(path);
         }
     }
-    for (const IR::SymbolBezierIR& b : data.beziers) {
-        if (b.controlPoints.size() == 4)
+    for (int bezierIndex = 0; bezierIndex < data.beziers.size(); ++bezierIndex) {
+        const IR::SymbolBezierIR& b = data.beziers.at(bezierIndex);
+        if (b.controlPoints.size() == 4) {
             component.beziers.append(convertBezier(b));
+        } else {
+            m_diagnostics.append(QStringLiteral("符号 %1 Bézier 图元 %2 的控制点数量为 %3，已跳过")
+                                     .arg(data.name)
+                                     .arg(bezierIndex)
+                                     .arg(b.controlPoints.size()));
+        }
     }
     for (const IR::SymbolIeeeIR& ieee : data.ieeeSymbols)
         component.ieeeSymbols.append(convertIeee(ieee));

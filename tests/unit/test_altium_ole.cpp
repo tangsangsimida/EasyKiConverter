@@ -1193,6 +1193,17 @@ private slots:
         QVERIFY(!diagnosticData.contains("FileName=bad|name.png"));
         QVERIFY(!diagnosticData.contains("FileName=aaaaaaaa"));
 
+        IR::SymbolComponentIR invalidBezierSymbol;
+        invalidBezierSymbol.name = QStringLiteral("INVALID_BEZIER");
+        IR::SymbolBezierIR invalidBezier;
+        invalidBezier.controlPoints = {QPointF(0.0, 0.0), QPointF(1.0, 1.0)};
+        invalidBezierSymbol.beziers.append(invalidBezier);
+        ExporterAltiumSymbol invalidBezierExporter;
+        const QString invalidBezierPath = QDir(tempDir.path()).filePath(QStringLiteral("invalid-bezier.SchLib"));
+        QVERIFY(invalidBezierExporter.exportSymbol(invalidBezierSymbol, invalidBezierPath));
+        QVERIFY(invalidBezierExporter.diagnostics().contains(
+            QStringLiteral("符号 INVALID_BEZIER Bézier 图元 0 的控制点数量为 2，已跳过")));
+
         IR::SymbolComponentIR nativeArcSymbol;
         nativeArcSymbol.name = QStringLiteral("NATIVE_ARC");
         IR::SymbolPathIR nativeArcPath;
