@@ -108,22 +108,31 @@ bool AltiumSchLibReader::readComponentData(const QString& componentName, QByteAr
 }
 
 bool AltiumSchLibReader::readComponentRecords(int componentIndexValue, QVector<Record>* records) const {
-    if (records == nullptr)
+    if (records == nullptr) {
+        m_errorMessage = QStringLiteral("读取 SchLib 记录时输出容器为空");
         return false;
+    }
     records->clear();
+    m_errorMessage.clear();
+
+    const auto failRead = [this, records](const QString& message) {
+        records->clear();
+        m_errorMessage = message;
+        return false;
+    };
 
     QByteArray data;
     if (!readComponentData(componentIndexValue, &data))
-        return false;
+        return failRead(QStringLiteral("无法读取 SchLib 组件 Data 流"));
     AltiumBinaryReader reader(data);
     while (reader.remaining() > 0) {
         const int startPosition = reader.position();
         QByteArray payload;
         uint8_t flags = 0;
-        if (!reader.readBlock(&payload, &flags) || payload.isEmpty()) {
-            records->clear();
-            return false;
-        }
+        if (!reader.readBlock(&payload, &flags))
+            return failRead(QStringLiteral("读取 SchLib 组件记录失败: %1").arg(reader.errorString()));
+        if (payload.isEmpty())
+            return failRead(QStringLiteral("SchLib 组件记录为空，偏移量 %1").arg(startPosition));
         Record record;
         record.flags = flags;
         record.payload = payload;
@@ -131,14 +140,17 @@ bool AltiumSchLibReader::readComponentRecords(int componentIndexValue, QVector<R
         if (payload.startsWith('|')) {
             AltiumBinaryReader parameterReader(payload);
             if (!parameterReader.parseCStringParameterData(payload, &record.parameters)) {
-                records->clear();
-                return false;
+                return failRead(QStringLiteral("SchLib 组件参数记录无效，偏移量 %1: %2")
+                                    .arg(startPosition)
+                                    .arg(parameterReader.errorString()));
             }
             record.hasParameters = true;
         }
         records->append(record);
     }
-    return !records->isEmpty();
+    if (records->isEmpty())
+        return failRead(QStringLiteral("SchLib 组件 Data 流不包含记录"));
+    return true;
 }
 
 bool AltiumSchLibReader::readComponentRecords(const QString& componentName, QVector<Record>* records) const {

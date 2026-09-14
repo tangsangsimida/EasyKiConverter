@@ -1108,6 +1108,39 @@ private slots:
     }
 
     /**
+     * @brief 验证 SchLib 损坏记录提供诊断并保留原始流回退路径
+     */
+    void rejectsMalformedSchLibRecords() {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        OLECompoundWriter writer;
+        QVERIFY(writer.create());
+        QByteArray headerData;
+        AltiumBinaryWriter headerWriter(headerData);
+        headerWriter.writeCStringParameterBlock({{QStringLiteral("COMPCOUNT"), QStringLiteral("1")}});
+        headerWriter.writeInt32(1);
+        headerWriter.writeStringBlock(QStringLiteral("BROKEN"));
+        QVERIFY(writer.writeStream(QStringLiteral("FileHeader"), headerData));
+        QVERIFY(writer.addStorage(QStringLiteral("BROKEN")));
+        const QByteArray malformedData(2, '\0');
+        QVERIFY(writer.writeStream(QStringLiteral("BROKEN"), QStringLiteral("Data"), malformedData));
+        const QString path = QDir(tempDir.path()).filePath(QStringLiteral("malformed-record.PcbLib"));
+        QVERIFY(writer.saveToFile(path));
+
+        AltiumSchLibReader reader;
+        QVERIFY2(reader.open(path), qPrintable(reader.errorString()));
+        QVector<AltiumSchLibReader::Record> records;
+        QVERIFY(!reader.readComponentRecords(QStringLiteral("BROKEN"), &records));
+        QVERIFY(records.isEmpty());
+        QVERIFY(reader.hasError());
+        QVERIFY(reader.errorString().contains(QStringLiteral("记录失败")));
+        QByteArray rawData;
+        QVERIFY(reader.readComponentData(QStringLiteral("BROKEN"), &rawData));
+        QCOMPARE(rawData, malformedData);
+    }
+
+    /**
      * @brief 验证 PcbLib 封装写入 UniqueIdPrimitiveInformation 流
      * @details 验证 Header 中的图元计数和 Data 中的 PRIMITIVEOBJECTID 条目
      */

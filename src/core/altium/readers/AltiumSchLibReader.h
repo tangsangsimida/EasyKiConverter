@@ -63,7 +63,7 @@ private:
     OLECompoundReader m_oleReader;
     QVector<ComponentInfo> m_components;
     QMap<QString, QString> m_headerParameters;
-    QString m_errorMessage;
+    mutable QString m_errorMessage;
 };
 
 }  // namespace EasyKiConverter
