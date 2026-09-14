@@ -195,6 +195,7 @@ bool AltiumSchLibReader::readComponentRecords(int componentIndexValue, QVector<R
     if (!readComponentData(componentIndexValue, &data))
         return failRead(QStringLiteral("无法读取 SchLib 组件 Data 流"));
     AltiumBinaryReader reader(data);
+    int lastIndexInSheet = -1;
     while (reader.remaining() > 0) {
         const int startPosition = reader.position();
         QByteArray payload;
@@ -242,6 +243,12 @@ bool AltiumSchLibReader::readComponentRecords(int componentIndexValue, QVector<R
                 return failRead(
                     QStringLiteral("SchLib 组件参数记录的 OWNERPARTID 超出部件范围，偏移量 %1").arg(startPosition));
             }
+            if (record.indexInSheet < -1 || (record.indexInSheet >= 0 && record.indexInSheet <= lastIndexInSheet)) {
+                return failRead(
+                    QStringLiteral("SchLib 组件参数记录的 IndexInSheet 非递增，偏移量 %1").arg(startPosition));
+            }
+            if (record.indexInSheet >= 0)
+                lastIndexInSheet = record.indexInSheet;
         } else {
             readBinaryRecordMetadata(payload, &record.recordType, &record.ownerPartId);
             if (record.ownerPartId >= 0 && record.ownerPartId > m_components.at(componentIndexValue).partCount) {

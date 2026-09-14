@@ -1255,6 +1255,47 @@ private slots:
     }
 
     /**
+     * @brief 验证 SchLib 内容记录索引不能重复或倒序。
+     */
+    void rejectsNonMonotonicSchLibRecordIndexes() {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        OLECompoundWriter writer;
+        QVERIFY(writer.create());
+        QByteArray headerData;
+        AltiumBinaryWriter headerWriter(headerData);
+        headerWriter.writeCStringParameterBlock({{QStringLiteral("COMPCOUNT"), QStringLiteral("1")},
+                                                 {QStringLiteral("PARTCOUNT0"), QStringLiteral("2")},
+                                                 {QStringLiteral("FontIdCount"), QStringLiteral("1")},
+                                                 {QStringLiteral("FontName1"), QStringLiteral("Times New Roman")},
+                                                 {QStringLiteral("Size1"), QStringLiteral("10")}});
+        headerWriter.writeInt32(1);
+        headerWriter.writeStringBlock(QStringLiteral("NON_MONOTONIC"));
+        QVERIFY(writer.writeStream(QStringLiteral("FileHeader"), headerData));
+        QVERIFY(writer.addStorage(QStringLiteral("NON_MONOTONIC")));
+
+        QByteArray componentData;
+        AltiumBinaryWriter componentWriter(componentData);
+        componentWriter.writeCStringParameterBlock({{QStringLiteral("RECORD"), QStringLiteral("13")},
+                                                    {QStringLiteral("OWNERPARTID"), QStringLiteral("1")},
+                                                    {QStringLiteral("IndexInSheet"), QStringLiteral("1")}});
+        componentWriter.writeCStringParameterBlock({{QStringLiteral("RECORD"), QStringLiteral("13")},
+                                                    {QStringLiteral("OWNERPARTID"), QStringLiteral("1")},
+                                                    {QStringLiteral("IndexInSheet"), QStringLiteral("1")}});
+        QVERIFY(writer.writeStream(QStringLiteral("NON_MONOTONIC"), QStringLiteral("Data"), componentData));
+        const QString path = QDir(tempDir.path()).filePath(QStringLiteral("non-monotonic.SchLib"));
+        QVERIFY(writer.saveToFile(path));
+
+        AltiumSchLibReader reader;
+        QVERIFY2(reader.open(path), qPrintable(reader.errorString()));
+        QVector<AltiumSchLibReader::Record> records;
+        QVERIFY(!reader.readComponentRecords(QStringLiteral("NON_MONOTONIC"), &records));
+        QVERIFY(records.isEmpty());
+        QVERIFY(reader.errorString().contains(QStringLiteral("IndexInSheet 非递增")));
+    }
+
+    /**
      * @brief 验证 PcbLib 封装写入 UniqueIdPrimitiveInformation 流
      * @details 验证 Header 中的图元计数和 Data 中的 PRIMITIVEOBJECTID 条目
      */
