@@ -1165,9 +1165,16 @@ private slots:
         invalidNameImage.fileName = QStringLiteral("bad|name.png");
         invalidNameImage.data = QByteArrayLiteral("image");
         diagnosticSymbol.images.append(invalidNameImage);
+        diagnosticSymbol.graphicOrder = {{QStringLiteral("T"), 0, 0}};
+        AltiumSchPolygon fallbackPolygon;
+        fallbackPolygon.vertices = {QPointF(100000, 100000), QPointF(200000, 100000), QPointF(100000, 200000)};
+        diagnosticSymbol.polygons.append(fallbackPolygon);
         AltiumSchLibWriter diagnosticWriter;
         const QString diagnosticPath = QDir(tempDir.path()).filePath(QStringLiteral("image-diagnostics.SchLib"));
         QVERIFY(diagnosticWriter.write({diagnosticSymbol}, diagnosticPath, QStringLiteral("IMAGE_DIAGNOSTICS")));
+        QByteArray fallbackData;
+        QVERIFY(readCfbStream(diagnosticPath, QStringLiteral("IMAGE_DIAGNOSTICS/Data"), fallbackData));
+        QVERIFY(fallbackData.contains("RECORD=7"));
         QVERIFY(diagnosticWriter.diagnostics().contains(
             QStringLiteral("组件 IMAGE_DIAGNOSTICS 图片 0 的嵌入数据为空，已跳过 Storage")));
         QVERIFY(diagnosticWriter.diagnostics().contains(

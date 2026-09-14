@@ -541,6 +541,10 @@ void AltiumSchLibWriter::writeComponentStorage(OLECompoundWriter& ole,
             if (rect.sourceGraphicIndex < 0)
                 writeRoundRectangleRecord(writer, rect);
         }
+        for (const AltiumSchPolygon& polygon : component.polygons) {
+            if (polygon.sourceGraphicIndex < 0)
+                writePolygonRecord(writer, polygon);
+        }
         for (const AltiumSchEllipse& ellipse : component.ellipses) {
             if (ellipse.sourceGraphicType.isEmpty())
                 writeEllipseRecord(writer, ellipse);
