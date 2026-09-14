@@ -31,6 +31,7 @@ public:
         int recordType = -1;  ///< RECORD 字段或二进制记录类型
         int ownerPartId = -1;  ///< OWNERPARTID，公共 Part 使用 -1
         int indexInSheet = -1;  ///< 内容记录序号，首条隐含序号为 0
+        int fontId = -1;  ///< FONTID，按 FileHeader 中的 FontID 顺序，从 1 开始
     };
 
     /** @brief SchLib /Storage 中的嵌入图片条目 */

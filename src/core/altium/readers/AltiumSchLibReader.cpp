@@ -221,6 +221,23 @@ bool AltiumSchLibReader::readComponentRecords(int componentIndexValue, QVector<R
                     record.parameters, QStringLiteral("IndexInSheet"), -1, &record.indexInSheet)) {
                 return failRead(QStringLiteral("SchLib 组件参数记录的数值字段无效，偏移量 %1").arg(startPosition));
             }
+            const bool hasFontId = record.parameters.contains(QStringLiteral("FontID")) ||
+                                   record.parameters.contains(QStringLiteral("FONTID"));
+            if (hasFontId) {
+                int mixedCaseFontId = -1;
+                int upperCaseFontId = -1;
+                if (!readOptionalParameterInt(record.parameters, QStringLiteral("FontID"), -1, &mixedCaseFontId) ||
+                    !readOptionalParameterInt(record.parameters, QStringLiteral("FONTID"), -1, &upperCaseFontId)) {
+                    return failRead(QStringLiteral("SchLib 组件参数记录的 FONTID 无效，偏移量 %1").arg(startPosition));
+                }
+                if (mixedCaseFontId >= 0 && upperCaseFontId >= 0 && mixedCaseFontId != upperCaseFontId)
+                    return failRead(
+                        QStringLiteral("SchLib 组件参数记录的 FONTID 字段不一致，偏移量 %1").arg(startPosition));
+                record.fontId = mixedCaseFontId >= 0 ? mixedCaseFontId : upperCaseFontId;
+                if (record.fontId < 1 || record.fontId > m_fonts.size())
+                    return failRead(
+                        QStringLiteral("SchLib 组件参数记录的 FONTID 超出字体表范围，偏移量 %1").arg(startPosition));
+            }
             if (record.ownerPartId >= 0 && record.ownerPartId > m_components.at(componentIndexValue).partCount) {
                 return failRead(
                     QStringLiteral("SchLib 组件参数记录的 OWNERPARTID 超出部件范围，偏移量 %1").arg(startPosition));

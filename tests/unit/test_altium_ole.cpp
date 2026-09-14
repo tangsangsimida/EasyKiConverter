@@ -1237,7 +1237,8 @@ private slots:
         QVERIFY(writer.addStorage(QStringLiteral("BROKEN_METADATA")));
         QByteArray componentData;
         AltiumBinaryWriter componentWriter(componentData);
-        componentWriter.writeCStringParameterBlock({{QStringLiteral("RECORD"), QStringLiteral("not-a-number")}});
+        componentWriter.writeCStringParameterBlock({{QStringLiteral("RECORD"), QStringLiteral("1")},
+                                                    {QStringLiteral("FONTID"), QStringLiteral("not-a-number")}});
         QVERIFY(writer.writeStream(QStringLiteral("BROKEN_METADATA"), QStringLiteral("Data"), componentData));
         const QString path = QDir(tempDir.path()).filePath(QStringLiteral("malformed-record-metadata.SchLib"));
         QVERIFY(writer.saveToFile(path));
@@ -1247,7 +1248,7 @@ private slots:
         QVector<AltiumSchLibReader::Record> records;
         QVERIFY(!reader.readComponentRecords(QStringLiteral("BROKEN_METADATA"), &records));
         QVERIFY(records.isEmpty());
-        QVERIFY(reader.errorString().contains(QStringLiteral("数值字段无效")));
+        QVERIFY(reader.errorString().contains(QStringLiteral("FONTID 无效")));
         QByteArray rawData;
         QVERIFY(reader.readComponentData(QStringLiteral("BROKEN_METADATA"), &rawData));
         QCOMPARE(rawData, componentData);
@@ -1455,6 +1456,19 @@ private slots:
         QVERIFY(schData.contains(QStringLiteral("测试中文描述").toUtf8()));
         QVERIFY(schData.contains(QStringLiteral("测试厂商").toUtf8()));
         QVERIFY(schData.contains(QStringLiteral("中文文本").toUtf8()));
+
+        AltiumSchLibReader reader;
+        QVERIFY2(reader.open(schPath), qPrintable(reader.errorString()));
+        QVector<AltiumSchLibReader::Record> records;
+        QVERIFY2(reader.readComponentRecords(QStringLiteral("TEST_UTF8"), &records), qPrintable(reader.errorString()));
+        bool sawFontReference = false;
+        for (const auto& record : records) {
+            if (record.parameters.value(QStringLiteral("RECORD")) == QStringLiteral("4")) {
+                sawFontReference = true;
+                QCOMPARE(record.fontId, 1);
+            }
+        }
+        QVERIFY(sawFontReference);
 
         IR::SymbolComponentIR rotatedTextSymbol;
         rotatedTextSymbol.name = QStringLiteral("ROTATED_TEXT");
