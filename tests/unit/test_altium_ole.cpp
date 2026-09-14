@@ -622,12 +622,26 @@ private slots:
         invalidOwnerRectangle.cornerY = 100000;
         invalidOwnerRectangle.ownerPartId = 0;
         invalidPartCount.rectangles.append(invalidOwnerRectangle);
+        AltiumSchArc invalidArc;
+        invalidArc.startAngle = std::numeric_limits<double>::quiet_NaN();
+        invalidArc.endAngle = std::numeric_limits<double>::infinity();
+        invalidPartCount.arcs.append(invalidArc);
+        AltiumSchPie invalidPie;
+        invalidPie.startAngle = std::numeric_limits<double>::infinity();
+        invalidPartCount.pies.append(invalidPie);
+        AltiumSchEllipticalArc invalidEllipticalArc;
+        invalidEllipticalArc.endAngle = std::numeric_limits<double>::quiet_NaN();
+        invalidPartCount.ellipticalArcs.append(invalidEllipticalArc);
         QVERIFY(writer.write({invalidPartCount}, outputPath));
         QVERIFY(writer.diagnostics().join('\n').contains(QStringLiteral("partCount 无效")));
         QVERIFY(writer.diagnostics().join('\n').contains(QStringLiteral("引脚 OWNERPARTID=0 无效")));
         QVERIFY(writer.diagnostics().join('\n').contains(QStringLiteral("图元 OWNERPARTID=0 无效")));
         QVERIFY(writer.diagnostics().join('\n').contains(QStringLiteral("文本字体大小无效")));
         QVERIFY(writer.diagnostics().join('\n').contains(QStringLiteral("文本内容为空")));
+        QVERIFY(writer.diagnostics().join('\n').contains(QStringLiteral("圆弧起始角度无效")));
+        QVERIFY(writer.diagnostics().join('\n').contains(QStringLiteral("圆弧结束角度无效")));
+        QVERIFY(writer.diagnostics().join('\n').contains(QStringLiteral("扇形起始角度无效")));
+        QVERIFY(writer.diagnostics().join('\n').contains(QStringLiteral("椭圆弧结束角度无效")));
 
         QByteArray header;
         QVERIFY(readCfbStream(outputPath, QStringLiteral("FileHeader"), header));

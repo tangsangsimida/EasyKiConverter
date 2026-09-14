@@ -991,6 +991,8 @@ void AltiumSchLibWriter::writeLineRecord(AltiumBinaryWriter& writer, const Altiu
  * @brief 写入弧线记录 (RECORD=12)
  */
 void AltiumSchLibWriter::writeArcRecord(AltiumBinaryWriter& writer, const AltiumSchArc& arc) {
+    const double startAngle = normalizeFiniteAngle(arc.startAngle, 0.0, QStringLiteral("圆弧起始角度"));
+    const double endAngle = normalizeFiniteAngle(arc.endAngle, 360.0, QStringLiteral("圆弧结束角度"));
     QMap<QString, QString> params;
     params["RECORD"] = "12";
     addOwnerParams(params, arc.ownerPartId);
@@ -1002,9 +1004,9 @@ void AltiumSchLibWriter::writeArcRecord(AltiumBinaryWriter& writer, const Altium
         params["LineWidth"] = QString::number(arc.lineWidth);
     if (arc.lineStyle != 0)
         params["LineStyle"] = QString::number(arc.lineStyle);
-    if (arc.startAngle != 0.0)
-        params["StartAngle"] = QString::number(arc.startAngle, 'f', 3);
-    params["EndAngle"] = QString::number(arc.endAngle, 'f', 3);
+    if (startAngle != 0.0)
+        params["StartAngle"] = QString::number(startAngle, 'f', 3);
+    params["EndAngle"] = QString::number(endAngle, 'f', 3);
     addColorParam(params, "Color", arc.color);
 
     addUniqueID(params);
@@ -1072,6 +1074,8 @@ void AltiumSchLibWriter::writeEllipseRecord(AltiumBinaryWriter& writer, const Al
  * @brief 写入扇形记录 (RECORD=9)
  */
 void AltiumSchLibWriter::writePieRecord(AltiumBinaryWriter& writer, const AltiumSchPie& pie) {
+    const double startAngle = normalizeFiniteAngle(pie.startAngle, 0.0, QStringLiteral("扇形起始角度"));
+    const double endAngle = normalizeFiniteAngle(pie.endAngle, 360.0, QStringLiteral("扇形结束角度"));
     QMap<QString, QString> params;
     params["RECORD"] = "9";
     addOwnerParams(params, pie.ownerPartId);
@@ -1082,9 +1086,9 @@ void AltiumSchLibWriter::writePieRecord(AltiumBinaryWriter& writer, const Altium
         params["LineWidth"] = QString::number(pie.lineWidth);
     if (pie.lineStyle != 0)
         params["LineStyle"] = QString::number(pie.lineStyle);
-    if (pie.startAngle != 0.0)
-        params["StartAngle"] = QString::number(pie.startAngle, 'f', 3);
-    params["EndAngle"] = QString::number(pie.endAngle, 'f', 3);
+    if (startAngle != 0.0)
+        params["StartAngle"] = QString::number(startAngle, 'f', 3);
+    params["EndAngle"] = QString::number(endAngle, 'f', 3);
     addColorParam(params, "Color", pie.color);
     if (pie.areaColor != 0xFFFFFF)
         params["AreaColor"] = QString::number(pie.areaColor);
@@ -1097,6 +1101,8 @@ void AltiumSchLibWriter::writePieRecord(AltiumBinaryWriter& writer, const Altium
  * @brief 写入椭圆弧记录 (RECORD=11)
  */
 void AltiumSchLibWriter::writeEllipticalArcRecord(AltiumBinaryWriter& writer, const AltiumSchEllipticalArc& arc) {
+    const double startAngle = normalizeFiniteAngle(arc.startAngle, 0.0, QStringLiteral("椭圆弧起始角度"));
+    const double endAngle = normalizeFiniteAngle(arc.endAngle, 360.0, QStringLiteral("椭圆弧结束角度"));
     QMap<QString, QString> params;
     params["RECORD"] = "11";
     addOwnerParams(params, arc.ownerPartId);
@@ -1108,9 +1114,9 @@ void AltiumSchLibWriter::writeEllipticalArcRecord(AltiumBinaryWriter& writer, co
         params["LineWidth"] = QString::number(arc.lineWidth);
     if (arc.lineStyle != 0)
         params["LineStyle"] = QString::number(arc.lineStyle);
-    if (arc.startAngle != 0.0)
-        params["StartAngle"] = QString::number(arc.startAngle, 'f', 3);
-    params["EndAngle"] = QString::number(arc.endAngle, 'f', 3);
+    if (startAngle != 0.0)
+        params["StartAngle"] = QString::number(startAngle, 'f', 3);
+    params["EndAngle"] = QString::number(endAngle, 'f', 3);
     addColorParam(params, "Color", arc.color);
     if (arc.areaColor != 0xFFFFFF)
         params["AreaColor"] = QString::number(arc.areaColor);
@@ -1647,6 +1653,17 @@ int AltiumSchLibWriter::normalizeOwnerPartId(int ownerPartId, const QString& con
         return normalized;
     }
     return ownerPartId;
+}
+
+double AltiumSchLibWriter::normalizeFiniteAngle(double angle, double fallback, const QString& context) {
+    if (std::isfinite(angle))
+        return angle;
+
+    const QString diagnostic =
+        QStringLiteral("Altium SchLib %1无效，已规范化为 %2 度").arg(context).arg(fallback, 0, 'f', 3);
+    m_diagnostics.append(diagnostic);
+    qWarning() << "AltiumSchLibWriter:" << diagnostic;
+    return fallback;
 }
 
 void AltiumSchLibWriter::addOwnerParams(QMap<QString, QString>& params, int ownerPartId) {

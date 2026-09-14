@@ -96,6 +96,7 @@ private:
     int componentRecordCount(const AltiumSchComponent& component) const;
     int componentParameterRecordCount(const AltiumSchComponent& component) const;
     int normalizeOwnerPartId(int ownerPartId, const QString& context);
+    double normalizeFiniteAngle(double angle, double fallback, const QString& context);
     void addOwnerParams(QMap<QString, QString>& params, int ownerPartId);
 
     // 字体表管理
