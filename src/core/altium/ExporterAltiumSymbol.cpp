@@ -385,6 +385,10 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
             continue;
         }
         AltiumSchEllipse ellipse = convertCircle(circle);
+        if (ellipse.radiusX <= 0 || ellipse.radiusY <= 0) {
+            m_diagnostics.append(QStringLiteral("符号 %1 圆图元 %2 半径量化后无效，已跳过").arg(data.name).arg(i));
+            continue;
+        }
         ellipse.sourceGraphicType = QStringLiteral("C");
         ellipse.sourceGraphicIndex = sourceIndexForPart(data.circles, i, data.circles.at(i).partIndex);
         ellipse.sourcePartIndex = data.circles.at(i).partIndex;
@@ -539,6 +543,14 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
                     altiumArc.sourceGraphicIndex = sourceIndexForPart(data.paths, pathIndex, p.partIndex);
                     altiumArc.sourceSegmentIndex = segmentIndex;
                     altiumArc.sourcePartIndex = p.partIndex;
+                    if (altiumArc.radiusX <= 0 || altiumArc.radiusY <= 0) {
+                        m_diagnostics.append(QStringLiteral("符号 %1 路径图元 %2 的段 %3 椭圆弧半径量化后无效，已跳过")
+                                                 .arg(data.name)
+                                                 .arg(pathIndex)
+                                                 .arg(segmentIndex));
+                        ++segmentIndex;
+                        continue;
+                    }
                     component.ellipticalArcs.append(altiumArc);
                 } else {
                     IR::SymbolArcIR arc;
@@ -550,6 +562,14 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
                     arc.strokeStyle = p.strokeStyle;
                     arc.partIndex = p.partIndex;
                     AltiumSchArc altiumArc = convertArc(arc);
+                    if (altiumArc.radius <= 0) {
+                        m_diagnostics.append(QStringLiteral("符号 %1 路径图元 %2 的段 %3 圆弧半径量化后无效，已跳过")
+                                                 .arg(data.name)
+                                                 .arg(pathIndex)
+                                                 .arg(segmentIndex));
+                        ++segmentIndex;
+                        continue;
+                    }
                     altiumArc.sourceGraphicType = QStringLiteral("PT");
                     altiumArc.sourceGraphicIndex = sourceIndexForPart(data.paths, pathIndex, p.partIndex);
                     altiumArc.sourceSegmentIndex = segmentIndex;
@@ -638,6 +658,10 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
             continue;
         }
         AltiumSchEllipse ellipse = convertEllipse(sourceEllipse);
+        if (ellipse.radiusX <= 0 || ellipse.radiusY <= 0) {
+            m_diagnostics.append(QStringLiteral("符号 %1 椭圆图元 %2 半径量化后无效，已跳过").arg(data.name).arg(i));
+            continue;
+        }
         ellipse.sourceGraphicType = QStringLiteral("E");
         ellipse.sourceGraphicIndex = sourceIndexForPart(data.ellipses, i, sourceEllipse.partIndex);
         ellipse.sourcePartIndex = sourceEllipse.partIndex;
@@ -651,7 +675,12 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
             m_diagnostics.append(QStringLiteral("符号 %1 扇形图元 %2 的几何参数无效，已跳过").arg(data.name).arg(i));
             continue;
         }
-        component.pies.append(convertPie(sourcePie));
+        AltiumSchPie pie = convertPie(sourcePie);
+        if (pie.radius <= 0) {
+            m_diagnostics.append(QStringLiteral("符号 %1 扇形图元 %2 半径量化后无效，已跳过").arg(data.name).arg(i));
+            continue;
+        }
+        component.pies.append(pie);
     }
     for (int i = 0; i < data.ellipticalArcs.size(); ++i) {
         const IR::SymbolEllipticalArcIR& sourceArc = data.ellipticalArcs.at(i);
@@ -662,7 +691,12 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
             m_diagnostics.append(QStringLiteral("符号 %1 椭圆弧图元 %2 的几何参数无效，已跳过").arg(data.name).arg(i));
             continue;
         }
-        component.ellipticalArcs.append(convertEllipticalArc(sourceArc));
+        AltiumSchEllipticalArc ellipticalArc = convertEllipticalArc(sourceArc);
+        if (ellipticalArc.radiusX <= 0 || ellipticalArc.radiusY <= 0) {
+            m_diagnostics.append(QStringLiteral("符号 %1 椭圆弧图元 %2 半径量化后无效，已跳过").arg(data.name).arg(i));
+            continue;
+        }
+        component.ellipticalArcs.append(ellipticalArc);
     }
 
     // 添加封装链接，保留多个候选封装

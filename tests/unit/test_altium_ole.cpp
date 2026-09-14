@@ -2419,6 +2419,73 @@ private slots:
         QVERIFY(readCfbStream(nativeArcPathFile, QStringLiteral("NATIVE_ARC/Data"), nativeArcData));
         QVERIFY(nativeArcData.contains("RECORD=12"));
 
+        IR::SymbolComponentIR zeroRadiusNativeArcSymbol;
+        zeroRadiusNativeArcSymbol.name = QStringLiteral("ZERO_RADIUS_NATIVE_ARC");
+        IR::SymbolPathIR zeroRadiusNativeArcPath;
+        zeroRadiusNativeArcPath.strokeWidth = 0.1;
+        IR::SymbolPathSegmentIR zeroRadiusNativeArcSegment;
+        zeroRadiusNativeArcSegment.type = IR::SymbolPathSegmentIR::Type::CircularArc;
+        zeroRadiusNativeArcSegment.start = QPointF(0.0, 0.0);
+        zeroRadiusNativeArcSegment.arcMid = QPointF(0.0, 0.0);
+        zeroRadiusNativeArcSegment.end = QPointF(0.0, 0.0);
+        zeroRadiusNativeArcPath.segments.append(zeroRadiusNativeArcSegment);
+        zeroRadiusNativeArcSymbol.paths.append(zeroRadiusNativeArcPath);
+        const QString zeroRadiusNativeArcFile =
+            QDir(tempDir.path()).filePath(QStringLiteral("zero-radius-native-arc.SchLib"));
+        ExporterAltiumSymbol zeroRadiusNativeArcExporter;
+        QVERIFY(zeroRadiusNativeArcExporter.exportSymbol(zeroRadiusNativeArcSymbol, zeroRadiusNativeArcFile));
+        QVERIFY(zeroRadiusNativeArcExporter.diagnostics().contains(
+            QStringLiteral("符号 ZERO_RADIUS_NATIVE_ARC 路径图元 0 的段 0 圆弧半径量化后无效，已跳过")));
+
+        IR::SymbolComponentIR quantizedRadiusSymbol;
+        quantizedRadiusSymbol.name = QStringLiteral("QUANTIZED_RADIUS_GRAPHICS");
+        IR::SymbolCircleIR tinyCircle;
+        tinyCircle.center = QPointF(0.0, 0.0);
+        tinyCircle.radius = 0.000001;
+        tinyCircle.strokeWidth = 0.1;
+        quantizedRadiusSymbol.circles.append(tinyCircle);
+        IR::SymbolEllipseIR tinyEllipse;
+        tinyEllipse.center = QPointF(1.0, 0.0);
+        tinyEllipse.radiusX = 0.000001;
+        tinyEllipse.radiusY = 1.0;
+        tinyEllipse.strokeWidth = 0.1;
+        quantizedRadiusSymbol.ellipses.append(tinyEllipse);
+        IR::SymbolPieIR tinyPie;
+        tinyPie.center = QPointF(2.0, 0.0);
+        tinyPie.radius = 0.000001;
+        tinyPie.strokeWidth = 0.1;
+        quantizedRadiusSymbol.pies.append(tinyPie);
+        IR::SymbolEllipticalArcIR tinyEllipticalArc;
+        tinyEllipticalArc.center = QPointF(3.0, 0.0);
+        tinyEllipticalArc.radiusX = 0.000001;
+        tinyEllipticalArc.radiusY = 1.0;
+        tinyEllipticalArc.strokeWidth = 0.1;
+        quantizedRadiusSymbol.ellipticalArcs.append(tinyEllipticalArc);
+        IR::SymbolPathIR tinyEllipticalArcPath;
+        tinyEllipticalArcPath.strokeWidth = 0.1;
+        IR::SymbolPathSegmentIR tinyEllipticalArcSegment;
+        tinyEllipticalArcSegment.type = IR::SymbolPathSegmentIR::Type::EllipticalArc;
+        tinyEllipticalArcSegment.arcCenter = QPointF(4.0, 0.0);
+        tinyEllipticalArcSegment.radiusX = 0.000001;
+        tinyEllipticalArcSegment.radiusY = 1.0;
+        tinyEllipticalArcPath.segments.append(tinyEllipticalArcSegment);
+        quantizedRadiusSymbol.paths.append(tinyEllipticalArcPath);
+        ExporterAltiumSymbol quantizedRadiusExporter;
+        const QString quantizedRadiusFile =
+            QDir(tempDir.path()).filePath(QStringLiteral("quantized-radius-graphics.SchLib"));
+        QVERIFY(quantizedRadiusExporter.exportSymbol(quantizedRadiusSymbol, quantizedRadiusFile));
+        const QStringList quantizedRadiusDiagnostics = quantizedRadiusExporter.diagnostics();
+        QVERIFY(quantizedRadiusDiagnostics.contains(
+            QStringLiteral("符号 QUANTIZED_RADIUS_GRAPHICS 圆图元 0 半径量化后无效，已跳过")));
+        QVERIFY(quantizedRadiusDiagnostics.contains(
+            QStringLiteral("符号 QUANTIZED_RADIUS_GRAPHICS 椭圆图元 0 半径量化后无效，已跳过")));
+        QVERIFY(quantizedRadiusDiagnostics.contains(
+            QStringLiteral("符号 QUANTIZED_RADIUS_GRAPHICS 扇形图元 0 半径量化后无效，已跳过")));
+        QVERIFY(quantizedRadiusDiagnostics.contains(
+            QStringLiteral("符号 QUANTIZED_RADIUS_GRAPHICS 椭圆弧图元 0 半径量化后无效，已跳过")));
+        QVERIFY(quantizedRadiusDiagnostics.contains(
+            QStringLiteral("符号 QUANTIZED_RADIUS_GRAPHICS 路径图元 0 的段 0 椭圆弧半径量化后无效，已跳过")));
+
         IR::SymbolComponentIR nativeQuadraticSymbol;
         nativeQuadraticSymbol.name = QStringLiteral("NATIVE_QUADRATIC");
         IR::SymbolPathIR nativeQuadraticPath;
