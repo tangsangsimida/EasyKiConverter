@@ -4,6 +4,7 @@
 
 #include <QList>
 #include <QString>
+#include <QStringList>
 
 namespace EasyKiConverter {
 
@@ -21,6 +22,14 @@ public:
      * @return 文件扩展名（如 ".kicad_sym"、".SchLib"），包含点号
      */
     virtual QString libraryFileExtension() const = 0;
+
+    /**
+     * @brief 获取最近一次导出的非致命诊断
+     * @return 目标格式写入器产生的诊断列表
+     */
+    virtual QStringList diagnostics() const {
+        return {};
+    }
 
     /**
      * @brief 导出单个符号到文件

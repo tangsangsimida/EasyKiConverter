@@ -89,6 +89,11 @@ void ExportReportGenerator::writeDetailedReport(const QString& reason,
         out << "- Failed: " << typeProgress.failedCount << "\n";
         out << "- Skipped: " << typeProgress.skippedCount << "\n";
         out << "- In progress: " << typeProgress.inProgressCount << "\n";
+        if (!typeProgress.diagnostics.isEmpty()) {
+            out << "\n#### Exporter Diagnostics\n\n";
+            for (const QString& diagnostic : typeProgress.diagnostics)
+                out << "- " << diagnostic << "\n";
+        }
         bool hasDiagnostics = false;
         for (auto statusIt = typeProgress.itemStatus.cbegin(); statusIt != typeProgress.itemStatus.cend(); ++statusIt) {
             if (!statusIt.value().diagnostics.isEmpty()) {

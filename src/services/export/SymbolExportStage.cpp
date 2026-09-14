@@ -288,6 +288,14 @@ void SymbolExportStage::doLibraryExport(const QStringList& componentIds,
         }
         exportSuccess = exporter->exportSymbolLibrary(
             irSymbolList, libName, tempPath, appendMode, m_options.updateMode, libraryDescription);
+        const QStringList exporterDiagnostics = exporter->diagnostics();
+        if (!exporterDiagnostics.isEmpty()) {
+            QMutexLocker locker(&m_progressMutex);
+            m_progress.diagnostics = exporterDiagnostics;
+            const ExportTypeProgress progressSnapshot = m_progress;
+            locker.unlock();
+            emit progressChanged(progressSnapshot);
+        }
     }
 
     if (m_cancelled.load()) {

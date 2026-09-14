@@ -21,6 +21,11 @@ public:
         return QStringLiteral(".SchLib");
     }
 
+    /** @brief 获取最近一次 SchLib 导出的非致命诊断 */
+    QStringList diagnostics() const override {
+        return m_diagnostics;
+    }
+
     /**
      * @brief 导出单个符号到 SchLib 文件
      */
@@ -128,6 +133,7 @@ private:
     void centerComponent(AltiumSchComponent& component);
 
     AltiumSchLibWriter m_writer;
+    QStringList m_diagnostics;
 };
 
 }  // namespace EasyKiConverter

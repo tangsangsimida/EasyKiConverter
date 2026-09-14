@@ -38,6 +38,14 @@ public:
                const QString& filePath,
                const QString& libraryName = QString());
 
+    /**
+     * @brief 获取最近一次写入产生的非致命诊断
+     * @return 图片文件名、嵌入数据等被跳过或修正时的诊断列表
+     */
+    QStringList diagnostics() const {
+        return m_diagnostics;
+    }
+
 private:
     // ---- 文件级写入 ----
     void writeFileHeader(OLECompoundWriter& ole, const QList<AltiumSchComponent>& components);
@@ -90,6 +98,7 @@ private:
     int m_uniqueIdCounter = 0;
     int m_nextIndexInSheet = 0;
     QString m_libraryName;
+    QStringList m_diagnostics;
 };
 
 }  // namespace EasyKiConverter

@@ -1065,6 +1065,25 @@ private slots:
         QVERIFY(multipartStorage.contains("multipart.png"));
         QVERIFY(multipartStorage.contains("multipart_2.png"));
 
+        AltiumSchComponent diagnosticSymbol;
+        diagnosticSymbol.name = QStringLiteral("IMAGE_DIAGNOSTICS");
+        AltiumSchImage emptyImage;
+        emptyImage.embedImage = true;
+        emptyImage.fileName = QStringLiteral("empty.png");
+        diagnosticSymbol.images.append(emptyImage);
+        AltiumSchImage invalidNameImage;
+        invalidNameImage.embedImage = true;
+        invalidNameImage.fileName = QStringLiteral("bad|name.png");
+        invalidNameImage.data = QByteArrayLiteral("image");
+        diagnosticSymbol.images.append(invalidNameImage);
+        AltiumSchLibWriter diagnosticWriter;
+        const QString diagnosticPath = QDir(tempDir.path()).filePath(QStringLiteral("image-diagnostics.SchLib"));
+        QVERIFY(diagnosticWriter.write({diagnosticSymbol}, diagnosticPath, QStringLiteral("IMAGE_DIAGNOSTICS")));
+        QVERIFY(diagnosticWriter.diagnostics().contains(
+            QStringLiteral("组件 IMAGE_DIAGNOSTICS 图片 0 的嵌入数据为空，已跳过 Storage")));
+        QVERIFY(diagnosticWriter.diagnostics().contains(
+            QStringLiteral("组件 IMAGE_DIAGNOSTICS 图片 1 的嵌入文件名无效: bad|name.png，已跳过 Storage")));
+
         IR::FootprintComponentIR footprint;
         footprint.name = QStringLiteral("SEGMENTS");
         IR::FootprintTrackIR polyline;

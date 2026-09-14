@@ -83,6 +83,8 @@ private slots:
         QVERIFY(content.contains(QStringLiteral("- `C123`:")));
         QVERIFY(content.contains(QStringLiteral("  - Rectangle 0 has a non-positive size")));
         QVERIFY(content.contains(QStringLiteral("  - Path 0 has no commands")));
+        QVERIFY(content.contains(QStringLiteral("#### Exporter Diagnostics")));
+        QVERIFY(content.contains(QStringLiteral("组件 IMAGE_DIAGNOSTICS 图片 0 的嵌入数据为空，已跳过 Storage")));
         QVERIFY(content.contains(QStringLiteral("### Footprint")));
         QVERIFY(content.contains(QStringLiteral("- Completed: 2/3")));
 
@@ -129,6 +131,7 @@ private:
         symbolProgress.failedCount = 0;
         symbolProgress.skippedCount = 1;
         symbolProgress.inProgressCount = 0;
+        symbolProgress.diagnostics = {QStringLiteral("组件 IMAGE_DIAGNOSTICS 图片 0 的嵌入数据为空，已跳过 Storage")};
         ExportItemStatus symbolStatus;
         symbolStatus.status = ExportItemStatus::Status::Success;
         symbolStatus.diagnostics = {QStringLiteral("Rectangle 0 has a non-positive size"),

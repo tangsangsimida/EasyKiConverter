@@ -220,6 +220,7 @@ bool AltiumSchLibWriter::write(const QList<AltiumSchComponent>& components,
     m_embeddedImageNames.clear();
     m_uniqueIdCounter = 0;
     m_libraryName = libraryName;
+    m_diagnostics.clear();
 
     prepareImageStorageNames(components);
 
@@ -951,7 +952,8 @@ void AltiumSchLibWriter::writeImageRecord(AltiumBinaryWriter& writer, const Alti
 void AltiumSchLibWriter::prepareImageStorageNames(const QList<AltiumSchComponent>& components) {
     QSet<QString> usedNames;
     for (const AltiumSchComponent& component : components) {
-        for (const AltiumSchImage& image : component.images) {
+        for (int imageIndex = 0; imageIndex < component.images.size(); ++imageIndex) {
+            const AltiumSchImage& image = component.images.at(imageIndex);
             if (!image.embedImage)
                 continue;
 
@@ -959,10 +961,22 @@ void AltiumSchLibWriter::prepareImageStorageNames(const QList<AltiumSchComponent
             sourceName.replace('\\', '/');
             const QString embeddedName = QFileInfo(sourceName).fileName();
             const QByteArray encodedName = embeddedName.toLocal8Bit();
-            if (image.data.isEmpty() || embeddedName.isEmpty() || embeddedName == QStringLiteral(".") ||
-                embeddedName == QStringLiteral("..") || embeddedName.contains('|') ||
-                embeddedName.contains(QChar::Null) || encodedName.size() > 255) {
-                qWarning() << "AltiumSchLibWriter: Ignoring invalid embedded image name" << image.fileName;
+            if (image.data.isEmpty()) {
+                const QString diagnostic = QStringLiteral("组件 %1 图片 %2 的嵌入数据为空，已跳过 Storage")
+                                               .arg(component.name)
+                                               .arg(imageIndex);
+                m_diagnostics.append(diagnostic);
+                qWarning() << "AltiumSchLibWriter:" << diagnostic;
+                continue;
+            }
+            if (embeddedName.isEmpty() || embeddedName == QStringLiteral(".") || embeddedName == QStringLiteral("..") ||
+                embeddedName.contains('|') || embeddedName.contains(QChar::Null) || encodedName.size() > 255) {
+                const QString diagnostic = QStringLiteral("组件 %1 图片 %2 的嵌入文件名无效: %3，已跳过 Storage")
+                                               .arg(component.name)
+                                               .arg(imageIndex)
+                                               .arg(image.fileName);
+                m_diagnostics.append(diagnostic);
+                qWarning() << "AltiumSchLibWriter:" << diagnostic;
                 continue;
             }
 
@@ -983,6 +997,15 @@ void AltiumSchLibWriter::prepareImageStorageNames(const QList<AltiumSchComponent
             }
             usedNames.insert(candidate.toCaseFolded());
             m_embeddedImageNames.insert(&image, candidate);
+            if (candidate != embeddedName) {
+                const QString diagnostic = QStringLiteral("组件 %1 图片 %2 的嵌入文件名 %3 重复，已改为 %4")
+                                               .arg(component.name)
+                                               .arg(imageIndex)
+                                               .arg(embeddedName)
+                                               .arg(candidate);
+                m_diagnostics.append(diagnostic);
+                qWarning() << "AltiumSchLibWriter:" << diagnostic;
+            }
         }
     }
 }

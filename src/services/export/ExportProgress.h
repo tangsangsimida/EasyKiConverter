@@ -159,6 +159,7 @@ struct ExportTypeProgress {
     int skippedCount = 0;  ///< 被跳过的元器件数量
     int inProgressCount = 0;  ///< 当前正在导出的元器件数量
     QMap<QString, ExportItemStatus> itemStatus;  ///< 所有元器件的导出状态映射
+    QStringList diagnostics;  ///< 导出器产生的非致命诊断
     qint64 totalBytes = 0;  ///< 该类型所有文件的总字节数
     qint64 processedBytes = 0;  ///< 已处理的字节数
     qint64 totalTimeMs = 0;  ///< 该类型导出的总耗时（毫秒）

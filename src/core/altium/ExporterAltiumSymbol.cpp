@@ -182,6 +182,7 @@ bool ExporterAltiumSymbol::exportSymbol(const IR::SymbolComponentIR& symbol, con
     QList<AltiumSchComponent> components;
     components.append(convertSymbol(symbol));
     bool ok = m_writer.write(components, filePath);
+    m_diagnostics = m_writer.diagnostics();
     if (!ok) {
         qWarning() << "ExporterAltiumSymbol: Failed to write symbol to" << filePath;
     }
@@ -202,6 +203,7 @@ bool ExporterAltiumSymbol::exportSymbolLibrary(const QList<IR::SymbolComponentIR
         components.append(convertSymbol(symbol));
     }
     bool ok = m_writer.write(components, filePath, libName);
+    m_diagnostics = m_writer.diagnostics();
     if (!ok) {
         qWarning() << "ExporterAltiumSymbol: Failed to write symbol library to" << filePath;
     }
