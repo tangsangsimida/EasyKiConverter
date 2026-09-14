@@ -279,6 +279,7 @@ struct SymbolComponentIR {
         paths.clear();
         texts.clear();
         footprintName.clear();
+        sourceMetadata.clear();
     }
 };
 

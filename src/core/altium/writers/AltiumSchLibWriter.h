@@ -70,6 +70,7 @@ private:
     void addColorParam(QMap<QString, QString>& params, const QString& key, uint32_t color);
     void addUniqueID(QMap<QString, QString>& params);
     int componentRecordCount(const AltiumSchComponent& component) const;
+    int componentParameterRecordCount(const AltiumSchComponent& component) const;
     void addOwnerParams(QMap<QString, QString>& params, int ownerPartId) const;
 
     // 字体表管理

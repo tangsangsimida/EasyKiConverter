@@ -6,8 +6,69 @@
 
 #include <QDebug>
 #include <QRandomGenerator>
+#include <QSet>
 
 namespace EasyKiConverter {
+
+namespace {
+
+using ParameterField = QPair<QString, QString>;
+
+/**
+ * @brief 将来源元数据转换为 Altium 可编辑的参数字段。
+ * @details Comment 是 Altium 的 Value 字段；其余字段使用 RECORD=41，
+ *          保留未知键以支持新的供应商数据而无需修改协议模型。
+ */
+QList<ParameterField> componentParameterFields(const AltiumSchComponent& component) {
+    static const QMap<QString, QString> knownNames = {
+        {QStringLiteral("description"), QStringLiteral("Description")},
+        {QStringLiteral("manufacturer"), QStringLiteral("Manufacturer")},
+        {QStringLiteral("manufacturerPart"), QStringLiteral("Manufacturer Part Number")},
+        {QStringLiteral("datasheet"), QStringLiteral("Datasheet")},
+        {QStringLiteral("lcscId"), QStringLiteral("LCSC Part")},
+        {QStringLiteral("jlcId"), QStringLiteral("JLCPCB Part")},
+        {QStringLiteral("jlcpcbPartClass"), QStringLiteral("JLCPCB Part Class")},
+        {QStringLiteral("supplierPart"), QStringLiteral("Supplier Part Number")},
+        {QStringLiteral("supplier"), QStringLiteral("Supplier")},
+        {QStringLiteral("category"), QStringLiteral("Category")},
+        {QStringLiteral("source"), QStringLiteral("Source")},
+    };
+
+    QList<ParameterField> fields;
+    QSet<QString> names;
+
+    QString value = component.sourceMetadata.value(QStringLiteral("value")).trimmed();
+    if (value.isEmpty())
+        value = component.name.trimmed();
+    if (!value.isEmpty()) {
+        fields.append({QStringLiteral("Comment"), value});
+        names.insert(QStringLiteral("Comment"));
+    }
+
+    QString description = component.sourceMetadata.value(QStringLiteral("description")).trimmed();
+    if (description.isEmpty())
+        description = component.description.trimmed();
+    if (!description.isEmpty()) {
+        fields.append({QStringLiteral("Description"), description});
+        names.insert(QStringLiteral("Description"));
+    }
+
+    for (auto it = component.sourceMetadata.constBegin(); it != component.sourceMetadata.constEnd(); ++it) {
+        const QString value = it.value().trimmed();
+        if (value.isEmpty() || it.key() == QStringLiteral("value") || it.key() == QStringLiteral("description"))
+            continue;
+
+        const QString name = knownNames.value(it.key(), it.key()).trimmed();
+        if (name.isEmpty() || names.contains(name))
+            continue;
+
+        fields.append({name, value});
+        names.insert(name);
+    }
+    return fields;
+}
+
+}  // namespace
 
 /**
  * @brief 获取元件的 Section Key（存储键）
@@ -564,7 +625,7 @@ void AltiumSchLibWriter::writeTextRecord(AltiumBinaryWriter& writer, const Altiu
 }
 
 /**
- * @brief 写入元件参数记录（Designator 和 Comment）
+ * @brief 写入元件参数记录（Designator、Value 和自定义参数）
  * @param writer 二进制写入器
  * @param component 元件数据
  */
@@ -590,17 +651,19 @@ void AltiumSchLibWriter::writeComponentParameterRecords(AltiumBinaryWriter& writ
     addUniqueID(designatorParams);
     writer.writeCStringParameterBlockUtf8(designatorParams);
 
-    QMap<QString, QString> commentParams;
-    commentParams["RECORD"] = "41";
-    commentParams["OWNERPARTID"] = "-1";
-    commentParams["LOCATION.X_FRAC"] = "-5";
-    commentParams["LOCATION.Y_FRAC"] = "-15";
-    commentParams["COLOR"] = "8388608";
-    commentParams["FONTID"] = "1";
-    commentParams["TEXT"] = "*";
-    commentParams["NAME"] = "Comment";
-    addUniqueID(commentParams);
-    writer.writeCStringParameterBlock(commentParams);
+    for (const ParameterField& field : componentParameterFields(component)) {
+        QMap<QString, QString> parameterParams;
+        parameterParams["RECORD"] = "41";
+        parameterParams["OWNERPARTID"] = "-1";
+        parameterParams["LOCATION.X_FRAC"] = "-5";
+        parameterParams["LOCATION.Y_FRAC"] = "-15";
+        parameterParams["COLOR"] = "8388608";
+        parameterParams["FONTID"] = "1";
+        parameterParams["TEXT"] = field.second;
+        parameterParams["NAME"] = field.first;
+        addUniqueID(parameterParams);
+        writer.writeCStringParameterBlockUtf8(parameterParams);
+    }
 }
 
 /**
@@ -673,8 +736,17 @@ int AltiumSchLibWriter::componentRecordCount(const AltiumSchComponent& component
     const int graphics = component.pins.size() + component.rectangles.size() + component.lines.size() +
                          component.arcs.size() + component.polygons.size() + component.ellipses.size() +
                          component.polylines.size() + component.paths.size() + component.texts.size();
-    // Component + graphics + Designator + Comment + ImplementationList + implementation triplets.
-    return 1 + graphics + 2 + 1 + component.implementations.size() * 3;
+    // Component + graphics + 参数字段 + ImplementationList + implementation triplets.
+    return 1 + graphics + componentParameterRecordCount(component) + 1 + component.implementations.size() * 3;
+}
+
+/**
+ * @brief 计算元件参数记录数。
+ * @param component 元件数据
+ * @return Designator、Value 和自定义参数记录总数
+ */
+int AltiumSchLibWriter::componentParameterRecordCount(const AltiumSchComponent& component) const {
+    return 1 + componentParameterFields(component).size();
 }
 
 /**

@@ -193,6 +193,7 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
     component.description = data.description;
     component.designatorPrefix = data.designatorPrefix;
     component.partCount = data.partCount;
+    component.sourceMetadata = data.sourceMetadata;
 
     // 转换引脚
     for (const IR::SymbolPinIR& pin : data.pins) {

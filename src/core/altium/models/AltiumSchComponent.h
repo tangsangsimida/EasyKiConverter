@@ -3,6 +3,7 @@
 #include "AltiumCommon.h"
 
 #include <QList>
+#include <QMap>
 #include <QPointF>
 #include <QString>
 
@@ -137,6 +138,9 @@ struct AltiumSchComponent {
     QString description;  ///< 元件描述
     QString designatorPrefix = "?";  ///< 位号前缀（如 "R", "C", "U"）
     int partCount = 1;  ///< 部件数量
+
+    /** @brief 符号参数（如制造商、料号、Datasheet 和来源元数据） */
+    QMap<QString, QString> sourceMetadata;
 
     QList<AltiumSchPin> pins;
     QList<AltiumSchRectangle> rectangles;

@@ -47,6 +47,10 @@ inline SymbolComponentIR toSymbolIR(const SymbolData& data) {
     // EasyEDA 特有字段 -> sourceMetadata
     if (!data.info().lcscId.isEmpty())
         ir.sourceMetadata["lcscId"] = data.info().lcscId;
+    if (!data.info().manufacturer.isEmpty())
+        ir.sourceMetadata["manufacturer"] = data.info().manufacturer;
+    if (!data.info().datasheet.isEmpty())
+        ir.sourceMetadata["datasheet"] = data.info().datasheet;
     if (!data.info().jlcId.isEmpty())
         ir.sourceMetadata["jlcId"] = data.info().jlcId;
     if (!data.info().uuid.isEmpty())

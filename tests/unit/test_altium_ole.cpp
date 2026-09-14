@@ -489,6 +489,8 @@ private slots:
         AltiumSchComponent symbol;
         symbol.name = QStringLiteral("C2040");
         symbol.partCount = 1;
+        symbol.sourceMetadata.insert(QStringLiteral("manufacturer"), QStringLiteral("Example Corp"));
+        symbol.sourceMetadata.insert(QStringLiteral("lcscId"), QStringLiteral("C2040"));
 
         AltiumSchPin pin;
         pin.name = QStringLiteral("A");
@@ -524,7 +526,7 @@ private slots:
         QByteArray schHeader;
         QVERIFY(readCfbStream(schPath, QStringLiteral("FileHeader"), schHeader));
         QVERIFY(schHeader.contains("COMPCOUNT=1"));
-        QVERIFY(schHeader.contains("WEIGHT=10"));
+        QVERIFY(schHeader.contains("WEIGHT=12"));
         QVERIFY(schHeader.contains("LIBREF0=C2040"));
         QVERIFY(schHeader.contains("PARTCOUNT0=2"));
         QVERIFY(schHeader.mid(4).startsWith("|HEADER="));
@@ -542,6 +544,10 @@ private slots:
         QVERIFY(schData.contains("NAME=Designator"));
         QVERIFY(schData.contains("RECORD=41"));
         QVERIFY(schData.contains("NAME=Comment"));
+        QVERIFY(schData.contains("TEXT=C2040"));
+        QVERIFY(schData.contains("NAME=Manufacturer"));
+        QVERIFY(schData.contains("TEXT=Example Corp"));
+        QVERIFY(schData.contains("NAME=LCSC Part"));
 
         AltiumPcbComponent footprint;
         footprint.name = QStringLiteral("LQFN-56_L7.0-W7.0-P0.4-EP");
@@ -793,6 +799,7 @@ private slots:
         symbol.name = QStringLiteral("TEST_UTF8");
         symbol.description = QStringLiteral("测试中文描述");
         symbol.partCount = 1;
+        symbol.sourceMetadata.insert(QStringLiteral("manufacturer"), QStringLiteral("测试厂商"));
 
         AltiumSchPin pin;
         pin.name = QStringLiteral("A");
@@ -823,6 +830,7 @@ private slots:
         QVERIFY(schData.contains("%UTF8%ComponentDescription=") || schData.contains("ComponentDescription="));
         QVERIFY(schData.contains("%UTF8%Text=") || schData.contains("Text="));
         QVERIFY(schData.contains(QStringLiteral("测试中文描述").toUtf8()));
+        QVERIFY(schData.contains(QStringLiteral("测试厂商").toUtf8()));
         QVERIFY(schData.contains(QStringLiteral("中文文本").toUtf8()));
     }
 
