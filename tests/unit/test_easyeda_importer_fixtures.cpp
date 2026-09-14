@@ -1,4 +1,5 @@
 #include "core/altium/ExporterAltiumSymbol.h"
+#include "core/altium/readers/AltiumSchLibReader.h"
 #include "core/easyeda/EasyedaFootprintImporter.h"
 #include "core/easyeda/EasyedaSymbolImporter.h"
 #include "core/ir/SymbolDataConverter.h"
@@ -140,6 +141,41 @@ private slots:
         QVERIFY(schLibData.contains(QByteArray::fromHex("02000000")));  // 二进制引脚记录类型
         QVERIFY(schLibData.contains("IndexInSheet=1"));
         QVERIFY(schLibData.contains("IndexInSheet=2"));
+
+        AltiumSchLibReader reader;
+        QVERIFY2(reader.open(outputPath), qPrintable(reader.errorString()));
+        QCOMPARE(reader.components().size(), 1);
+        QCOMPARE(reader.components().first().name, QStringLiteral("FIXTURE_SYMBOL"));
+        QVector<AltiumSchLibReader::Record> records;
+        QVERIFY(reader.readComponentRecords(QStringLiteral("FIXTURE_SYMBOL"), &records));
+        QVERIFY(records.size() >= 7);
+        QVERIFY(records.first().hasParameters);
+        QCOMPARE(records.first().parameters.value(QStringLiteral("RECORD")), QStringLiteral("1"));
+        QCOMPARE(records.first().parameters.value(QStringLiteral("LibReference")), QStringLiteral("FIXTURE_SYMBOL"));
+        bool foundRoundedRectangle = false;
+        bool foundBezier = false;
+        bool foundLine = false;
+        bool foundText = false;
+        bool foundBinaryPin = false;
+        for (const auto& record : records) {
+            if (!record.hasParameters) {
+                if (record.payload.size() >= 4 &&
+                    static_cast<unsigned char>(record.payload.at(0)) == static_cast<unsigned char>(2))
+                    foundBinaryPin = true;
+                continue;
+            }
+            const QString recordType = record.parameters.value(QStringLiteral("RECORD"));
+            foundRoundedRectangle |= recordType == QStringLiteral("10");
+            foundBezier |= recordType == QStringLiteral("5");
+            foundLine |= recordType == QStringLiteral("6");
+            foundText |= recordType == QStringLiteral("4") &&
+                         record.parameters.value(QStringLiteral("Text")) == QStringLiteral("LABEL");
+        }
+        QVERIFY(foundRoundedRectangle);
+        QVERIFY(foundBezier);
+        QVERIFY(foundLine);
+        QVERIFY(foundText);
+        QVERIFY(foundBinaryPin);
     }
 
     void testFootprintFixtureImportsMetadataAndGeometry() {
