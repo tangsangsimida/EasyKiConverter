@@ -25,20 +25,74 @@ int primitiveBlockCount(quint8 objectId) {
     }
 }
 
-bool isStringBlockPayload(const QByteArray& payload) {
+bool readStringBlockPayload(const QByteArray& payload, QString* value) {
     AltiumBinaryReader reader(payload);
     uint8_t stringSize = 0;
     QByteArray stringData;
-    return reader.readUInt8(&stringSize) && reader.readBytes(stringSize, &stringData) && reader.remaining() == 0;
+    if (!reader.readUInt8(&stringSize) || !reader.readBytes(stringSize, &stringData) || reader.remaining() != 0)
+        return false;
+    if (value != nullptr)
+        *value = QString::fromLatin1(stringData);
+    return true;
 }
 
-bool readCommonPrimitiveHeader(const QByteArray& payload, quint8* layer, quint16* flags) {
+bool isStringBlockPayload(const QByteArray& payload) {
+    return readStringBlockPayload(payload, nullptr);
+}
+
+bool readCommonPrimitiveHeader(AltiumBinaryReader& reader, quint8* layer, quint16* flags) {
     if (layer == nullptr || flags == nullptr)
         return false;
 
-    AltiumBinaryReader reader(payload);
     QByteArray objectIndexes;
     return reader.readUInt8(layer) && reader.readUInt16(flags) && reader.readBytes(10, &objectIndexes);
+}
+
+bool readCommonPrimitiveHeader(const QByteArray& payload, quint8* layer, quint16* flags) {
+    AltiumBinaryReader reader(payload);
+    return readCommonPrimitiveHeader(reader, layer, flags);
+}
+
+bool parseTrackFields(const QByteArray& payload, AltiumPcbLibReader::TrackFields* fields) {
+    if (fields == nullptr)
+        return false;
+    AltiumBinaryReader reader(payload);
+    quint8 layer = 0;
+    quint16 flags = 0;
+    return readCommonPrimitiveHeader(reader, &layer, &flags) && reader.readInt32(&fields->startX) &&
+           reader.readInt32(&fields->startY) && reader.readInt32(&fields->endX) && reader.readInt32(&fields->endY) &&
+           reader.readInt32(&fields->width) && reader.readUInt16(&fields->netIndex) &&
+           reader.readUInt8(&fields->componentIndex);
+}
+
+bool parseArcFields(const QByteArray& payload, AltiumPcbLibReader::ArcFields* fields) {
+    if (fields == nullptr)
+        return false;
+    AltiumBinaryReader reader(payload);
+    quint8 layer = 0;
+    quint16 flags = 0;
+    return readCommonPrimitiveHeader(reader, &layer, &flags) && reader.readInt32(&fields->centerX) &&
+           reader.readInt32(&fields->centerY) && reader.readInt32(&fields->radius) &&
+           reader.readDouble(&fields->startAngle) && reader.readDouble(&fields->endAngle) &&
+           reader.readInt32(&fields->width);
+}
+
+bool parseTextFields(const QByteArray& payload, AltiumPcbLibReader::TextFields* fields) {
+    if (fields == nullptr)
+        return false;
+    AltiumBinaryReader reader(payload);
+    quint8 layer = 0;
+    quint16 flags = 0;
+    QByteArray padding;
+    return readCommonPrimitiveHeader(reader, &layer, &flags) && reader.readInt32(&fields->locationX) &&
+           reader.readInt32(&fields->locationY) && reader.readInt32(&fields->height) &&
+           reader.readInt16(&fields->fontId) && reader.readDouble(&fields->rotation) &&
+           reader.readUInt8(&fields->mirrored) && reader.readInt32(&fields->strokeWidth) &&
+           reader.readUInt8(&fields->isComment) && reader.readUInt8(&fields->isDesignator) &&
+           reader.readUInt8(&fields->characterSet) && reader.readUInt8(&fields->baseFontType) &&
+           reader.readBytes(71, &padding) && reader.readUInt32(&fields->wideStringIndex) &&
+           reader.readBytes(41, &padding) && reader.readUInt8(&fields->kind) && reader.readBytes(65, &padding) &&
+           reader.readUInt32(&fields->v7LayerId);
 }
 
 }  // namespace
@@ -218,12 +272,28 @@ bool AltiumPcbLibReader::readFootprintObjects(int componentIndexValue, QVector<P
                                      (objectId != AltiumConstants::PCB_OBJECT_PAD && blockIndex == 0);
             if (isMainBlock && !readCommonPrimitiveHeader(payload, &object.layer, &object.primitiveFlags))
                 return failRead(QStringLiteral("PcbLib 图元 %1 的公共头部不完整").arg(objectId));
+            if (isMainBlock && objectId == AltiumConstants::PCB_OBJECT_TRACK) {
+                if (!parseTrackFields(payload, &object.track))
+                    return failRead(QStringLiteral("PcbLib 走线图元字段不完整"));
+                object.hasTrackFields = true;
+            } else if (isMainBlock && objectId == AltiumConstants::PCB_OBJECT_ARC) {
+                if (!parseArcFields(payload, &object.arc))
+                    return failRead(QStringLiteral("PcbLib 弧线图元字段不完整"));
+                object.hasArcFields = true;
+            } else if (isMainBlock && objectId == AltiumConstants::PCB_OBJECT_TEXT) {
+                if (!parseTextFields(payload, &object.textFields))
+                    return failRead(QStringLiteral("PcbLib 文本图元字段不完整"));
+                object.hasTextFields = true;
+            }
             PrimitiveBlock block;
             block.flags = flags;
             block.payload = payload;
             block.encoded = data.mid(blockStart, reader.position() - blockStart);
             object.blocks.append(block);
         }
+        if (objectId == AltiumConstants::PCB_OBJECT_TEXT &&
+            !readStringBlockPayload(object.blocks.at(1).payload, &object.text))
+            return failRead(QStringLiteral("PcbLib 文本图元字符串内容无效"));
         object.encoded = data.mid(objectStart, reader.position() - objectStart);
         objects->append(object);
     }

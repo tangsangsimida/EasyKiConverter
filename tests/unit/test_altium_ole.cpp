@@ -837,6 +837,16 @@ private slots:
         track.layer = 33;
         footprint.tracks.append(track);
 
+        AltiumPcbArc arc;
+        arc.centerX = 30000;
+        arc.centerY = 40000;
+        arc.radius = 5000;
+        arc.startAngle = 15.0;
+        arc.endAngle = 225.0;
+        arc.width = 800;
+        arc.layer = 1;
+        footprint.arcs.append(arc);
+
         const QString pcbPath = QDir(tempDir.path()).filePath(QStringLiteral("easyeda_convertlib.PcbLib"));
         AltiumPcbLibWriter pcbWriter;
         QVERIFY(pcbWriter.write({footprint}, pcbPath, QStringLiteral("easyeda_convertlib")));
@@ -899,7 +909,7 @@ private slots:
         QVERIFY(footprintReaderData.contains("LQFN-56_L7.0-W7.0-P0.4-EP"));
         QVector<AltiumPcbLibReader::PrimitiveRecord> footprintObjects;
         QVERIFY(pcbLibraryReader.readFootprintObjects(0, &footprintObjects));
-        QCOMPARE(footprintObjects.size(), 2);
+        QCOMPARE(footprintObjects.size(), 3);
         QCOMPARE(footprintObjects.at(0).objectId, quint8(AltiumConstants::PCB_OBJECT_PAD));
         QCOMPARE(footprintObjects.at(0).layer, quint8(1));
         QVERIFY(footprintObjects.at(0).primitiveFlags != 0);
@@ -907,7 +917,13 @@ private slots:
         QCOMPARE(footprintObjects.at(1).objectId, quint8(AltiumConstants::PCB_OBJECT_TRACK));
         QCOMPARE(footprintObjects.at(1).layer, quint8(33));
         QCOMPARE(footprintObjects.at(1).primitiveFlags, quint16(0x0C));
+        QVERIFY(footprintObjects.at(1).hasTrackFields);
+        QCOMPARE(footprintObjects.at(1).track.endX, qint32(10000));
         QCOMPARE(footprintObjects.at(1).blocks.size(), 1);
+        QCOMPARE(footprintObjects.at(2).objectId, quint8(AltiumConstants::PCB_OBJECT_ARC));
+        QVERIFY(footprintObjects.at(2).hasArcFields);
+        QCOMPARE(footprintObjects.at(2).arc.radius, qint32(5000));
+        QCOMPARE(footprintObjects.at(2).arc.endAngle, 225.0);
         QByteArray reconstructedFootprintObjects;
         for (const auto& object : footprintObjects)
             reconstructedFootprintObjects.append(object.encoded);
@@ -1022,6 +1038,9 @@ private slots:
         QCOMPARE(objects.at(1).objectId, quint8(AltiumConstants::PCB_OBJECT_TEXT));
         QCOMPARE(objects.at(1).layer, quint8(33));
         QCOMPARE(objects.at(1).primitiveFlags, quint16(0x08));
+        QVERIFY(objects.at(1).hasTextFields);
+        QCOMPARE(objects.at(1).textFields.locationX, qint32(0));
+        QCOMPARE(objects.at(1).text, QStringLiteral("REF**"));
         QCOMPARE(objects.at(1).blocks.size(), 2);
         QVERIFY(objects.at(1).blocks.at(1).payload.startsWith(char(5)));
 
@@ -1125,7 +1144,7 @@ private slots:
         QVERIFY(writer.addStorage(QStringLiteral("BROKEN")));
         const QByteArray malformedData(2, '\0');
         QVERIFY(writer.writeStream(QStringLiteral("BROKEN"), QStringLiteral("Data"), malformedData));
-        const QString path = QDir(tempDir.path()).filePath(QStringLiteral("malformed-record.PcbLib"));
+        const QString path = QDir(tempDir.path()).filePath(QStringLiteral("malformed-record.SchLib"));
         QVERIFY(writer.saveToFile(path));
 
         AltiumSchLibReader reader;

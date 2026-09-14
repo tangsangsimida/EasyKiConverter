@@ -4,6 +4,7 @@
 
 #include <QByteArray>
 #include <QMap>
+#include <QString>
 #include <QVector>
 
 namespace EasyKiConverter {
@@ -28,6 +29,45 @@ public:
         QByteArray encoded;
     };
 
+    /** @brief PcbLib 走线公共字段之后的结构化数据 */
+    struct TrackFields {
+        qint32 startX = 0;
+        qint32 startY = 0;
+        qint32 endX = 0;
+        qint32 endY = 0;
+        qint32 width = 0;
+        quint16 netIndex = 0;
+        quint8 componentIndex = 0;
+    };
+
+    /** @brief PcbLib 弧线公共字段之后的结构化数据 */
+    struct ArcFields {
+        qint32 centerX = 0;
+        qint32 centerY = 0;
+        qint32 radius = 0;
+        double startAngle = 0.0;
+        double endAngle = 0.0;
+        qint32 width = 0;
+    };
+
+    /** @brief PcbLib 文本主块的结构化数据 */
+    struct TextFields {
+        qint32 locationX = 0;
+        qint32 locationY = 0;
+        qint32 height = 0;
+        qint16 fontId = 0;
+        double rotation = 0.0;
+        quint8 mirrored = 0;
+        qint32 strokeWidth = 0;
+        quint8 isComment = 0;
+        quint8 isDesignator = 0;
+        quint8 characterSet = 0;
+        quint8 baseFontType = 0;
+        quint32 wideStringIndex = 0;
+        quint8 kind = 0;
+        quint32 v7LayerId = 0;
+    };
+
     /**
      * @brief PcbLib Data 中的图元对象
      * @details 保留对象 ID、所有子块和完整编码；未知对象类型不会被猜测解析。
@@ -36,6 +76,13 @@ public:
         quint8 objectId = 0;
         quint8 layer = 0;  ///< 图元公共头部中的层编号
         quint16 primitiveFlags = 0;  ///< 图元公共头部中的标志位
+        bool hasTrackFields = false;
+        TrackFields track;
+        bool hasArcFields = false;
+        ArcFields arc;
+        bool hasTextFields = false;
+        TextFields textFields;
+        QString text;
         QVector<PrimitiveBlock> blocks;
         QByteArray encoded;
     };
