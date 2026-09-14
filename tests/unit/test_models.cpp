@@ -159,7 +159,17 @@ private slots:
         visibleText.anchor = QStringLiteral("end");
         visibleText.textSize = 8.0;
         visiblePart.texts.append(visibleText);
+        SymbolRectangle visibleRectangle;
+        visibleRectangle.posX = 0.0;
+        visibleRectangle.posY = 0.0;
+        visibleRectangle.rx = 0.0;
+        visibleRectangle.ry = 0.0;
+        visibleRectangle.width = 4.0;
+        visibleRectangle.height = 2.0;
+        visiblePart.rectangles.append(visibleRectangle);
         visiblePart.graphicOrder.append({QStringLiteral("P"), 0});
+        visiblePart.graphicOrder.append({QStringLiteral("R"), 0});
+        visiblePart.graphicOrder.append({QStringLiteral("T"), 0});
 
         symbol.addPart(commonPart);
         symbol.addPart(visiblePart);
@@ -168,6 +178,10 @@ private slots:
         QVERIFY(restored.fromJson(symbol.toJson()));
         QCOMPARE(restored.parts().size(), 2);
         QVERIFY(restored.parts().first().commonToAllParts);
+        QCOMPARE(restored.parts().at(1).rectangles.size(), 1);
+        QCOMPARE(restored.parts().at(1).graphicOrder.size(), 3);
+        QCOMPARE(restored.parts().at(1).graphicOrder.at(1).type, QStringLiteral("R"));
+        QCOMPARE(restored.parts().at(1).graphicOrder.at(2).type, QStringLiteral("T"));
 
         const IR::SymbolComponentIR ir = IR::toSymbolIR(restored);
         QCOMPARE(ir.partCount, 1);
