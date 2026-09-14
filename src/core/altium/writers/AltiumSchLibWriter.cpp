@@ -268,6 +268,11 @@ bool AltiumSchLibWriter::write(const QList<AltiumSchComponent>& components,
 
     writeImageStorage(ole, components);
 
+    if (ole.hasError()) {
+        qWarning() << "AltiumSchLibWriter: Failed to construct OLE document:" << ole.errorString();
+        return false;
+    }
+
     return ole.saveToFile(filePath);
 }
 

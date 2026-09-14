@@ -78,6 +78,11 @@ bool AltiumPcbLibWriter::write(const QList<AltiumPcbComponent>& components,
         writeFootprintStorage(ole, components[i], sectionKeys[i]);
     }
 
+    if (ole.hasError()) {
+        qWarning() << "AltiumPcbLibWriter: Failed to construct OLE document:" << ole.errorString();
+        return false;
+    }
+
     bool result = ole.saveToFile(filePath);
     qDebug() << "AltiumPcbLibWriter::write: saveToFile result:" << result << "filePath:" << filePath;
     return result;

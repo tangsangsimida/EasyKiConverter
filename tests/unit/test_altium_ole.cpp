@@ -553,6 +553,12 @@ private slots:
         OLECompoundWriter writer;
         QVERIFY(writer.create());
         QVERIFY(!writer.addStorage(QStringLiteral("Missing"), QStringLiteral("Child")));
+        QVERIFY(writer.hasError());
+        QCOMPARE(writer.errorString(), QStringLiteral("无法创建存储: Missing/Child"));
+        QVERIFY(!writer.saveToFile(QDir::temp().filePath(QStringLiteral("invalid-cfb.cfb"))));
+
+        QVERIFY(writer.create());
+        QVERIFY(!writer.hasError());
         QVERIFY(!writer.addStorage(QStringLiteral("Bad/Name")));
         QVERIFY(writer.addStorage(QStringLiteral("Models")));
         QVERIFY(!writer.addStorage(QStringLiteral("models")));
