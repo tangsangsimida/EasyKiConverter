@@ -80,6 +80,7 @@ private:
     void writeComponentParameterRecords(AltiumBinaryWriter& writer, const AltiumSchComponent& component);
     void writeImplementationRecords(AltiumBinaryWriter& writer, const AltiumSchComponent& component);
     bool hasCompleteGraphicOrder(const AltiumSchComponent& component) const;
+    bool validateGeometry(const AltiumSchComponent& component);
 
     // ---- 辅助 ----
     QString getSectionKey(const QString& name) const;

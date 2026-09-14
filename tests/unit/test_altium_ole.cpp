@@ -624,13 +624,17 @@ private slots:
         invalidOwnerRectangle.ownerPartId = 0;
         invalidPartCount.rectangles.append(invalidOwnerRectangle);
         AltiumSchArc invalidArc;
+        invalidArc.radius = 100000;
         invalidArc.startAngle = std::numeric_limits<double>::quiet_NaN();
         invalidArc.endAngle = std::numeric_limits<double>::infinity();
         invalidPartCount.arcs.append(invalidArc);
         AltiumSchPie invalidPie;
+        invalidPie.radius = 100000;
         invalidPie.startAngle = std::numeric_limits<double>::infinity();
         invalidPartCount.pies.append(invalidPie);
         AltiumSchEllipticalArc invalidEllipticalArc;
+        invalidEllipticalArc.radiusX = 100000;
+        invalidEllipticalArc.radiusY = 50000;
         invalidEllipticalArc.endAngle = std::numeric_limits<double>::quiet_NaN();
         invalidPartCount.ellipticalArcs.append(invalidEllipticalArc);
         QVERIFY(writer.write({invalidPartCount}, outputPath));
@@ -661,6 +665,21 @@ private slots:
             if (record.recordType == 2 || record.recordType == 9)
                 QCOMPARE(record.ownerPartId, 1);
         }
+
+        AltiumSchComponent invalidGeometry;
+        invalidGeometry.name = QStringLiteral("INVALID_GEOMETRY");
+        AltiumSchArc invalidRadiusArc;
+        invalidGeometry.arcs.append(invalidRadiusArc);
+        QVERIFY(!writer.write({invalidGeometry}, outputPath));
+        QVERIFY(writer.diagnostics().join('\n').contains(QStringLiteral("圆弧半径无效")));
+
+        AltiumSchComponent invalidPolygon;
+        invalidPolygon.name = QStringLiteral("INVALID_POLYGON");
+        AltiumSchPolygon invalidPolygonData;
+        invalidPolygonData.vertices = {QPointF(0, 0), QPointF(100000, 0)};
+        invalidPolygon.polygons.append(invalidPolygonData);
+        QVERIFY(!writer.write({invalidPolygon}, outputPath));
+        QVERIFY(writer.diagnostics().join('\n').contains(QStringLiteral("多边形顶点数量不足")));
 
         AltiumPcbComponent invalidPcb;
         invalidPcb.name = QStringLiteral("INVALID_PCB_FLOATS");
@@ -2187,7 +2206,7 @@ private slots:
         const QString invalidGeometryPath = QDir(tempDir.path()).filePath(QStringLiteral("invalid-geometry.SchLib"));
         QVERIFY(invalidGeometryExporter.exportSymbol(invalidGeometrySymbol, invalidGeometryPath));
         QVERIFY(invalidGeometryExporter.diagnostics().contains(
-            QStringLiteral("符号 INVALID_GEOMETRY 圆图元 0 的半径无效，已钳制为非负值")));
+            QStringLiteral("符号 INVALID_GEOMETRY 圆图元 0 的半径无效，已跳过")));
         QVERIFY(invalidGeometryExporter.diagnostics().contains(
             QStringLiteral("符号 INVALID_GEOMETRY 圆图元 1 的中心或线宽无效，已跳过")));
         QVERIFY(invalidGeometryExporter.diagnostics().contains(

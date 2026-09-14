@@ -381,7 +381,8 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
             continue;
         }
         if (!std::isfinite(circle.radius) || circle.radius < 0.0) {
-            m_diagnostics.append(QStringLiteral("符号 %1 圆图元 %2 的半径无效，已钳制为非负值").arg(data.name).arg(i));
+            m_diagnostics.append(QStringLiteral("符号 %1 圆图元 %2 的半径无效，已跳过").arg(data.name).arg(i));
+            continue;
         }
         AltiumSchEllipse ellipse = convertCircle(circle);
         ellipse.sourceGraphicType = QStringLiteral("C");

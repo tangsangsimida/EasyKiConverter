@@ -11,6 +11,7 @@
 #include <QRandomGenerator>
 #include <QSet>
 
+#include <algorithm>
 #include <cmath>
 
 namespace EasyKiConverter {
@@ -245,6 +246,8 @@ bool AltiumSchLibWriter::write(const QList<AltiumSchComponent>& components,
             qWarning() << "AltiumSchLibWriter: Refusing to write a component without a name";
             return false;
         }
+        if (!validateGeometry(component))
+            return false;
         if (component.partCount <= 0) {
             m_diagnostics.append(
                 QStringLiteral("Altium SchLib 组件 %1 的 partCount 无效，已规范化为 1").arg(component.name));
@@ -814,6 +817,63 @@ bool AltiumSchLibWriter::hasCompleteGraphicOrder(const AltiumSchComponent& compo
     for (const QString& actualKey : actual) {
         if (!expected.contains(actualKey))
             return false;
+    }
+    return true;
+}
+
+bool AltiumSchLibWriter::validateGeometry(const AltiumSchComponent& component) {
+    const auto hasFinitePoints = [](const QList<QPointF>& points) {
+        return std::all_of(points.cbegin(), points.cend(), [](const QPointF& point) {
+            return std::isfinite(point.x()) && std::isfinite(point.y());
+        });
+    };
+    const auto reject = [this, &component](const QString& message) {
+        m_diagnostics.append(QStringLiteral("Altium SchLib 组件 %1 的%2，已拒绝写入").arg(component.name, message));
+        qWarning() << "AltiumSchLibWriter:" << m_diagnostics.constLast();
+        return false;
+    };
+
+    for (const AltiumSchRoundRectangle& rect : component.roundRectangles) {
+        if (rect.cornerXRadius < 0 || rect.cornerYRadius < 0)
+            return reject(QStringLiteral("圆角矩形圆角半径无效"));
+    }
+    for (const AltiumSchArc& arc : component.arcs) {
+        if (arc.radius <= 0)
+            return reject(QStringLiteral("圆弧半径无效"));
+    }
+    for (const AltiumSchEllipse& ellipse : component.ellipses) {
+        if (ellipse.radiusX <= 0 || ellipse.radiusY <= 0)
+            return reject(QStringLiteral("椭圆半径无效"));
+    }
+    for (const AltiumSchPie& pie : component.pies) {
+        if (pie.radius <= 0)
+            return reject(QStringLiteral("扇形半径无效"));
+    }
+    for (const AltiumSchEllipticalArc& arc : component.ellipticalArcs) {
+        if (arc.radiusX <= 0 || arc.radiusY <= 0)
+            return reject(QStringLiteral("椭圆弧半径无效"));
+    }
+    for (const AltiumSchPolygon& polygon : component.polygons) {
+        if (polygon.vertices.size() < 3)
+            return reject(QStringLiteral("多边形顶点数量不足"));
+        if (!hasFinitePoints(polygon.vertices))
+            return reject(QStringLiteral("多边形顶点包含非有限坐标"));
+    }
+    for (const AltiumSchPolyline& polyline : component.polylines) {
+        if (polyline.vertices.size() < 2)
+            return reject(QStringLiteral("折线顶点数量不足"));
+        if (!hasFinitePoints(polyline.vertices))
+            return reject(QStringLiteral("折线顶点包含非有限坐标"));
+    }
+    for (const AltiumSchPath& path : component.paths) {
+        if (path.vertices.size() < 2)
+            return reject(QStringLiteral("路径顶点数量不足"));
+        if (!hasFinitePoints(path.vertices))
+            return reject(QStringLiteral("路径顶点包含非有限坐标"));
+    }
+    for (const AltiumSchBezier& bezier : component.beziers) {
+        if (bezier.controlPoints.size() == 4 && !hasFinitePoints(bezier.controlPoints))
+            return reject(QStringLiteral("Bézier 控制点包含非有限坐标"));
     }
     return true;
 }
