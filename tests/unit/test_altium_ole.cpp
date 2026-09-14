@@ -611,6 +611,12 @@ private slots:
         QByteArray header;
         QVERIFY(readCfbStream(outputPath, QStringLiteral("FileHeader"), header));
         QVERIFY(header.contains("PARTCOUNT0=2"));
+
+        AltiumSchLibReader emptyImageReader;
+        QVERIFY2(emptyImageReader.open(outputPath), qPrintable(emptyImageReader.errorString()));
+        QVector<AltiumSchLibReader::ImageStorageEntry> emptyImageEntries;
+        QVERIFY2(emptyImageReader.readImageStorage(&emptyImageEntries), qPrintable(emptyImageReader.errorString()));
+        QVERIFY(emptyImageEntries.isEmpty());
     }
 
     /**

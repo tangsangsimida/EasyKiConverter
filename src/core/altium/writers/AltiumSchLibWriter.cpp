@@ -1402,8 +1402,7 @@ void AltiumSchLibWriter::writeImageStorage(OLECompoundWriter& ole, const QList<A
     AltiumBinaryWriter storageWriter(storageData);
     QMap<QString, QString> storageParams;
     storageParams["HEADER"] = "Icon storage";
-    if (!embeddedImages.isEmpty())
-        storageParams["Weight"] = QString::number(embeddedImages.size());
+    storageParams["Weight"] = QString::number(embeddedImages.size());
     storageWriter.writeCStringParameterBlock(storageParams);
 
     for (const AltiumSchImage* image : embeddedImages) {
