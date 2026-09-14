@@ -19,6 +19,7 @@
 #include "core/altium/readers/AltiumSchLibReader.h"
 #include "core/altium/utils/AltiumBinaryReader.h"
 #include "core/altium/utils/AltiumBinaryWriter.h"
+#include "core/altium/utils/AltiumConstants.h"
 #include "core/altium/utils/AltiumWriterUtils.h"
 #include "core/altium/writers/AltiumPcbLibWriter.h"
 #include "core/altium/writers/AltiumSchLibWriter.h"
@@ -896,6 +897,18 @@ private slots:
         QByteArray footprintReaderData;
         QVERIFY(pcbLibraryReader.readFootprintStream(0, QStringLiteral("Data"), &footprintReaderData));
         QVERIFY(footprintReaderData.contains("LQFN-56_L7.0-W7.0-P0.4-EP"));
+        QVector<AltiumPcbLibReader::PrimitiveRecord> footprintObjects;
+        QVERIFY(pcbLibraryReader.readFootprintObjects(0, &footprintObjects));
+        QCOMPARE(footprintObjects.size(), 2);
+        QCOMPARE(footprintObjects.at(0).objectId, quint8(AltiumConstants::PCB_OBJECT_PAD));
+        QCOMPARE(footprintObjects.at(0).blocks.size(), 6);
+        QCOMPARE(footprintObjects.at(1).objectId, quint8(AltiumConstants::PCB_OBJECT_TRACK));
+        QCOMPARE(footprintObjects.at(1).blocks.size(), 1);
+        QByteArray reconstructedFootprintObjects;
+        for (const auto& object : footprintObjects)
+            reconstructedFootprintObjects.append(object.encoded);
+        const int footprintNameSize = static_cast<int>(readU32(footprintReaderData, 0));
+        QCOMPARE(reconstructedFootprintObjects, footprintReaderData.mid(4 + footprintNameSize));
         QByteArray footprintHeaderReaderData;
         QVERIFY(pcbLibraryReader.readFootprintStream(0, QStringLiteral("Header"), &footprintHeaderReaderData));
         AltiumBinaryReader footprintHeaderReader(footprintHeaderReaderData);

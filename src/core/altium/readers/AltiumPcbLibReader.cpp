@@ -1,8 +1,30 @@
 #include "AltiumPcbLibReader.h"
 
 #include "core/altium/utils/AltiumBinaryReader.h"
+#include "core/altium/utils/AltiumConstants.h"
 
 namespace EasyKiConverter {
+
+namespace {
+
+int primitiveBlockCount(quint8 objectId) {
+    switch (objectId) {
+        case AltiumConstants::PCB_OBJECT_ARC:
+        case AltiumConstants::PCB_OBJECT_TRACK:
+        case AltiumConstants::PCB_OBJECT_FILL:
+        case AltiumConstants::PCB_OBJECT_REGION:
+        case AltiumConstants::PCB_OBJECT_COMPONENT_BODY:
+            return 1;
+        case AltiumConstants::PCB_OBJECT_PAD:
+            return 6;
+        case AltiumConstants::PCB_OBJECT_TEXT:
+            return 2;
+        default:
+            return -1;
+    }
+}
+
+}  // namespace
 
 bool AltiumPcbLibReader::fail(const QString& message) {
     m_components.clear();
@@ -121,6 +143,60 @@ bool AltiumPcbLibReader::readFootprintStream(const QString& componentName,
                                              const QString& streamName,
                                              QByteArray* data) const {
     return readFootprintStream(componentIndex(componentName), streamName, data);
+}
+
+bool AltiumPcbLibReader::readFootprintObjects(int componentIndexValue, QVector<PrimitiveRecord>* objects) const {
+    if (objects == nullptr)
+        return false;
+    objects->clear();
+
+    QByteArray data;
+    if (!readFootprintStream(componentIndexValue, QStringLiteral("Data"), &data))
+        return false;
+
+    AltiumBinaryReader reader(data);
+    QString footprintName;
+    if (!reader.readStringBlock(&footprintName) || footprintName.isEmpty())
+        return false;
+
+    while (reader.remaining() > 0) {
+        const int objectStart = reader.position();
+        uint8_t objectId = 0;
+        if (!reader.readUInt8(&objectId)) {
+            objects->clear();
+            return false;
+        }
+        const int blockCount = primitiveBlockCount(objectId);
+        if (blockCount < 0) {
+            objects->clear();
+            return false;
+        }
+
+        PrimitiveRecord object;
+        object.objectId = objectId;
+        object.blocks.reserve(blockCount);
+        for (int blockIndex = 0; blockIndex < blockCount; ++blockIndex) {
+            const int blockStart = reader.position();
+            QByteArray payload;
+            uint8_t flags = 0;
+            if (!reader.readBlock(&payload, &flags) || payload.isEmpty()) {
+                objects->clear();
+                return false;
+            }
+            PrimitiveBlock block;
+            block.flags = flags;
+            block.payload = payload;
+            block.encoded = data.mid(blockStart, reader.position() - blockStart);
+            object.blocks.append(block);
+        }
+        object.encoded = data.mid(objectStart, reader.position() - objectStart);
+        objects->append(object);
+    }
+    return true;
+}
+
+bool AltiumPcbLibReader::readFootprintObjects(const QString& componentName, QVector<PrimitiveRecord>* objects) const {
+    return readFootprintObjects(componentIndex(componentName), objects);
 }
 
 QString AltiumPcbLibReader::errorString() const {
