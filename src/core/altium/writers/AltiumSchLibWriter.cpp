@@ -393,6 +393,11 @@ void AltiumSchLibWriter::writeComponentStorage(OLECompoundWriter& ole,
         writePathRecord(writer, path);
     }
 
+    // 写入三次 Bézier 曲线
+    for (const AltiumSchBezier& bezier : component.beziers) {
+        writeBezierRecord(writer, bezier);
+    }
+
     // 写入文本
     for (const AltiumSchText& text : component.texts) {
         writeTextRecord(writer, text);
@@ -659,6 +664,31 @@ void AltiumSchLibWriter::writePathRecord(AltiumBinaryWriter& writer, const Altiu
 }
 
 /**
+ * @brief 写入三次 Bézier 曲线记录 (RECORD=5)
+ */
+void AltiumSchLibWriter::writeBezierRecord(AltiumBinaryWriter& writer, const AltiumSchBezier& bezier) {
+    if (bezier.controlPoints.size() != 4)
+        return;
+
+    QMap<QString, QString> params;
+    params["RECORD"] = "5";
+    addOwnerParams(params, bezier.ownerPartId);
+    params["LineWidth"] = QString::number(bezier.lineWidth);
+    addColorParam(params, "Color", bezier.color);
+    params["LocationCount"] = "4";
+    for (int i = 0; i < 4; ++i) {
+        const int32_t x = AltiumCoord::toSchematicUnits(static_cast<int>(bezier.controlPoints[i].x()));
+        const int32_t y = AltiumCoord::toSchematicUnits(static_cast<int>(bezier.controlPoints[i].y()));
+        if (x != 0)
+            params[QString("X%1").arg(i + 1)] = QString::number(x);
+        if (y != 0)
+            params[QString("Y%1").arg(i + 1)] = QString::number(y);
+    }
+    addUniqueID(params);
+    writer.writeCStringParameterBlock(params);
+}
+
+/**
  * @brief 写入文本记录 (RECORD=4, Label)
  */
 void AltiumSchLibWriter::writeTextRecord(AltiumBinaryWriter& writer, const AltiumSchText& text) {
@@ -812,7 +842,8 @@ void AltiumSchLibWriter::writeImplementationRecords(AltiumBinaryWriter& writer, 
 int AltiumSchLibWriter::componentRecordCount(const AltiumSchComponent& component) const {
     const int graphics = component.pins.size() + component.rectangles.size() + component.lines.size() +
                          component.arcs.size() + component.polygons.size() + component.ellipses.size() +
-                         component.polylines.size() + component.paths.size() + component.texts.size();
+                         component.polylines.size() + component.paths.size() + component.beziers.size() +
+                         component.texts.size();
     // Component + graphics + 参数字段 + ImplementationList + implementation triplets.
     return 1 + graphics + componentParameterRecordCount(component) + 1 + component.implementations.size() * 3;
 }

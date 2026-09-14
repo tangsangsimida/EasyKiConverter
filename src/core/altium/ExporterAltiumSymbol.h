@@ -78,6 +78,11 @@ private:
     AltiumSchPath convertPath(const IR::SymbolPathIR& path);
 
     /**
+     * @brief SymbolBezierIR → AltiumSchBezier
+     */
+    AltiumSchBezier convertBezier(const IR::SymbolBezierIR& bezier);
+
+    /**
      * @brief SymbolTextIR → AltiumSchText 转换
      */
     AltiumSchText convertText(const IR::SymbolTextIR& text);

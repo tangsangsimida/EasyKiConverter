@@ -252,6 +252,10 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
         component.polylines.append(convertPolyline(p));
     for (const IR::SymbolPathIR& p : data.paths)
         component.paths.append(convertPath(p));
+    for (const IR::SymbolBezierIR& b : data.beziers) {
+        if (b.controlPoints.size() == 4)
+            component.beziers.append(convertBezier(b));
+    }
     for (const IR::SymbolTextIR& t : data.texts)
         component.texts.append(convertText(t));
     for (const IR::SymbolEllipseIR& e : data.ellipses)
@@ -549,6 +553,21 @@ AltiumSchPath ExporterAltiumSymbol::convertPath(const IR::SymbolPathIR& path) {
 }
 
 /**
+ * @brief SymbolBezierIR → AltiumSchBezier
+ */
+AltiumSchBezier ExporterAltiumSymbol::convertBezier(const IR::SymbolBezierIR& bezier) {
+    AltiumSchBezier altiumBezier;
+    altiumBezier.lineWidth = AltiumCoord::lineWidthMmToIndex(bezier.strokeWidth);
+    altiumBezier.color = toAltiumColor(bezier.strokeColor);
+    altiumBezier.ownerPartId = qMax(1, bezier.partIndex + 1);
+    for (const QPointF& point : bezier.controlPoints) {
+        altiumBezier.controlPoints.append(
+            QPointF(AltiumCoord::mmToSchematicUnits(point.x()), AltiumCoord::mmToSchematicUnits(point.y())));
+    }
+    return altiumBezier;
+}
+
+/**
  * @brief SymbolTextIR → AltiumSchText
  */
 AltiumSchText ExporterAltiumSymbol::convertText(const IR::SymbolTextIR& text) {
@@ -627,6 +646,9 @@ void ExporterAltiumSymbol::centerComponent(AltiumSchComponent& component) {
     for (const auto& path : component.paths)
         for (const QPointF& point : path.vertices)
             includeSchematicPoint(point);
+    for (const auto& bezier : component.beziers)
+        for (const QPointF& point : bezier.controlPoints)
+            includeSchematicPoint(point);
     for (const auto& text : component.texts)
         include(text.locationX, text.locationY);
     for (const auto& parameter : component.parameters)
@@ -688,6 +710,11 @@ void ExporterAltiumSymbol::centerComponent(AltiumSchComponent& component) {
     }
     for (auto& path : component.paths) {
         for (QPointF& v : path.vertices) {
+            v = QPointF(v.x() - offsetPolyX, v.y() - offsetPolyY);
+        }
+    }
+    for (auto& bezier : component.beziers) {
+        for (QPointF& v : bezier.controlPoints) {
             v = QPointF(v.x() - offsetPolyX, v.y() - offsetPolyY);
         }
     }

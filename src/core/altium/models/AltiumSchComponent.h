@@ -115,6 +115,17 @@ struct AltiumSchPath {
 };
 
 /**
+ * @brief Altium 符号三次 Bézier 曲线
+ * @details 四个控制点按 Schematic Units 写入 RECORD=5。
+ */
+struct AltiumSchBezier {
+    QList<QPointF> controlPoints;  ///< 起点、两个控制点和终点
+    int lineWidth = 0;
+    uint32_t color = 0x000000;
+    int ownerPartId = 1;
+};
+
+/**
  * @brief Altium 符号文本
  */
 struct AltiumSchText {
@@ -172,6 +183,7 @@ struct AltiumSchComponent {
     QList<AltiumSchEllipse> ellipses;
     QList<AltiumSchPolyline> polylines;
     QList<AltiumSchPath> paths;
+    QList<AltiumSchBezier> beziers;
     QList<AltiumSchText> texts;
 
     /** @brief 封装链接（实现记录） */

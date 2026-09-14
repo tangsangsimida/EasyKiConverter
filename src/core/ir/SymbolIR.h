@@ -206,6 +206,17 @@ struct SymbolPathIR {
 };
 
 /**
+ * @brief 通用符号三次 Bézier 曲线
+ * @details 按 Altium RECORD=5 的四个控制点保存，坐标单位为 mm。
+ */
+struct SymbolBezierIR {
+    QList<QPointF> controlPoints;  ///< 起点、两个控制点和终点
+    QColor strokeColor = Qt::black;
+    double strokeWidth = 0.0;
+    int partIndex = 0;  ///< 所属部件索引（多部件符号使用）
+};
+
+/**
  * @brief 通用符号文本
  * @note 颜色、字体大小已标准化
  */
@@ -275,6 +286,7 @@ struct SymbolComponentIR {
     QList<SymbolPolylineIR> polylines;
     QList<SymbolPolygonIR> polygons;
     QList<SymbolPathIR> paths;
+    QList<SymbolBezierIR> beziers;
     QList<SymbolTextIR> texts;
     QList<SymbolParameterIR> parameters;
     QList<SymbolModelIR> models;
@@ -299,7 +311,7 @@ struct SymbolComponentIR {
     bool hasGraphics() const {
         return !pins.isEmpty() || !rectangles.isEmpty() || !circles.isEmpty() || !arcs.isEmpty() ||
                !ellipses.isEmpty() || !polylines.isEmpty() || !polygons.isEmpty() || !paths.isEmpty() ||
-               !texts.isEmpty();
+               !beziers.isEmpty() || !texts.isEmpty();
     }
 
     void clear() {
@@ -316,6 +328,7 @@ struct SymbolComponentIR {
         polylines.clear();
         polygons.clear();
         paths.clear();
+        beziers.clear();
         texts.clear();
         parameters.clear();
         models.clear();

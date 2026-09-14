@@ -899,6 +899,10 @@ private slots:
         path.points = {QPointF(0, 0), QPointF(1, 1), QPointF(2, 0)};
         path.partIndex = 1;
         symbol.paths.append(path);
+        IR::SymbolBezierIR bezier;
+        bezier.controlPoints = {QPointF(-1, 0), QPointF(-0.5, 2), QPointF(0.5, -2), QPointF(1, 0)};
+        bezier.partIndex = 1;
+        symbol.beziers.append(bezier);
 
         const QString schPath = QDir(tempDir.path()).filePath(QStringLiteral("multipart.SchLib"));
         ExporterAltiumSymbol symbolExporter;
@@ -912,6 +916,8 @@ private slots:
         const int secondPinOffset = pinOffset + 4 + static_cast<int>(readU32(symbolData, pinOffset) & 0x00FFFFFFU);
         QCOMPARE(readU16(symbolData, secondPinOffset + 9), quint16(0xFFFF));
         QVERIFY(symbolData.contains("OWNERPARTID=2"));
+        QVERIFY(symbolData.contains("RECORD=5"));
+        QVERIFY(symbolData.contains("LocationCount=4"));
 
         IR::FootprintComponentIR footprint;
         footprint.name = QStringLiteral("SEGMENTS");
