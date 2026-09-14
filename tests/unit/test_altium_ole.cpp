@@ -2355,6 +2355,20 @@ private slots:
         QVERIFY(invalidArcExporter.diagnostics().contains(
             QStringLiteral("符号 INVALID_ARC_DATA IEEE 图形 0 的位置无效，已跳过")));
 
+        IR::SymbolComponentIR zeroRadiusArcSymbol;
+        zeroRadiusArcSymbol.name = QStringLiteral("ZERO_RADIUS_ARC");
+        IR::SymbolArcIR zeroRadiusArc;
+        zeroRadiusArc.startPoint = QPointF(0.0, 0.0);
+        zeroRadiusArc.midPoint = QPointF(0.0, 0.0);
+        zeroRadiusArc.endPoint = QPointF(0.0, 0.0);
+        zeroRadiusArc.strokeWidth = 0.1;
+        zeroRadiusArcSymbol.arcs.append(zeroRadiusArc);
+        ExporterAltiumSymbol zeroRadiusArcExporter;
+        const QString zeroRadiusArcPath = QDir(tempDir.path()).filePath(QStringLiteral("zero-radius-arc.SchLib"));
+        QVERIFY(zeroRadiusArcExporter.exportSymbol(zeroRadiusArcSymbol, zeroRadiusArcPath));
+        QVERIFY(zeroRadiusArcExporter.diagnostics().contains(
+            QStringLiteral("符号 ZERO_RADIUS_ARC 圆弧图元 0 半径量化后无效，已跳过")));
+
         IR::SymbolComponentIR invalidPathSymbol;
         invalidPathSymbol.name = QStringLiteral("INVALID_PATH_SEGMENT");
         IR::SymbolPathIR invalidPath;

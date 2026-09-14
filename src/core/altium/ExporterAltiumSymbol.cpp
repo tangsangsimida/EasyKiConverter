@@ -406,6 +406,10 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
                 QStringLiteral("符号 %1 圆弧图元 %2 三点退化，已使用安全回退圆心").arg(data.name).arg(i));
         }
         AltiumSchArc arc = convertArc(sourceArc);
+        if (arc.radius <= 0) {
+            m_diagnostics.append(QStringLiteral("符号 %1 圆弧图元 %2 半径量化后无效，已跳过").arg(data.name).arg(i));
+            continue;
+        }
         arc.sourceGraphicType = QStringLiteral("A");
         arc.sourceGraphicIndex = sourceIndexForPart(data.arcs, i, data.arcs.at(i).partIndex);
         arc.sourcePartIndex = data.arcs.at(i).partIndex;
