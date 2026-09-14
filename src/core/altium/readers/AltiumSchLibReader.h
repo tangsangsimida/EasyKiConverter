@@ -25,6 +25,8 @@ public:
         quint8 flags = 0;
         QByteArray payload;
         QByteArray encoded;
+        bool hasParameters = false;
+        QMap<QString, QString> parameters;
     };
 
     /**

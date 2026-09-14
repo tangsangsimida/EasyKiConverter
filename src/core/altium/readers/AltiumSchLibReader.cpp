@@ -128,6 +128,14 @@ bool AltiumSchLibReader::readComponentRecords(int componentIndexValue, QVector<R
         record.flags = flags;
         record.payload = payload;
         record.encoded = data.mid(startPosition, reader.position() - startPosition);
+        if (payload.startsWith('|')) {
+            AltiumBinaryReader parameterReader(payload);
+            if (!parameterReader.parseCStringParameterData(payload, &record.parameters)) {
+                records->clear();
+                return false;
+            }
+            record.hasParameters = true;
+        }
         records->append(record);
     }
     return !records->isEmpty();

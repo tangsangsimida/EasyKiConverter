@@ -921,6 +921,18 @@ private slots:
             reconstructedRecords.append(record.encoded);
         QCOMPARE(reconstructedRecords, componentData);
         QVERIFY(records.first().payload.startsWith("|RECORD=1|"));
+        QVERIFY(records.first().hasParameters);
+        QCOMPARE(records.first().parameters.value(QStringLiteral("RECORD")), QStringLiteral("1"));
+        QVERIFY(records.first().parameters.contains(QStringLiteral("LibReference")));
+        bool sawBinaryPin = false;
+        for (const auto& record : records) {
+            if (!record.hasParameters && record.payload.size() >= 4 &&
+                static_cast<quint32>(static_cast<unsigned char>(record.payload.at(0))) == 2) {
+                sawBinaryPin = true;
+                break;
+            }
+        }
+        QVERIFY(sawBinaryPin);
     }
 
     /**

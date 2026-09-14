@@ -64,6 +64,13 @@ public:
      * @details 自动应用 `%UTF8%KEY=VALUE` 对对应 ANSI 值的覆盖。
      */
     bool readCStringParameterBlock(QMap<QString, QString>* params);
+    /**
+     * @brief 解析已经去除长度前缀的 C 字符串参数数据
+     * @param data 参数数据，不包含外层长度和标志字段
+     * @param params 输出参数
+     * @details 自动应用 `%UTF8%KEY=VALUE` 对应的 UTF-8 值覆盖 ANSI 值。
+     */
+    bool parseCStringParameterData(const QByteArray& data, QMap<QString, QString>* params);
 
     /** @brief 获取当前读取位置 */
     int position() const;

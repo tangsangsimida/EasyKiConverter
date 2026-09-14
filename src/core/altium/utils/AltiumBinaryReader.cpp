@@ -177,10 +177,17 @@ bool AltiumBinaryReader::readPascalString(QString* value) {
 bool AltiumBinaryReader::readCStringParameterBlock(QMap<QString, QString>* params) {
     if (params == nullptr)
         return fail(QStringLiteral("读取参数块时输出指针为空"));
-    params->clear();
     QByteArray block;
     if (!readBlock(&block))
         return false;
+    return parseCStringParameterData(block, params);
+}
+
+bool AltiumBinaryReader::parseCStringParameterData(const QByteArray& data, QMap<QString, QString>* params) {
+    if (params == nullptr)
+        return fail(QStringLiteral("解析参数数据时输出指针为空"));
+    params->clear();
+    QByteArray block = data;
     if (!block.isEmpty() && block.endsWith('\0'))
         block.chop(1);
     const QList<QByteArray> fields = block.split('|');
