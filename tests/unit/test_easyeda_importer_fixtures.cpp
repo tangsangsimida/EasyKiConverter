@@ -118,6 +118,12 @@ private slots:
 
         const QStringList validationErrors = symbol->validationErrors();
         QVERIFY(validationErrors.join('\n').contains(QStringLiteral("unknown type UNKNOWN")));
+
+        SymbolData restored;
+        QVERIFY(restored.fromJson(symbol->toJson()));
+        QCOMPARE(restored.graphicOrder().last().type, QStringLiteral("UNKNOWN"));
+        QCOMPARE(restored.graphicOrder().last().index, -1);
+        QVERIFY(restored.validationErrors().join('\n').contains(QStringLiteral("unknown type UNKNOWN")));
     }
 
     /**

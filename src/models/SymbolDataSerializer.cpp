@@ -140,7 +140,9 @@ static QJsonObject graphicOrderToJson(const SymbolGraphicOrder& order) {
 static bool graphicOrderFromJson(SymbolGraphicOrder& order, const QJsonObject& json) {
     order.type = json["type"].toString();
     order.index = json["index"].toInt(-1);
-    return !order.type.isEmpty() && order.index >= 0;
+    // 保留 -1 等无效索引，供 validationErrors() 报告源数据中的损坏引用，
+    // 避免缓存往返时把未知或未解析的图元静默丢弃。
+    return !order.type.isEmpty() && order.index >= -1;
 }
 
 // Class method definitions for shape types (also delegate to SymbolShapeSerializer)
