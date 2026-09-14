@@ -4,6 +4,7 @@
 #include "models/AltiumSchComponent.h"
 #include "utils/AltiumBinaryWriter.h"
 
+#include <QHash>
 #include <QList>
 #include <QString>
 #include <QStringList>
@@ -63,6 +64,7 @@ private:
     void writeTextRecord(AltiumBinaryWriter& writer, const AltiumSchText& text);
     void writeTextFrameRecord(AltiumBinaryWriter& writer, const AltiumSchTextFrame& frame);
     void writeImageRecord(AltiumBinaryWriter& writer, const AltiumSchImage& image);
+    void prepareImageStorageNames(const QList<AltiumSchComponent>& components);
     void writeImageStorage(OLECompoundWriter& ole, const QList<AltiumSchComponent>& components);
     void writeComponentParameterRecords(AltiumBinaryWriter& writer, const AltiumSchComponent& component);
     void writeImplementationRecords(AltiumBinaryWriter& writer, const AltiumSchComponent& component);
@@ -83,6 +85,7 @@ private:
 
     // 字体表管理
     QList<AltiumModels::FontEntry> m_fonts;
+    QHash<const AltiumSchImage*, QString> m_embeddedImageNames;
     int m_uniqueIdCounter = 0;
     int m_nextIndexInSheet = 0;
     QString m_libraryName;

@@ -1017,6 +1017,9 @@ private slots:
         image.fileName = QStringLiteral("multipart.png");
         image.data = QByteArrayLiteral("multipart-image");
         symbol.images.append(image);
+        IR::SymbolImageIR duplicateImage = image;
+        duplicateImage.data = QByteArrayLiteral("multipart-image-duplicate");
+        symbol.images.append(duplicateImage);
 
         const QString schPath = QDir(tempDir.path()).filePath(QStringLiteral("multipart.SchLib"));
         ExporterAltiumSymbol symbolExporter;
@@ -1037,9 +1040,12 @@ private slots:
         QVERIFY(symbolData.contains("RECORD=10"));
         QVERIFY(symbolData.contains("RECORD=30"));
         QVERIFY(symbolData.contains("EmbedImage=T"));
+        QVERIFY(symbolData.contains("FileName=multipart.png"));
+        QVERIFY(symbolData.contains("FileName=multipart_2.png"));
         QByteArray multipartStorage;
         QVERIFY(readCfbStream(schPath, QStringLiteral("Storage"), multipartStorage));
         QVERIFY(multipartStorage.contains("multipart.png"));
+        QVERIFY(multipartStorage.contains("multipart_2.png"));
 
         IR::FootprintComponentIR footprint;
         footprint.name = QStringLiteral("SEGMENTS");

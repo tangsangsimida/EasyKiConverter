@@ -6,6 +6,7 @@
 
 #include <QDataStream>
 #include <QDebug>
+#include <QFileInfo>
 #include <QIODevice>
 #include <QRandomGenerator>
 #include <QSet>
@@ -199,8 +200,11 @@ bool AltiumSchLibWriter::write(const QList<AltiumSchComponent>& components,
         return false;
     }
     m_fonts.clear();
+    m_embeddedImageNames.clear();
     m_uniqueIdCounter = 0;
     m_libraryName = libraryName;
+
+    prepareImageStorageNames(components);
 
     // 确保有默认字体
     getOrAddFont("Times New Roman", 10);
@@ -904,14 +908,48 @@ void AltiumSchLibWriter::writeImageRecord(AltiumBinaryWriter& writer, const Alti
         params["ShowBorder"] = "T";
     if (image.keepAspect)
         params["KeepAspect"] = "T";
-    const bool hasEmbeddedImage = image.embedImage && !image.data.isEmpty() && !image.fileName.isEmpty() &&
-                                  image.fileName.toLocal8Bit().size() <= 255;
+    const QString storageFileName = m_embeddedImageNames.value(&image, image.fileName);
+    const bool hasEmbeddedImage = image.embedImage && !image.data.isEmpty() && !storageFileName.isEmpty() &&
+                                  storageFileName.toLocal8Bit().size() <= 255;
     if (hasEmbeddedImage)
         params["EmbedImage"] = "T";
-    if (!image.fileName.isEmpty())
-        params["FileName"] = image.fileName;
+    if (!storageFileName.isEmpty())
+        params["FileName"] = storageFileName;
     addUniqueID(params);
     writer.writeCStringParameterBlockUtf8(params);
+}
+
+/**
+ * @brief 为嵌入图片生成稳定且唯一的 Storage 文件名。
+ * @details Altium 的 Storage 以文件名关联图片记录；重复名称会导致多个图元指向同一条目。
+ */
+void AltiumSchLibWriter::prepareImageStorageNames(const QList<AltiumSchComponent>& components) {
+    QSet<QString> usedNames;
+    for (const AltiumSchComponent& component : components) {
+        for (const AltiumSchImage& image : component.images) {
+            if (!image.embedImage || image.data.isEmpty() || image.fileName.isEmpty() ||
+                image.fileName.toLocal8Bit().size() > 255)
+                continue;
+
+            const QFileInfo fileInfo(image.fileName);
+            const QString suffix = fileInfo.suffix();
+            QString baseName =
+                suffix.isEmpty() ? image.fileName : image.fileName.left(image.fileName.size() - suffix.size() - 1);
+            QString candidate = image.fileName;
+            int duplicateIndex = 1;
+            while (usedNames.contains(candidate.toCaseFolded())) {
+                ++duplicateIndex;
+                const QString suffixText = suffix.isEmpty() ? QString() : QStringLiteral(".") + suffix;
+                const QString marker = QStringLiteral("_%1").arg(duplicateIndex);
+                QString trimmedBase = baseName;
+                while (!trimmedBase.isEmpty() && (trimmedBase + marker + suffixText).toLocal8Bit().size() > 255)
+                    trimmedBase.chop(1);
+                candidate = trimmedBase + marker + suffixText;
+            }
+            usedNames.insert(candidate.toCaseFolded());
+            m_embeddedImageNames.insert(&image, candidate);
+        }
+    }
 }
 
 /**
@@ -923,8 +961,7 @@ void AltiumSchLibWriter::writeImageStorage(OLECompoundWriter& ole, const QList<A
     QList<const AltiumSchImage*> embeddedImages;
     for (const AltiumSchComponent& component : components) {
         for (const AltiumSchImage& image : component.images) {
-            if (image.embedImage && !image.data.isEmpty() && !image.fileName.isEmpty() &&
-                image.fileName.toLocal8Bit().size() <= 255)
+            if (image.embedImage && !image.data.isEmpty() && m_embeddedImageNames.contains(&image))
                 embeddedImages.append(&image);
         }
     }
@@ -939,7 +976,7 @@ void AltiumSchLibWriter::writeImageStorage(OLECompoundWriter& ole, const QList<A
 
     for (const AltiumSchImage* image : embeddedImages) {
         const QByteArray compressed = qCompress(image->data, 9).mid(4);
-        const QByteArray name = image->fileName.toLocal8Bit();
+        const QByteArray name = m_embeddedImageNames.value(image).toLocal8Bit();
         if (name.isEmpty() || name.size() > 255)
             continue;
 
