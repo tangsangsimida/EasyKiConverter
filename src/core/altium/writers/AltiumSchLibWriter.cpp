@@ -1500,8 +1500,16 @@ void AltiumSchLibWriter::prepareImageStorageNames(const QList<AltiumSchComponent
     for (const AltiumSchComponent& component : components) {
         for (int imageIndex = 0; imageIndex < component.images.size(); ++imageIndex) {
             const AltiumSchImage& image = component.images.at(imageIndex);
-            if (!image.embedImage)
+            if (!image.embedImage) {
+                if (image.fileName.trimmed().isEmpty()) {
+                    const QString diagnostic = QStringLiteral("组件 %1 图片 %2 的外部文件名为空，已跳过文件引用")
+                                                   .arg(component.name)
+                                                   .arg(imageIndex);
+                    m_diagnostics.append(diagnostic);
+                    qWarning() << "AltiumSchLibWriter:" << diagnostic;
+                }
                 continue;
+            }
 
             QString sourceName = image.fileName;
             sourceName.replace('\\', '/');

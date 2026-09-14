@@ -2320,6 +2320,8 @@ private slots:
             QStringLiteral("组件 IMAGE_DIAGNOSTICS 图片 0 的嵌入数据为空，已跳过 Storage")));
         QVERIFY(diagnosticWriter.diagnostics().contains(
             QStringLiteral("组件 IMAGE_DIAGNOSTICS 图片 1 的嵌入文件名无效: bad|name.png，已跳过 Storage")));
+        AltiumSchImage missingExternalNameImage;
+        diagnosticSymbol.images.append(missingExternalNameImage);
         AltiumSchImage invalidWindowsNameImage;
         invalidWindowsNameImage.embedImage = true;
         invalidWindowsNameImage.fileName = QStringLiteral("bad:name.png");
@@ -2333,8 +2335,10 @@ private slots:
         const QString oversizedDiagnosticPath = QDir(tempDir.path()).filePath(QStringLiteral("oversized-image.SchLib"));
         QVERIFY(
             diagnosticWriter.write({diagnosticSymbol}, oversizedDiagnosticPath, QStringLiteral("IMAGE_DIAGNOSTICS")));
-        QVERIFY(diagnosticWriter.diagnostics().join('\n').contains(QStringLiteral("图片 2 的嵌入文件名无效")));
         QVERIFY(diagnosticWriter.diagnostics().join('\n').contains(QStringLiteral("图片 3 的嵌入文件名无效")));
+        QVERIFY(diagnosticWriter.diagnostics().join('\n').contains(QStringLiteral("图片 4 的嵌入文件名无效")));
+        QVERIFY(diagnosticWriter.diagnostics().join('\n').contains(
+            QStringLiteral("组件 IMAGE_DIAGNOSTICS 图片 2 的外部文件名为空，已跳过文件引用")));
         QByteArray diagnosticData;
         QVERIFY(readCfbStream(oversizedDiagnosticPath, QStringLiteral("IMAGE_DIAGNOSTICS/Data"), diagnosticData));
         QVERIFY(!diagnosticData.contains("FileName=bad|name.png"));
