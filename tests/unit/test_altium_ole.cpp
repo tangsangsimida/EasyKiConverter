@@ -1360,6 +1360,40 @@ private slots:
     }
 
     /**
+     * @brief 验证 SchLib 记录不会接受小于 -1 的 OWNERPARTID
+     */
+    void rejectsInvalidSchLibOwnerPartId() {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        OLECompoundWriter writer;
+        QVERIFY(writer.create());
+        QByteArray headerData;
+        AltiumBinaryWriter headerWriter(headerData);
+        headerWriter.writeCStringParameterBlock(
+            {{QStringLiteral("COMPCOUNT"), QStringLiteral("1")}, {QStringLiteral("PARTCOUNT0"), QStringLiteral("2")}});
+        headerWriter.writeInt32(1);
+        headerWriter.writeStringBlock(QStringLiteral("INVALID_OWNER"));
+        QVERIFY(writer.writeStream(QStringLiteral("FileHeader"), headerData));
+        QVERIFY(writer.addStorage(QStringLiteral("INVALID_OWNER")));
+
+        QByteArray componentData;
+        AltiumBinaryWriter componentWriter(componentData);
+        componentWriter.writeCStringParameterBlock(
+            {{QStringLiteral("RECORD"), QStringLiteral("14")}, {QStringLiteral("OWNERPARTID"), QStringLiteral("-2")}});
+        QVERIFY(writer.writeStream(QStringLiteral("INVALID_OWNER"), QStringLiteral("Data"), componentData));
+        const QString path = QDir(tempDir.path()).filePath(QStringLiteral("invalid-owner.SchLib"));
+        QVERIFY(writer.saveToFile(path));
+
+        AltiumSchLibReader reader;
+        QVERIFY2(reader.open(path), qPrintable(reader.errorString()));
+        QVector<AltiumSchLibReader::Record> records;
+        QVERIFY(!reader.readComponentRecords(QStringLiteral("INVALID_OWNER"), &records));
+        QVERIFY(records.isEmpty());
+        QVERIFY(reader.errorString().contains(QStringLiteral("OWNERPARTID 小于 -1")));
+    }
+
+    /**
      * @brief 验证 SchLib 内容记录索引不能重复或倒序。
      */
     void rejectsNonMonotonicSchLibRecordIndexes() {

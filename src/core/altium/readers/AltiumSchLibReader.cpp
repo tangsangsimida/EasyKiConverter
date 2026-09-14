@@ -301,6 +301,9 @@ bool AltiumSchLibReader::readComponentRecords(int componentIndexValue, QVector<R
                     return failRead(
                         QStringLiteral("SchLib 组件参数记录的 FONTID 超出字体表范围，偏移量 %1").arg(startPosition));
             }
+            if (record.ownerPartId < -1)
+                return failRead(
+                    QStringLiteral("SchLib 组件参数记录的 OWNERPARTID 小于 -1，偏移量 %1").arg(startPosition));
             if (record.ownerPartId >= 0 && record.ownerPartId > m_components.at(componentIndexValue).partCount) {
                 return failRead(
                     QStringLiteral("SchLib 组件参数记录的 OWNERPARTID 超出部件范围，偏移量 %1").arg(startPosition));
@@ -316,6 +319,9 @@ bool AltiumSchLibReader::readComponentRecords(int componentIndexValue, QVector<R
                     payload, &record.recordType, &record.ownerPartId, &record.ownerPartDisplayMode)) {
                 return failRead(QStringLiteral("SchLib 二进制记录元数据无效，偏移量 %1").arg(startPosition));
             }
+            if (record.ownerPartId < -1)
+                return failRead(
+                    QStringLiteral("SchLib 二进制记录的 OWNERPARTID 小于 -1，偏移量 %1").arg(startPosition));
             if (record.ownerPartId >= 0 && record.ownerPartId > m_components.at(componentIndexValue).partCount) {
                 return failRead(
                     QStringLiteral("SchLib 二进制记录的 OWNERPARTID 超出部件范围，偏移量 %1").arg(startPosition));
