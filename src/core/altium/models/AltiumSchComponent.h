@@ -178,6 +178,10 @@ struct AltiumSchComponent {
     struct Implementation {
         QString modelName;  ///< 封装名称
         QString modelType = "PCBLIB";  ///< 模型类型
+        QString dataFileKind = "PCBLib";  ///< 数据文件类型
+        QString dataFileEntity;  ///< 数据文件实体或路径
+        QMap<QString, QString> parameters;  ///< 模型参数
+        QMap<QString, QString> pinMappings;  ///< 引脚映射
     };
 
     QList<Implementation> implementations;

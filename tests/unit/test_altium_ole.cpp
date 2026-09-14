@@ -523,6 +523,8 @@ private slots:
         AltiumSchComponent::Implementation impl;
         impl.modelName = QStringLiteral("LQFN-56_L7.0-W7.0-P0.4-EP");
         impl.modelType = QStringLiteral("PCBLIB");
+        impl.parameters.insert(QStringLiteral("THERMAL_MODEL"), QStringLiteral("default"));
+        impl.pinMappings.insert(QStringLiteral("1"), QStringLiteral("A1"));
         symbol.implementations.append(impl);
 
         const QString schPath = QDir(tempDir.path()).filePath(QStringLiteral("easyeda_convertlib.SchLib"));
@@ -543,6 +545,8 @@ private slots:
         QVERIFY(schData.contains("LibReference=C2040"));
         QVERIFY(schData.contains("RECORD=14"));
         QVERIFY(schData.contains("RECORD=45"));
+        QVERIFY(schData.contains("DESIMP0=A1"));
+        QVERIFY(schData.contains("THERMAL_MODEL=default"));
         QVERIFY(schData.contains("RECORD=6"));
         QVERIFY(schData.contains("OWNERPARTID=1"));
         QVERIFY(schData.contains("PartCount=2"));

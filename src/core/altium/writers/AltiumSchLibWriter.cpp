@@ -762,8 +762,10 @@ void AltiumSchLibWriter::writeImplementationRecords(AltiumBinaryWriter& writer, 
             params["MODELNAME"] = impl.modelName;
             params["MODELTYPE"] = impl.modelType;
             params["DATAFILECOUNT"] = "1";
-            params["MODELDATAFILEKIND1"] = "PCBLib";
-            params["MODELDATAFILEENTITY1"] = m_libraryName.isEmpty() ? "*" : m_libraryName + ".PcbLib";
+            params["MODELDATAFILEKIND1"] = impl.dataFileKind.isEmpty() ? "PCBLib" : impl.dataFileKind;
+            params["MODELDATAFILEENTITY1"] = impl.dataFileEntity.isEmpty()
+                                                 ? (m_libraryName.isEmpty() ? "*" : m_libraryName + ".PcbLib")
+                                                 : impl.dataFileEntity;
             params["ISCURRENT"] = "T";
             addUniqueID(params);
             writer.writeCStringParameterBlock(params);
@@ -784,16 +786,19 @@ void AltiumSchLibWriter::writeImplementationRecords(AltiumBinaryWriter& writer, 
             pinMappingParams["RECORD"] = "47";
             pinMappingParams["DESINTF"] = QString::number(pinIndex);
             pinMappingParams["DESIMPCOUNT"] = "1";
-            pinMappingParams["DESIMP0"] = QString::number(pinIndex);
+            const QString mappedPin = impl.pinMappings.value(QString::number(pinIndex), QString::number(pinIndex));
+            pinMappingParams["DESIMP0"] = mappedPin;
             pinMappingParams["ISTRIVIAL"] = "T";
             addUniqueID(pinMappingParams);
             writer.writeCStringParameterBlock(pinMappingParams);
         }
 
-        // RECORD=48: ImplementationParameters（空容器）
+        // RECORD=48: ImplementationParameters
         {
             QMap<QString, QString> params;
             params["RECORD"] = "48";
+            for (auto it = impl.parameters.constBegin(); it != impl.parameters.constEnd(); ++it)
+                params[it.key()] = it.value();
             writer.writeCStringParameterBlock(params);
         }
     }

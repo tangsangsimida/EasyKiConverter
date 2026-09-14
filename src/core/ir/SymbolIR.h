@@ -239,6 +239,19 @@ struct SymbolParameterIR {
 };
 
 /**
+ * @brief 符号关联模型
+ * @details 用于封装、SPICE、STEP、VRML 等目标格式模型的统一描述。
+ */
+struct SymbolModelIR {
+    QString name;  ///< 模型名称
+    QString type = QStringLiteral("PCBLIB");  ///< 模型类型
+    QString fileKind;  ///< 数据文件类型
+    QString fileEntity;  ///< 数据文件实体或路径
+    QMap<QString, QString> parameters;  ///< 模型参数
+    QMap<QString, QString> pinMappings;  ///< 符号引脚到模型引脚的映射
+};
+
+/**
  * @brief 通用符号组件
  *
  * 包含一个符号的所有图形原语和引脚。
@@ -263,6 +276,7 @@ struct SymbolComponentIR {
     QList<SymbolPathIR> paths;
     QList<SymbolTextIR> texts;
     QList<SymbolParameterIR> parameters;
+    QList<SymbolModelIR> models;
 
     /** @brief 封装关联名称 */
     QString footprintName;
@@ -303,6 +317,7 @@ struct SymbolComponentIR {
         paths.clear();
         texts.clear();
         parameters.clear();
+        models.clear();
         footprintName.clear();
         footprintNames.clear();
         aliases.clear();
