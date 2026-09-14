@@ -204,6 +204,56 @@ private slots:
     }
 
     /**
+     * @brief 验证基础符号的 SchLib 核心记录顺序与归属快照
+     * @details Golden 只保留稳定语义字段，不冻结随机 UniqueID 和 OLE 物理布局。
+     */
+    void testSymbolFixtureMatchesAltiumRecordGolden() {
+        QString error;
+        const QJsonObject fixture = loadFixtureObject(QStringLiteral("easyeda/symbol_basic.json"), &error);
+        QVERIFY2(error.isEmpty(), qPrintable(error));
+
+        EasyedaSymbolImporter importer;
+        const QSharedPointer<SymbolData> symbol = importer.importSymbolData(fixture);
+        QVERIFY(symbol);
+
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+        const QString outputPath = QDir(tempDir.path()).filePath(QStringLiteral("fixture.SchLib"));
+        ExporterAltiumSymbol exporter;
+        QVERIFY(exporter.exportSymbolLibrary(
+            {IR::toSymbolIR(*symbol)}, QStringLiteral("fixture"), outputPath, false, false));
+
+        AltiumSchLibReader reader;
+        QVERIFY2(reader.open(outputPath), qPrintable(reader.errorString()));
+        QVector<AltiumSchLibReader::Record> records;
+        QVERIFY(reader.readComponentRecords(QStringLiteral("FIXTURE_SYMBOL"), &records));
+
+        QString actual;
+        for (const auto& record : records) {
+            if (record.recordType != 1 && record.recordType != 2 && record.recordType != 4 && record.recordType != 5 &&
+                record.recordType != 6 && record.recordType != 10) {
+                continue;
+            }
+            actual += QStringLiteral("record=%1|owner=%2|display=%3|index=%4")
+                          .arg(record.recordType)
+                          .arg(record.ownerPartId)
+                          .arg(record.ownerPartDisplayMode)
+                          .arg(record.indexInSheet);
+            if (record.recordType == 4) {
+                actual += QStringLiteral("|text=%1|anchor=%2")
+                              .arg(record.parameters.value(QStringLiteral("Text")),
+                                   record.parameters.value(QStringLiteral("TextAnchor")));
+            } else if (record.recordType == 5 || record.recordType == 6) {
+                actual += QStringLiteral("|locations=%1").arg(record.parameters.value(QStringLiteral("LocationCount")));
+            }
+            actual += QLatin1Char('\n');
+        }
+
+        QVERIFY2(TestPaths::compareTextToGolden(actual, QStringLiteral("altium/symbol_basic_records.txt"), &error),
+                 qPrintable(error));
+    }
+
+    /**
      * @brief 验证真实 EasyEDA 多部件符号的公共部件归属能够完整写入 SchLib
      * @details 覆盖公共 Part 0、两个普通部件、图形和引脚的 OWNERPARTID 映射。
      */
