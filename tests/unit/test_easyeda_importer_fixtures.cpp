@@ -121,6 +121,35 @@ private slots:
     }
 
     /**
+     * @brief 验证多部件符号中的未支持图元同样保留诊断引用。
+     * @details 覆盖公共 Part 的导入分支，避免单部分修复与多部分逻辑出现行为分歧。
+     */
+    void testUnsupportedShapeIsReportedInMultipartGraphicOrder() {
+        QString error;
+        QJsonObject fixture = loadFixtureObject(QStringLiteral("easyeda/symbol_multipart.json"), &error);
+        QVERIFY2(error.isEmpty(), qPrintable(error));
+
+        QJsonArray subparts = fixture.value(QStringLiteral("subparts")).toArray();
+        QVERIFY(!subparts.isEmpty());
+        QJsonObject commonPart = subparts.first().toObject();
+        QJsonObject dataStr = commonPart.value(QStringLiteral("dataStr")).toObject();
+        QJsonArray shapes = dataStr.value(QStringLiteral("shape")).toArray();
+        shapes.append(QStringLiteral("UNKNOWN~payload"));
+        dataStr[QStringLiteral("shape")] = shapes;
+        commonPart[QStringLiteral("dataStr")] = dataStr;
+        subparts[0] = commonPart;
+        fixture[QStringLiteral("subparts")] = subparts;
+
+        EasyedaSymbolImporter importer;
+        const QSharedPointer<SymbolData> symbol = importer.importSymbolData(fixture);
+        QVERIFY(symbol);
+        QVERIFY(symbol->isMultiPart());
+        QCOMPARE(symbol->parts().first().graphicOrder.last().type, QStringLiteral("UNKNOWN"));
+        QCOMPARE(symbol->parts().first().graphicOrder.last().index, -1);
+        QVERIFY(symbol->validationErrors().join('\n').contains(QStringLiteral("unknown type UNKNOWN")));
+    }
+
+    /**
      * @brief 验证真实 EasyEDA 源数据能够完整写出为 Altium SchLib
      * @details 覆盖源 JSON、SymbolData、通用 IR 和 SchLib 导出之间的完整链路。
      */
