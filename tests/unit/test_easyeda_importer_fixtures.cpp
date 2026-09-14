@@ -112,6 +112,11 @@ private slots:
         QVERIFY(!symbolIr.rectangles.isEmpty());
         QVERIFY(!symbolIr.paths.isEmpty());
         QVERIFY(!symbolIr.pins.isEmpty());
+        QCOMPARE(symbolIr.sourceMetadata.value(QStringLiteral("manufacturer")), QStringLiteral("Fixture Inc"));
+        QCOMPARE(symbolIr.sourceMetadata.value(QStringLiteral("lcscId")), QStringLiteral("C12345"));
+        QCOMPARE(symbolIr.sourceMetadata.value(QStringLiteral("supplier")), QStringLiteral("LCSC"));
+        QCOMPARE(symbolIr.sourceMetadata.value(QStringLiteral("manufacturerPart")), QStringLiteral("FIX-123"));
+        QCOMPARE(symbolIr.sourceMetadata.value(QStringLiteral("jlcpcbPartClass")), QStringLiteral("Basic"));
         QCOMPARE(symbolIr.texts.size(), 1);
         QCOMPARE(symbolIr.texts.first().text, QStringLiteral("LABEL"));
         QCOMPARE(symbolIr.texts.first().anchor, QStringLiteral("start"));
@@ -157,6 +162,11 @@ private slots:
         bool foundLine = false;
         bool foundText = false;
         bool foundBinaryPin = false;
+        bool foundManufacturer = false;
+        bool foundLCSCPart = false;
+        bool foundSupplier = false;
+        bool foundManufacturerPart = false;
+        bool foundJlcpcbPartClass = false;
         for (const auto& record : records) {
             if (!record.hasParameters) {
                 if (record.payload.size() >= 4 &&
@@ -170,12 +180,27 @@ private slots:
             foundLine |= recordType == QStringLiteral("6");
             foundText |= recordType == QStringLiteral("4") &&
                          record.parameters.value(QStringLiteral("Text")) == QStringLiteral("LABEL");
+            if (recordType == QStringLiteral("41")) {
+                const QString name = record.parameters.value(QStringLiteral("NAME"));
+                const QString text = record.parameters.value(QStringLiteral("TEXT"));
+                foundManufacturer |= name == QStringLiteral("Manufacturer") && text == QStringLiteral("Fixture Inc");
+                foundLCSCPart |= name == QStringLiteral("LCSC Part") && text == QStringLiteral("C12345");
+                foundSupplier |= name == QStringLiteral("Supplier") && text == QStringLiteral("LCSC");
+                foundManufacturerPart |=
+                    name == QStringLiteral("Manufacturer Part Number") && text == QStringLiteral("FIX-123");
+                foundJlcpcbPartClass |= name == QStringLiteral("JLCPCB Part Class") && text == QStringLiteral("Basic");
+            }
         }
         QVERIFY(foundRoundedRectangle);
         QVERIFY(foundBezier);
         QVERIFY(foundLine);
         QVERIFY(foundText);
         QVERIFY(foundBinaryPin);
+        QVERIFY(foundManufacturer);
+        QVERIFY(foundLCSCPart);
+        QVERIFY(foundSupplier);
+        QVERIFY(foundManufacturerPart);
+        QVERIFY(foundJlcpcbPartClass);
     }
 
     /**
