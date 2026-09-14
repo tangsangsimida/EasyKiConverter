@@ -73,6 +73,24 @@ quint16 readU16(const QByteArray& data, qint64 offset) {
 }
 
 /**
+ * @brief 统计 SchLib Data 流中的记录块数量
+ * @param data Data 流内容
+ * @return 记录数量；块结构损坏时返回 -1
+ */
+int countSchLibRecords(const QByteArray& data) {
+    int count = 0;
+    for (int offset = 0; offset + 4 <= data.size();) {
+        const int payloadSize = static_cast<int>(readU32(data, offset) & 0x00FFFFFFU);
+        const int nextOffset = offset + 4 + payloadSize;
+        if (payloadSize <= 0 || nextOffset > data.size())
+            return -1;
+        ++count;
+        offset = nextOffset;
+    }
+    return count;
+}
+
+/**
  * @brief 从字节数组中读取小端序 64 位无符号整数
  * @param data 数据缓冲区
  * @param offset 起始偏移
@@ -682,6 +700,15 @@ private slots:
 
         QByteArray schData;
         QVERIFY(readCfbStream(schPath, QStringLiteral("C2040/Data"), schData));
+        const int weightOffset = schHeader.indexOf("WEIGHT=");
+        const int weightEnd = schHeader.indexOf('|', weightOffset);
+        QVERIFY(weightOffset >= 0);
+        QVERIFY(weightEnd > weightOffset);
+        bool weightOk = false;
+        const int headerWeight =
+            QString::fromLatin1(schHeader.mid(weightOffset + 7, weightEnd - weightOffset - 7)).toInt(&weightOk);
+        QVERIFY(weightOk);
+        QCOMPARE(countSchLibRecords(schData), headerWeight);
         QVERIFY(schData.mid(4).startsWith("|RECORD=1|"));
         QVERIFY(schData.contains("LibReference=C2040"));
         QVERIFY(schData.contains("RECORD=14"));
