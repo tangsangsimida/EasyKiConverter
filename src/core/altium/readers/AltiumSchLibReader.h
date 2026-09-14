@@ -33,6 +33,13 @@ public:
         int indexInSheet = -1;  ///< 内容记录序号，首条隐含序号为 0
     };
 
+    /** @brief SchLib /Storage 中的嵌入图片条目 */
+    struct ImageStorageEntry {
+        quint8 flags = 0;
+        QString name;
+        QByteArray compressedData;
+    };
+
     /**
      * @brief 打开并解析 SchLib 文件
      * @param filePath 文件路径
@@ -55,6 +62,11 @@ public:
     bool readComponentRecords(int componentIndex, QVector<Record>* records) const;
     /** @brief 按组件名称拆分 Data 记录 */
     bool readComponentRecords(const QString& componentName, QVector<Record>* records) const;
+    /**
+     * @brief 读取并校验根 /Storage 中的嵌入图片
+     * @details 保留去除 Qt 长度前缀后的原始压缩数据，不在读取阶段解码图片。
+     */
+    bool readImageStorage(QVector<ImageStorageEntry>* entries) const;
     /** @brief 获取最近一次错误说明 */
     QString errorString() const;
     /** @brief 获取是否发生读取错误 */

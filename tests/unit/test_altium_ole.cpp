@@ -787,6 +787,14 @@ private slots:
         const QByteArray restoredImage =
             qUncompress(expectedSize + imageStorage.mid(imageDataOffset, compressedLength));
         QCOMPARE(restoredImage, image.data);
+        AltiumSchLibReader imageReader;
+        QVERIFY2(imageReader.open(schPath), qPrintable(imageReader.errorString()));
+        QVector<AltiumSchLibReader::ImageStorageEntry> imageEntries;
+        QVERIFY2(imageReader.readImageStorage(&imageEntries), qPrintable(imageReader.errorString()));
+        QCOMPARE(imageEntries.size(), 1);
+        QCOMPARE(imageEntries.first().flags, quint8(1));
+        QCOMPARE(imageEntries.first().name, QStringLiteral("logo.png"));
+        QCOMPARE(qUncompress(expectedSize + imageEntries.first().compressedData), image.data);
         QVERIFY(schData.contains("Mirror=T"));
         QVERIFY(schData.contains("OWNERPARTID=1"));
         QVERIFY(schData.contains("PartCount=2"));
@@ -1170,6 +1178,20 @@ private slots:
         QVERIFY(writer.addStorage(QStringLiteral("BROKEN")));
         const QByteArray malformedData(2, '\0');
         QVERIFY(writer.writeStream(QStringLiteral("BROKEN"), QStringLiteral("Data"), malformedData));
+        QByteArray malformedStorage;
+        AltiumBinaryWriter storageWriter(malformedStorage);
+        storageWriter.writeCStringParameterBlock({{QStringLiteral("HEADER"), QStringLiteral("Icon storage")},
+                                                  {QStringLiteral("Weight"), QStringLiteral("2")}});
+        for (int i = 0; i < 2; ++i) {
+            storageWriter.beginBlock(1);
+            storageWriter.writeUInt8(0xD0);
+            storageWriter.writeUInt8(5);
+            storageWriter.writeBytes(QByteArrayLiteral("x.png"));
+            storageWriter.writeUInt32(1);
+            storageWriter.writeUInt8(0x78);
+            storageWriter.endBlock();
+        }
+        QVERIFY(writer.writeStream(QStringLiteral("Storage"), malformedStorage));
         const QString path = QDir(tempDir.path()).filePath(QStringLiteral("malformed-record.SchLib"));
         QVERIFY(writer.saveToFile(path));
 
@@ -1180,6 +1202,10 @@ private slots:
         QVERIFY(records.isEmpty());
         QVERIFY(reader.hasError());
         QVERIFY(reader.errorString().contains(QStringLiteral("记录失败")));
+        QVector<AltiumSchLibReader::ImageStorageEntry> imageEntries;
+        QVERIFY(!reader.readImageStorage(&imageEntries));
+        QVERIFY(imageEntries.isEmpty());
+        QVERIFY(reader.errorString().contains(QStringLiteral("重复或非法文件名")));
         QByteArray rawData;
         QVERIFY(reader.readComponentData(QStringLiteral("BROKEN"), &rawData));
         QCOMPARE(rawData, malformedData);

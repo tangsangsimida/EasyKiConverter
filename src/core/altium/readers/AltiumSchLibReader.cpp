@@ -2,6 +2,8 @@
 
 #include "core/altium/utils/AltiumBinaryReader.h"
 
+#include <QSet>
+
 namespace EasyKiConverter {
 
 namespace {
@@ -188,6 +190,90 @@ bool AltiumSchLibReader::readComponentRecords(int componentIndexValue, QVector<R
 
 bool AltiumSchLibReader::readComponentRecords(const QString& componentName, QVector<Record>* records) const {
     return readComponentRecords(componentIndex(componentName), records);
+}
+
+bool AltiumSchLibReader::readImageStorage(QVector<ImageStorageEntry>* entries) const {
+    if (entries == nullptr) {
+        m_errorMessage = QStringLiteral("读取 SchLib 图片 Storage 时输出容器为空");
+        return false;
+    }
+    entries->clear();
+    m_errorMessage.clear();
+
+    if (!m_oleReader.containsStream(QStringLiteral("Storage")))
+        return true;
+
+    QByteArray storage;
+    if (!m_oleReader.readStream(QStringLiteral("Storage"), &storage)) {
+        m_errorMessage = QStringLiteral("无法读取 SchLib 图片 Storage 流");
+        return false;
+    }
+
+    AltiumBinaryReader reader(storage);
+    QMap<QString, QString> storageParameters;
+    if (!reader.readCStringParameterBlock(&storageParameters)) {
+        m_errorMessage = QStringLiteral("SchLib 图片 Storage 头部无效: %1").arg(reader.errorString());
+        return false;
+    }
+    bool expectedCountOk = true;
+    const int expectedCount = storageParameters.contains(QStringLiteral("Weight"))
+                                  ? storageParameters.value(QStringLiteral("Weight")).toInt(&expectedCountOk)
+                                  : -1;
+    if (!expectedCountOk || expectedCount < 0) {
+        m_errorMessage = QStringLiteral("SchLib 图片 Storage 的 Weight 无效");
+        return false;
+    }
+
+    QSet<QString> names;
+    while (reader.remaining() > 0) {
+        QByteArray entryData;
+        quint8 flags = 0;
+        if (!reader.readBlock(&entryData, &flags)) {
+            m_errorMessage = QStringLiteral("读取 SchLib 图片 Storage 条目失败: %1").arg(reader.errorString());
+            entries->clear();
+            return false;
+        }
+        if (flags != 1) {
+            m_errorMessage = QStringLiteral("SchLib 图片 Storage 条目标志无效: %1").arg(flags);
+            entries->clear();
+            return false;
+        }
+
+        AltiumBinaryReader entryReader(entryData);
+        quint8 marker = 0;
+        quint8 nameSize = 0;
+        QByteArray nameData;
+        quint32 compressedSize = 0;
+        QByteArray compressedData;
+        if (!entryReader.readUInt8(&marker) || marker != 0xD0 || !entryReader.readUInt8(&nameSize) || nameSize == 0 ||
+            !entryReader.readBytes(nameSize, &nameData) || nameData.contains('\0') ||
+            !entryReader.readUInt32(&compressedSize) || compressedSize == 0 ||
+            compressedSize > static_cast<quint32>(entryReader.remaining()) ||
+            !entryReader.readBytes(static_cast<int>(compressedSize), &compressedData) || entryReader.remaining() != 0) {
+            m_errorMessage = QStringLiteral("SchLib 图片 Storage 条目内容无效");
+            entries->clear();
+            return false;
+        }
+
+        const QString name = QString::fromLocal8Bit(nameData);
+        const QString foldedName = name.toCaseFolded();
+        if (name.isEmpty() || name == QStringLiteral(".") || name == QStringLiteral("..") || name.contains('/') ||
+            name.contains('\\') || name.contains('|') || names.contains(foldedName)) {
+            m_errorMessage = QStringLiteral("SchLib 图片 Storage 包含重复或非法文件名: %1").arg(name);
+            entries->clear();
+            return false;
+        }
+        names.insert(foldedName);
+        entries->append({flags, name, compressedData});
+    }
+
+    if (expectedCount >= 0 && expectedCount != entries->size()) {
+        m_errorMessage =
+            QStringLiteral("SchLib 图片 Storage 数量不一致，声明 %1，实际 %2").arg(expectedCount).arg(entries->size());
+        entries->clear();
+        return false;
+    }
+    return true;
 }
 
 QString AltiumSchLibReader::errorString() const {
