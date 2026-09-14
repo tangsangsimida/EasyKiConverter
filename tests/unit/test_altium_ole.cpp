@@ -2735,6 +2735,37 @@ private slots:
     }
 
     /**
+     * @brief 验证有序图元模式下未参与来源顺序的图片只写出一次。
+     */
+    void orderedGraphicsDoNotDuplicateUnindexedImages() {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        AltiumSchComponent symbol;
+        symbol.name = QStringLiteral("ORDERED_IMAGE");
+        AltiumSchRectangle rectangle;
+        rectangle.sourceGraphicIndex = 0;
+        rectangle.sourcePartIndex = 0;
+        rectangle.cornerX = 100000;
+        symbol.rectangles.append(rectangle);
+        AltiumSchImage image;
+        image.fileName = QStringLiteral("unindexed.png");
+        image.sourceGraphicIndex = -1;
+        image.sourcePartIndex = 0;
+        symbol.images.append(image);
+        symbol.graphicOrder = {{QStringLiteral("R"), 0, 0}};
+
+        AltiumSchLibWriter writer;
+        const QString path = QDir(tempDir.path()).filePath(QStringLiteral("ordered-image.SchLib"));
+        QVERIFY(writer.write({symbol}, path, QStringLiteral("ordered-image")));
+
+        QByteArray data;
+        QVERIFY(readCfbStream(path, QStringLiteral("ORDERED_IMAGE/Data"), data));
+        QCOMPARE(data.count(QByteArrayLiteral("RECORD=14")), 1);
+        QCOMPARE(data.count(QByteArrayLiteral("RECORD=30")), 1);
+    }
+
+    /**
      * @brief 路径分段编号出现缺口时仍按实际索引写出全部图元。
      */
     void gappedPathSegmentsPreserveGraphics() {

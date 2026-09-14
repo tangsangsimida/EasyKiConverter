@@ -633,10 +633,6 @@ void AltiumSchLibWriter::writeComponentStorage(OLECompoundWriter& ole,
             if (path.sourceGraphicType.isEmpty())
                 writePathRecord(writer, path);
         }
-        for (const AltiumSchImage& image : component.images) {
-            if (image.sourceGraphicIndex < 0)
-                writeImageRecord(writer, image);
-        }
     } else {
         // 写入引脚
         for (const AltiumSchPin& pin : component.pins) {
