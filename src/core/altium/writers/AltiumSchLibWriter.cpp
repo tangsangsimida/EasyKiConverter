@@ -506,7 +506,13 @@ void AltiumSchLibWriter::writeComponentStorage(OLECompoundWriter& ole,
     // 写入元件记录
     writeComponentRecord(writer, component);
 
-    if (!component.graphicOrder.isEmpty()) {
+    const bool useGraphicOrder = !component.graphicOrder.isEmpty() && hasCompleteGraphicOrder(component);
+    if (!component.graphicOrder.isEmpty() && !useGraphicOrder) {
+        m_diagnostics.append(
+            QStringLiteral("符号 %1 的 graphicOrder 不完整或包含无效引用，已回退到默认图元顺序").arg(component.name));
+    }
+
+    if (useGraphicOrder) {
         for (const AltiumSchGraphicOrder& order : component.graphicOrder)
             writeOrderedGraphic(writer, component, order);
         // 引脚名称和编号是由引脚派生出的文本，不在源 shape 顺序中。
@@ -639,6 +645,98 @@ void AltiumSchLibWriter::writeComponentStorage(OLECompoundWriter& ole,
 
     // 写入流
     ole.writeStream(sectionKey, "Data", data);
+}
+
+/**
+ * @brief 检查来源图元顺序是否覆盖所有可排序图元。
+ * @details 不完整的顺序会导致图元被静默跳过，并使 FileHeader 的 WEIGHT 与 Data 流不一致。
+ */
+bool AltiumSchLibWriter::hasCompleteGraphicOrder(const AltiumSchComponent& component) const {
+    QSet<QString> expected;
+    QSet<QString> actual;
+    const auto key = [](const QString& type, int index, int partIndex) {
+        return QStringLiteral("%1:%2:%3").arg(type).arg(index).arg(partIndex);
+    };
+
+    QMap<int, int> partPinIndexes;
+    QMap<int, int> commonPinIndexes;
+    for (const AltiumSchPin& pin : component.pins) {
+        const int partIndex = pin.sourcePartIndex;
+        expected.insert(key(QStringLiteral("P"), partPinIndexes[partIndex]++, partIndex));
+        if (pin.ownerPartId == -1)
+            expected.insert(key(QStringLiteral("P"), commonPinIndexes[-1]++, -1));
+    }
+
+    const auto addIndexed = [&expected, &key](const QString& type, int index, int partIndex) {
+        if (index >= 0)
+            expected.insert(key(type, index, partIndex));
+    };
+    for (const AltiumSchRectangle& rect : component.rectangles)
+        addIndexed(QStringLiteral("R"), rect.sourceGraphicIndex, rect.sourcePartIndex);
+    for (const AltiumSchRoundRectangle& rect : component.roundRectangles)
+        addIndexed(QStringLiteral("R"), rect.sourceGraphicIndex, rect.sourcePartIndex);
+    for (const AltiumSchEllipse& ellipse : component.ellipses)
+        addIndexed(ellipse.sourceGraphicType, ellipse.sourceGraphicIndex, ellipse.sourcePartIndex);
+    for (const AltiumSchArc& arc : component.arcs)
+        addIndexed(arc.sourceGraphicType, arc.sourceGraphicIndex, arc.sourcePartIndex);
+    for (const AltiumSchPolyline& polyline : component.polylines)
+        addIndexed(QStringLiteral("PL"), polyline.sourceGraphicIndex, polyline.sourcePartIndex);
+    for (const AltiumSchPolygon& polygon : component.polygons)
+        addIndexed(QStringLiteral("PG"), polygon.sourceGraphicIndex, polygon.sourcePartIndex);
+    for (const AltiumSchText& text : component.texts) {
+        if (!text.isPinLabel)
+            addIndexed(QStringLiteral("T"), text.sourceGraphicIndex, text.sourcePartIndex);
+    }
+    for (const AltiumSchPath& path : component.paths)
+        addIndexed(path.sourceGraphicType, path.sourceGraphicIndex, path.sourcePartIndex);
+    for (const AltiumSchBezier& bezier : component.beziers)
+        addIndexed(bezier.sourceGraphicType, bezier.sourceGraphicIndex, bezier.sourcePartIndex);
+    for (const AltiumSchEllipticalArc& arc : component.ellipticalArcs)
+        addIndexed(arc.sourceGraphicType, arc.sourceGraphicIndex, arc.sourcePartIndex);
+
+    for (const AltiumSchGraphicOrder& order : component.graphicOrder) {
+        if (order.index < 0 || order.type.isEmpty())
+            return false;
+        const QString orderKey = key(order.type, order.index, order.partIndex);
+        if (actual.contains(orderKey))
+            return false;
+        actual.insert(orderKey);
+    }
+
+    QSet<int> emittedPins;
+    for (const AltiumSchGraphicOrder& order : component.graphicOrder) {
+        if (order.type != QStringLiteral("P"))
+            continue;
+        int localIndex = 0;
+        for (int pinIndex = 0; pinIndex < component.pins.size(); ++pinIndex) {
+            const AltiumSchPin& pin = component.pins.at(pinIndex);
+            const bool matchesPart =
+                order.partIndex < 0 ? pin.ownerPartId == -1 : pin.sourcePartIndex == order.partIndex;
+            if (!matchesPart)
+                continue;
+            if (localIndex == order.index) {
+                if (emittedPins.contains(pinIndex))
+                    return false;
+                emittedPins.insert(pinIndex);
+                break;
+            }
+            ++localIndex;
+        }
+    }
+    if (emittedPins.size() != component.pins.size())
+        return false;
+
+    for (const QString& expectedKey : expected) {
+        if (expectedKey.startsWith(QStringLiteral("P:")))
+            continue;
+        if (!actual.contains(expectedKey))
+            return false;
+    }
+    for (const QString& actualKey : actual) {
+        if (!expected.contains(actualKey))
+            return false;
+    }
+    return true;
 }
 
 /**

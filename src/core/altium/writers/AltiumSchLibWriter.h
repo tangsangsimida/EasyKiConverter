@@ -79,6 +79,7 @@ private:
     void writeImageStorage(OLECompoundWriter& ole, const QList<AltiumSchComponent>& components);
     void writeComponentParameterRecords(AltiumBinaryWriter& writer, const AltiumSchComponent& component);
     void writeImplementationRecords(AltiumBinaryWriter& writer, const AltiumSchComponent& component);
+    bool hasCompleteGraphicOrder(const AltiumSchComponent& component) const;
 
     // ---- 辅助 ----
     QString getSectionKey(const QString& name) const;

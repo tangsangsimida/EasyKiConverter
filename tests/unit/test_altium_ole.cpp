@@ -1409,6 +1409,42 @@ private slots:
         QVERIFY(readCfbStream(pcbPath, QStringLiteral("SEGMENTS/Header"), footprintHeader));
         QCOMPARE(readU32(footprintHeader, 0), quint32(4));  // 2 track segments + 1 hole pad + 1 outline segment
     }
+
+    /**
+     * @brief 不完整来源顺序回退到默认写出，避免丢失图元。
+     */
+    void incompleteGraphicOrderFallsBackWithoutDroppingGraphics() {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        AltiumSchComponent symbol;
+        symbol.name = QStringLiteral("INCOMPLETE_ORDER");
+        AltiumSchRectangle first;
+        first.sourceGraphicIndex = 0;
+        first.sourcePartIndex = 0;
+        first.locationX = 100000;
+        first.cornerX = 200000;
+        symbol.rectangles.append(first);
+        AltiumSchRectangle second;
+        second.sourceGraphicIndex = 1;
+        second.sourcePartIndex = 0;
+        second.locationX = 300000;
+        second.cornerX = 400000;
+        symbol.rectangles.append(second);
+        symbol.graphicOrder = {{QStringLiteral("R"), 0, 0}};
+
+        AltiumSchLibWriter writer;
+        const QString path = QDir(tempDir.path()).filePath(QStringLiteral("incomplete-order.SchLib"));
+        QVERIFY(writer.write({symbol}, path, QStringLiteral("incomplete-order")));
+        QVERIFY(writer.diagnostics().contains(
+            QStringLiteral("符号 INCOMPLETE_ORDER 的 graphicOrder 不完整或包含无效引用，已回退到默认图元顺序")));
+
+        QByteArray data;
+        QVERIFY(readCfbStream(path, QStringLiteral("INCOMPLETE_ORDER/Data"), data));
+        QCOMPARE(data.count(QByteArrayLiteral("RECORD=14")), 2);
+        QVERIFY(data.contains("Location.X=1"));
+        QVERIFY(data.contains("Location.X=3"));
+    }
 };
 
 QTEST_GUILESS_MAIN(TestAltiumOle)
