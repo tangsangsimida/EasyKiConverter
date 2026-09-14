@@ -43,6 +43,29 @@ private slots:
         QVERIFY(manager.registeredTempFiles().isEmpty());
     }
 
+    void sharedTempDirectorySurvivesOtherManagerCommit() {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        TempFileManager firstManager;
+        TempFileManager secondManager;
+        firstManager.setOutputPath(tempDir.path());
+        secondManager.setOutputPath(tempDir.path());
+
+        const QString firstTempPath =
+            firstManager.createSymbolTempPath(QStringLiteral("First"), QStringLiteral(".kicad_sym"));
+        QVERIFY(writeFile(firstTempPath, QByteArrayLiteral("first")));
+        const QString firstFinalPath = QDir(tempDir.path()).filePath(QStringLiteral("First.kicad_sym"));
+        QVERIFY(firstManager.commit(firstFinalPath));
+        QVERIFY(QDir(firstManager.tempDirectory()).exists());
+
+        const QString secondTempPath =
+            secondManager.createSymbolTempPath(QStringLiteral("Second"), QStringLiteral(".kicad_sym"));
+        QVERIFY(writeFile(secondTempPath, QByteArrayLiteral("second")));
+        secondManager.rollbackAll();
+        QVERIFY(QDir(firstManager.tempDirectory()).exists());
+    }
+
     void tempDirectoryCommitMovesDirectoryAndReplacesExistingTarget() {
         QTemporaryDir tempDir;
         QVERIFY(tempDir.isValid());
