@@ -1113,6 +1113,10 @@ private slots:
         QVERIFY(
             diagnosticWriter.write({diagnosticSymbol}, oversizedDiagnosticPath, QStringLiteral("IMAGE_DIAGNOSTICS")));
         QVERIFY(diagnosticWriter.diagnostics().join('\n').contains(QStringLiteral("图片 2 的嵌入文件名无效")));
+        QByteArray diagnosticData;
+        QVERIFY(readCfbStream(oversizedDiagnosticPath, QStringLiteral("IMAGE_DIAGNOSTICS/Data"), diagnosticData));
+        QVERIFY(!diagnosticData.contains("FileName=bad|name.png"));
+        QVERIFY(!diagnosticData.contains("FileName=aaaaaaaa"));
 
         IR::SymbolComponentIR nativeArcSymbol;
         nativeArcSymbol.name = QStringLiteral("NATIVE_ARC");

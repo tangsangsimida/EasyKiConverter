@@ -933,12 +933,15 @@ void AltiumSchLibWriter::writeImageRecord(AltiumBinaryWriter& writer, const Alti
         params["ShowBorder"] = "T";
     if (image.keepAspect)
         params["KeepAspect"] = "T";
-    const QString storageFileName = m_embeddedImageNames.value(&image, image.fileName);
-    const bool hasEmbeddedImage = image.embedImage && !image.data.isEmpty() && !storageFileName.isEmpty() &&
+    const bool isEmbeddedImage = image.embedImage;
+    const QString storageFileName = isEmbeddedImage ? m_embeddedImageNames.value(&image) : image.fileName;
+    const bool hasEmbeddedImage = isEmbeddedImage && !image.data.isEmpty() && !storageFileName.isEmpty() &&
                                   storageFileName.toLocal8Bit().size() <= 255;
     if (hasEmbeddedImage)
         params["EmbedImage"] = "T";
-    if (!storageFileName.isEmpty())
+    if (!isEmbeddedImage && !storageFileName.isEmpty())
+        params["FileName"] = storageFileName;
+    else if (hasEmbeddedImage)
         params["FileName"] = storageFileName;
     addUniqueID(params);
     writer.writeCStringParameterBlockUtf8(params);
