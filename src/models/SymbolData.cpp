@@ -101,10 +101,10 @@ QStringList SymbolData::validationErrors() const {
 
     if (m_info.name.trimmed().isEmpty())
         addError(QStringLiteral("Symbol name is empty"));
-    if (m_bbox.x == 0.0 && m_bbox.y == 0.0)
-        addError(QStringLiteral("Symbol bbox is empty"));
     if (!isFinite(m_bbox.x) || !isFinite(m_bbox.y) || !isFinite(m_bbox.width) || !isFinite(m_bbox.height))
         addError(QStringLiteral("Symbol bbox contains a non-finite value"));
+    else if (m_bbox.width <= 0.0 || m_bbox.height <= 0.0)
+        addError(QStringLiteral("Symbol bbox is empty"));
 
     for (int i = 0; i < m_pins.size(); ++i) {
         if (m_pins[i].settings.spicePinNumber.trimmed().isEmpty())

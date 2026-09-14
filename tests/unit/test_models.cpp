@@ -108,6 +108,16 @@ private slots:
         QVERIFY(errors.contains(QStringLiteral("Part 0 Path 0 has no commands")));
     }
 
+    void testSymbolValidationAcceptsOriginBasedBoundingBox() {
+        SymbolData symbol;
+        SymbolInfo info;
+        info.name = QStringLiteral("ORIGIN_SYMBOL");
+        symbol.setInfo(info);
+        symbol.setBbox(SymbolBBox{0.0, 0.0, 10.0, 5.0});
+
+        QVERIFY(symbol.validationErrors().isEmpty());
+    }
+
     void testFootprintDataRoundTrip() {
         FootprintData original;
 
