@@ -1081,6 +1081,8 @@ private slots:
         QVector<AltiumPcbLibReader::PrimitiveRecord> objects;
         QVERIFY(!truncatedHeaderReader.readFootprintObjects(QStringLiteral("BROKEN"), &objects));
         QVERIFY(objects.isEmpty());
+        QVERIFY(truncatedHeaderReader.hasError());
+        QVERIFY(truncatedHeaderReader.errorString().contains(QStringLiteral("公共头部")));
         QByteArray rawData;
         QVERIFY(truncatedHeaderReader.readFootprintStream(QStringLiteral("BROKEN"), QStringLiteral("Data"), &rawData));
         QCOMPARE(rawData, truncatedHeaderData);
@@ -1099,6 +1101,8 @@ private slots:
         QVERIFY2(malformedStringReader.open(malformedStringPath), qPrintable(malformedStringReader.errorString()));
         QVERIFY(!malformedStringReader.readFootprintObjects(QStringLiteral("BROKEN"), &objects));
         QVERIFY(objects.isEmpty());
+        QVERIFY(malformedStringReader.hasError());
+        QVERIFY(malformedStringReader.errorString().contains(QStringLiteral("字符串子块")));
         QVERIFY(malformedStringReader.readFootprintStream(0, QStringLiteral("Data"), &rawData));
         QCOMPARE(rawData, malformedStringData);
     }

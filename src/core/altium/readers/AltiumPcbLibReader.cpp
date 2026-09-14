@@ -163,31 +163,37 @@ bool AltiumPcbLibReader::readFootprintStream(const QString& componentName,
 }
 
 bool AltiumPcbLibReader::readFootprintObjects(int componentIndexValue, QVector<PrimitiveRecord>* objects) const {
-    if (objects == nullptr)
+    if (objects == nullptr) {
+        m_errorMessage = QStringLiteral("读取 PcbLib 图元时输出容器为空");
         return false;
+    }
     objects->clear();
+    m_errorMessage.clear();
+
+    const auto failRead = [this, objects](const QString& message) {
+        objects->clear();
+        m_errorMessage = message;
+        return false;
+    };
 
     QByteArray data;
     if (!readFootprintStream(componentIndexValue, QStringLiteral("Data"), &data))
-        return false;
+        return failRead(QStringLiteral("无法读取 PcbLib 封装 Data 流"));
 
     AltiumBinaryReader reader(data);
     QString footprintName;
     if (!reader.readStringBlock(&footprintName) || footprintName.isEmpty())
-        return false;
+        return failRead(QStringLiteral("PcbLib 封装 Data 首部无效: %1").arg(reader.errorString()));
 
     while (reader.remaining() > 0) {
         const int objectStart = reader.position();
         uint8_t objectId = 0;
         if (!reader.readUInt8(&objectId)) {
-            objects->clear();
-            return false;
+            return failRead(QStringLiteral("读取 PcbLib 图元 ID 失败: %1").arg(reader.errorString()));
         }
         const int blockCount = primitiveBlockCount(objectId);
-        if (blockCount < 0) {
-            objects->clear();
-            return false;
-        }
+        if (blockCount < 0)
+            return failRead(QStringLiteral("PcbLib 图元 ID %1 不受支持").arg(objectId));
 
         PrimitiveRecord object;
         object.objectId = objectId;
@@ -196,22 +202,22 @@ bool AltiumPcbLibReader::readFootprintObjects(int componentIndexValue, QVector<P
             const int blockStart = reader.position();
             QByteArray payload;
             uint8_t flags = 0;
-            if (!reader.readBlock(&payload, &flags) || payload.isEmpty()) {
-                objects->clear();
-                return false;
-            }
+            if (!reader.readBlock(&payload, &flags))
+                return failRead(QStringLiteral("读取 PcbLib 图元 %1 的子块 %2 失败: %3")
+                                    .arg(objectId)
+                                    .arg(blockIndex)
+                                    .arg(reader.errorString()));
+            if (payload.isEmpty())
+                return failRead(QStringLiteral("PcbLib 图元 %1 的子块 %2 为空").arg(objectId).arg(blockIndex));
             const bool isPadStringBlock = objectId == AltiumConstants::PCB_OBJECT_PAD && blockIndex < 3;
             const bool isTextStringBlock = objectId == AltiumConstants::PCB_OBJECT_TEXT && blockIndex == 1;
             if ((isPadStringBlock || isTextStringBlock) && !isStringBlockPayload(payload)) {
-                objects->clear();
-                return false;
+                return failRead(QStringLiteral("PcbLib 图元 %1 的字符串子块 %2 无效").arg(objectId).arg(blockIndex));
             }
             const bool isMainBlock = (objectId == AltiumConstants::PCB_OBJECT_PAD && blockIndex == 4) ||
                                      (objectId != AltiumConstants::PCB_OBJECT_PAD && blockIndex == 0);
-            if (isMainBlock && !readCommonPrimitiveHeader(payload, &object.layer, &object.primitiveFlags)) {
-                objects->clear();
-                return false;
-            }
+            if (isMainBlock && !readCommonPrimitiveHeader(payload, &object.layer, &object.primitiveFlags))
+                return failRead(QStringLiteral("PcbLib 图元 %1 的公共头部不完整").arg(objectId));
             PrimitiveBlock block;
             block.flags = flags;
             block.payload = payload;

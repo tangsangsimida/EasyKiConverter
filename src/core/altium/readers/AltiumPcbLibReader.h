@@ -78,7 +78,7 @@ private:
     QVector<ComponentInfo> m_components;
     QString m_fileVersion;
     QByteArray m_libraryMetadata;
-    QString m_errorMessage;
+    mutable QString m_errorMessage;
 };
 
 }  // namespace EasyKiConverter
