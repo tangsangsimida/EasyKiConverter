@@ -947,6 +947,7 @@ private slots:
         QCOMPARE(schComponents.size(), 1);
         QCOMPARE(schComponents.first().name, QStringLiteral("C2040"));
         QCOMPARE(schComponents.first().sectionKey, QStringLiteral("C2040"));
+        QCOMPARE(schComponents.first().partCount, 1);
         QCOMPARE(schLibraryReader.headerParameters().value(QStringLiteral("COMPCOUNT")), QStringLiteral("1"));
         QByteArray componentData;
         QVERIFY(schLibraryReader.readComponentData(0, &componentData));
@@ -962,15 +963,30 @@ private slots:
         QVERIFY(records.first().hasParameters);
         QCOMPARE(records.first().parameters.value(QStringLiteral("RECORD")), QStringLiteral("1"));
         QVERIFY(records.first().parameters.contains(QStringLiteral("LibReference")));
+        QCOMPARE(records.first().recordType, 1);
+        QCOMPARE(records.first().ownerPartId, -1);
+        QCOMPARE(records.first().indexInSheet, -1);
         bool sawBinaryPin = false;
         for (const auto& record : records) {
             if (!record.hasParameters && record.payload.size() >= 4 &&
                 static_cast<quint32>(static_cast<unsigned char>(record.payload.at(0))) == 2) {
                 sawBinaryPin = true;
+                QCOMPARE(record.recordType, 2);
+                QCOMPARE(record.ownerPartId, 1);
                 break;
             }
         }
         QVERIFY(sawBinaryPin);
+
+        int previousIndexInSheet = -1;
+        for (const auto& record : records) {
+            if (record.indexInSheet >= 0) {
+                QVERIFY(record.indexInSheet > previousIndexInSheet);
+                previousIndexInSheet = record.indexInSheet;
+            }
+            if (record.ownerPartId >= 0)
+                QVERIFY(record.ownerPartId <= schComponents.first().partCount);
+        }
     }
 
     /**

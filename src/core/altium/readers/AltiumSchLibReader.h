@@ -18,6 +18,7 @@ public:
     struct ComponentInfo {
         QString name;
         QString sectionKey;
+        int partCount = 1;  ///< 可见部件数量，不包含公共 Part 0
     };
 
     /** @brief SchLib Data 中的原始记录块 */
@@ -27,6 +28,9 @@ public:
         QByteArray encoded;
         bool hasParameters = false;
         QMap<QString, QString> parameters;
+        int recordType = -1;  ///< RECORD 字段或二进制记录类型
+        int ownerPartId = -1;  ///< OWNERPARTID，公共 Part 使用 -1
+        int indexInSheet = -1;  ///< 内容记录序号，首条隐含序号为 0
     };
 
     /**

@@ -4,6 +4,30 @@
 
 namespace EasyKiConverter {
 
+namespace {
+
+int parameterInt(const QMap<QString, QString>& parameters, const QString& name, int fallback) {
+    bool ok = false;
+    const int value = parameters.value(name).toInt(&ok);
+    return ok ? value : fallback;
+}
+
+bool readBinaryRecordMetadata(const QByteArray& payload, int* recordType, int* ownerPartId) {
+    if (recordType == nullptr || ownerPartId == nullptr || payload.size() < 7)
+        return false;
+    AltiumBinaryReader reader(payload);
+    qint32 type = -1;
+    quint8 unknown = 0;
+    qint16 owner = -1;
+    if (!reader.readInt32(&type) || !reader.readUInt8(&unknown) || !reader.readInt16(&owner))
+        return false;
+    *recordType = type;
+    *ownerPartId = owner;
+    return true;
+}
+
+}  // namespace
+
 bool AltiumSchLibReader::fail(const QString& message) {
     m_components.clear();
     m_headerParameters.clear();
@@ -71,12 +95,16 @@ bool AltiumSchLibReader::open(const QString& filePath) {
             return fail(QStringLiteral("SchLib SectionKeys 末尾包含无效数据"));
     }
 
-    for (const QString& name : names) {
+    for (int i = 0; i < names.size(); ++i) {
+        const QString& name = names.at(i);
         const QString sectionKey = sectionKeys.value(name, name);
         const QString dataPath = sectionKey + QStringLiteral("/Data");
         if (!m_oleReader.containsStream(dataPath))
             return fail(QStringLiteral("SchLib 缺少组件 Data 流: %1").arg(dataPath));
-        m_components.append({name, sectionKey});
+        const int serializedPartCount = parameterInt(m_headerParameters, QStringLiteral("PARTCOUNT%1").arg(i), 2);
+        if (serializedPartCount < 1)
+            return fail(QStringLiteral("SchLib 组件 %1 的 PARTCOUNT 无效").arg(name));
+        m_components.append({name, sectionKey, qMax(1, serializedPartCount - 1)});
     }
     return true;
 }
@@ -145,6 +173,11 @@ bool AltiumSchLibReader::readComponentRecords(int componentIndexValue, QVector<R
                                     .arg(parameterReader.errorString()));
             }
             record.hasParameters = true;
+            record.recordType = parameterInt(record.parameters, QStringLiteral("RECORD"), -1);
+            record.ownerPartId = parameterInt(record.parameters, QStringLiteral("OWNERPARTID"), -1);
+            record.indexInSheet = parameterInt(record.parameters, QStringLiteral("IndexInSheet"), -1);
+        } else {
+            readBinaryRecordMetadata(payload, &record.recordType, &record.ownerPartId);
         }
         records->append(record);
     }
