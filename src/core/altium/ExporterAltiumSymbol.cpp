@@ -256,6 +256,9 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
         return std::all_of(points.cbegin(), points.cend(), isFinitePoint);
     };
     const auto isValidStrokeWidth = [](double width) { return std::isfinite(width) && width >= 0.0; };
+    const auto isValidBounds = [](double x0, double y0, double x1, double y1) {
+        return std::isfinite(x0) && std::isfinite(y0) && std::isfinite(x1) && std::isfinite(y1) && x0 != x1 && y0 != y1;
+    };
 
     for (const IR::SymbolParameterIR& parameter : data.parameters) {
         if (!isFinitePoint(parameter.position) || !std::isfinite(parameter.rotation) ||
@@ -331,6 +334,10 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
     // 转换图形元素
     for (int i = 0; i < data.rectangles.size(); ++i) {
         const IR::SymbolRectangleIR& r = data.rectangles.at(i);
+        if (!isValidBounds(r.x0, r.y0, r.x1, r.y1)) {
+            m_diagnostics.append(QStringLiteral("符号 %1 矩形图元 %2 的边界无效，已跳过").arg(data.name).arg(i));
+            continue;
+        }
         if (!std::isfinite(r.cornerRadiusX) || !std::isfinite(r.cornerRadiusY) || r.cornerRadiusX < 0.0 ||
             r.cornerRadiusY < 0.0) {
             m_diagnostics.append(
@@ -583,9 +590,8 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
     }
     for (int i = 0; i < data.textFrames.size(); ++i) {
         const IR::SymbolTextFrameIR& frame = data.textFrames.at(i);
-        if (!std::isfinite(frame.x0) || !std::isfinite(frame.y0) || !std::isfinite(frame.x1) ||
-            !std::isfinite(frame.y1) || !std::isfinite(frame.textMargin) || frame.textMargin < 0.0 ||
-            !isValidStrokeWidth(frame.strokeWidth)) {
+        if (!isValidBounds(frame.x0, frame.y0, frame.x1, frame.y1) || !std::isfinite(frame.textMargin) ||
+            frame.textMargin < 0.0 || !isValidStrokeWidth(frame.strokeWidth)) {
             m_diagnostics.append(QStringLiteral("符号 %1 文本框图元 %2 的几何参数无效，已跳过").arg(data.name).arg(i));
             continue;
         }

@@ -1401,6 +1401,23 @@ private slots:
         QVERIFY(invalidTextExporter.diagnostics().contains(
             QStringLiteral("符号 INVALID_TEXT_DATA 参数 Custom 的位置、旋转角度或名称无效，已跳过")));
 
+        IR::SymbolComponentIR invalidBoundsSymbol;
+        invalidBoundsSymbol.name = QStringLiteral("INVALID_BOUNDS_DATA");
+        IR::SymbolRectangleIR invalidRectangle;
+        invalidRectangle.x1 = std::numeric_limits<double>::quiet_NaN();
+        invalidBoundsSymbol.rectangles.append(invalidRectangle);
+        IR::SymbolTextFrameIR zeroTextFrame;
+        zeroTextFrame.x1 = 0.0;
+        zeroTextFrame.y1 = 0.0;
+        invalidBoundsSymbol.textFrames.append(zeroTextFrame);
+        ExporterAltiumSymbol invalidBoundsExporter;
+        const QString invalidBoundsPath = QDir(tempDir.path()).filePath(QStringLiteral("invalid-bounds-data.SchLib"));
+        QVERIFY(invalidBoundsExporter.exportSymbol(invalidBoundsSymbol, invalidBoundsPath));
+        QVERIFY(invalidBoundsExporter.diagnostics().contains(
+            QStringLiteral("符号 INVALID_BOUNDS_DATA 矩形图元 0 的边界无效，已跳过")));
+        QVERIFY(invalidBoundsExporter.diagnostics().contains(
+            QStringLiteral("符号 INVALID_BOUNDS_DATA 文本框图元 0 的几何参数无效，已跳过")));
+
         IR::SymbolComponentIR invalidImageSymbol;
         invalidImageSymbol.name = QStringLiteral("INVALID_IMAGE_DATA");
         IR::SymbolImageIR invalidImage;
