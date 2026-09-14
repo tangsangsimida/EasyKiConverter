@@ -708,6 +708,8 @@ private slots:
         const QString schPath = QDir(tempDir.path()).filePath(QStringLiteral("easyeda_convertlib.SchLib"));
         AltiumSchLibWriter schWriter;
         QVERIFY(schWriter.write({symbol}, schPath, QStringLiteral("easyeda_convertlib")));
+        QVERIFY(schWriter.diagnostics().contains(
+            QStringLiteral("Altium SchLib Bézier 图元控制点数量无效（数量为 3），已跳过")));
 
         QByteArray schHeader;
         QVERIFY(readCfbStream(schPath, QStringLiteral("FileHeader"), schHeader));

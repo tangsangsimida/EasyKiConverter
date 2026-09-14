@@ -1145,8 +1145,11 @@ void AltiumSchLibWriter::writePathRecord(AltiumBinaryWriter& writer, const Altiu
  * @brief 写入三次 Bézier 曲线记录 (RECORD=5)
  */
 void AltiumSchLibWriter::writeBezierRecord(AltiumBinaryWriter& writer, const AltiumSchBezier& bezier) {
-    if (bezier.controlPoints.size() != 4)
+    if (bezier.controlPoints.size() != 4) {
+        m_diagnostics.append(QStringLiteral("Altium SchLib Bézier 图元控制点数量无效（数量为 %1），已跳过")
+                                 .arg(bezier.controlPoints.size()));
         return;
+    }
 
     QMap<QString, QString> params;
     params["RECORD"] = "5";
