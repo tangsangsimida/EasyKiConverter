@@ -76,6 +76,11 @@ private slots:
         QCOMPARE(symbolIr.texts.size(), 1);
         QCOMPARE(symbolIr.texts.first().text, QStringLiteral("LABEL"));
         QCOMPARE(symbolIr.texts.first().anchor, QStringLiteral("start"));
+        QCOMPARE(symbolIr.texts.first().fontFamily, QStringLiteral("Arial"));
+        QVERIFY(qAbs(symbolIr.texts.first().fontSizeMm - 7.0 * 25.4 / 72.0) < 1e-5);
+        QVERIFY(symbolIr.texts.first().bold);
+        QVERIFY(!symbolIr.texts.first().italic);
+        QCOMPARE(symbolIr.texts.first().color, QColor(QStringLiteral("#112233")));
 
         QCOMPARE(symbol->pins().size(), 1);
         const SymbolPin pin = symbol->pins().first();
@@ -109,6 +114,9 @@ private slots:
         QCOMPARE(symbolIr.texts.size(), 1);
         QCOMPARE(symbolIr.texts.first().text, QStringLiteral("LABEL"));
         QCOMPARE(symbolIr.texts.first().anchor, QStringLiteral("start"));
+        QCOMPARE(symbolIr.texts.first().fontFamily, QStringLiteral("Arial"));
+        QVERIFY(symbolIr.texts.first().bold);
+        QCOMPARE(symbolIr.texts.first().color, QColor(QStringLiteral("#112233")));
 
         QTemporaryDir tempDir;
         QVERIFY(tempDir.isValid());
@@ -128,6 +136,7 @@ private slots:
         QVERIFY(schLibData.contains("RECORD=4"));  // 普通文本
         QVERIFY(schLibData.contains("Text=LABEL"));
         QVERIFY(schLibData.contains("TextAnchor=start"));
+        QVERIFY(schLibData.contains("Arial"));
         QVERIFY(schLibData.contains(QByteArray::fromHex("02000000")));  // 二进制引脚记录类型
         QVERIFY(schLibData.contains("IndexInSheet=1"));
         QVERIFY(schLibData.contains("IndexInSheet=2"));
