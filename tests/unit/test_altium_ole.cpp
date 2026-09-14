@@ -1192,6 +1192,33 @@ private slots:
         QVERIFY(nativeQuadraticData.contains("RECORD=5"));
         QVERIFY(nativeQuadraticData.contains("LocationCount=4"));
 
+        IR::SymbolComponentIR nativeEllipticalArcSymbol;
+        nativeEllipticalArcSymbol.name = QStringLiteral("NATIVE_ELLIPTICAL_ARC");
+        IR::SymbolPathIR nativeEllipticalArcPath;
+        nativeEllipticalArcPath.strokeWidth = 0.1;
+        IR::SymbolPathSegmentIR nativeEllipticalArcSegment;
+        nativeEllipticalArcSegment.type = IR::SymbolPathSegmentIR::Type::EllipticalArc;
+        nativeEllipticalArcSegment.arcCenter = QPointF(0.0, 0.0);
+        nativeEllipticalArcSegment.radiusX = 2.0;
+        nativeEllipticalArcSegment.radiusY = 1.0;
+        nativeEllipticalArcSegment.arcStartAngle = 0.0;
+        nativeEllipticalArcSegment.arcEndAngle = 90.0;
+        nativeEllipticalArcPath.segments.append(nativeEllipticalArcSegment);
+        nativeEllipticalArcSymbol.paths.append(nativeEllipticalArcPath);
+        const QString nativeEllipticalArcFile =
+            QDir(tempDir.path()).filePath(QStringLiteral("native-elliptical-arc.SchLib"));
+        ExporterAltiumSymbol nativeEllipticalArcExporter;
+        QVERIFY(nativeEllipticalArcExporter.exportSymbolLibrary({nativeEllipticalArcSymbol},
+                                                                QStringLiteral("native-elliptical-arc"),
+                                                                nativeEllipticalArcFile,
+                                                                false,
+                                                                false));
+        QByteArray nativeEllipticalArcData;
+        QVERIFY(readCfbStream(
+            nativeEllipticalArcFile, QStringLiteral("NATIVE_ELLIPTICAL_ARC/Data"), nativeEllipticalArcData));
+        QVERIFY(nativeEllipticalArcData.contains("RECORD=11"));
+        QVERIFY(nativeEllipticalArcData.contains("SecondaryRadius="));
+
         IR::FootprintComponentIR footprint;
         footprint.name = QStringLiteral("SEGMENTS");
         IR::FootprintTrackIR polyline;

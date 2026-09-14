@@ -9,17 +9,22 @@ namespace EasyKiConverter {
 
 /**
  * @brief SVG 路径中的可导出几何段
- * @details 二次 Bézier 保留为独立段；圆形、未旋转的圆弧保留为
- *          原生圆弧段，其余椭圆弧仍展开为直线段以保持兼容性。
+ * @details 二次 Bézier、圆形弧和未旋转椭圆弧保留为独立段；旋转椭圆弧
+ *          仍展开为直线段，以避免丢失目标格式的旋转语义。
  */
 struct SvgPathSegment {
-    enum class Type { Line, QuadraticBezier, CubicBezier, CircularArc };
+    enum class Type { Line, QuadraticBezier, CubicBezier, CircularArc, EllipticalArc };
 
     Type type = Type::Line;
     QPointF start;
     QPointF control1;
     QPointF control2;
     QPointF arcMid;
+    QPointF arcCenter;
+    double radiusX = 0.0;
+    double radiusY = 0.0;
+    double arcStartAngle = 0.0;
+    double arcEndAngle = 0.0;
     QPointF end;
 };
 

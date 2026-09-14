@@ -13,6 +13,79 @@ namespace EasyKiConverter {
 
 const double PI = 3.14159265358979323846;
 
+namespace {
+
+struct SvgArcGeometry {
+    bool valid = false;
+    QPointF center;
+    double radiusX = 0.0;
+    double radiusY = 0.0;
+    double startAngle = 0.0;
+    double deltaAngle = 0.0;
+};
+
+SvgArcGeometry calculateArcGeometry(const QPointF& start,
+                                    double radiusX,
+                                    double radiusY,
+                                    double xRotation,
+                                    bool largeArc,
+                                    bool sweep,
+                                    const QPointF& end) {
+    SvgArcGeometry geometry;
+    radiusX = std::abs(radiusX);
+    radiusY = std::abs(radiusY);
+    if (radiusX <= 0.0 || radiusY <= 0.0 || start == end)
+        return geometry;
+
+    const double phi = xRotation * PI / 180.0;
+    const double cosPhi = std::cos(phi);
+    const double sinPhi = std::sin(phi);
+    const double dx = (start.x() - end.x()) / 2.0;
+    const double dy = (start.y() - end.y()) / 2.0;
+    const double xPrime = cosPhi * dx + sinPhi * dy;
+    const double yPrime = -sinPhi * dx + cosPhi * dy;
+    double rxSquared = radiusX * radiusX;
+    double rySquared = radiusY * radiusY;
+    const double lambda = xPrime * xPrime / rxSquared + yPrime * yPrime / rySquared;
+    if (lambda > 1.0) {
+        const double scale = std::sqrt(lambda);
+        radiusX *= scale;
+        radiusY *= scale;
+        rxSquared = radiusX * radiusX;
+        rySquared = radiusY * radiusY;
+    }
+
+    const double denominator = rxSquared * yPrime * yPrime + rySquared * xPrime * xPrime;
+    if (qFuzzyIsNull(denominator))
+        return geometry;
+    const double numerator =
+        std::max(0.0, rxSquared * rySquared - rxSquared * yPrime * yPrime - rySquared * xPrime * xPrime);
+    const double factor = (largeArc == sweep ? -1.0 : 1.0) * std::sqrt(numerator / denominator);
+    const double centerPrimeX = factor * radiusX * yPrime / radiusY;
+    const double centerPrimeY = -factor * radiusY * xPrime / radiusX;
+    const QPointF center(cosPhi * centerPrimeX - sinPhi * centerPrimeY + (start.x() + end.x()) / 2.0,
+                         sinPhi * centerPrimeX + cosPhi * centerPrimeY + (start.y() + end.y()) / 2.0);
+    const double ux = (xPrime - centerPrimeX) / radiusX;
+    const double uy = (yPrime - centerPrimeY) / radiusY;
+    const double vx = (-xPrime - centerPrimeX) / radiusX;
+    const double vy = (-yPrime - centerPrimeY) / radiusY;
+    double deltaAngle = std::atan2(ux * vy - uy * vx, ux * vx + uy * vy);
+    if (sweep && deltaAngle < 0.0)
+        deltaAngle += 2.0 * PI;
+    else if (!sweep && deltaAngle > 0.0)
+        deltaAngle -= 2.0 * PI;
+
+    geometry.valid = true;
+    geometry.center = center;
+    geometry.radiusX = radiusX;
+    geometry.radiusY = radiusY;
+    geometry.startAngle = std::atan2(uy, ux);
+    geometry.deltaAngle = deltaAngle;
+    return geometry;
+}
+
+}  // namespace
+
 QList<QPointF> SvgPathParser::parsePath(const QString& path) {
     QList<QPointF> points;
     if (path.isEmpty()) {
@@ -545,6 +618,26 @@ QList<SvgPathSegment> SvgPathParser::parseSegments(const QString& path) {
                     segment.end = end;
                     segments.append(segment);
                     current = end;
+                } else if (!isCircular && values[0] > 0.0 && values[1] > 0.0 &&
+                           qFuzzyIsNull(std::sin(values[2] * PI / 180.0))) {
+                    const SvgArcGeometry geometry = calculateArcGeometry(
+                        start, values[0], values[1], values[2], values[3] != 0, values[4] != 0, end);
+                    if (geometry.valid) {
+                        SvgPathSegment segment;
+                        segment.type = SvgPathSegment::Type::EllipticalArc;
+                        segment.start = start;
+                        segment.arcCenter = geometry.center;
+                        segment.radiusX = geometry.radiusX;
+                        segment.radiusY = geometry.radiusY;
+                        segment.arcStartAngle = geometry.startAngle * 180.0 / PI;
+                        segment.arcEndAngle = (geometry.startAngle + geometry.deltaAngle) * 180.0 / PI;
+                        segment.end = end;
+                        segments.append(segment);
+                        current = end;
+                    } else {
+                        for (const QPointF& point : arcPoints)
+                            addLine(point);
+                    }
                 } else {
                     for (const QPointF& point : arcPoints)
                         addLine(point);

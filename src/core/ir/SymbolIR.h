@@ -238,17 +238,22 @@ struct SymbolPolygonIR {
 
 /**
  * @brief 通用符号路径段
- * @details 二次 Bézier 保留为独立段；圆形圆弧保留为原生圆弧段，
- *          椭圆弧和旋转弧由解析器提供折线段回退。
+ * @details 二次 Bézier、圆形弧和未旋转椭圆弧保留为原生段，旋转椭圆弧
+ *          由解析器提供折线段回退。
  */
 struct SymbolPathSegmentIR {
-    enum class Type { Line, QuadraticBezier, CubicBezier, CircularArc };
+    enum class Type { Line, QuadraticBezier, CubicBezier, CircularArc, EllipticalArc };
 
     Type type = Type::Line;
     QPointF start;
     QPointF control1;  ///< 二次曲线控制点，或三次曲线第一个控制点
     QPointF control2;
     QPointF arcMid;
+    QPointF arcCenter;
+    double radiusX = 0.0;
+    double radiusY = 0.0;
+    double arcStartAngle = 0.0;
+    double arcEndAngle = 0.0;
     QPointF end;
 };
 

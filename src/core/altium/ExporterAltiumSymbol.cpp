@@ -373,6 +373,23 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
                     altiumBezier.sourceSegmentIndex = segmentIndex;
                     altiumBezier.sourcePartIndex = p.partIndex;
                     component.beziers.append(altiumBezier);
+                } else if (segment.type == IR::SymbolPathSegmentIR::Type::EllipticalArc) {
+                    IR::SymbolEllipticalArcIR ellipseArc;
+                    ellipseArc.center = segment.arcCenter;
+                    ellipseArc.radiusX = segment.radiusX;
+                    ellipseArc.radiusY = segment.radiusY;
+                    ellipseArc.startAngle = segment.arcStartAngle;
+                    ellipseArc.endAngle = segment.arcEndAngle;
+                    ellipseArc.strokeColor = p.strokeColor;
+                    ellipseArc.strokeWidth = p.strokeWidth;
+                    ellipseArc.strokeStyle = p.strokeStyle;
+                    ellipseArc.partIndex = p.partIndex;
+                    AltiumSchEllipticalArc altiumArc = convertEllipticalArc(ellipseArc);
+                    altiumArc.sourceGraphicType = QStringLiteral("PT");
+                    altiumArc.sourceGraphicIndex = sourceIndexForPart(data.paths, pathIndex, p.partIndex);
+                    altiumArc.sourceSegmentIndex = segmentIndex;
+                    altiumArc.sourcePartIndex = p.partIndex;
+                    component.ellipticalArcs.append(altiumArc);
                 } else {
                     IR::SymbolArcIR arc;
                     arc.startPoint = segment.start;

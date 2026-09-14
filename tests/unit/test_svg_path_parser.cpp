@@ -137,7 +137,7 @@ private slots:
         QCOMPARE(segments.at(2).end, QPointF(60, 0));
     }
 
-    void preservesCircularArcSegmentsAndFallsBackForEllipses() {
+    void preservesCircularArcSegmentsAndEllipsesAndFallsBackForRotatedEllipses() {
         const QList<SvgPathSegment> circular =
             SvgPathParser::parseSegments(QStringLiteral("M 0 0 A 10 10 0 0 1 10 10"));
         QCOMPARE(circular.size(), 1);
@@ -149,8 +149,18 @@ private slots:
 
         const QList<SvgPathSegment> elliptical =
             SvgPathParser::parseSegments(QStringLiteral("M 0 0 A 10 5 0 0 1 10 10"));
-        QVERIFY(elliptical.size() > 2);
-        for (const SvgPathSegment& segment : elliptical)
+        QCOMPARE(elliptical.size(), 1);
+        QCOMPARE(elliptical.first().type, SvgPathSegment::Type::EllipticalArc);
+        QCOMPARE(elliptical.first().start, QPointF(0, 0));
+        QCOMPARE(elliptical.first().end, QPointF(10, 10));
+        QVERIFY(elliptical.first().radiusX > 10.0);
+        QVERIFY(elliptical.first().radiusY > 5.0);
+        QVERIFY(!qFuzzyIsNull(elliptical.first().arcEndAngle - elliptical.first().arcStartAngle));
+
+        const QList<SvgPathSegment> rotatedElliptical =
+            SvgPathParser::parseSegments(QStringLiteral("M 0 0 A 10 5 30 0 1 10 10"));
+        QVERIFY(rotatedElliptical.size() > 2);
+        for (const SvgPathSegment& segment : rotatedElliptical)
             QCOMPARE(segment.type, SvgPathSegment::Type::Line);
     }
 

@@ -157,6 +157,10 @@ struct AltiumSchEllipticalArc {
     uint32_t color = 0x000000;
     uint32_t areaColor = 0xFFFFFF;
     int ownerPartId = 1;
+    QString sourceGraphicType;
+    int sourceGraphicIndex = -1;
+    int sourceSegmentIndex = -1;
+    int sourcePartIndex = 0;
 };
 
 /**

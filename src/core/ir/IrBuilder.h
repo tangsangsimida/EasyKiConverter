@@ -240,6 +240,8 @@ inline SymbolComponentIR toSymbolIR(const SymbolData& data) {
                     segment.type = SymbolPathSegmentIR::Type::CubicBezier;
                 else if (sourceSegment.type == SvgPathSegment::Type::CircularArc)
                     segment.type = SymbolPathSegmentIR::Type::CircularArc;
+                else if (sourceSegment.type == SvgPathSegment::Type::EllipticalArc)
+                    segment.type = SymbolPathSegmentIR::Type::EllipticalArc;
                 else
                     segment.type = SymbolPathSegmentIR::Type::Line;
                 segment.start = transformSegmentPoint(sourceSegment.start);
@@ -252,6 +254,12 @@ inline SymbolComponentIR toSymbolIR(const SymbolData& data) {
                     segment.control2 = transformSegmentPoint(sourceSegment.control2);
                 } else if (segment.type == SymbolPathSegmentIR::Type::CircularArc) {
                     segment.arcMid = transformSegmentPoint(sourceSegment.arcMid);
+                } else if (segment.type == SymbolPathSegmentIR::Type::EllipticalArc) {
+                    segment.arcCenter = transformSegmentPoint(sourceSegment.arcCenter);
+                    segment.radiusX = sourceSegment.radiusX * EASYEDA_PX_TO_MM;
+                    segment.radiusY = sourceSegment.radiusY * EASYEDA_PX_TO_MM;
+                    segment.arcStartAngle = -sourceSegment.arcStartAngle;
+                    segment.arcEndAngle = -sourceSegment.arcEndAngle;
                 }
                 pathIR.segments.append(segment);
             }

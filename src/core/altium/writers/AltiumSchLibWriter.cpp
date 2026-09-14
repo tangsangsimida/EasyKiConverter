@@ -466,6 +466,14 @@ void AltiumSchLibWriter::writeOrderedGraphic(AltiumBinaryWriter& writer,
                     break;
                 }
             }
+            for (const AltiumSchEllipticalArc& arc : component.ellipticalArcs) {
+                if (arc.sourceGraphicType == order.type && arc.sourceGraphicIndex == order.index &&
+                    matchesPart(arc.sourcePartIndex) && arc.sourceSegmentIndex == segmentIndex) {
+                    writeEllipticalArcRecord(writer, arc);
+                    found = true;
+                    break;
+                }
+            }
             if (!found)
                 break;
         }
@@ -506,8 +514,10 @@ void AltiumSchLibWriter::writeComponentStorage(OLECompoundWriter& ole,
             writeLineRecord(writer, line);
         for (const AltiumSchPie& pie : component.pies)
             writePieRecord(writer, pie);
-        for (const AltiumSchEllipticalArc& arc : component.ellipticalArcs)
-            writeEllipticalArcRecord(writer, arc);
+        for (const AltiumSchEllipticalArc& arc : component.ellipticalArcs) {
+            if (arc.sourceGraphicType.isEmpty())
+                writeEllipticalArcRecord(writer, arc);
+        }
         for (const AltiumSchIeee& ieee : component.ieeeSymbols)
             writeIeeeRecord(writer, ieee);
         for (const AltiumSchBezier& bezier : component.beziers) {
