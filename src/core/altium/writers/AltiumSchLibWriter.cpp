@@ -445,7 +445,7 @@ void AltiumSchLibWriter::writePinRecord(AltiumBinaryWriter& writer, const Altium
     writer.writeInt32(2);  // Record type = 2
     writer.writeUInt8(0);  // Unknown
     Q_UNUSED(partId);
-    writer.writeInt16(static_cast<int16_t>(qBound(1, pin.ownerPartId, 32767)));  // OwnerPartId
+    writer.writeInt16(static_cast<int16_t>(qBound(-1, pin.ownerPartId, 32767)));  // OwnerPartId，-1 表示公共 Part Zero
     writer.writeUInt8(0);  // OwnerPartDisplayMode
 
     // Symbol edges / IEEE 装饰。四个字节必须位于描述字符串之前。

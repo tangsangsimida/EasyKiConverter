@@ -338,16 +338,20 @@ AltiumSchPin ExporterAltiumSymbol::convertPin(const IR::SymbolPinIR& pin) {
     altiumPin.color = toAltiumColor(QColor(Qt::black));
     // EasyEDA 的反相圆点位于引脚外侧，时钟标记贴近主体内侧。
     // 优先从 style 语义层获取，兼容旧 hasDot/hasClock 字段。
-    if (pin.style.inverted || pin.style.activeLow || pin.hasDot)
+    if (pin.style.inverted || pin.hasDot)
         altiumPin.symbolOuterEdge = 1;  // Dot
+    if (pin.style.activeLow)
+        altiumPin.symbolOuterEdge = 4;  // Active Low Input
     if (pin.style.clock || pin.hasClock)
         altiumPin.symbolInnerEdge = 3;  // Clock
 
     // 处理更丰富的 PinDecoration 枚举
     switch (pin.style.decoration) {
         case IR::PinDecoration::Dot:
-        case IR::PinDecoration::ActiveLow:
             altiumPin.symbolOuterEdge = 1;
+            break;
+        case IR::PinDecoration::ActiveLow:
+            altiumPin.symbolOuterEdge = 4;
             break;
         case IR::PinDecoration::Clock:
             altiumPin.symbolInnerEdge = 3;
@@ -357,19 +361,37 @@ AltiumSchPin ExporterAltiumSymbol::convertPin(const IR::SymbolPinIR& pin) {
             altiumPin.symbolOuterEdge = 1;
             break;
         case IR::PinDecoration::OpenCollector:
-            altiumPin.symbolOuterEdge = 8;
+            altiumPin.symbolInside = 9;
             break;
         case IR::PinDecoration::OpenEmitter:
-            altiumPin.symbolOuterEdge = 15;
+            altiumPin.symbolInside = 23;
             break;
         case IR::PinDecoration::HiZ:
-            altiumPin.symbolOuterEdge = 12;
+            altiumPin.symbolInside = 10;
             break;
         case IR::PinDecoration::Pulse:
-            altiumPin.symbolOuterEdge = 14;
+            altiumPin.symbolInside = 12;
             break;
         case IR::PinDecoration::Postponed:
-            altiumPin.symbolOuterEdge = 11;
+            altiumPin.symbolInside = 8;
+            break;
+        case IR::PinDecoration::ShiftLeft:
+            altiumPin.symbolInside = 30;
+            break;
+        case IR::PinDecoration::AnalogInput:
+            altiumPin.symbolOutside = 5;
+            break;
+        case IR::PinDecoration::NoConnect:
+            altiumPin.symbolOutside = 6;
+            break;
+        case IR::PinDecoration::GroupLine:
+            altiumPin.symbolOutside = 34;  // Bidirectional Signal Flow
+            break;
+        case IR::PinDecoration::FlagRight:
+            altiumPin.symbolOutside = 33;  // Left Right Signal Flow
+            break;
+        case IR::PinDecoration::FlagLeft:
+            altiumPin.symbolOutside = 2;  // Right Left Signal Flow
             break;
         default:
             break;
@@ -378,15 +400,16 @@ AltiumSchPin ExporterAltiumSymbol::convertPin(const IR::SymbolPinIR& pin) {
     // 这些电气类型同时具有明确的 Altium IEEE 装饰
     switch (pin.electricalType) {
         case IR::PinElectricalType::OpenCollector:
-            altiumPin.symbolOuterEdge = 8;
+            altiumPin.symbolInside = 9;
             break;
         case IR::PinElectricalType::OpenEmitter:
-            altiumPin.symbolOuterEdge = 15;
+            altiumPin.symbolInside = 23;
             break;
         default:
             break;
     }
-    altiumPin.ownerPartId = qMax(1, pin.partIndex + 1);
+    // Altium 使用 -1 表示 Part Zero 中的公共引脚；普通部件仍使用 1-based 编号。
+    altiumPin.ownerPartId = pin.commonToAllParts ? -1 : qMax(1, pin.partIndex + 1);
 
     // 电源引脚检测：EasyEDA 通常不区分电源引脚（type=3/Bidirectional），
     // 通过引脚名称匹配常见电源网络名称，强制设为 Power 类型

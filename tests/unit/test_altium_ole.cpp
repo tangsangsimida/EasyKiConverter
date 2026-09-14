@@ -887,7 +887,14 @@ private slots:
         pin.designator = QStringLiteral("2");
         pin.length = 2.54;
         pin.partIndex = 1;
+        pin.style.decoration = IR::PinDecoration::AnalogInput;
         symbol.pins.append(pin);
+        IR::SymbolPinIR commonPin;
+        commonPin.name = QStringLiteral("VCC");
+        commonPin.designator = QStringLiteral("3");
+        commonPin.length = 2.54;
+        commonPin.commonToAllParts = true;
+        symbol.pins.append(commonPin);
         IR::SymbolPathIR path;
         path.points = {QPointF(0, 0), QPointF(1, 1), QPointF(2, 0)};
         path.partIndex = 1;
@@ -901,6 +908,9 @@ private slots:
         const int pinOffset = 4 + static_cast<int>(readU32(symbolData, 0) & 0x00FFFFFFU);
         QCOMPARE(readU32(symbolData, pinOffset + 4), quint32(2));
         QCOMPARE(readU16(symbolData, pinOffset + 9), quint16(2));
+        QCOMPARE(static_cast<uint8_t>(symbolData.at(pinOffset + 15)), static_cast<uint8_t>(5));
+        const int secondPinOffset = pinOffset + 4 + static_cast<int>(readU32(symbolData, pinOffset) & 0x00FFFFFFU);
+        QCOMPARE(readU16(symbolData, secondPinOffset + 9), quint16(0xFFFF));
         QVERIFY(symbolData.contains("OWNERPARTID=2"));
 
         IR::FootprintComponentIR footprint;

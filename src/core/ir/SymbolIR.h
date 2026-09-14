@@ -103,6 +103,7 @@ struct SymbolPinIR {
 
     // === 部件 ===
     int partIndex = 0;  ///< 所属部件索引（多部件符号使用）
+    bool commonToAllParts = false;  ///< 是否属于多部件符号的公共 Part Zero
 };
 
 /**
