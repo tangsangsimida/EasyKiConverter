@@ -356,7 +356,7 @@ void AltiumSchLibWriter::writeComponentStorage(OLECompoundWriter& ole,
 
     // 写入引脚
     for (const AltiumSchPin& pin : component.pins) {
-        writePinRecord(writer, pin, 1);
+        writePinRecord(writer, pin, pin.ownerPartId);
     }
 
     // 写入矩形
