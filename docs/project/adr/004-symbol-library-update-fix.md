@@ -320,6 +320,8 @@ if (!isOverwritten && !isOrphanedSubSymbol)
 
 后续如果实现 Altium 库读取器和增量合并，应同时补充 OLE 流、FileHeader、SectionKeys、多部件符号及图片 Storage 的回归测试，并移除当前保护性拒绝逻辑。
 
+当前已新增 `OLECompoundReader` 作为只读 CFB/OLE 基础层，能够校验 V3 文件、解析 FAT/DIFAT、枚举目录流，并读取普通流和迷你流。该读取器目前只提供原始流访问，不负责解释 SchLib/PcbLib 的业务记录，也不会改变“已有 Altium 库禁止追加或更新”的保护策略。后续增量合并必须在此基础上增加 Altium 结构解析、保留未知流和元数据的写回能力，并以真实库样本补充回归测试。
+
 ## 相关文档
 
 - [ADR-001: MVVM 架构](001-mvvm-architecture.md)

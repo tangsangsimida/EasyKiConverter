@@ -13,6 +13,7 @@
 
 #include "core/altium/ExporterAltiumFootprint.h"
 #include "core/altium/ExporterAltiumSymbol.h"
+#include "core/altium/compound/OLECompoundReader.h"
 #include "core/altium/compound/OLECompoundWriter.h"
 #include "core/altium/utils/AltiumWriterUtils.h"
 #include "core/altium/writers/AltiumPcbLibWriter.h"
@@ -1813,6 +1814,62 @@ private slots:
         const QByteArray parameterRecord = data.mid(parameterOffset, nextRecordOffset - parameterOffset);
         QVERIFY(parameterRecord.contains("OWNERPARTID=1"));
         QVERIFY(!parameterRecord.contains("ISNOTACCESIBLE"));
+    }
+
+    /**
+     * @brief 验证生产 OLE 读取器能够读取目录、迷你流和普通流。
+     */
+    void compoundReaderReadsMiniAndRegularStreams() {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        OLECompoundWriter writer;
+        QVERIFY(writer.create());
+        QVERIFY(writer.addStorage(QStringLiteral("Nested")));
+        QVERIFY(writer.addStorage(QStringLiteral("Nested"), QStringLiteral("Deep")));
+        const QByteArray miniData("mini-stream-data");
+        const QByteArray deepData("nested-stream-data");
+        const QByteArray regularData(5000, '\x5A');
+        QVERIFY(writer.writeStream(QStringLiteral("Tiny"), miniData));
+        QVERIFY(writer.writeStream(QStringLiteral("Nested/Deep"), QStringLiteral("Data"), deepData));
+        QVERIFY(writer.writeStream(QStringLiteral("Regular"), regularData));
+
+        const QString path = QDir(tempDir.path()).filePath(QStringLiteral("reader-roundtrip.cfb"));
+        QVERIFY(writer.saveToFile(path));
+
+        OLECompoundReader reader;
+        QVERIFY(reader.open(path));
+        QCOMPARE(reader.streamPaths(),
+                 QStringList({QStringLiteral("Nested/Deep/Data"), QStringLiteral("Regular"), QStringLiteral("Tiny")}));
+        QVERIFY(reader.containsStream(QStringLiteral("Nested/Deep/Data")));
+
+        QByteArray data;
+        QVERIFY(reader.readStream(QStringLiteral("Tiny"), &data));
+        QCOMPARE(data, miniData);
+        QVERIFY(reader.readStream(QStringLiteral("Nested/Deep/Data"), &data));
+        QCOMPARE(data, deepData);
+        QVERIFY(reader.readStream(QStringLiteral("Regular"), &data));
+        QCOMPARE(data, regularData);
+        QVERIFY(!reader.readStream(QStringLiteral("Missing"), &data));
+    }
+
+    /**
+     * @brief 无效输入必须被读取器拒绝并返回诊断信息。
+     */
+    void compoundReaderRejectsInvalidDocument() {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+        const QString path = QDir(tempDir.path()).filePath(QStringLiteral("invalid.cfb"));
+        QFile file(path);
+        QVERIFY(file.open(QIODevice::WriteOnly));
+        QVERIFY(file.write("not-an-ole-document") > 0);
+        file.close();
+
+        OLECompoundReader reader;
+        QVERIFY(!reader.open(path));
+        QVERIFY(reader.hasError());
+        QVERIFY(!reader.errorString().isEmpty());
+        QVERIFY(reader.streamPaths().isEmpty());
     }
 };
 

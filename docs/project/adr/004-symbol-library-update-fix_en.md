@@ -320,6 +320,8 @@ Append and update behavior currently applies only to KiCad symbol libraries, whi
 
 If Altium library reading and incremental merging are implemented later, add regression coverage for OLE streams, FileHeader, SectionKeys, multi-part symbols, and image Storage before removing this protective rejection.
 
+The project now provides `OLECompoundReader` as a read-only CFB/OLE foundation. It validates V3 files, parses FAT/DIFAT, enumerates directory streams, and reads both regular and mini streams. It intentionally exposes raw stream data only; it does not yet interpret SchLib/PcbLib records or enable incremental merging, so the protective rejection for existing Altium libraries remains in place. Future merging must add Altium structure parsing, preservation of unknown streams and metadata, write-back support, and regression coverage using real library samples.
+
 ## Related Documents
 
 - [ADR-001: MVVM Architecture](001-mvvm-architecture.md)

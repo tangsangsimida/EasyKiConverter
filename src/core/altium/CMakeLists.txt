@@ -17,6 +17,8 @@ target_sources(EasyKiConverterAltium
         writers/AltiumPcbLibWriter.cpp
 
         # OLE 复合文档
+        compound/OLECompoundReader.h
+        compound/OLECompoundReader.cpp
         compound/OLECompoundWriter.h
         compound/OLECompoundWriter.cpp
 
