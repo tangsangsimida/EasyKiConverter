@@ -661,6 +661,16 @@ private slots:
         QVector<AltiumSchLibReader::Record> invalidOwnerRecords;
         QVERIFY2(emptyImageReader.readComponentRecords(QStringLiteral("INVALID_PART_COUNT"), &invalidOwnerRecords),
                  qPrintable(emptyImageReader.errorString()));
+        const int invalidWeightOffset = header.indexOf("WEIGHT=");
+        const int invalidWeightEnd = header.indexOf('|', invalidWeightOffset);
+        QVERIFY(invalidWeightOffset >= 0);
+        QVERIFY(invalidWeightEnd > invalidWeightOffset);
+        bool invalidWeightOk = false;
+        const int invalidHeaderWeight =
+            QString::fromLatin1(header.mid(invalidWeightOffset + 7, invalidWeightEnd - invalidWeightOffset - 7))
+                .toInt(&invalidWeightOk);
+        QVERIFY(invalidWeightOk);
+        QCOMPARE(invalidOwnerRecords.size(), invalidHeaderWeight);
         for (const auto& record : invalidOwnerRecords) {
             if (record.recordType == 2 || record.recordType == 9)
                 QCOMPARE(record.ownerPartId, 1);
