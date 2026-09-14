@@ -426,6 +426,17 @@ QList<SvgPathSegment> SvgPathParser::parseSegments(const QString& path) {
         segments.append(segment);
         current = end;
     };
+    auto addQuadratic = [&](const QPointF& control, const QPointF& end) {
+        if (!hasCurrent)
+            return;
+        SvgPathSegment segment;
+        segment.type = SvgPathSegment::Type::QuadraticBezier;
+        segment.start = current;
+        segment.control1 = control;
+        segment.end = end;
+        segments.append(segment);
+        current = end;
+    };
 
     int index = 0;
     while (index < tokens.size()) {
@@ -562,7 +573,7 @@ QList<SvgPathSegment> SvgPathParser::parseSegments(const QString& path) {
                         control2 += start;
                         end += start;
                     }
-                } else {
+                } else if (command == 'Q' || command == 'T') {
                     QPointF quadraticControl;
                     if (command == 'Q') {
                         quadraticControl = QPointF(values[0], values[1]);
@@ -580,11 +591,12 @@ QList<SvgPathSegment> SvgPathParser::parseSegments(const QString& path) {
                         if (relative)
                             end += start;
                     }
-                    control1 = start + (quadraticControl - start) * (2.0 / 3.0);
-                    control2 = end + (quadraticControl - end) * (2.0 / 3.0);
+                    addQuadratic(quadraticControl, end);
                     lastQuadraticControl = quadraticControl;
                 }
-                addCubic(control1, control2, end);
+                if (command == 'C' || command == 'S') {
+                    addCubic(control1, control2, end);
+                }
                 if (command == 'C' || command == 'S')
                     lastCubicControl = control2;
             }

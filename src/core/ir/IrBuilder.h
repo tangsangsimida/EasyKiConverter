@@ -234,7 +234,9 @@ inline SymbolComponentIR toSymbolIR(const SymbolData& data) {
             };
             for (const SvgPathSegment& sourceSegment : SvgPathParser::parseSegments(path.paths)) {
                 SymbolPathSegmentIR segment;
-                if (sourceSegment.type == SvgPathSegment::Type::CubicBezier)
+                if (sourceSegment.type == SvgPathSegment::Type::QuadraticBezier)
+                    segment.type = SymbolPathSegmentIR::Type::QuadraticBezier;
+                else if (sourceSegment.type == SvgPathSegment::Type::CubicBezier)
                     segment.type = SymbolPathSegmentIR::Type::CubicBezier;
                 else if (sourceSegment.type == SvgPathSegment::Type::CircularArc)
                     segment.type = SymbolPathSegmentIR::Type::CircularArc;
@@ -242,8 +244,11 @@ inline SymbolComponentIR toSymbolIR(const SymbolData& data) {
                     segment.type = SymbolPathSegmentIR::Type::Line;
                 segment.start = transformSegmentPoint(sourceSegment.start);
                 segment.end = transformSegmentPoint(sourceSegment.end);
-                if (segment.type == SymbolPathSegmentIR::Type::CubicBezier) {
+                if (segment.type == SymbolPathSegmentIR::Type::QuadraticBezier ||
+                    segment.type == SymbolPathSegmentIR::Type::CubicBezier) {
                     segment.control1 = transformSegmentPoint(sourceSegment.control1);
+                }
+                if (segment.type == SymbolPathSegmentIR::Type::CubicBezier) {
                     segment.control2 = transformSegmentPoint(sourceSegment.control2);
                 } else if (segment.type == SymbolPathSegmentIR::Type::CircularArc) {
                     segment.arcMid = transformSegmentPoint(sourceSegment.arcMid);

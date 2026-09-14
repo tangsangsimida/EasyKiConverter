@@ -114,14 +114,27 @@ private slots:
         QCOMPARE(segments.at(0).end, QPointF(10, 0));
         QCOMPARE(segments.at(1).type, SvgPathSegment::Type::Line);
         QCOMPARE(segments.at(1).end, QPointF(20, 0));
-        QCOMPARE(segments.at(2).type, SvgPathSegment::Type::CubicBezier);
-        QVERIFY(qAbs(segments.at(2).control1.x() - 23.3333333333) < 1e-9);
-        QVERIFY(qAbs(segments.at(2).control1.y() - 6.6666666667) < 1e-9);
-        QVERIFY(qAbs(segments.at(2).control2.x() - 26.6666666667) < 1e-9);
-        QVERIFY(qAbs(segments.at(2).control2.y() - 6.6666666667) < 1e-9);
+        QCOMPARE(segments.at(2).type, SvgPathSegment::Type::QuadraticBezier);
+        QCOMPARE(segments.at(2).control1, QPointF(25, 10));
         QCOMPARE(segments.at(2).end, QPointF(30, 0));
         QCOMPARE(segments.at(3).type, SvgPathSegment::Type::Line);
         QCOMPARE(segments.at(3).end, QPointF(0, 0));
+    }
+
+    void preservesQuadraticAndSmoothQuadraticSegments() {
+        const QList<SvgPathSegment> segments =
+            SvgPathParser::parseSegments(QStringLiteral("M 0 0 Q 10 20 20 0 T 40 0 q 10 -20 20 0"));
+
+        QCOMPARE(segments.size(), 3);
+        QCOMPARE(segments.at(0).type, SvgPathSegment::Type::QuadraticBezier);
+        QCOMPARE(segments.at(0).control1, QPointF(10, 20));
+        QCOMPARE(segments.at(0).end, QPointF(20, 0));
+        QCOMPARE(segments.at(1).type, SvgPathSegment::Type::QuadraticBezier);
+        QCOMPARE(segments.at(1).control1, QPointF(30, -20));
+        QCOMPARE(segments.at(1).end, QPointF(40, 0));
+        QCOMPARE(segments.at(2).type, SvgPathSegment::Type::QuadraticBezier);
+        QCOMPARE(segments.at(2).control1, QPointF(50, -20));
+        QCOMPARE(segments.at(2).end, QPointF(60, 0));
     }
 
     void preservesCircularArcSegmentsAndFallsBackForEllipses() {

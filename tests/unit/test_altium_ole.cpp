@@ -1171,6 +1171,27 @@ private slots:
         QVERIFY(readCfbStream(nativeArcPathFile, QStringLiteral("NATIVE_ARC/Data"), nativeArcData));
         QVERIFY(nativeArcData.contains("RECORD=12"));
 
+        IR::SymbolComponentIR nativeQuadraticSymbol;
+        nativeQuadraticSymbol.name = QStringLiteral("NATIVE_QUADRATIC");
+        IR::SymbolPathIR nativeQuadraticPath;
+        nativeQuadraticPath.strokeWidth = 0.1;
+        IR::SymbolPathSegmentIR nativeQuadraticSegment;
+        nativeQuadraticSegment.type = IR::SymbolPathSegmentIR::Type::QuadraticBezier;
+        nativeQuadraticSegment.start = QPointF(0.0, 0.0);
+        nativeQuadraticSegment.control1 = QPointF(1.0, 2.0);
+        nativeQuadraticSegment.end = QPointF(2.0, 0.0);
+        nativeQuadraticPath.segments.append(nativeQuadraticSegment);
+        nativeQuadraticSymbol.paths.append(nativeQuadraticPath);
+        const QString nativeQuadraticPathFile =
+            QDir(tempDir.path()).filePath(QStringLiteral("native-quadratic.SchLib"));
+        ExporterAltiumSymbol nativeQuadraticExporter;
+        QVERIFY(nativeQuadraticExporter.exportSymbolLibrary(
+            {nativeQuadraticSymbol}, QStringLiteral("native-quadratic"), nativeQuadraticPathFile, false, false));
+        QByteArray nativeQuadraticData;
+        QVERIFY(readCfbStream(nativeQuadraticPathFile, QStringLiteral("NATIVE_QUADRATIC/Data"), nativeQuadraticData));
+        QVERIFY(nativeQuadraticData.contains("RECORD=5"));
+        QVERIFY(nativeQuadraticData.contains("LocationCount=4"));
+
         IR::FootprintComponentIR footprint;
         footprint.name = QStringLiteral("SEGMENTS");
         IR::FootprintTrackIR polyline;

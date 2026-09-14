@@ -351,9 +351,18 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
                     path.vertices.append(QPointF(AltiumCoord::mmToSchematicUnits(segment.end.x()),
                                                  AltiumCoord::mmToSchematicUnits(segment.end.y())));
                     component.paths.append(path);
-                } else if (segment.type == IR::SymbolPathSegmentIR::Type::CubicBezier) {
+                } else if (segment.type == IR::SymbolPathSegmentIR::Type::QuadraticBezier ||
+                           segment.type == IR::SymbolPathSegmentIR::Type::CubicBezier) {
                     IR::SymbolBezierIR bezier;
-                    bezier.controlPoints = {segment.start, segment.control1, segment.control2, segment.end};
+                    if (segment.type == IR::SymbolPathSegmentIR::Type::QuadraticBezier) {
+                        // Altium SchLib 仅提供三次 Bézier 记录；二次曲线可用
+                        // C1=P0+2/3(Q-P0), C2=P1+2/3(Q-P1) 精确表示。
+                        const QPointF control1 = segment.start + (segment.control1 - segment.start) * (2.0 / 3.0);
+                        const QPointF control2 = segment.end + (segment.control1 - segment.end) * (2.0 / 3.0);
+                        bezier.controlPoints = {segment.start, control1, control2, segment.end};
+                    } else {
+                        bezier.controlPoints = {segment.start, segment.control1, segment.control2, segment.end};
+                    }
                     bezier.strokeColor = p.strokeColor;
                     bezier.strokeWidth = p.strokeWidth;
                     bezier.strokeStyle = p.strokeStyle;
