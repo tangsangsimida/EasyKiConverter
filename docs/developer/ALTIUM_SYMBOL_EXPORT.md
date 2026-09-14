@@ -12,7 +12,7 @@
 - 符号参数：Value、Description、Manufacturer、Manufacturer Part Number、Datasheet、LCSC、JLCPCB、供应商及自定义参数。
 - 参数控制：参数值、名称、显示/隐藏、只读、位置、旋转角度、字体编号、字体大小和所属部件。
 - 文本字体：普通文本支持字体族、字号、粗体和斜体，并在 SchLib `FileHeader` 中动态登记字体表；参数的 `fontSizeMm` 会映射到参数记录的 `FONTID`；无法解析到当前字体表的显式编号回退到默认字体 1；旋转角度按最近的 90° 方向归一化为 Altium `Orientation=0..3`。
-- 多部件符号：图形、文本、参数和引脚按 `partIndex` 写入对应部件；同名参数按 `OWNERPARTID` 分开保留，不会因名称去重而丢失部件参数。
+- 多部件符号：图形、文本、参数和引脚按 `partIndex` 写入对应部件；同名参数按 `OWNERPARTID` 分开保留，不会因名称去重而丢失部件参数。读取器同时解析 `OWNERPARTID` 和 `OWNERPARTDISPLAYMODE`，二进制 Pin 记录也会保留显示模式字段。
 - 公共图元：`SymbolPart::commonToAllParts` 会在缓存序列化和 `IrBuilder` 阶段保留，转换为 IR 的负 `partIndex`；最终写入 Altium Part Zero（`OWNERPARTID=-1`）。公共部件中的引脚会设置 `SymbolPinIR::commonToAllParts`，其名称、编号文字也会继承该归属。文本图元同时写出 `OWNERPARTDISPLAYMODE=1`，与当前单显示模式的引脚记录保持一致。
 - `IndexInSheet`：图元、二进制引脚和归属于具体部件的用户参数共享组件内从 `0` 开始的内容记录计数；首条内容记录隐含索引 `0`，后续文本记录和用户参数写出 `IndexInSheet`。二进制引脚虽然没有文本字段，但会推进同一计数器；组件记录、Designator、公共参数和实现记录不占用该计数。
 - 多候选封装：每个封装生成一个 SchLib implementation，并自动去重。

@@ -2303,6 +2303,30 @@ private slots:
         const QByteArray parameterRecord = data.mid(parameterOffset, nextRecordOffset - parameterOffset);
         QVERIFY(parameterRecord.contains("OWNERPARTID=1"));
         QVERIFY(!parameterRecord.contains("ISNOTACCESIBLE"));
+
+        AltiumSchLibReader reader;
+        QVERIFY2(reader.open(path), qPrintable(reader.errorString()));
+        QVector<AltiumSchLibReader::Record> records;
+        QVERIFY2(reader.readComponentRecords(QStringLiteral("CONTENT_INDEX"), &records),
+                 qPrintable(reader.errorString()));
+        bool foundGraphic = false;
+        bool foundParameter = false;
+        for (const AltiumSchLibReader::Record& record : records) {
+            if (!record.hasParameters)
+                continue;
+            if (record.recordType == 14) {
+                QCOMPARE(record.ownerPartId, 1);
+                QCOMPARE(record.ownerPartDisplayMode, 1);
+                foundGraphic = true;
+            } else if (record.recordType == 41 &&
+                       record.parameters.value(QStringLiteral("NAME")) == QStringLiteral("Custom")) {
+                QCOMPARE(record.ownerPartId, 1);
+                QCOMPARE(record.ownerPartDisplayMode, -1);
+                foundParameter = true;
+            }
+        }
+        QVERIFY(foundGraphic);
+        QVERIFY(foundParameter);
     }
 
     /**

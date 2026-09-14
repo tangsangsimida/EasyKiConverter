@@ -31,7 +31,10 @@ bool readOptionalParameterInt(const QMap<QString, QString>& parameters, const QS
     return true;
 }
 
-bool readBinaryRecordMetadata(const QByteArray& payload, int* recordType, int* ownerPartId) {
+bool readBinaryRecordMetadata(const QByteArray& payload,
+                              int* recordType,
+                              int* ownerPartId,
+                              int* ownerPartDisplayMode = nullptr) {
     if (recordType == nullptr || ownerPartId == nullptr || payload.size() < 7)
         return false;
     AltiumBinaryReader reader(payload);
@@ -42,6 +45,19 @@ bool readBinaryRecordMetadata(const QByteArray& payload, int* recordType, int* o
         return false;
     *recordType = type;
     *ownerPartId = owner;
+    if (ownerPartDisplayMode != nullptr)
+        *ownerPartDisplayMode = -1;
+    if (ownerPartDisplayMode != nullptr && type == 2 && payload.size() >= 8) {
+        AltiumBinaryReader displayReader(payload);
+        qint32 ignoredType = -1;
+        quint8 ignoredUnknown = 0;
+        qint16 ignoredOwner = -1;
+        quint8 displayMode = 0;
+        if (!displayReader.readInt32(&ignoredType) || !displayReader.readUInt8(&ignoredUnknown) ||
+            !displayReader.readInt16(&ignoredOwner) || !displayReader.readUInt8(&displayMode))
+            return false;
+        *ownerPartDisplayMode = displayMode;
+    }
     return true;
 }
 
@@ -249,12 +265,25 @@ bool AltiumSchLibReader::readComponentRecords(int componentIndexValue, QVector<R
                                     .arg(parameterReader.errorString()));
             }
             record.hasParameters = true;
+            const auto readOptionalParameterAlias =
+                [&record](const QString& primary, const QString& alias, int fallback, int* value) {
+                    const QString selectedName = record.parameters.contains(primary) ? primary : alias;
+                    return readOptionalParameterInt(record.parameters, selectedName, fallback, value);
+                };
             if (!readOptionalParameterInt(record.parameters, QStringLiteral("RECORD"), -1, &record.recordType) ||
-                !readOptionalParameterInt(record.parameters, QStringLiteral("OWNERPARTID"), -1, &record.ownerPartId) ||
+                !readOptionalParameterAlias(
+                    QStringLiteral("OWNERPARTID"), QStringLiteral("OwnerPartId"), -1, &record.ownerPartId) ||
+                !readOptionalParameterAlias(QStringLiteral("OWNERPARTDISPLAYMODE"),
+                                            QStringLiteral("OwnerPartDisplayMode"),
+                                            -1,
+                                            &record.ownerPartDisplayMode) ||
                 !readOptionalParameterInt(
                     record.parameters, QStringLiteral("IndexInSheet"), -1, &record.indexInSheet)) {
                 return failRead(QStringLiteral("SchLib 组件参数记录的数值字段无效，偏移量 %1").arg(startPosition));
             }
+            if (record.ownerPartDisplayMode < -1)
+                return failRead(
+                    QStringLiteral("SchLib 组件参数记录的 OWNERPARTDISPLAYMODE 无效，偏移量 %1").arg(startPosition));
             const bool hasFontId = record.parameters.contains(QStringLiteral("FontID")) ||
                                    record.parameters.contains(QStringLiteral("FONTID"));
             if (hasFontId) {
@@ -283,7 +312,10 @@ bool AltiumSchLibReader::readComponentRecords(int componentIndexValue, QVector<R
             if (record.indexInSheet >= 0)
                 lastIndexInSheet = record.indexInSheet;
         } else {
-            readBinaryRecordMetadata(payload, &record.recordType, &record.ownerPartId);
+            if (!readBinaryRecordMetadata(
+                    payload, &record.recordType, &record.ownerPartId, &record.ownerPartDisplayMode)) {
+                return failRead(QStringLiteral("SchLib 二进制记录元数据无效，偏移量 %1").arg(startPosition));
+            }
             if (record.ownerPartId >= 0 && record.ownerPartId > m_components.at(componentIndexValue).partCount) {
                 return failRead(
                     QStringLiteral("SchLib 二进制记录的 OWNERPARTID 超出部件范围，偏移量 %1").arg(startPosition));
