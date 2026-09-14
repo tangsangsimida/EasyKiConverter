@@ -8,6 +8,7 @@
 
 #include <algorithm>
 #include <climits>
+#include <cmath>
 
 namespace EasyKiConverter {
 
@@ -28,6 +29,10 @@ int toAltiumOwnerPartId(int partIndex) {
  */
 int toAltiumOrientation(double rotation) {
     return ((qRound(rotation / 90.0) % 4) + 4) % 4;
+}
+
+double finiteNonNegative(double value) {
+    return std::isfinite(value) ? qMax(0.0, value) : 0.0;
 }
 
 }  // namespace
@@ -293,6 +298,11 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
     // 转换图形元素
     for (int i = 0; i < data.rectangles.size(); ++i) {
         const IR::SymbolRectangleIR& r = data.rectangles.at(i);
+        if (!std::isfinite(r.cornerRadiusX) || !std::isfinite(r.cornerRadiusY) || r.cornerRadiusX < 0.0 ||
+            r.cornerRadiusY < 0.0) {
+            m_diagnostics.append(
+                QStringLiteral("符号 %1 矩形图元 %2 的圆角半径无效，已钳制为非负值").arg(data.name).arg(i));
+        }
         if (r.cornerRadiusX > 0.0 || r.cornerRadiusY > 0.0) {
             AltiumSchRoundRectangle rectangle = convertRoundRectangle(r);
             rectangle.sourceGraphicIndex = sourceIndexForPart(data.rectangles, i, r.partIndex);
@@ -306,14 +316,26 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
         }
     }
     for (int i = 0; i < data.circles.size(); ++i) {
-        AltiumSchEllipse ellipse = convertCircle(data.circles.at(i));
+        const IR::SymbolCircleIR& circle = data.circles.at(i);
+        if (!std::isfinite(circle.radius) || circle.radius < 0.0) {
+            m_diagnostics.append(QStringLiteral("符号 %1 圆图元 %2 的半径无效，已钳制为非负值").arg(data.name).arg(i));
+        }
+        AltiumSchEllipse ellipse = convertCircle(circle);
         ellipse.sourceGraphicType = QStringLiteral("C");
         ellipse.sourceGraphicIndex = sourceIndexForPart(data.circles, i, data.circles.at(i).partIndex);
         ellipse.sourcePartIndex = data.circles.at(i).partIndex;
         component.ellipses.append(ellipse);
     }
     for (int i = 0; i < data.arcs.size(); ++i) {
-        AltiumSchArc arc = convertArc(data.arcs.at(i));
+        const IR::SymbolArcIR& sourceArc = data.arcs.at(i);
+        const double determinant = 2.0 * (sourceArc.startPoint.x() * (sourceArc.midPoint.y() - sourceArc.endPoint.y()) +
+                                          sourceArc.midPoint.x() * (sourceArc.endPoint.y() - sourceArc.startPoint.y()) +
+                                          sourceArc.endPoint.x() * (sourceArc.startPoint.y() - sourceArc.midPoint.y()));
+        if (!std::isfinite(determinant) || std::abs(determinant) <= 1e-12) {
+            m_diagnostics.append(
+                QStringLiteral("符号 %1 圆弧图元 %2 三点退化，已使用安全回退圆心").arg(data.name).arg(i));
+        }
+        AltiumSchArc arc = convertArc(sourceArc);
         arc.sourceGraphicType = QStringLiteral("A");
         arc.sourceGraphicIndex = sourceIndexForPart(data.arcs, i, data.arcs.at(i).partIndex);
         arc.sourcePartIndex = data.arcs.at(i).partIndex;
@@ -713,8 +735,8 @@ AltiumSchRoundRectangle ExporterAltiumSymbol::convertRoundRectangle(const IR::Sy
     altiumRect.locationY = AltiumCoord::mmToRaw(rect.y0);
     altiumRect.cornerX = AltiumCoord::mmToRaw(rect.x1);
     altiumRect.cornerY = AltiumCoord::mmToRaw(rect.y1);
-    altiumRect.cornerXRadius = AltiumCoord::mmToRaw(qMax(0.0, rect.cornerRadiusX));
-    altiumRect.cornerYRadius = AltiumCoord::mmToRaw(qMax(0.0, rect.cornerRadiusY));
+    altiumRect.cornerXRadius = AltiumCoord::mmToRaw(finiteNonNegative(rect.cornerRadiusX));
+    altiumRect.cornerYRadius = AltiumCoord::mmToRaw(finiteNonNegative(rect.cornerRadiusY));
     altiumRect.lineWidth = AltiumCoord::lineWidthMmToIndex(rect.strokeWidth);
     altiumRect.lineStyle = toAltiumLineStyle(rect.strokeStyle);
     altiumRect.color = toAltiumColor(rect.strokeColor);
@@ -731,8 +753,9 @@ AltiumSchEllipse ExporterAltiumSymbol::convertCircle(const IR::SymbolCircleIR& c
     AltiumSchEllipse altiumEllipse;
     altiumEllipse.centerX = AltiumCoord::mmToRaw(circle.center.x());
     altiumEllipse.centerY = AltiumCoord::mmToRaw(circle.center.y());
-    altiumEllipse.radiusX = AltiumCoord::mmToRaw(circle.radius);
-    altiumEllipse.radiusY = AltiumCoord::mmToRaw(circle.radius);
+    const double radius = finiteNonNegative(circle.radius);
+    altiumEllipse.radiusX = AltiumCoord::mmToRaw(radius);
+    altiumEllipse.radiusY = AltiumCoord::mmToRaw(radius);
     altiumEllipse.lineWidth = AltiumCoord::lineWidthMmToIndex(circle.strokeWidth);
     altiumEllipse.lineStyle = toAltiumLineStyle(circle.strokeStyle);
     altiumEllipse.color = toAltiumColor(circle.strokeColor);
@@ -959,7 +982,7 @@ AltiumSchPie ExporterAltiumSymbol::convertPie(const IR::SymbolPieIR& pie) {
     AltiumSchPie altiumPie;
     altiumPie.centerX = AltiumCoord::mmToRaw(pie.center.x());
     altiumPie.centerY = AltiumCoord::mmToRaw(pie.center.y());
-    altiumPie.radius = AltiumCoord::mmToRaw(qMax(0.0, pie.radius));
+    altiumPie.radius = AltiumCoord::mmToRaw(finiteNonNegative(pie.radius));
     altiumPie.startAngle = pie.startAngle;
     altiumPie.endAngle = pie.endAngle;
     altiumPie.lineWidth = AltiumCoord::lineWidthMmToIndex(pie.strokeWidth);
@@ -978,8 +1001,8 @@ AltiumSchEllipticalArc ExporterAltiumSymbol::convertEllipticalArc(const IR::Symb
     AltiumSchEllipticalArc altiumArc;
     altiumArc.centerX = AltiumCoord::mmToRaw(arc.center.x());
     altiumArc.centerY = AltiumCoord::mmToRaw(arc.center.y());
-    altiumArc.radiusX = AltiumCoord::mmToRaw(qMax(0.0, arc.radiusX));
-    altiumArc.radiusY = AltiumCoord::mmToRaw(qMax(0.0, arc.radiusY));
+    altiumArc.radiusX = AltiumCoord::mmToRaw(finiteNonNegative(arc.radiusX));
+    altiumArc.radiusY = AltiumCoord::mmToRaw(finiteNonNegative(arc.radiusY));
     altiumArc.startAngle = arc.startAngle;
     altiumArc.endAngle = arc.endAngle;
     altiumArc.lineWidth = AltiumCoord::lineWidthMmToIndex(arc.strokeWidth);

@@ -1280,6 +1280,24 @@ private slots:
         QVERIFY(invalidBezierExporter.diagnostics().contains(
             QStringLiteral("符号 INVALID_BEZIER Bézier 图元 0 的控制点数量为 2，已跳过")));
 
+        IR::SymbolComponentIR invalidGeometrySymbol;
+        invalidGeometrySymbol.name = QStringLiteral("INVALID_GEOMETRY");
+        IR::SymbolCircleIR invalidCircle;
+        invalidCircle.radius = -1.0;
+        invalidGeometrySymbol.circles.append(invalidCircle);
+        IR::SymbolArcIR degenerateArc;
+        degenerateArc.startPoint = QPointF(0.0, 0.0);
+        degenerateArc.midPoint = QPointF(1.0, 1.0);
+        degenerateArc.endPoint = QPointF(2.0, 2.0);
+        invalidGeometrySymbol.arcs.append(degenerateArc);
+        ExporterAltiumSymbol invalidGeometryExporter;
+        const QString invalidGeometryPath = QDir(tempDir.path()).filePath(QStringLiteral("invalid-geometry.SchLib"));
+        QVERIFY(invalidGeometryExporter.exportSymbol(invalidGeometrySymbol, invalidGeometryPath));
+        QVERIFY(invalidGeometryExporter.diagnostics().contains(
+            QStringLiteral("符号 INVALID_GEOMETRY 圆图元 0 的半径无效，已钳制为非负值")));
+        QVERIFY(invalidGeometryExporter.diagnostics().contains(
+            QStringLiteral("符号 INVALID_GEOMETRY 圆弧图元 0 三点退化，已使用安全回退圆心")));
+
         IR::SymbolComponentIR nativeArcSymbol;
         nativeArcSymbol.name = QStringLiteral("NATIVE_ARC");
         IR::SymbolPathIR nativeArcPath;
