@@ -68,10 +68,12 @@ QList<ParameterField> componentParameterFields(const AltiumSchComponent& compone
                                  int fontId = 1,
                                  uint32_t color = 0x000000,
                                  double fontSizeMm = 0.0) {
-        if (name.trimmed().isEmpty() || value.trimmed().isEmpty() || names.contains(name))
+        const QString normalizedName = name.trimmed();
+        const QString deduplicationKey = QStringLiteral("%1:%2").arg(normalizedName).arg(ownerPartId);
+        if (normalizedName.isEmpty() || value.trimmed().isEmpty() || names.contains(deduplicationKey))
             return;
         ParameterField field;
-        field.name = name.trimmed();
+        field.name = normalizedName;
         field.value = value.trimmed();
         field.hasLocation = hasLocation;
         field.locationX = locationX;
@@ -85,7 +87,7 @@ QList<ParameterField> componentParameterFields(const AltiumSchComponent& compone
         field.color = color;
         field.fontSizeMm = fontSizeMm;
         fields.append(field);
-        names.insert(field.name);
+        names.insert(deduplicationKey);
     };
 
     QString value = component.sourceMetadata.value(QStringLiteral("value")).trimmed();

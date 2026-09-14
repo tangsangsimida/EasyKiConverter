@@ -1057,6 +1057,15 @@ private slots:
         firstPartParameter.value = QStringLiteral("P1");
         firstPartParameter.partIndex = 0;
         rotatedTextSymbol.parameters.append(firstPartParameter);
+        IR::SymbolParameterIR sharedFirstPartParameter;
+        sharedFirstPartParameter.name = QStringLiteral("Shared");
+        sharedFirstPartParameter.value = QStringLiteral("P1");
+        sharedFirstPartParameter.partIndex = 0;
+        rotatedTextSymbol.parameters.append(sharedFirstPartParameter);
+        IR::SymbolParameterIR sharedSecondPartParameter = sharedFirstPartParameter;
+        sharedSecondPartParameter.value = QStringLiteral("P2");
+        sharedSecondPartParameter.partIndex = 1;
+        rotatedTextSymbol.parameters.append(sharedSecondPartParameter);
         IR::SymbolParameterIR commonParameter;
         commonParameter.name = QStringLiteral("公共参数");
         commonParameter.value = QStringLiteral("COMMON");
@@ -1072,6 +1081,7 @@ private slots:
         QVERIFY(rotatedTextData.contains("Orientation=3"));
         QVERIFY(rotatedTextData.contains("NAME=第一部件参数"));
         QVERIFY(rotatedTextData.contains("NAME=公共参数"));
+        QCOMPARE(rotatedTextData.count("NAME=Shared"), 2);
         const int rotatedParameterOffset = rotatedTextData.indexOf("NAME=角度参数");
         const int rotatedParameterRecordOffset = rotatedTextData.lastIndexOf("|RECORD=41|", rotatedParameterOffset);
         QVERIFY(rotatedParameterOffset > rotatedParameterRecordOffset);
