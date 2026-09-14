@@ -36,15 +36,17 @@ private slots:
         QCOMPARE(symbol->info().datasheet, QStringLiteral("https://example.test/datasheet.pdf"));
         QCOMPARE(symbol->bbox().width, 120.0);
         QCOMPARE(symbol->bbox().height, 80.0);
-        QCOMPARE(symbol->graphicOrder().size(), 4);
+        QCOMPARE(symbol->graphicOrder().size(), 5);
         QCOMPARE(symbol->graphicOrder().at(0).type, QStringLiteral("R"));
         QCOMPARE(symbol->graphicOrder().at(0).index, 0);
         QCOMPARE(symbol->graphicOrder().at(1).type, QStringLiteral("PT"));
         QCOMPARE(symbol->graphicOrder().at(1).index, 0);
-        QCOMPARE(symbol->graphicOrder().at(2).type, QStringLiteral("T"));
+        QCOMPARE(symbol->graphicOrder().at(2).type, QStringLiteral("A"));
         QCOMPARE(symbol->graphicOrder().at(2).index, 0);
-        QCOMPARE(symbol->graphicOrder().at(3).type, QStringLiteral("P"));
+        QCOMPARE(symbol->graphicOrder().at(3).type, QStringLiteral("T"));
         QCOMPARE(symbol->graphicOrder().at(3).index, 0);
+        QCOMPARE(symbol->graphicOrder().at(4).type, QStringLiteral("P"));
+        QCOMPARE(symbol->graphicOrder().at(4).index, 0);
 
         QCOMPARE(symbol->texts().size(), 1);
         QCOMPARE(symbol->texts().first().text, QStringLiteral("LABEL"));
@@ -69,11 +71,15 @@ private slots:
         QCOMPARE(symbolIr.paths.first().segments.first().type, IR::SymbolPathSegmentIR::Type::CubicBezier);
         QCOMPARE(symbolIr.paths.first().segments.last().type, IR::SymbolPathSegmentIR::Type::Line);
         QCOMPARE(symbolIr.paths.first().segments.first().end, QPointF(2.54, 0.0));
-        QCOMPARE(symbolIr.graphicOrder.size(), 4);
+        QCOMPARE(symbolIr.arcs.size(), 1);
+        QCOMPARE(symbolIr.arcs.first().startPoint, QPointF(0.0, 0.0));
+        QCOMPARE(symbolIr.arcs.first().endPoint, QPointF(5.08, 0.0));
+        QCOMPARE(symbolIr.graphicOrder.size(), 5);
         QCOMPARE(symbolIr.graphicOrder.at(0).type, QStringLiteral("R"));
         QCOMPARE(symbolIr.graphicOrder.at(1).type, QStringLiteral("PT"));
-        QCOMPARE(symbolIr.graphicOrder.at(2).type, QStringLiteral("T"));
-        QCOMPARE(symbolIr.graphicOrder.at(3).type, QStringLiteral("P"));
+        QCOMPARE(symbolIr.graphicOrder.at(2).type, QStringLiteral("A"));
+        QCOMPARE(symbolIr.graphicOrder.at(3).type, QStringLiteral("T"));
+        QCOMPARE(symbolIr.graphicOrder.at(4).type, QStringLiteral("P"));
         QCOMPARE(symbolIr.texts.size(), 1);
         QCOMPARE(symbolIr.texts.first().text, QStringLiteral("LABEL"));
         QCOMPARE(symbolIr.texts.first().anchor, QStringLiteral("start"));
@@ -112,7 +118,7 @@ private slots:
         EasyedaSymbolImporter importer;
         const QSharedPointer<SymbolData> symbol = importer.importSymbolData(fixture);
         QVERIFY(symbol);
-        QCOMPARE(symbol->graphicOrder().size(), 5);
+        QCOMPARE(symbol->graphicOrder().size(), 6);
         QCOMPARE(symbol->graphicOrder().last().type, QStringLiteral("UNKNOWN"));
         QCOMPARE(symbol->graphicOrder().last().index, -1);
 
@@ -172,6 +178,7 @@ private slots:
         QVERIFY(!symbolIr.name.isEmpty());
         QVERIFY(!symbolIr.rectangles.isEmpty());
         QVERIFY(!symbolIr.paths.isEmpty());
+        QVERIFY(!symbolIr.arcs.isEmpty());
         QVERIFY(!symbolIr.pins.isEmpty());
         QCOMPARE(symbolIr.sourceMetadata.value(QStringLiteral("manufacturer")), QStringLiteral("Fixture Inc"));
         QCOMPARE(symbolIr.sourceMetadata.value(QStringLiteral("lcscId")), QStringLiteral("C12345"));
@@ -200,6 +207,7 @@ private slots:
         QVERIFY(schLibData.contains("RECORD=10"));  // 圆角矩形
         QVERIFY(schLibData.contains("RECORD=5"));  // 路径中的三次 Bézier
         QVERIFY(schLibData.contains("RECORD=6"));  // 路径中的线段
+        QVERIFY(schLibData.contains("RECORD=12"));  // 原生圆弧
         QVERIFY(schLibData.contains("RECORD=4"));  // 普通文本
         QVERIFY(schLibData.contains("Text=LABEL"));
         QVERIFY(schLibData.contains("TextAnchor=start"));
@@ -230,6 +238,7 @@ private slots:
         bool foundRoundedRectangle = false;
         bool foundBezier = false;
         bool foundLine = false;
+        bool foundArc = false;
         bool foundText = false;
         bool foundBinaryPin = false;
         bool foundManufacturer = false;
@@ -248,6 +257,7 @@ private slots:
             foundRoundedRectangle |= recordType == QStringLiteral("10");
             foundBezier |= recordType == QStringLiteral("5");
             foundLine |= recordType == QStringLiteral("6");
+            foundArc |= recordType == QStringLiteral("12");
             foundText |= recordType == QStringLiteral("4") &&
                          record.parameters.value(QStringLiteral("Text")) == QStringLiteral("LABEL");
             if (recordType == QStringLiteral("4") &&
@@ -269,6 +279,7 @@ private slots:
         QVERIFY(foundRoundedRectangle);
         QVERIFY(foundBezier);
         QVERIFY(foundLine);
+        QVERIFY(foundArc);
         QVERIFY(foundText);
         QVERIFY(foundBinaryPin);
         QVERIFY(foundManufacturer);
@@ -306,7 +317,7 @@ private slots:
         QString actual;
         for (const auto& record : records) {
             if (record.recordType != 1 && record.recordType != 2 && record.recordType != 4 && record.recordType != 5 &&
-                record.recordType != 6 && record.recordType != 10) {
+                record.recordType != 6 && record.recordType != 10 && record.recordType != 12) {
                 continue;
             }
             actual += QStringLiteral("record=%1|owner=%2|display=%3|index=%4")
@@ -338,7 +349,7 @@ private slots:
                 contentIndexes.append(record.indexInSheet);
         }
         QVERIFY(hasBinaryPin);
-        QCOMPARE(contentIndexes, QList<int>({1, 2, 3, 5, 6}));
+        QCOMPARE(contentIndexes, QList<int>({1, 2, 3, 4, 6, 7}));
     }
 
     /**
