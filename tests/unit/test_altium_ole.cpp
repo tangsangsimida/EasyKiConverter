@@ -2619,9 +2619,9 @@ private slots:
     }
 
     /**
-     * @brief 路径分段编号出现缺口时回退，避免顺序写出提前终止。
+     * @brief 路径分段编号出现缺口时仍按实际索引写出全部图元。
      */
-    void gappedPathSegmentsFallBackWithoutDroppingGraphics() {
+    void gappedPathSegmentsPreserveGraphics() {
         QTemporaryDir tempDir;
         QVERIFY(tempDir.isValid());
 
@@ -2641,7 +2641,7 @@ private slots:
         AltiumSchLibWriter writer;
         const QString path = QDir(tempDir.path()).filePath(QStringLiteral("gapped-path.SchLib"));
         QVERIFY(writer.write({symbol}, path, QStringLiteral("gapped-path")));
-        QVERIFY(writer.diagnostics().contains(
+        QVERIFY(!writer.diagnostics().contains(
             QStringLiteral("符号 GAPPED_PATH 的 graphicOrder 不完整或包含无效引用，已回退到默认图元顺序")));
 
         QByteArray data;

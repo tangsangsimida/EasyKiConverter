@@ -492,13 +492,26 @@ void AltiumSchLibWriter::writeOrderedGraphic(AltiumBinaryWriter& writer,
                 return;
             }
         }
-        for (int segmentIndex = 0;; ++segmentIndex) {
-            bool found = false;
+        QSet<int> segmentIndexSet;
+        const auto collectSegmentIndices = [&](const auto& graphics) {
+            for (const auto& graphic : graphics) {
+                if (graphic.sourceGraphicType == order.type && graphic.sourceGraphicIndex == order.index &&
+                    matchesPart(graphic.sourcePartIndex) && graphic.sourceSegmentIndex >= 0) {
+                    segmentIndexSet.insert(graphic.sourceSegmentIndex);
+                }
+            }
+        };
+        collectSegmentIndices(component.paths);
+        collectSegmentIndices(component.beziers);
+        collectSegmentIndices(component.arcs);
+        collectSegmentIndices(component.ellipticalArcs);
+        QList<int> segmentIndices = segmentIndexSet.values();
+        std::sort(segmentIndices.begin(), segmentIndices.end());
+        for (const int segmentIndex : segmentIndices) {
             for (const AltiumSchPath& path : component.paths) {
                 if (path.sourceGraphicType == order.type && path.sourceGraphicIndex == order.index &&
                     matchesPart(path.sourcePartIndex) && path.sourceSegmentIndex == segmentIndex) {
                     writePathRecord(writer, path);
-                    found = true;
                     break;
                 }
             }
@@ -506,7 +519,6 @@ void AltiumSchLibWriter::writeOrderedGraphic(AltiumBinaryWriter& writer,
                 if (bezier.sourceGraphicType == order.type && bezier.sourceGraphicIndex == order.index &&
                     matchesPart(bezier.sourcePartIndex) && bezier.sourceSegmentIndex == segmentIndex) {
                     writeBezierRecord(writer, bezier);
-                    found = true;
                     break;
                 }
             }
@@ -514,7 +526,6 @@ void AltiumSchLibWriter::writeOrderedGraphic(AltiumBinaryWriter& writer,
                 if (arc.sourceGraphicType == order.type && arc.sourceGraphicIndex == order.index &&
                     matchesPart(arc.sourcePartIndex) && arc.sourceSegmentIndex == segmentIndex) {
                     writeArcRecord(writer, arc);
-                    found = true;
                     break;
                 }
             }
@@ -522,12 +533,9 @@ void AltiumSchLibWriter::writeOrderedGraphic(AltiumBinaryWriter& writer,
                 if (arc.sourceGraphicType == order.type && arc.sourceGraphicIndex == order.index &&
                     matchesPart(arc.sourcePartIndex) && arc.sourceSegmentIndex == segmentIndex) {
                     writeEllipticalArcRecord(writer, arc);
-                    found = true;
                     break;
                 }
             }
-            if (!found)
-                break;
         }
     }
 }
@@ -814,15 +822,10 @@ bool AltiumSchLibWriter::hasCompleteGraphicOrder(const AltiumSchComponent& compo
             return false;
     }
     for (auto it = pathSegments.cbegin(); it != pathSegments.cend(); ++it) {
-        if (it.value().isEmpty() || !it.value().contains(0))
+        // 段索引允许出现缺口：前面的来源段可能因几何量化或参数无效被跳过，
+        // 但后续有效段仍应按实际索引写出，而不是迫使整个图元回退到分组顺序。
+        if (it.value().isEmpty())
             return false;
-        int maxSegmentIndex = 0;
-        for (const int segmentIndex : it.value())
-            maxSegmentIndex = qMax(maxSegmentIndex, segmentIndex);
-        for (int segmentIndex = 1; segmentIndex <= maxSegmentIndex; ++segmentIndex) {
-            if (!it.value().contains(segmentIndex))
-                return false;
-        }
     }
 
     for (const QString& expectedKey : expected) {
