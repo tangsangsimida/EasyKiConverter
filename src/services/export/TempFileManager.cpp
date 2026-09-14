@@ -242,8 +242,14 @@ TempFileManager::~TempFileManager() {
         }
     }
     m_tempFiles.clear();
-    unregisterTempDirectoryUser(m_registeredTempDirectory);
+    const QString releasedTempDirectory = m_registeredTempDirectory;
+    unregisterTempDirectoryUser(releasedTempDirectory);
     m_registeredTempDirectory.clear();
+    if (!releasedTempDirectory.isEmpty() && !hasOtherTempDirectoryUsers(releasedTempDirectory)) {
+        QDir tempDir(releasedTempDirectory);
+        if (tempDir.exists() && tempDir.isEmpty())
+            QDir().rmdir(releasedTempDirectory);
+    }
 }
 
 void TempFileManager::setOutputPath(const QString& outputPath) {
