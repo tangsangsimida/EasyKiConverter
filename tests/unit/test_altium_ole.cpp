@@ -787,6 +787,53 @@ private slots:
     }
 
     /**
+     * @brief 验证嵌入图片的 Storage 文件名冲突和无效数据诊断
+     * @details 确认重复文件名会被稳定改名，非法文件名和空数据不会进入 Storage，且有效压缩数据可回读。
+     */
+    void validatesEmbeddedImageStorageNamesAndPayloads() {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        const QByteArray imageData = QByteArrayLiteral("embedded-image-payload");
+        const auto makeImage = [&](const QString& fileName, const QByteArray& data) {
+            AltiumSchImage image;
+            image.fileName = fileName;
+            image.data = data;
+            image.embedImage = true;
+            image.cornerX = 100000;
+            image.cornerY = 100000;
+            return image;
+        };
+
+        AltiumSchComponent component;
+        component.name = QStringLiteral("IMAGE_STORAGE_DIAGNOSTICS");
+        component.images.append(makeImage(QStringLiteral("same.png"), imageData));
+        component.images.append(makeImage(QStringLiteral("SAME.PNG"), imageData));
+        component.images.append(makeImage(QStringLiteral("invalid?.png"), imageData));
+        component.images.append(makeImage(QStringLiteral("empty.png"), {}));
+
+        AltiumSchLibWriter writer;
+        const QString outputPath = QDir(tempDir.path()).filePath(QStringLiteral("image-diagnostics.SchLib"));
+        QVERIFY(writer.write({component}, outputPath));
+        const QString diagnostics = writer.diagnostics().join('\n');
+        QVERIFY(diagnostics.contains(QStringLiteral("嵌入文件名 SAME.PNG 重复")));
+        QVERIFY(diagnostics.contains(QStringLiteral("嵌入文件名无效: invalid?.png")));
+        QVERIFY(diagnostics.contains(QStringLiteral("嵌入数据为空")));
+
+        AltiumSchLibReader reader;
+        QVERIFY2(reader.open(outputPath), qPrintable(reader.errorString()));
+        QVector<AltiumSchLibReader::ImageStorageEntry> entries;
+        QVERIFY2(reader.readImageStorage(&entries), qPrintable(reader.errorString()));
+        QCOMPARE(entries.size(), 2);
+        QCOMPARE(entries.at(0).name, QStringLiteral("same.png"));
+        QCOMPARE(entries.at(1).name, QStringLiteral("SAME_2.PNG"));
+        QByteArray expectedSize(4, '\0');
+        expectedSize[3] = static_cast<char>(imageData.size());
+        QCOMPARE(qUncompress(expectedSize + entries.at(0).compressedData), imageData);
+        QCOMPARE(qUncompress(expectedSize + entries.at(1).compressedData), imageData);
+    }
+
+    /**
      * @brief 验证 SchLib 和 PcbLib 完整写入和流结构
      * @details 写入包含引脚、矩形、路径的符号和包含焊盘、走线的封装，
      *          验证 FileHeader 参数、Data 流内容、Library 元数据和图元记录布局
