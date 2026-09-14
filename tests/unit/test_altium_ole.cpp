@@ -987,6 +987,23 @@ private slots:
         QCOMPARE(imageEntries.first().flags, quint8(1));
         QCOMPARE(imageEntries.first().name, QStringLiteral("logo.png"));
         QCOMPARE(qUncompress(expectedSize + imageEntries.first().compressedData), image.data);
+        QVector<AltiumSchLibReader::Record> implementationRecords;
+        QVERIFY2(imageReader.readComponentRecords(QStringLiteral("C2040"), &implementationRecords),
+                 qPrintable(imageReader.errorString()));
+        bool foundUnicodeImplementation = false;
+        bool foundUnicodeImplementationParameters = false;
+        for (const AltiumSchLibReader::Record& record : implementationRecords) {
+            if (record.recordType == 45 &&
+                record.parameters.value(QStringLiteral("MODELNAME")) == QStringLiteral("模型-高精度")) {
+                foundUnicodeImplementation = true;
+            }
+            if (record.recordType == 48 &&
+                record.parameters.value(QStringLiteral("热模型")) == QStringLiteral("高精度")) {
+                foundUnicodeImplementationParameters = true;
+            }
+        }
+        QVERIFY(foundUnicodeImplementation);
+        QVERIFY(foundUnicodeImplementationParameters);
         QVERIFY(schData.contains("Mirror=T"));
         QVERIFY(schData.contains("OWNERPARTID=1"));
         QVERIFY(schData.contains("PartCount=2"));
