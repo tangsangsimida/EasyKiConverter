@@ -312,6 +312,19 @@ private slots:
 
         QVERIFY2(TestPaths::compareTextToGolden(actual, QStringLiteral("altium/symbol_basic_records.txt"), &error),
                  qPrintable(error));
+
+        QList<int> contentIndexes;
+        bool hasBinaryPin = false;
+        for (const auto& record : records) {
+            if (!record.hasParameters && record.recordType == 2) {
+                hasBinaryPin = true;
+                continue;
+            }
+            if (record.indexInSheet >= 0)
+                contentIndexes.append(record.indexInSheet);
+        }
+        QVERIFY(hasBinaryPin);
+        QCOMPARE(contentIndexes, QList<int>({1, 2, 3, 5, 6}));
     }
 
     /**
