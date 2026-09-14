@@ -605,8 +605,20 @@ private slots:
         AltiumSchComponent invalidPartCount;
         invalidPartCount.name = QStringLiteral("INVALID_PART_COUNT");
         invalidPartCount.partCount = 0;
+        AltiumSchPin invalidOwnerPin;
+        invalidOwnerPin.name = QStringLiteral("A");
+        invalidOwnerPin.designator = QStringLiteral("1");
+        invalidOwnerPin.ownerPartId = 0;
+        invalidPartCount.pins.append(invalidOwnerPin);
+        AltiumSchRectangle invalidOwnerRectangle;
+        invalidOwnerRectangle.cornerX = 100000;
+        invalidOwnerRectangle.cornerY = 100000;
+        invalidOwnerRectangle.ownerPartId = 0;
+        invalidPartCount.rectangles.append(invalidOwnerRectangle);
         QVERIFY(writer.write({invalidPartCount}, outputPath));
         QVERIFY(writer.diagnostics().join('\n').contains(QStringLiteral("partCount 无效")));
+        QVERIFY(writer.diagnostics().join('\n').contains(QStringLiteral("引脚 OWNERPARTID=0 无效")));
+        QVERIFY(writer.diagnostics().join('\n').contains(QStringLiteral("图元 OWNERPARTID=0 无效")));
 
         QByteArray header;
         QVERIFY(readCfbStream(outputPath, QStringLiteral("FileHeader"), header));
@@ -617,6 +629,14 @@ private slots:
         QVector<AltiumSchLibReader::ImageStorageEntry> emptyImageEntries;
         QVERIFY2(emptyImageReader.readImageStorage(&emptyImageEntries), qPrintable(emptyImageReader.errorString()));
         QVERIFY(emptyImageEntries.isEmpty());
+
+        QVector<AltiumSchLibReader::Record> invalidOwnerRecords;
+        QVERIFY2(emptyImageReader.readComponentRecords(QStringLiteral("INVALID_PART_COUNT"), &invalidOwnerRecords),
+                 qPrintable(emptyImageReader.errorString()));
+        for (const auto& record : invalidOwnerRecords) {
+            if (record.recordType == 2 || record.recordType == 9)
+                QCOMPARE(record.ownerPartId, 1);
+        }
     }
 
     /**

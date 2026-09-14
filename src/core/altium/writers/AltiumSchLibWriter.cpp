@@ -854,7 +854,8 @@ void AltiumSchLibWriter::writePinRecord(AltiumBinaryWriter& writer, const Altium
 
     writer.writeInt32(2);  // Record type = 2
     writer.writeUInt8(0);  // Unknown
-    writer.writeInt16(static_cast<int16_t>(qBound(-1, pin.ownerPartId, 32767)));  // OwnerPartId，-1 表示公共 Part Zero
+    writer.writeInt16(static_cast<int16_t>(normalizeOwnerPartId(pin.ownerPartId, QStringLiteral("引脚"))));
+    // OwnerPartId 为 -1 表示公共 Part Zero。
     writer.writeUInt8(0);  // OwnerPartDisplayMode
 
     // Symbol edges / IEEE 装饰。四个字节必须位于描述字符串之前。
@@ -1458,7 +1459,7 @@ void AltiumSchLibWriter::writeComponentParameterRecords(AltiumBinaryWriter& writ
     for (const ParameterField& field : componentParameterFields(component)) {
         QMap<QString, QString> parameterParams;
         parameterParams["RECORD"] = "41";
-        const int ownerPartId = field.ownerPartId < 0 ? -1 : qMax(1, field.ownerPartId);
+        const int ownerPartId = normalizeOwnerPartId(field.ownerPartId, QStringLiteral("参数"));
         parameterParams["OWNERPARTID"] = QString::number(ownerPartId);
         if (ownerPartId >= 1)
             addContentIndex(parameterParams);
@@ -1620,12 +1621,26 @@ void AltiumSchLibWriter::addContentIndex(QMap<QString, QString>& params) {
  * @param params 参数映射（输出）
  * @param ownerPartId 所属部件 ID
  */
+int AltiumSchLibWriter::normalizeOwnerPartId(int ownerPartId, const QString& context) {
+    if (ownerPartId == 0 || ownerPartId < -1 || ownerPartId > 32767) {
+        const int normalized = ownerPartId < 0 ? -1 : qBound(1, ownerPartId, 32767);
+        const QString diagnostic = QStringLiteral("Altium SchLib %1 OWNERPARTID=%2 无效，已规范化为 %3")
+                                       .arg(context)
+                                       .arg(ownerPartId)
+                                       .arg(normalized);
+        m_diagnostics.append(diagnostic);
+        qWarning() << "AltiumSchLibWriter:" << diagnostic;
+        return normalized;
+    }
+    return ownerPartId;
+}
+
 void AltiumSchLibWriter::addOwnerParams(QMap<QString, QString>& params, int ownerPartId) {
     params["ISNOTACCESIBLE"] = "T";
     addContentIndex(params);
     // 当前每个符号只有一个显示模式；真实 SchLib 样本使用从 1 开始的显示模式编号。
     params["OWNERPARTDISPLAYMODE"] = "1";
-    params["OWNERPARTID"] = QString::number(ownerPartId < 0 ? -1 : qMax(1, ownerPartId));
+    params["OWNERPARTID"] = QString::number(normalizeOwnerPartId(ownerPartId, QStringLiteral("图元")));
 }
 
 }  // namespace EasyKiConverter
