@@ -957,6 +957,13 @@ private slots:
         QCOMPARE(schComponents.first().sectionKey, QStringLiteral("C2040"));
         QCOMPARE(schComponents.first().partCount, 1);
         QCOMPARE(schLibraryReader.headerParameters().value(QStringLiteral("COMPCOUNT")), QStringLiteral("1"));
+        const auto fonts = schLibraryReader.fonts();
+        QVERIFY(fonts.size() >= 2);
+        QCOMPARE(fonts.at(0).name, QStringLiteral("Times New Roman"));
+        QCOMPARE(fonts.at(1).name, QStringLiteral("Arial"));
+        QCOMPARE(fonts.at(1).size, 8);
+        QVERIFY(fonts.at(1).bold);
+        QVERIFY(fonts.at(1).italic);
         QByteArray componentData;
         QVERIFY(schLibraryReader.readComponentData(0, &componentData));
         QVERIFY(componentData.contains("LibReference=C2040"));

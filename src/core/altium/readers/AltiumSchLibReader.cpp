@@ -48,6 +48,7 @@ bool readBinaryRecordMetadata(const QByteArray& payload, int* recordType, int* o
 bool AltiumSchLibReader::fail(const QString& message) {
     m_components.clear();
     m_headerParameters.clear();
+    m_fonts.clear();
     m_errorMessage = message;
     return false;
 }
@@ -55,6 +56,7 @@ bool AltiumSchLibReader::fail(const QString& message) {
 bool AltiumSchLibReader::open(const QString& filePath) {
     m_components.clear();
     m_headerParameters.clear();
+    m_fonts.clear();
     m_errorMessage.clear();
 
     if (!m_oleReader.open(filePath))
@@ -67,6 +69,25 @@ bool AltiumSchLibReader::open(const QString& filePath) {
     AltiumBinaryReader headerReader(headerData);
     if (!headerReader.readCStringParameterBlock(&m_headerParameters))
         return fail(QStringLiteral("SchLib FileHeader 参数块无效: %1").arg(headerReader.errorString()));
+
+    bool fontCountOk = true;
+    const int fontCount = m_headerParameters.contains(QStringLiteral("FontIdCount"))
+                              ? m_headerParameters.value(QStringLiteral("FontIdCount")).toInt(&fontCountOk)
+                              : 0;
+    if (!fontCountOk || fontCount < 0)
+        return fail(QStringLiteral("SchLib FileHeader 的 FontIdCount 无效"));
+    m_fonts.reserve(fontCount);
+    for (int i = 1; i <= fontCount; ++i) {
+        FontInfo font;
+        font.name = m_headerParameters.value(QStringLiteral("FontName%1").arg(i));
+        font.size = parameterInt(m_headerParameters, QStringLiteral("Size%1").arg(i), 0);
+        font.bold = m_headerParameters.value(QStringLiteral("Bold%1").arg(i)) == QStringLiteral("T");
+        font.italic = m_headerParameters.value(QStringLiteral("Italic%1").arg(i)) == QStringLiteral("T");
+        font.underline = m_headerParameters.value(QStringLiteral("Underline%1").arg(i)) == QStringLiteral("T");
+        if (font.name.isEmpty() || font.size <= 0)
+            return fail(QStringLiteral("SchLib FileHeader 的字体 %1 无效").arg(i));
+        m_fonts.append(font);
+    }
 
     bool componentCountOk = false;
     const int componentCount = m_headerParameters.value(QStringLiteral("COMPCOUNT")).toInt(&componentCountOk);
@@ -132,6 +153,10 @@ QVector<AltiumSchLibReader::ComponentInfo> AltiumSchLibReader::components() cons
 
 QMap<QString, QString> AltiumSchLibReader::headerParameters() const {
     return m_headerParameters;
+}
+
+QVector<AltiumSchLibReader::FontInfo> AltiumSchLibReader::fonts() const {
+    return m_fonts;
 }
 
 int AltiumSchLibReader::componentIndex(const QString& componentName) const {

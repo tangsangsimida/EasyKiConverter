@@ -40,6 +40,15 @@ public:
         QByteArray compressedData;
     };
 
+    /** @brief SchLib FileHeader 中的字体表条目 */
+    struct FontInfo {
+        QString name;
+        int size = 0;
+        bool bold = false;
+        bool italic = false;
+        bool underline = false;
+    };
+
     /**
      * @brief 打开并解析 SchLib 文件
      * @param filePath 文件路径
@@ -51,6 +60,8 @@ public:
     QVector<ComponentInfo> components() const;
     /** @brief 获取 FileHeader 参数 */
     QMap<QString, QString> headerParameters() const;
+    /** @brief 获取按 FontID 顺序排列的字体表 */
+    QVector<FontInfo> fonts() const;
     /** @brief 获取指定组件的 Data 流 */
     bool readComponentData(int componentIndex, QByteArray* data) const;
     /** @brief 获取指定组件的 Data 流 */
@@ -79,6 +90,7 @@ private:
     OLECompoundReader m_oleReader;
     QVector<ComponentInfo> m_components;
     QMap<QString, QString> m_headerParameters;
+    QVector<FontInfo> m_fonts;
     mutable QString m_errorMessage;
 };
 
