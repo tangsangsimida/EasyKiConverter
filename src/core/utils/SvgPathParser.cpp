@@ -106,6 +106,11 @@ QList<QPointF> SvgPathParser::parsePath(const QString& path) {
             i++;
             continue;
         }
+        // 参数只能由前面的命令消费；遇到残留数字时跳过，避免把参数误报为命令。
+        if (!cmd.at(0).isLetter()) {
+            i++;
+            continue;
+        }
 
         QChar command = cmd[0].toUpper();
 
