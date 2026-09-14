@@ -244,6 +244,10 @@ bool AltiumSchLibWriter::write(const QList<AltiumSchComponent>& components,
             qWarning() << "AltiumSchLibWriter: Refusing to write a component without a name";
             return false;
         }
+        if (component.partCount <= 0) {
+            m_diagnostics.append(
+                QStringLiteral("Altium SchLib 组件 %1 的 partCount 无效，已规范化为 1").arg(component.name));
+        }
     }
     m_fonts.clear();
     m_embeddedImageNames.clear();

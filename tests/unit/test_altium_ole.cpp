@@ -601,6 +601,16 @@ private slots:
         QVERIFY(!writer.write({named}, QString()));
         QVERIFY(writer.diagnostics().join('\n').contains(QStringLiteral("输出路径为空")));
         QVERIFY(!writer.diagnostics().join('\n').contains(QStringLiteral("组件名称为空")));
+
+        AltiumSchComponent invalidPartCount;
+        invalidPartCount.name = QStringLiteral("INVALID_PART_COUNT");
+        invalidPartCount.partCount = 0;
+        QVERIFY(writer.write({invalidPartCount}, outputPath));
+        QVERIFY(writer.diagnostics().join('\n').contains(QStringLiteral("partCount 无效")));
+
+        QByteArray header;
+        QVERIFY(readCfbStream(outputPath, QStringLiteral("FileHeader"), header));
+        QVERIFY(header.contains("PARTCOUNT0=2"));
     }
 
     /**
