@@ -363,20 +363,25 @@ void AltiumSchLibWriter::writeSectionKeys(OLECompoundWriter& ole,
 void AltiumSchLibWriter::writeOrderedGraphic(AltiumBinaryWriter& writer,
                                              const AltiumSchComponent& component,
                                              const AltiumSchGraphicOrder& order) {
+    const auto matchesPart = [&order](int sourcePartIndex) { return sourcePartIndex == order.partIndex; };
+    const auto matchesOwner = [&order](int ownerPartId) {
+        return ownerPartId == (order.partIndex < 0 ? -1 : order.partIndex + 1);
+    };
     if (order.type == QStringLiteral("P")) {
-        if (order.index >= 0 && order.index < component.pins.size())
+        if (order.index >= 0 && order.index < component.pins.size() &&
+            matchesOwner(component.pins.at(order.index).ownerPartId))
             writePinRecord(writer, component.pins.at(order.index));
         return;
     }
     if (order.type == QStringLiteral("R")) {
         for (const AltiumSchRoundRectangle& rect : component.roundRectangles) {
-            if (rect.sourceGraphicIndex == order.index) {
+            if (rect.sourceGraphicIndex == order.index && matchesPart(rect.sourcePartIndex)) {
                 writeRoundRectangleRecord(writer, rect);
                 return;
             }
         }
         for (const AltiumSchRectangle& rect : component.rectangles) {
-            if (rect.sourceGraphicIndex == order.index) {
+            if (rect.sourceGraphicIndex == order.index && matchesPart(rect.sourcePartIndex)) {
                 writeRectangleRecord(writer, rect);
                 return;
             }
@@ -385,7 +390,8 @@ void AltiumSchLibWriter::writeOrderedGraphic(AltiumBinaryWriter& writer,
     }
     if (order.type == QStringLiteral("C") || order.type == QStringLiteral("E")) {
         for (const AltiumSchEllipse& ellipse : component.ellipses) {
-            if (ellipse.sourceGraphicType == order.type && ellipse.sourceGraphicIndex == order.index) {
+            if (ellipse.sourceGraphicType == order.type && ellipse.sourceGraphicIndex == order.index &&
+                matchesPart(ellipse.sourcePartIndex)) {
                 writeEllipseRecord(writer, ellipse);
                 return;
             }
@@ -394,7 +400,8 @@ void AltiumSchLibWriter::writeOrderedGraphic(AltiumBinaryWriter& writer,
     }
     if (order.type == QStringLiteral("A")) {
         for (const AltiumSchArc& arc : component.arcs) {
-            if (arc.sourceGraphicType == order.type && arc.sourceGraphicIndex == order.index) {
+            if (arc.sourceGraphicType == order.type && arc.sourceGraphicIndex == order.index &&
+                matchesPart(arc.sourcePartIndex)) {
                 writeArcRecord(writer, arc);
                 return;
             }
@@ -403,7 +410,7 @@ void AltiumSchLibWriter::writeOrderedGraphic(AltiumBinaryWriter& writer,
     }
     if (order.type == QStringLiteral("PL")) {
         for (const AltiumSchPolyline& polyline : component.polylines) {
-            if (polyline.sourceGraphicIndex == order.index) {
+            if (polyline.sourceGraphicIndex == order.index && matchesPart(polyline.sourcePartIndex)) {
                 writePolylineRecord(writer, polyline);
                 return;
             }
@@ -411,13 +418,14 @@ void AltiumSchLibWriter::writeOrderedGraphic(AltiumBinaryWriter& writer,
         return;
     }
     if (order.type == QStringLiteral("PG")) {
-        if (order.index >= 0 && order.index < component.polygons.size())
+        if (order.index >= 0 && order.index < component.polygons.size() &&
+            matchesPart(component.polygons.at(order.index).sourcePartIndex))
             writePolygonRecord(writer, component.polygons.at(order.index));
         return;
     }
     if (order.type == QStringLiteral("T")) {
         for (const AltiumSchText& text : component.texts) {
-            if (!text.isPinLabel && text.sourceGraphicIndex == order.index) {
+            if (!text.isPinLabel && text.sourceGraphicIndex == order.index && matchesPart(text.sourcePartIndex)) {
                 writeTextRecord(writer, text);
                 return;
             }
@@ -427,7 +435,7 @@ void AltiumSchLibWriter::writeOrderedGraphic(AltiumBinaryWriter& writer,
     if (order.type == QStringLiteral("PT")) {
         for (const AltiumSchPath& path : component.paths) {
             if (path.sourceGraphicType == order.type && path.sourceGraphicIndex == order.index &&
-                path.sourceSegmentIndex < 0) {
+                matchesPart(path.sourcePartIndex) && path.sourceSegmentIndex < 0) {
                 writePathRecord(writer, path);
                 return;
             }
@@ -436,7 +444,7 @@ void AltiumSchLibWriter::writeOrderedGraphic(AltiumBinaryWriter& writer,
             bool found = false;
             for (const AltiumSchPath& path : component.paths) {
                 if (path.sourceGraphicType == order.type && path.sourceGraphicIndex == order.index &&
-                    path.sourceSegmentIndex == segmentIndex) {
+                    matchesPart(path.sourcePartIndex) && path.sourceSegmentIndex == segmentIndex) {
                     writePathRecord(writer, path);
                     found = true;
                     break;
@@ -444,7 +452,7 @@ void AltiumSchLibWriter::writeOrderedGraphic(AltiumBinaryWriter& writer,
             }
             for (const AltiumSchBezier& bezier : component.beziers) {
                 if (bezier.sourceGraphicType == order.type && bezier.sourceGraphicIndex == order.index &&
-                    bezier.sourceSegmentIndex == segmentIndex) {
+                    matchesPart(bezier.sourcePartIndex) && bezier.sourceSegmentIndex == segmentIndex) {
                     writeBezierRecord(writer, bezier);
                     found = true;
                     break;
@@ -452,7 +460,7 @@ void AltiumSchLibWriter::writeOrderedGraphic(AltiumBinaryWriter& writer,
             }
             for (const AltiumSchArc& arc : component.arcs) {
                 if (arc.sourceGraphicType == order.type && arc.sourceGraphicIndex == order.index &&
-                    arc.sourceSegmentIndex == segmentIndex) {
+                    matchesPart(arc.sourcePartIndex) && arc.sourceSegmentIndex == segmentIndex) {
                     writeArcRecord(writer, arc);
                     found = true;
                     break;

@@ -1061,6 +1061,13 @@ private slots:
         commonRectangle.y1 = -1.0;
         commonRectangle.partIndex = -1;
         symbol.rectangles.append(commonRectangle);
+        IR::SymbolRectangleIR secondPartRectangle;
+        secondPartRectangle.x0 = 4.0;
+        secondPartRectangle.y0 = 3.0;
+        secondPartRectangle.x1 = 5.0;
+        secondPartRectangle.y1 = 4.0;
+        secondPartRectangle.partIndex = 0;
+        symbol.rectangles.append(secondPartRectangle);
         IR::SymbolImageIR image;
         image.x0 = -1.0;
         image.y0 = -0.5;
@@ -1074,11 +1081,12 @@ private slots:
         duplicateImage.fileName = QStringLiteral("C:\\assets\\multipart.png");
         symbol.images.append(duplicateImage);
         symbol.graphicOrder = {
-            {QStringLiteral("P"), 0, 0},
+            {QStringLiteral("P"), 0, 1},
             {QStringLiteral("R"), 0, 1},
             {QStringLiteral("PT"), 0, 1},
-            {QStringLiteral("P"), 1, 0},
-            {QStringLiteral("R"), 1, -1},
+            {QStringLiteral("P"), 1, -1},
+            {QStringLiteral("R"), 0, -1},
+            {QStringLiteral("R"), 0, 0},
         };
 
         const QString schPath = QDir(tempDir.path()).filePath(QStringLiteral("multipart.SchLib"));

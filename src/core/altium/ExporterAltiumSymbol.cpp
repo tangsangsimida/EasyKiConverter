@@ -232,6 +232,14 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
     component.aliases = data.aliases;
     for (const IR::SymbolGraphicOrderIR& order : data.graphicOrder)
         component.graphicOrder.append({order.type, order.index, order.partIndex});
+    const auto sourceIndexForPart = [](const auto& values, int index, int partIndex) {
+        int localIndex = 0;
+        for (int i = 0; i < index; ++i) {
+            if (values.at(i).partIndex == partIndex)
+                ++localIndex;
+        }
+        return localIndex;
+    };
 
     for (const IR::SymbolParameterIR& parameter : data.parameters) {
         AltiumSchParameter altiumParameter;
@@ -261,6 +269,7 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
             text.orientation = toAltiumOrientation(pin.nameRotation);
             text.ownerPartId = pin.commonToAllParts ? -1 : toAltiumOwnerPartId(pin.partIndex);
             text.isPinLabel = true;
+            text.sourcePartIndex = pin.commonToAllParts ? -1 : pin.partIndex;
             component.texts.append(text);
         }
         if (pin.hasNumberPosition && !pin.designator.isEmpty()) {
@@ -274,6 +283,7 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
             text.orientation = toAltiumOrientation(pin.numberRotation);
             text.ownerPartId = pin.commonToAllParts ? -1 : toAltiumOwnerPartId(pin.partIndex);
             text.isPinLabel = true;
+            text.sourcePartIndex = pin.commonToAllParts ? -1 : pin.partIndex;
             component.texts.append(text);
         }
     }
@@ -283,31 +293,40 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
         const IR::SymbolRectangleIR& r = data.rectangles.at(i);
         if (r.cornerRadiusX > 0.0 || r.cornerRadiusY > 0.0) {
             AltiumSchRoundRectangle rectangle = convertRoundRectangle(r);
-            rectangle.sourceGraphicIndex = i;
+            rectangle.sourceGraphicIndex = sourceIndexForPart(data.rectangles, i, r.partIndex);
+            rectangle.sourcePartIndex = r.partIndex;
             component.roundRectangles.append(rectangle);
         } else {
             AltiumSchRectangle rectangle = convertRectangle(r);
-            rectangle.sourceGraphicIndex = i;
+            rectangle.sourceGraphicIndex = sourceIndexForPart(data.rectangles, i, r.partIndex);
+            rectangle.sourcePartIndex = r.partIndex;
             component.rectangles.append(rectangle);
         }
     }
     for (int i = 0; i < data.circles.size(); ++i) {
         AltiumSchEllipse ellipse = convertCircle(data.circles.at(i));
         ellipse.sourceGraphicType = QStringLiteral("C");
-        ellipse.sourceGraphicIndex = i;
+        ellipse.sourceGraphicIndex = sourceIndexForPart(data.circles, i, data.circles.at(i).partIndex);
+        ellipse.sourcePartIndex = data.circles.at(i).partIndex;
         component.ellipses.append(ellipse);
     }
     for (int i = 0; i < data.arcs.size(); ++i) {
         AltiumSchArc arc = convertArc(data.arcs.at(i));
         arc.sourceGraphicType = QStringLiteral("A");
-        arc.sourceGraphicIndex = i;
+        arc.sourceGraphicIndex = sourceIndexForPart(data.arcs, i, data.arcs.at(i).partIndex);
+        arc.sourcePartIndex = data.arcs.at(i).partIndex;
         component.arcs.append(arc);
     }
-    for (const IR::SymbolPolygonIR& p : data.polygons)
-        component.polygons.append(convertPolygon(p));
+    for (int i = 0; i < data.polygons.size(); ++i) {
+        AltiumSchPolygon polygon = convertPolygon(data.polygons.at(i));
+        polygon.sourceGraphicIndex = sourceIndexForPart(data.polygons, i, data.polygons.at(i).partIndex);
+        polygon.sourcePartIndex = data.polygons.at(i).partIndex;
+        component.polygons.append(polygon);
+    }
     for (int i = 0; i < data.polylines.size(); ++i) {
         AltiumSchPolyline polyline = convertPolyline(data.polylines.at(i));
-        polyline.sourceGraphicIndex = i;
+        polyline.sourceGraphicIndex = sourceIndexForPart(data.polylines, i, data.polylines.at(i).partIndex);
+        polyline.sourcePartIndex = data.polylines.at(i).partIndex;
         component.polylines.append(polyline);
     }
     for (int pathIndex = 0; pathIndex < data.paths.size(); ++pathIndex) {
@@ -324,8 +343,9 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
                     path.color = toAltiumColor(p.strokeColor);
                     path.ownerPartId = toAltiumOwnerPartId(p.partIndex);
                     path.sourceGraphicType = QStringLiteral("PT");
-                    path.sourceGraphicIndex = pathIndex;
+                    path.sourceGraphicIndex = sourceIndexForPart(data.paths, pathIndex, p.partIndex);
                     path.sourceSegmentIndex = segmentIndex;
+                    path.sourcePartIndex = p.partIndex;
                     path.vertices.append(QPointF(AltiumCoord::mmToSchematicUnits(segment.start.x()),
                                                  AltiumCoord::mmToSchematicUnits(segment.start.y())));
                     path.vertices.append(QPointF(AltiumCoord::mmToSchematicUnits(segment.end.x()),
@@ -340,8 +360,9 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
                     bezier.partIndex = p.partIndex;
                     AltiumSchBezier altiumBezier = convertBezier(bezier);
                     altiumBezier.sourceGraphicType = QStringLiteral("PT");
-                    altiumBezier.sourceGraphicIndex = pathIndex;
+                    altiumBezier.sourceGraphicIndex = sourceIndexForPart(data.paths, pathIndex, p.partIndex);
                     altiumBezier.sourceSegmentIndex = segmentIndex;
+                    altiumBezier.sourcePartIndex = p.partIndex;
                     component.beziers.append(altiumBezier);
                 } else {
                     IR::SymbolArcIR arc;
@@ -354,8 +375,9 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
                     arc.partIndex = p.partIndex;
                     AltiumSchArc altiumArc = convertArc(arc);
                     altiumArc.sourceGraphicType = QStringLiteral("PT");
-                    altiumArc.sourceGraphicIndex = pathIndex;
+                    altiumArc.sourceGraphicIndex = sourceIndexForPart(data.paths, pathIndex, p.partIndex);
                     altiumArc.sourceSegmentIndex = segmentIndex;
+                    altiumArc.sourcePartIndex = p.partIndex;
                     component.arcs.append(altiumArc);
                 }
                 ++segmentIndex;
@@ -363,7 +385,8 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
         } else {
             AltiumSchPath path = convertPath(p);
             path.sourceGraphicType = QStringLiteral("PT");
-            path.sourceGraphicIndex = pathIndex;
+            path.sourceGraphicIndex = sourceIndexForPart(data.paths, pathIndex, p.partIndex);
+            path.sourcePartIndex = p.partIndex;
             component.paths.append(path);
         }
     }
@@ -375,7 +398,8 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
         component.ieeeSymbols.append(convertIeee(ieee));
     for (int i = 0; i < data.texts.size(); ++i) {
         AltiumSchText text = convertText(data.texts.at(i));
-        text.sourceGraphicIndex = i;
+        text.sourceGraphicIndex = sourceIndexForPart(data.texts, i, data.texts.at(i).partIndex);
+        text.sourcePartIndex = data.texts.at(i).partIndex;
         component.texts.append(text);
     }
     for (const IR::SymbolTextFrameIR& frame : data.textFrames)
@@ -385,7 +409,8 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
     for (int i = 0; i < data.ellipses.size(); ++i) {
         AltiumSchEllipse ellipse = convertEllipse(data.ellipses.at(i));
         ellipse.sourceGraphicType = QStringLiteral("E");
-        ellipse.sourceGraphicIndex = i;
+        ellipse.sourceGraphicIndex = sourceIndexForPart(data.ellipses, i, data.ellipses.at(i).partIndex);
+        ellipse.sourcePartIndex = data.ellipses.at(i).partIndex;
         component.ellipses.append(ellipse);
     }
     for (const IR::SymbolPieIR& p : data.pies)

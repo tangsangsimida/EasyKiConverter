@@ -46,6 +46,7 @@ struct AltiumSchRectangle {
     bool isSolid = true;
     int ownerPartId = 1;
     int sourceGraphicIndex = -1;
+    int sourcePartIndex = 0;
 };
 
 /**
@@ -62,6 +63,7 @@ struct AltiumSchRoundRectangle {
     bool isSolid = true;
     int ownerPartId = 1;
     int sourceGraphicIndex = -1;
+    int sourcePartIndex = 0;
 };
 
 /**
@@ -91,6 +93,7 @@ struct AltiumSchArc {
     QString sourceGraphicType;
     int sourceGraphicIndex = -1;
     int sourceSegmentIndex = -1;
+    int sourcePartIndex = 0;
 };
 
 /**
@@ -104,6 +107,8 @@ struct AltiumSchPolygon {
     uint32_t areaColor = 0xFFFFFF;
     bool isSolid = true;
     int ownerPartId = 1;
+    int sourceGraphicIndex = -1;
+    int sourcePartIndex = 0;
 };
 
 /**
@@ -120,6 +125,7 @@ struct AltiumSchEllipse {
     int ownerPartId = 1;
     QString sourceGraphicType;
     int sourceGraphicIndex = -1;
+    int sourcePartIndex = 0;
 };
 
 /**
@@ -163,6 +169,7 @@ struct AltiumSchPolyline {
     uint32_t color = 0x000000;
     int ownerPartId = 1;
     int sourceGraphicIndex = -1;
+    int sourcePartIndex = 0;
 };
 
 /**
@@ -177,6 +184,7 @@ struct AltiumSchPath {
     QString sourceGraphicType;
     int sourceGraphicIndex = -1;
     int sourceSegmentIndex = -1;
+    int sourcePartIndex = 0;
 };
 
 /**
@@ -191,6 +199,7 @@ struct AltiumSchBezier {
     QString sourceGraphicType;
     int sourceGraphicIndex = -1;
     int sourceSegmentIndex = -1;
+    int sourcePartIndex = 0;
 };
 
 /**
@@ -227,6 +236,7 @@ struct AltiumSchText {
     int ownerPartId = 1;
     bool isPinLabel = false;
     int sourceGraphicIndex = -1;
+    int sourcePartIndex = 0;
 };
 
 /**
