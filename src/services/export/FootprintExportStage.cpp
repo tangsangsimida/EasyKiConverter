@@ -494,6 +494,13 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
         finalPath = outputDir + QDir::separator() + libName + fileExt;
         tempPath = m_tempManager.createSymbolTempPath(libName, fileExt);
     }
+
+    if (m_options.targetFormat == TargetEdaFormat::Altium && QFile::exists(finalPath) &&
+        (!m_options.overwriteExistingFiles || m_options.updateMode)) {
+        abortExport(QStringLiteral("Altium PcbLib 暂不支持在已有库上追加或更新，已拒绝覆盖: %1").arg(finalPath));
+        return;
+    }
+
     if (tempPath.isEmpty()) {
         abortExport(QStringLiteral("Failed to create temp path"));
         return;

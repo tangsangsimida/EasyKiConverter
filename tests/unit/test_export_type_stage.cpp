@@ -274,6 +274,44 @@ private slots:
         QVERIFY2(!content.contains(absolutePrefix), "Footprint should not contain absolute paths in relative mode");
     }
 
+    /**
+     * @brief 验证 Altium PcbLib 不会静默覆盖已有库
+     */
+    void altiumFootprintExportRejectsUnsupportedLibraryMerge() {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        const QString libName = QStringLiteral("ExistingPcbLib");
+        const QString outputPath = tempDir.path() + QDir::separator() + libName + QStringLiteral(".PcbLib");
+        QFile existingFile(outputPath);
+        QVERIFY(existingFile.open(QIODevice::WriteOnly));
+        const QByteArray originalData = QByteArrayLiteral("existing-pcblib");
+        QCOMPARE(existingFile.write(originalData), originalData.size());
+        existingFile.close();
+
+        FootprintExportStage stage;
+        ExportOptions options;
+        options.outputPath = tempDir.path();
+        options.libName = libName;
+        options.targetFormat = TargetEdaFormat::Altium;
+        options.overwriteExistingFiles = false;
+        stage.setOptions(options);
+
+        QMap<QString, QSharedPointer<ComponentData>> cachedData;
+        cachedData[QStringLiteral("C9100")] = makeFootprintComponent(QStringLiteral("C9100"), QStringLiteral("PKG"));
+
+        QSignalSpy completedSpy(&stage, &FootprintExportStage::completed);
+        stage.start({QStringLiteral("C9100")}, cachedData);
+        QVERIFY2(completedSpy.wait(3000), "Altium footprint export should reject existing library merge");
+        QCOMPARE(completedSpy.count(), 1);
+        QCOMPARE(completedSpy.at(0).at(0).toInt(), 0);
+        QCOMPARE(completedSpy.at(0).at(1).toInt(), 1);
+
+        QVERIFY(existingFile.open(QIODevice::ReadOnly));
+        QCOMPARE(existingFile.readAll(), originalData);
+        existingFile.close();
+    }
+
     void symbolLibraryExportMergesMultipleComponentsIntoOneLibrary() {
         QTemporaryDir tempDir;
         QVERIFY(tempDir.isValid());
