@@ -409,13 +409,19 @@ private slots:
         QVERIFY(restored.fromJson(symbol->toJson()));
         QCOMPARE(restored.parts().size(), 3);
         QVERIFY(restored.parts().at(0).commonToAllParts);
-        QCOMPARE(restored.parts().at(1).graphicOrder.size(), 2);
+        QCOMPARE(restored.parts().at(1).graphicOrder.size(), 3);
         QCOMPARE(restored.parts().at(2).graphicOrder.size(), 2);
+        QCOMPARE(restored.parts().at(1).images.size(), 1);
+        QCOMPARE(restored.parts().at(1).images.first().fileName, QStringLiteral("image.png"));
+        QVERIFY(!restored.parts().at(1).images.first().data.isEmpty());
 
         const IR::SymbolComponentIR symbolIr = IR::toSymbolIR(restored);
         QCOMPARE(symbolIr.partCount, 2);
         QCOMPARE(symbolIr.pins.size(), 3);
         QCOMPARE(symbolIr.rectangles.size(), 3);
+        QCOMPARE(symbolIr.images.size(), 1);
+        QCOMPARE(symbolIr.images.first().partIndex, 0);
+        QCOMPARE(symbolIr.images.first().fileName, QStringLiteral("image.png"));
 
         int commonPinCount = 0;
         int partOnePinCount = 0;
@@ -444,6 +450,13 @@ private slots:
         QVERIFY2(reader.open(outputPath), qPrintable(reader.errorString()));
         QCOMPARE(reader.components().size(), 1);
         QCOMPARE(reader.components().first().partCount, 2);
+        QVector<AltiumSchLibReader::ImageStorageEntry> imageEntries;
+        QVERIFY2(reader.readImageStorage(&imageEntries), qPrintable(reader.errorString()));
+        QCOMPARE(imageEntries.size(), 1);
+        QCOMPARE(imageEntries.first().name, QStringLiteral("image.png"));
+        QCOMPARE(qUncompress(restoreQtCompressionHeader(imageEntries.first().compressedData,
+                                                        symbolIr.images.first().data.size())),
+                 symbolIr.images.first().data);
 
         QVector<AltiumSchLibReader::Record> records;
         QVERIFY(reader.readComponentRecords(QStringLiteral("MULTIPART_SYMBOL"), &records));
@@ -465,7 +478,7 @@ private slots:
             }
         }
         QVERIFY(commonRecordCount >= 2);
-        QVERIFY(partOneRecordCount >= 2);
+        QVERIFY(partOneRecordCount >= 3);
         QVERIFY(partTwoRecordCount >= 2);
         QCOMPARE(binaryPinCount, 3);
     }

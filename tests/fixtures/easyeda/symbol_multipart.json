@@ -52,6 +52,7 @@
         },
         "shape": [
           "R~90~90~0~0~30~20~#000000~1~solid~none~part_a_rect~0",
+          "I~100~100~20~10~0~data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=~0",
           "P~show~1~1~100~110~0~part_a_pin~0^^100~110^^M 100 110 h 10~#000000^^show~104~110~0~A~start~Arial~7^^hide~0~0~~1^^unused^^hide~"
         ]
       }
