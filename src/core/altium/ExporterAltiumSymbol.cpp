@@ -13,6 +13,18 @@ namespace EasyKiConverter {
 
 namespace {
 
+int toAltiumLineStyle(IR::StrokeStyle style) {
+    switch (style) {
+        case IR::StrokeStyle::Dashed:
+            return 1;
+        case IR::StrokeStyle::Dotted:
+            return 2;
+        case IR::StrokeStyle::Solid:
+        default:
+            return 0;
+    }
+}
+
 /**
  * @brief 将 Qt 颜色转换为 Altium 使用的 0x00BBGGRR 编码。
  * @details IR 统一使用 RGB，而 SchLib 参数保存的是 BGR 数值。此前转换器
@@ -505,6 +517,7 @@ AltiumSchRectangle ExporterAltiumSymbol::convertRectangle(const IR::SymbolRectan
     altiumRect.cornerX = AltiumCoord::mmToRaw(rect.x1);
     altiumRect.cornerY = AltiumCoord::mmToRaw(rect.y1);
     altiumRect.lineWidth = AltiumCoord::lineWidthMmToIndex(rect.strokeWidth);
+    altiumRect.lineStyle = toAltiumLineStyle(rect.strokeStyle);
     altiumRect.color = toAltiumColor(rect.strokeColor);
     altiumRect.areaColor = rect.isFilled ? toAltiumColor(rect.fillColor) : 0xFFFFFF;
     altiumRect.isSolid = rect.isFilled;
@@ -522,6 +535,7 @@ AltiumSchEllipse ExporterAltiumSymbol::convertCircle(const IR::SymbolCircleIR& c
     altiumEllipse.radiusX = AltiumCoord::mmToRaw(circle.radius);
     altiumEllipse.radiusY = AltiumCoord::mmToRaw(circle.radius);
     altiumEllipse.lineWidth = AltiumCoord::lineWidthMmToIndex(circle.strokeWidth);
+    altiumEllipse.lineStyle = toAltiumLineStyle(circle.strokeStyle);
     altiumEllipse.color = toAltiumColor(circle.strokeColor);
     altiumEllipse.areaColor = circle.isFilled ? toAltiumColor(circle.fillColor) : 0xFFFFFF;
     altiumEllipse.isSolid = circle.isFilled;
@@ -559,6 +573,7 @@ AltiumSchArc ExporterAltiumSymbol::convertArc(const IR::SymbolArcIR& arc) {
     altiumArc.startAngle = std::atan2(arc.startPoint.y() - center.y(), arc.startPoint.x() - center.x()) * 180.0 / M_PI;
     altiumArc.endAngle = std::atan2(arc.endPoint.y() - center.y(), arc.endPoint.x() - center.x()) * 180.0 / M_PI;
     altiumArc.lineWidth = AltiumCoord::lineWidthMmToIndex(arc.strokeWidth);
+    altiumArc.lineStyle = toAltiumLineStyle(arc.strokeStyle);
     altiumArc.color = toAltiumColor(arc.strokeColor);
     altiumArc.ownerPartId = qMax(1, arc.partIndex + 1);
     return altiumArc;
@@ -570,6 +585,7 @@ AltiumSchArc ExporterAltiumSymbol::convertArc(const IR::SymbolArcIR& arc) {
 AltiumSchPolygon ExporterAltiumSymbol::convertPolygon(const IR::SymbolPolygonIR& polygon) {
     AltiumSchPolygon altiumPolygon;
     altiumPolygon.lineWidth = AltiumCoord::lineWidthMmToIndex(polygon.strokeWidth);
+    altiumPolygon.lineStyle = toAltiumLineStyle(polygon.strokeStyle);
     altiumPolygon.color = toAltiumColor(polygon.strokeColor);
     altiumPolygon.areaColor = polygon.isFilled ? toAltiumColor(polygon.fillColor) : 0xFFFFFF;
     altiumPolygon.isSolid = polygon.isFilled;
@@ -588,6 +604,7 @@ AltiumSchPolygon ExporterAltiumSymbol::convertPolygon(const IR::SymbolPolygonIR&
 AltiumSchPolyline ExporterAltiumSymbol::convertPolyline(const IR::SymbolPolylineIR& polyline) {
     AltiumSchPolyline altiumPolyline;
     altiumPolyline.lineWidth = AltiumCoord::lineWidthMmToIndex(polyline.strokeWidth);
+    altiumPolyline.lineStyle = toAltiumLineStyle(polyline.strokeStyle);
     altiumPolyline.color = toAltiumColor(polyline.strokeColor);
     altiumPolyline.ownerPartId = qMax(1, polyline.partIndex + 1);
 
@@ -604,6 +621,7 @@ AltiumSchPolyline ExporterAltiumSymbol::convertPolyline(const IR::SymbolPolyline
 AltiumSchPath ExporterAltiumSymbol::convertPath(const IR::SymbolPathIR& path) {
     AltiumSchPath altiumPath;
     altiumPath.lineWidth = AltiumCoord::lineWidthMmToIndex(path.strokeWidth);
+    altiumPath.lineStyle = toAltiumLineStyle(path.strokeStyle);
     altiumPath.color = toAltiumColor(path.strokeColor);
     altiumPath.ownerPartId = qMax(1, path.partIndex + 1);
 
@@ -671,6 +689,7 @@ AltiumSchEllipse ExporterAltiumSymbol::convertEllipse(const IR::SymbolEllipseIR&
     altiumEllipse.radiusX = AltiumCoord::mmToRaw(ellipse.radiusX);
     altiumEllipse.radiusY = AltiumCoord::mmToRaw(ellipse.radiusY);
     altiumEllipse.lineWidth = AltiumCoord::lineWidthMmToIndex(ellipse.strokeWidth);
+    altiumEllipse.lineStyle = toAltiumLineStyle(ellipse.strokeStyle);
     altiumEllipse.color = toAltiumColor(ellipse.strokeColor);
     altiumEllipse.areaColor = ellipse.isFilled ? toAltiumColor(ellipse.fillColor) : 0xFFFFFF;
     altiumEllipse.isSolid = ellipse.isFilled;

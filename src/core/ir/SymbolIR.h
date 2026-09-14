@@ -117,6 +117,7 @@ struct SymbolRectangleIR {
     double y1 = 0.0;  ///< 终点 Y（mm，已转换，KiCad Y 翻转后）
     QColor strokeColor = Qt::black;  ///< 边框颜色
     double strokeWidth = 0.0;  ///< 边框宽度（mm）
+    StrokeStyle strokeStyle = StrokeStyle::Solid;  ///< 线型
     QColor fillColor = Qt::transparent;  ///< 填充颜色
     bool isFilled = false;  ///< 是否填充
     int partIndex = 0;  ///< 所属部件索引（多部件符号使用）
@@ -130,6 +131,7 @@ struct SymbolCircleIR {
     double radius = 0.0;  ///< 半径（mm）
     QColor strokeColor = Qt::black;
     double strokeWidth = 0.0;
+    StrokeStyle strokeStyle = StrokeStyle::Solid;
     QColor fillColor = Qt::transparent;
     bool isFilled = false;
     int partIndex = 0;  ///< 所属部件索引（多部件符号使用）
@@ -147,6 +149,7 @@ struct SymbolArcIR {
     QPointF endPoint;  ///< 终点（已解析，单位 mm）
     QColor strokeColor = Qt::black;
     double strokeWidth = 0.0;
+    StrokeStyle strokeStyle = StrokeStyle::Solid;
     QColor fillColor = Qt::transparent;
     bool isFilled = false;
     int partIndex = 0;  ///< 所属部件索引（多部件符号使用）
@@ -161,6 +164,7 @@ struct SymbolEllipseIR {
     double radiusY = 0.0;  ///< Y 轴半径（mm）
     QColor strokeColor = Qt::black;
     double strokeWidth = 0.0;
+    StrokeStyle strokeStyle = StrokeStyle::Solid;
     QColor fillColor = Qt::transparent;
     bool isFilled = false;
     int partIndex = 0;  ///< 所属部件索引（多部件符号使用）
@@ -174,6 +178,7 @@ struct SymbolPolylineIR {
     QList<QPointF> points;  ///< 顶点列表（已解析，单位 mm）
     QColor strokeColor = Qt::black;
     double strokeWidth = 0.0;
+    StrokeStyle strokeStyle = StrokeStyle::Solid;
     QColor fillColor = Qt::transparent;
     bool isFilled = false;
     int partIndex = 0;  ///< 所属部件索引（多部件符号使用）
@@ -187,6 +192,7 @@ struct SymbolPolygonIR {
     QList<QPointF> points;  ///< 顶点列表（已解析，单位 mm）
     QColor strokeColor = Qt::black;
     double strokeWidth = 0.0;
+    StrokeStyle strokeStyle = StrokeStyle::Solid;
     QColor fillColor = Qt::transparent;
     bool isFilled = false;
     int partIndex = 0;  ///< 所属部件索引（多部件符号使用）
@@ -200,6 +206,7 @@ struct SymbolPathIR {
     QList<QPointF> points;  ///< 路径坐标序列（已解析，单位 mm）
     QColor strokeColor = Qt::black;
     double strokeWidth = 0.0;
+    StrokeStyle strokeStyle = StrokeStyle::Solid;
     QColor fillColor = Qt::transparent;
     bool isFilled = false;
     int partIndex = 0;  ///< 所属部件索引（多部件符号使用）
@@ -213,6 +220,7 @@ struct SymbolBezierIR {
     QList<QPointF> controlPoints;  ///< 起点、两个控制点和终点
     QColor strokeColor = Qt::black;
     double strokeWidth = 0.0;
+    StrokeStyle strokeStyle = StrokeStyle::Solid;
     int partIndex = 0;  ///< 所属部件索引（多部件符号使用）
 };
 

@@ -29,6 +29,20 @@ namespace IR {
  */
 namespace GeometryNormalizer {
 
+/**
+ * @brief 将来源线型字符串映射到通用线型枚举
+ * @param style 来源线型（如 solid、dashed、dotted）
+ * @return 通用线型
+ */
+inline StrokeStyle parseStrokeStyle(const QString& style) {
+    const QString normalized = style.trimmed().toLower();
+    if (normalized.contains(QStringLiteral("dash")))
+        return StrokeStyle::Dashed;
+    if (normalized.contains(QStringLiteral("dot")))
+        return StrokeStyle::Dotted;
+    return StrokeStyle::Solid;
+}
+
 // ==================== 坐标字符串解析 ====================
 
 /**

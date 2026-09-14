@@ -525,6 +525,8 @@ void AltiumSchLibWriter::writeRectangleRecord(AltiumBinaryWriter& writer, const 
 
     if (rect.lineWidth != 0)
         params["LineWidth"] = QString::number(rect.lineWidth);
+    if (rect.lineStyle != 0)
+        params["LineStyleExt"] = QString::number(rect.lineStyle);
     addColorParam(params, "Color", rect.color);
     if (rect.areaColor != 0xFFFFFF)
         params["AreaColor"] = QString::number(rect.areaColor);
@@ -548,6 +550,8 @@ void AltiumSchLibWriter::writeLineRecord(AltiumBinaryWriter& writer, const Altiu
     addCoordParam(params, "Corner.Y", line.cornerY);
 
     params["LineWidth"] = QString::number(AltiumCoord::lineWidthToIndex(line.lineWidth));
+    if (line.lineStyle != 0)
+        params["LineStyle"] = QString::number(line.lineStyle);
     addColorParam(params, "Color", line.color);
 
     addUniqueID(params);
@@ -567,6 +571,8 @@ void AltiumSchLibWriter::writeArcRecord(AltiumBinaryWriter& writer, const Altium
 
     if (arc.lineWidth != 0)
         params["LineWidth"] = QString::number(arc.lineWidth);
+    if (arc.lineStyle != 0)
+        params["LineStyle"] = QString::number(arc.lineStyle);
     if (arc.startAngle != 0.0)
         params["StartAngle"] = QString::number(arc.startAngle, 'f', 3);
     params["EndAngle"] = QString::number(arc.endAngle, 'f', 3);
@@ -584,6 +590,8 @@ void AltiumSchLibWriter::writePolygonRecord(AltiumBinaryWriter& writer, const Al
     params["RECORD"] = "7";
     addOwnerParams(params, polygon.ownerPartId);
     params["LineWidth"] = QString::number(polygon.lineWidth);
+    if (polygon.lineStyle != 0)
+        params["LineStyle"] = QString::number(polygon.lineStyle);
     addColorParam(params, "Color", polygon.color);
     if (polygon.areaColor != 0xFFFFFF)
         params["AreaColor"] = QString::number(polygon.areaColor);
@@ -619,6 +627,8 @@ void AltiumSchLibWriter::writeEllipseRecord(AltiumBinaryWriter& writer, const Al
 
     if (ellipse.lineWidth != 0)
         params["LineWidth"] = QString::number(ellipse.lineWidth);
+    if (ellipse.lineStyle != 0)
+        params["LineStyle"] = QString::number(ellipse.lineStyle);
     addColorParam(params, "Color", ellipse.color);
     if (ellipse.areaColor != 0xFFFFFF)
         params["AreaColor"] = QString::number(ellipse.areaColor);
@@ -637,6 +647,8 @@ void AltiumSchLibWriter::writePolylineRecord(AltiumBinaryWriter& writer, const A
     params["RECORD"] = "6";
     addOwnerParams(params, polyline.ownerPartId);
     params["LineWidth"] = QString::number(polyline.lineWidth);
+    if (polyline.lineStyle != 0)
+        params["LineStyle"] = QString::number(polyline.lineStyle);
     addColorParam(params, "Color", polyline.color);
 
     params["LocationCount"] = QString::number(polyline.vertices.size());
@@ -663,6 +675,7 @@ void AltiumSchLibWriter::writePathRecord(AltiumBinaryWriter& writer, const Altiu
     AltiumSchPolyline polyline;
     polyline.vertices = path.vertices;
     polyline.lineWidth = path.lineWidth;
+    polyline.lineStyle = path.lineStyle;
     polyline.color = path.color;
     polyline.ownerPartId = path.ownerPartId;
     writePolylineRecord(writer, polyline);

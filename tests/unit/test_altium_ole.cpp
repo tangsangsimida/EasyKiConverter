@@ -513,6 +513,7 @@ private slots:
         rect.locationY = 100000;
         rect.cornerX = 500000;
         rect.cornerY = 500000;
+        rect.lineStyle = 1;
         symbol.rectangles.append(rect);
 
         AltiumSchPath path;
@@ -554,6 +555,7 @@ private slots:
         QVERIFY(schData.mid(4).startsWith("|RECORD=1|"));
         QVERIFY(schData.contains("LibReference=C2040"));
         QVERIFY(schData.contains("RECORD=14"));
+        QVERIFY(schData.contains("LineStyleExt=1"));
         QVERIFY(schData.contains("RECORD=45"));
         QVERIFY(schData.contains("DESIMP0=A1"));
         QVERIFY(schData.contains("MODELTYPE=SIM"));

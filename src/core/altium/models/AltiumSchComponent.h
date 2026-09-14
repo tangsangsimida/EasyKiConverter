@@ -39,6 +39,7 @@ struct AltiumSchRectangle {
     int locationX = 0, locationY = 0;  ///< 左上角（原始单位）
     int cornerX = 0, cornerY = 0;  ///< 右下角（原始单位）
     int lineWidth = 0;  ///< 线宽索引 (0-3)
+    int lineStyle = 0;  ///< 线型（0 实线、1 虚线、2 点线）
     uint32_t color = 0x000000;
     uint32_t areaColor = 0xFFFFFF;  ///< 填充色
     bool isSolid = true;
@@ -52,6 +53,7 @@ struct AltiumSchLine {
     int locationX = 0, locationY = 0;  ///< 起点
     int cornerX = 0, cornerY = 0;  ///< 终点
     int lineWidth = 0;
+    int lineStyle = 0;
     uint32_t color = 0x000000;
     int ownerPartId = 1;
 };
@@ -65,6 +67,7 @@ struct AltiumSchArc {
     double startAngle = 0.0;  ///< 起始角度
     double endAngle = 360.0;  ///< 结束角度
     int lineWidth = 0;
+    int lineStyle = 0;
     uint32_t color = 0x000000;
     int ownerPartId = 1;
 };
@@ -75,6 +78,7 @@ struct AltiumSchArc {
 struct AltiumSchPolygon {
     QList<QPointF> vertices;  ///< 顶点列表（Schematic Units）
     int lineWidth = 0;
+    int lineStyle = 0;
     uint32_t color = 0x000000;
     uint32_t areaColor = 0xFFFFFF;
     bool isSolid = true;
@@ -88,6 +92,7 @@ struct AltiumSchEllipse {
     int centerX = 0, centerY = 0;
     int radiusX = 0, radiusY = 0;  ///< X/Y 半径（原始单位）
     int lineWidth = 0;
+    int lineStyle = 0;
     uint32_t color = 0x000000;
     uint32_t areaColor = 0xFFFFFF;
     bool isSolid = true;
@@ -100,6 +105,7 @@ struct AltiumSchEllipse {
 struct AltiumSchPolyline {
     QList<QPointF> vertices;  ///< 顶点列表（Schematic Units）
     int lineWidth = 0;
+    int lineStyle = 0;
     uint32_t color = 0x000000;
     int ownerPartId = 1;
 };
@@ -110,6 +116,7 @@ struct AltiumSchPolyline {
 struct AltiumSchPath {
     QList<QPointF> vertices;  ///< 路径顶点（Schematic Units）
     int lineWidth = 0;
+    int lineStyle = 0;
     uint32_t color = 0x000000;
     int ownerPartId = 1;
 };

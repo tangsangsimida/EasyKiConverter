@@ -145,6 +145,7 @@ inline SymbolComponentIR toSymbolIR(const SymbolData& data) {
             rir.y1 = -(rect.posY + rect.height - originY) * EASYEDA_PX_TO_MM;
             rir.strokeColor = parseColor(rect.strokeColor);
             rir.strokeWidth = rect.strokeWidth * EASYEDA_PX_TO_MM;
+            rir.strokeStyle = GeometryNormalizer::parseStrokeStyle(rect.strokeStyle);
             rir.isFilled = !rect.fillColor.isEmpty() && rect.fillColor != "none";
             if (rir.isFilled)
                 rir.fillColor = parseColor(rect.fillColor);
@@ -162,6 +163,7 @@ inline SymbolComponentIR toSymbolIR(const SymbolData& data) {
             cir.radius = circle.radius * EASYEDA_PX_TO_MM;
             cir.strokeColor = parseColor(circle.strokeColor);
             cir.strokeWidth = circle.strokeWidth * EASYEDA_PX_TO_MM;
+            cir.strokeStyle = GeometryNormalizer::parseStrokeStyle(circle.strokeStyle);
             cir.isFilled = circle.fillColor;
             cir.partIndex = partIdx;
             ir.circles.append(cir);
@@ -178,6 +180,7 @@ inline SymbolComponentIR toSymbolIR(const SymbolData& data) {
             eir.radiusY = ellipse.radiusY * EASYEDA_PX_TO_MM;
             eir.strokeColor = parseColor(ellipse.strokeColor);
             eir.strokeWidth = ellipse.strokeWidth * EASYEDA_PX_TO_MM;
+            eir.strokeStyle = GeometryNormalizer::parseStrokeStyle(ellipse.strokeStyle);
             eir.isFilled = ellipse.fillColor;
             eir.partIndex = partIdx;
             ir.ellipses.append(eir);
@@ -194,6 +197,7 @@ inline SymbolComponentIR toSymbolIR(const SymbolData& data) {
                 plir.points = GeometryNormalizer::transformPoints(plir.points, originMm);
                 plir.strokeColor = parseColor(pl.strokeColor);
                 plir.strokeWidth = pl.strokeWidth * EASYEDA_PX_TO_MM;
+                plir.strokeStyle = GeometryNormalizer::parseStrokeStyle(pl.strokeStyle);
                 plir.isFilled = pl.fillColor;
                 plir.partIndex = partIdx;
                 ir.polylines.append(plir);
@@ -209,6 +213,7 @@ inline SymbolComponentIR toSymbolIR(const SymbolData& data) {
             pgir.points = GeometryNormalizer::transformPoints(pgir.points, originMm);
             pgir.strokeColor = parseColor(pg.strokeColor);
             pgir.strokeWidth = pg.strokeWidth * EASYEDA_PX_TO_MM;
+            pgir.strokeStyle = GeometryNormalizer::parseStrokeStyle(pg.strokeStyle);
             pgir.isFilled = pg.fillColor;
             pgir.partIndex = partIdx;
             ir.polygons.append(pgir);
@@ -230,6 +235,7 @@ inline SymbolComponentIR toSymbolIR(const SymbolData& data) {
             }
             pathIR.strokeColor = parseColor(path.strokeColor);
             pathIR.strokeWidth = path.strokeWidth * EASYEDA_PX_TO_MM;
+            pathIR.strokeStyle = GeometryNormalizer::parseStrokeStyle(path.strokeStyle);
             pathIR.isFilled = path.fillColor;
             pathIR.partIndex = partIdx;
             ir.paths.append(pathIR);
@@ -276,6 +282,7 @@ inline SymbolComponentIR toSymbolIR(const SymbolData& data) {
             }
             air.strokeColor = parseColor(arc.strokeColor);
             air.strokeWidth = arc.strokeWidth * EASYEDA_PX_TO_MM;
+            air.strokeStyle = GeometryNormalizer::parseStrokeStyle(arc.strokeStyle);
             air.isFilled = arc.fillColor;
             air.partIndex = partIdx;
             ir.arcs.append(air);
