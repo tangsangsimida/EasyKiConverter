@@ -1352,6 +1352,19 @@ private slots:
         QVERIFY(invalidPathExporter.diagnostics().contains(
             QStringLiteral("符号 INVALID_PATH_SEGMENT 路径图元 0 的段 0 参数无效，已跳过")));
 
+        IR::SymbolComponentIR invalidPathPointsSymbol;
+        invalidPathPointsSymbol.name = QStringLiteral("INVALID_PATH_POINTS");
+        IR::SymbolPathIR invalidFilledPath;
+        invalidFilledPath.isFilled = true;
+        invalidFilledPath.points = {QPointF(0.0, 0.0), QPointF(std::numeric_limits<double>::quiet_NaN(), 1.0)};
+        invalidPathPointsSymbol.paths.append(invalidFilledPath);
+        ExporterAltiumSymbol invalidPathPointsExporter;
+        const QString invalidPathPointsFile =
+            QDir(tempDir.path()).filePath(QStringLiteral("invalid-path-points.SchLib"));
+        QVERIFY(invalidPathPointsExporter.exportSymbol(invalidPathPointsSymbol, invalidPathPointsFile));
+        QVERIFY(invalidPathPointsExporter.diagnostics().contains(
+            QStringLiteral("符号 INVALID_PATH_POINTS 路径图元 0 的点列无效，已跳过")));
+
         IR::SymbolComponentIR nativeArcSymbol;
         nativeArcSymbol.name = QStringLiteral("NATIVE_ARC");
         IR::SymbolPathIR nativeArcPath;

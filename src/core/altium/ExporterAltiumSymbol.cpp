@@ -250,6 +250,11 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
     const auto isFinitePoint = [](const QPointF& point) {
         return std::isfinite(point.x()) && std::isfinite(point.y());
     };
+    const auto hasFinitePoints = [&](const QList<QPointF>& points, int minimum) {
+        if (points.size() < minimum)
+            return false;
+        return std::all_of(points.cbegin(), points.cend(), isFinitePoint);
+    };
 
     for (const IR::SymbolParameterIR& parameter : data.parameters) {
         AltiumSchParameter altiumParameter;
@@ -465,6 +470,12 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
                 ++segmentIndex;
             }
         } else {
+            const int minimumPointCount = p.isFilled ? 3 : 2;
+            if (!hasFinitePoints(p.points, minimumPointCount)) {
+                m_diagnostics.append(
+                    QStringLiteral("符号 %1 路径图元 %2 的点列无效，已跳过").arg(data.name).arg(pathIndex));
+                continue;
+            }
             AltiumSchPath path = convertPath(p);
             path.sourceGraphicType = QStringLiteral("PT");
             path.sourceGraphicIndex = sourceIndexForPart(data.paths, pathIndex, p.partIndex);
