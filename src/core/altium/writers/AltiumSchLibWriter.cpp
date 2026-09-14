@@ -1419,10 +1419,8 @@ void AltiumSchLibWriter::writeComponentParameterRecords(AltiumBinaryWriter& writ
         QMap<QString, QString> parameterParams;
         parameterParams["RECORD"] = "41";
         parameterParams["OWNERPARTID"] = QString::number(field.ownerPartId);
-        if (field.ownerPartId >= 1) {
-            parameterParams["IndexInSheet"] = QString::number(m_nextIndexInSheet);
-            ++m_nextIndexInSheet;
-        }
+        if (field.ownerPartId >= 1)
+            addContentIndex(parameterParams);
         if (field.hasLocation) {
             addCoordParam(parameterParams, "LOCATION.X", field.locationX);
             addCoordParam(parameterParams, "LOCATION.Y", field.locationY);
@@ -1558,16 +1556,25 @@ int AltiumSchLibWriter::componentParameterRecordCount(const AltiumSchComponent& 
 }
 
 /**
+ * @brief 向内容记录添加共享的 IndexInSheet 序号
+ * @param params 参数映射（输出）
+ * @details 首条内容记录的索引 0 由 Altium 隐含表示，因此不写出字段。
+ */
+void AltiumSchLibWriter::addContentIndex(QMap<QString, QString>& params) {
+    params["ISNOTACCESIBLE"] = "T";
+    if (m_nextIndexInSheet != 0)
+        params["IndexInSheet"] = QString::number(m_nextIndexInSheet);
+    ++m_nextIndexInSheet;
+}
+
+/**
  * @brief 向参数映射中添加 OwnerPartId 和 ISNOTACCESIBLE 字段
  * @param params 参数映射（输出）
  * @param ownerPartId 所属部件 ID
  */
 void AltiumSchLibWriter::addOwnerParams(QMap<QString, QString>& params, int ownerPartId) {
-    params["ISNOTACCESIBLE"] = "T";
-    if (m_nextIndexInSheet != 0)
-        params["IndexInSheet"] = QString::number(m_nextIndexInSheet);
+    addContentIndex(params);
     params["OWNERPARTID"] = QString::number(ownerPartId < 0 ? -1 : qMax(1, ownerPartId));
-    ++m_nextIndexInSheet;
 }
 
 }  // namespace EasyKiConverter

@@ -1510,6 +1510,47 @@ private slots:
         QVERIFY(nextRecordOffset > ieeeOffset);
         QVERIFY(!data.mid(ieeeOffset, nextRecordOffset - ieeeOffset).contains("UniqueID="));
     }
+
+    /**
+     * @brief 验证二进制引脚会占用共享内容索引，且首条用户参数不会写出索引 0。
+     */
+    void contentIndexIsSharedAcrossPinsGraphicsAndParameters() {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        AltiumSchComponent symbol;
+        symbol.name = QStringLiteral("CONTENT_INDEX");
+        symbol.designatorPrefix = QStringLiteral("U");
+
+        AltiumSchPin pin;
+        pin.name = QStringLiteral("IN");
+        pin.designator = QStringLiteral("1");
+        symbol.pins.append(pin);
+
+        AltiumSchRectangle rectangle;
+        rectangle.locationX = -100000;
+        rectangle.locationY = -100000;
+        rectangle.cornerX = 100000;
+        rectangle.cornerY = 100000;
+        symbol.rectangles.append(rectangle);
+
+        AltiumSchParameter parameter;
+        parameter.name = QStringLiteral("Custom");
+        parameter.value = QStringLiteral("value");
+        parameter.ownerPartId = 1;
+        symbol.parameters.append(parameter);
+
+        AltiumSchLibWriter writer;
+        const QString path = QDir(tempDir.path()).filePath(QStringLiteral("content-index.SchLib"));
+        QVERIFY(writer.write({symbol}, path, QStringLiteral("content-index")));
+
+        QByteArray data;
+        QVERIFY(readCfbStream(path, QStringLiteral("CONTENT_INDEX/Data"), data));
+        QVERIFY(!data.contains("IndexInSheet=0"));
+        QVERIFY(data.contains("|RECORD=14|ISNOTACCESIBLE=T|IndexInSheet=1|OWNERPARTID=1|"));
+        QVERIFY(data.contains("RECORD=41"));
+        QVERIFY(data.contains("IndexInSheet=2"));
+    }
 };
 
 QTEST_GUILESS_MAIN(TestAltiumOle)
