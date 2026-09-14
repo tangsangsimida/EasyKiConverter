@@ -4,7 +4,9 @@
 #include "utils/AltiumCoord.h"
 #include "utils/AltiumWriterUtils.h"
 
+#include <QDataStream>
 #include <QDebug>
+#include <QIODevice>
 #include <QRandomGenerator>
 #include <QSet>
 
@@ -226,14 +228,7 @@ bool AltiumSchLibWriter::write(const QList<AltiumSchComponent>& components,
         writeComponentStorage(ole, components[i], sectionKeys[i]);
     }
 
-    // 即使没有图标，也写入合法的 icon-storage 参数记录。部分 AD 版本
-    // 会主动读取该流，零长度占位符并不是 SchLib 的规范表示。
-    QByteArray storageData;
-    AltiumBinaryWriter storageWriter(storageData);
-    QMap<QString, QString> storageParams;
-    storageParams["HEADER"] = "Icon storage";
-    storageWriter.writeCStringParameterBlock(storageParams);
-    ole.writeStream("Storage", storageData);
+    writeImageStorage(ole, components);
 
     return ole.saveToFile(filePath);
 }
@@ -363,6 +358,9 @@ void AltiumSchLibWriter::writeComponentStorage(OLECompoundWriter& ole,
     for (const AltiumSchRectangle& rect : component.rectangles) {
         writeRectangleRecord(writer, rect);
     }
+    for (const AltiumSchRoundRectangle& rect : component.roundRectangles) {
+        writeRoundRectangleRecord(writer, rect);
+    }
 
     // 写入线段
     for (const AltiumSchLine& line : component.lines) {
@@ -382,6 +380,12 @@ void AltiumSchLibWriter::writeComponentStorage(OLECompoundWriter& ole,
     // 写入椭圆
     for (const AltiumSchEllipse& ellipse : component.ellipses) {
         writeEllipseRecord(writer, ellipse);
+    }
+    for (const AltiumSchPie& pie : component.pies) {
+        writePieRecord(writer, pie);
+    }
+    for (const AltiumSchEllipticalArc& arc : component.ellipticalArcs) {
+        writeEllipticalArcRecord(writer, arc);
     }
 
     // 写入折线
@@ -406,6 +410,12 @@ void AltiumSchLibWriter::writeComponentStorage(OLECompoundWriter& ole,
     // 写入文本
     for (const AltiumSchText& text : component.texts) {
         writeTextRecord(writer, text);
+    }
+    for (const AltiumSchTextFrame& frame : component.textFrames) {
+        writeTextFrameRecord(writer, frame);
+    }
+    for (const AltiumSchImage& image : component.images) {
+        writeImageRecord(writer, image);
     }
 
     writeComponentParameterRecords(writer, component);
@@ -538,6 +548,32 @@ void AltiumSchLibWriter::writeRectangleRecord(AltiumBinaryWriter& writer, const 
 }
 
 /**
+ * @brief 写入圆角矩形记录 (RECORD=10)
+ */
+void AltiumSchLibWriter::writeRoundRectangleRecord(AltiumBinaryWriter& writer, const AltiumSchRoundRectangle& rect) {
+    QMap<QString, QString> params;
+    params["RECORD"] = "10";
+    addOwnerParams(params, rect.ownerPartId);
+    addCoordParam(params, "Location.X", rect.locationX);
+    addCoordParam(params, "Location.Y", rect.locationY);
+    addCoordParam(params, "Corner.X", rect.cornerX);
+    addCoordParam(params, "Corner.Y", rect.cornerY);
+    addCoordParam(params, "CornerXRadius", rect.cornerXRadius);
+    addCoordParam(params, "CornerYRadius", rect.cornerYRadius);
+    if (rect.lineWidth != 0)
+        params["LineWidth"] = QString::number(rect.lineWidth);
+    if (rect.lineStyle != 0)
+        params["LineStyle"] = QString::number(rect.lineStyle);
+    addColorParam(params, "Color", rect.color);
+    if (rect.areaColor != 0xFFFFFF)
+        params["AreaColor"] = QString::number(rect.areaColor);
+    if (rect.isSolid)
+        params["IsSolid"] = "T";
+    addUniqueID(params);
+    writer.writeCStringParameterBlock(params);
+}
+
+/**
  * @brief 写入线段记录 (RECORD=13)
  */
 void AltiumSchLibWriter::writeLineRecord(AltiumBinaryWriter& writer, const AltiumSchLine& line) {
@@ -635,6 +671,56 @@ void AltiumSchLibWriter::writeEllipseRecord(AltiumBinaryWriter& writer, const Al
     if (ellipse.isSolid)
         params["IsSolid"] = "T";
 
+    addUniqueID(params);
+    writer.writeCStringParameterBlock(params);
+}
+
+/**
+ * @brief 写入扇形记录 (RECORD=9)
+ */
+void AltiumSchLibWriter::writePieRecord(AltiumBinaryWriter& writer, const AltiumSchPie& pie) {
+    QMap<QString, QString> params;
+    params["RECORD"] = "9";
+    addOwnerParams(params, pie.ownerPartId);
+    addCoordParam(params, "Location.X", pie.centerX);
+    addCoordParam(params, "Location.Y", pie.centerY);
+    addCoordParam(params, "Radius", pie.radius);
+    if (pie.lineWidth != 0)
+        params["LineWidth"] = QString::number(pie.lineWidth);
+    if (pie.lineStyle != 0)
+        params["LineStyle"] = QString::number(pie.lineStyle);
+    if (pie.startAngle != 0.0)
+        params["StartAngle"] = QString::number(pie.startAngle, 'f', 3);
+    params["EndAngle"] = QString::number(pie.endAngle, 'f', 3);
+    addColorParam(params, "Color", pie.color);
+    if (pie.areaColor != 0xFFFFFF)
+        params["AreaColor"] = QString::number(pie.areaColor);
+    if (pie.isSolid)
+        params["IsSolid"] = "T";
+    writer.writeCStringParameterBlock(params);
+}
+
+/**
+ * @brief 写入椭圆弧记录 (RECORD=11)
+ */
+void AltiumSchLibWriter::writeEllipticalArcRecord(AltiumBinaryWriter& writer, const AltiumSchEllipticalArc& arc) {
+    QMap<QString, QString> params;
+    params["RECORD"] = "11";
+    addOwnerParams(params, arc.ownerPartId);
+    addCoordParam(params, "Location.X", arc.centerX);
+    addCoordParam(params, "Location.Y", arc.centerY);
+    addCoordParam(params, "Radius", arc.radiusX);
+    addCoordParam(params, "SecondaryRadius", arc.radiusY);
+    if (arc.lineWidth != 0)
+        params["LineWidth"] = QString::number(arc.lineWidth);
+    if (arc.lineStyle != 0)
+        params["LineStyle"] = QString::number(arc.lineStyle);
+    if (arc.startAngle != 0.0)
+        params["StartAngle"] = QString::number(arc.startAngle, 'f', 3);
+    params["EndAngle"] = QString::number(arc.endAngle, 'f', 3);
+    addColorParam(params, "Color", arc.color);
+    if (arc.areaColor != 0xFFFFFF)
+        params["AreaColor"] = QString::number(arc.areaColor);
     addUniqueID(params);
     writer.writeCStringParameterBlock(params);
 }
@@ -750,6 +836,127 @@ void AltiumSchLibWriter::writeTextRecord(AltiumBinaryWriter& writer, const Altiu
 
     addUniqueID(params);
     writer.writeCStringParameterBlockUtf8(params);
+}
+
+/**
+ * @brief 写入文本框记录 (RECORD=28)
+ */
+void AltiumSchLibWriter::writeTextFrameRecord(AltiumBinaryWriter& writer, const AltiumSchTextFrame& frame) {
+    QMap<QString, QString> params;
+    params["RECORD"] = "28";
+    addOwnerParams(params, frame.ownerPartId);
+    addCoordParam(params, "Location.X", frame.locationX);
+    addCoordParam(params, "Location.Y", frame.locationY);
+    addCoordParam(params, "Corner.X", frame.cornerX);
+    addCoordParam(params, "Corner.Y", frame.cornerY);
+    if (frame.lineWidth != 0)
+        params["LineWidth"] = QString::number(frame.lineWidth);
+    if (frame.lineStyle != 0)
+        params["LineStyle"] = QString::number(frame.lineStyle);
+    addColorParam(params, "Color", frame.color);
+    params["AreaColor"] = QString::number(frame.areaColor);
+    addColorParam(params, "TextColor", frame.textColor);
+    params["FontID"] = QString::number(frame.fontId);
+    if (frame.isSolid)
+        params["IsSolid"] = "T";
+    if (frame.showBorder)
+        params["ShowBorder"] = "T";
+    if (frame.orientation != 0)
+        params["Orientation"] = QString::number(frame.orientation);
+    if (frame.alignment != 0)
+        params["Alignment"] = QString::number(frame.alignment);
+    if (frame.wordWrap)
+        params["WordWrap"] = "T";
+    if (frame.clipToRect)
+        params["ClipToRect"] = "T";
+    params["Text"] = frame.text;
+    addCoordParam(params, "TextMargin", frame.textMargin);
+    if (frame.transparent)
+        params["Transparent"] = "T";
+    addUniqueID(params);
+    writer.writeCStringParameterBlockUtf8(params);
+}
+
+/**
+ * @brief 写入图片记录 (RECORD=30)
+ */
+void AltiumSchLibWriter::writeImageRecord(AltiumBinaryWriter& writer, const AltiumSchImage& image) {
+    QMap<QString, QString> params;
+    params["RECORD"] = "30";
+    addOwnerParams(params, image.ownerPartId);
+    addCoordParam(params, "Location.X", image.locationX);
+    addCoordParam(params, "Location.Y", image.locationY);
+    addCoordParam(params, "Corner.X", image.cornerX);
+    addCoordParam(params, "Corner.Y", image.cornerY);
+    if (image.lineWidth != 0)
+        params["LineWidth"] = QString::number(image.lineWidth);
+    if (image.lineStyle != 0)
+        params["LineStyle"] = QString::number(image.lineStyle);
+    addColorParam(params, "Color", image.color);
+    if (image.areaColor != 0)
+        params["AreaColor"] = QString::number(image.areaColor);
+    if (image.isSolid)
+        params["IsSolid"] = "T";
+    if (image.transparent)
+        params["Transparent"] = "T";
+    if (image.showBorder)
+        params["ShowBorder"] = "T";
+    if (image.keepAspect)
+        params["KeepAspect"] = "T";
+    const bool hasEmbeddedImage = image.embedImage && !image.data.isEmpty() && !image.fileName.isEmpty() &&
+                                  image.fileName.toLocal8Bit().size() <= 255;
+    if (hasEmbeddedImage)
+        params["EmbedImage"] = "T";
+    if (!image.fileName.isEmpty())
+        params["FileName"] = image.fileName;
+    addUniqueID(params);
+    writer.writeCStringParameterBlockUtf8(params);
+}
+
+/**
+ * @brief 写入 SchLib 根 /Storage 图片流
+ * @details 图片内容使用 Qt zlib 压缩结果（去除 qCompress 的四字节长度头），
+ *          并按 Altium 的 D0 标记和 Pascal 文件名组织条目。
+ */
+void AltiumSchLibWriter::writeImageStorage(OLECompoundWriter& ole, const QList<AltiumSchComponent>& components) {
+    QList<const AltiumSchImage*> embeddedImages;
+    for (const AltiumSchComponent& component : components) {
+        for (const AltiumSchImage& image : component.images) {
+            if (image.embedImage && !image.data.isEmpty() && !image.fileName.isEmpty() &&
+                image.fileName.toLocal8Bit().size() <= 255)
+                embeddedImages.append(&image);
+        }
+    }
+
+    QByteArray storageData;
+    AltiumBinaryWriter storageWriter(storageData);
+    QMap<QString, QString> storageParams;
+    storageParams["HEADER"] = "Icon storage";
+    if (!embeddedImages.isEmpty())
+        storageParams["Weight"] = QString::number(embeddedImages.size());
+    storageWriter.writeCStringParameterBlock(storageParams);
+
+    for (const AltiumSchImage* image : embeddedImages) {
+        const QByteArray compressed = qCompress(image->data, 9).mid(4);
+        const QByteArray name = image->fileName.toLocal8Bit();
+        if (name.isEmpty() || name.size() > 255)
+            continue;
+
+        QByteArray entry;
+        QDataStream entryStream(&entry, QIODevice::WriteOnly);
+        entryStream.setByteOrder(QDataStream::LittleEndian);
+        entryStream << static_cast<quint8>(0xD0) << static_cast<quint8>(name.size());
+        entry.append(name);
+        entryStream.device()->seek(entry.size());
+        entryStream << static_cast<quint32>(compressed.size());
+        entry.append(compressed);
+
+        QDataStream blockStream(&storageData, QIODevice::WriteOnly | QIODevice::Append);
+        blockStream.setByteOrder(QDataStream::LittleEndian);
+        blockStream << static_cast<quint32>(0x01000000U | static_cast<quint32>(entry.size()));
+        blockStream.writeRawData(entry.constData(), entry.size());
+    }
+    ole.writeStream("Storage", storageData);
 }
 
 /**
@@ -896,10 +1103,12 @@ int AltiumSchLibWriter::componentRecordCount(const AltiumSchComponent& component
         if (bezier.controlPoints.size() == 4)
             ++validBezierCount;
     }
-    const int graphics = component.pins.size() + component.rectangles.size() + component.lines.size() +
-                         component.arcs.size() + component.polygons.size() + component.ellipses.size() +
+    const int graphics = component.pins.size() + component.rectangles.size() + component.roundRectangles.size() +
+                         component.lines.size() + component.arcs.size() + component.polygons.size() +
+                         component.ellipses.size() + component.pies.size() + component.ellipticalArcs.size() +
                          component.polylines.size() + component.paths.size() + validBezierCount +
-                         component.ieeeSymbols.size() + component.texts.size();
+                         component.ieeeSymbols.size() + component.texts.size() + component.textFrames.size() +
+                         component.images.size();
     // Component + graphics + 参数字段 + ImplementationList + implementation records.
     // 每个实现包含 RECORD=45、46、48，以及每个符号引脚对应的 RECORD=47。
     return 1 + graphics + componentParameterRecordCount(component) + 1 +

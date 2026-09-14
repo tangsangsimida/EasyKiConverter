@@ -12,6 +12,7 @@
 
 #include "IRTypes.h"
 
+#include <QByteArray>
 #include <QColor>
 #include <QList>
 #include <QMap>
@@ -115,6 +116,8 @@ struct SymbolRectangleIR {
     double y0 = 0.0;  ///< 起点 Y（mm，已转换，KiCad Y 翻转后）
     double x1 = 0.0;  ///< 终点 X（mm，已转换）
     double y1 = 0.0;  ///< 终点 Y（mm，已转换，KiCad Y 翻转后）
+    double cornerRadiusX = 0.0;  ///< X 方向圆角半径（mm）
+    double cornerRadiusY = 0.0;  ///< Y 方向圆角半径（mm）
     QColor strokeColor = Qt::black;  ///< 边框颜色
     double strokeWidth = 0.0;  ///< 边框宽度（mm）
     StrokeStyle strokeStyle = StrokeStyle::Solid;  ///< 线型
@@ -168,6 +171,41 @@ struct SymbolEllipseIR {
     QColor fillColor = Qt::transparent;
     bool isFilled = false;
     int partIndex = 0;  ///< 所属部件索引（多部件符号使用）
+};
+
+/**
+ * @brief 通用符号扇形
+ * @details 写入 Altium RECORD=9，角度单位为度。
+ */
+struct SymbolPieIR {
+    QPointF center;  ///< 圆心（mm）
+    double radius = 0.0;  ///< 半径（mm）
+    double startAngle = 0.0;  ///< 起始角度（度）
+    double endAngle = 360.0;  ///< 结束角度（度）
+    QColor strokeColor = Qt::black;
+    double strokeWidth = 0.0;
+    StrokeStyle strokeStyle = StrokeStyle::Solid;
+    QColor fillColor = Qt::transparent;
+    bool isFilled = false;
+    int partIndex = 0;  ///< 所属部件索引
+};
+
+/**
+ * @brief 通用符号椭圆弧
+ * @details 写入 Altium RECORD=11，角度单位为度。
+ */
+struct SymbolEllipticalArcIR {
+    QPointF center;  ///< 中心点（mm）
+    double radiusX = 0.0;  ///< X 方向半径（mm）
+    double radiusY = 0.0;  ///< Y 方向半径（mm）
+    double startAngle = 0.0;  ///< 起始角度（度）
+    double endAngle = 360.0;  ///< 结束角度（度）
+    QColor strokeColor = Qt::black;
+    double strokeWidth = 0.0;
+    StrokeStyle strokeStyle = StrokeStyle::Solid;
+    QColor fillColor = Qt::transparent;
+    bool isFilled = false;
+    int partIndex = 0;  ///< 所属部件索引
 };
 
 /**
@@ -256,6 +294,51 @@ struct SymbolTextIR {
 };
 
 /**
+ * @brief 通用符号文本框
+ * @details 写入 Altium RECORD=28，可同时表达边框、填充和多行文本。
+ */
+struct SymbolTextFrameIR {
+    double x0 = 0.0, y0 = 0.0;  ///< 第一角点（mm）
+    double x1 = 0.0, y1 = 0.0;  ///< 第二角点（mm）
+    QString text;  ///< 多行文本
+    QColor strokeColor = Qt::black;
+    QColor fillColor = Qt::transparent;
+    QColor textColor = Qt::black;
+    double strokeWidth = 0.0;
+    StrokeStyle strokeStyle = StrokeStyle::Solid;
+    double textMargin = 0.0;  ///< 文本边距（mm）
+    int fontId = 0;
+    int orientation = 0;
+    int alignment = 0;
+    bool isFilled = false;
+    bool showBorder = false;
+    bool wordWrap = false;
+    bool clipToRect = false;
+    bool transparent = false;
+    int partIndex = 0;
+};
+
+/**
+ * @brief 通用符号图片
+ * @details 支持链接图片和写入 SchLib /Storage 的嵌入图片。
+ */
+struct SymbolImageIR {
+    double x0 = 0.0, y0 = 0.0;  ///< 边界第一角点（mm）
+    double x1 = 0.0, y1 = 0.0;  ///< 边界第二角点（mm）
+    QString fileName;  ///< 图片文件名或外部路径
+    QByteArray data;  ///< 图片原始字节；非空时可嵌入
+    QColor strokeColor = Qt::black;
+    QColor fillColor = Qt::transparent;
+    double strokeWidth = 0.0;
+    StrokeStyle strokeStyle = StrokeStyle::Solid;
+    bool isFilled = false;
+    bool showBorder = false;
+    bool keepAspect = true;
+    bool transparent = false;
+    int partIndex = 0;
+};
+
+/**
  * @brief 符号参数字段
  * @details 用于表达 Value、Datasheet 以及供应商自定义属性，参数名称和值
  *          与图形数据分离，便于各导出器按目标格式映射。
@@ -305,12 +388,16 @@ struct SymbolComponentIR {
     QList<SymbolCircleIR> circles;
     QList<SymbolArcIR> arcs;
     QList<SymbolEllipseIR> ellipses;
+    QList<SymbolPieIR> pies;
+    QList<SymbolEllipticalArcIR> ellipticalArcs;
     QList<SymbolPolylineIR> polylines;
     QList<SymbolPolygonIR> polygons;
     QList<SymbolPathIR> paths;
     QList<SymbolBezierIR> beziers;
     QList<SymbolIeeeIR> ieeeSymbols;
     QList<SymbolTextIR> texts;
+    QList<SymbolTextFrameIR> textFrames;
+    QList<SymbolImageIR> images;
     QList<SymbolParameterIR> parameters;
     QList<SymbolModelIR> models;
 
@@ -333,8 +420,9 @@ struct SymbolComponentIR {
     /** @brief 是否包含任何图形数据 */
     bool hasGraphics() const {
         return !pins.isEmpty() || !rectangles.isEmpty() || !circles.isEmpty() || !arcs.isEmpty() ||
-               !ellipses.isEmpty() || !polylines.isEmpty() || !polygons.isEmpty() || !paths.isEmpty() ||
-               !beziers.isEmpty() || !ieeeSymbols.isEmpty() || !texts.isEmpty();
+               !ellipses.isEmpty() || !pies.isEmpty() || !ellipticalArcs.isEmpty() || !polylines.isEmpty() ||
+               !polygons.isEmpty() || !paths.isEmpty() || !beziers.isEmpty() || !ieeeSymbols.isEmpty() ||
+               !texts.isEmpty() || !textFrames.isEmpty() || !images.isEmpty();
     }
 
     void clear() {
@@ -348,12 +436,16 @@ struct SymbolComponentIR {
         circles.clear();
         arcs.clear();
         ellipses.clear();
+        pies.clear();
+        ellipticalArcs.clear();
         polylines.clear();
         polygons.clear();
         paths.clear();
         beziers.clear();
         ieeeSymbols.clear();
         texts.clear();
+        textFrames.clear();
+        images.clear();
         parameters.clear();
         models.clear();
         footprintName.clear();

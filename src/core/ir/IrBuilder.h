@@ -143,6 +143,8 @@ inline SymbolComponentIR toSymbolIR(const SymbolData& data) {
             rir.y0 = -(rect.posY - originY) * EASYEDA_PX_TO_MM;
             rir.x1 = (rect.posX + rect.width - originX) * EASYEDA_PX_TO_MM;
             rir.y1 = -(rect.posY + rect.height - originY) * EASYEDA_PX_TO_MM;
+            rir.cornerRadiusX = rect.rx * EASYEDA_PX_TO_MM;
+            rir.cornerRadiusY = rect.ry * EASYEDA_PX_TO_MM;
             rir.strokeColor = parseColor(rect.strokeColor);
             rir.strokeWidth = rect.strokeWidth * EASYEDA_PX_TO_MM;
             rir.strokeStyle = GeometryNormalizer::parseStrokeStyle(rect.strokeStyle);

@@ -252,8 +252,12 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
     }
 
     // 转换图形元素
-    for (const IR::SymbolRectangleIR& r : data.rectangles)
-        component.rectangles.append(convertRectangle(r));
+    for (const IR::SymbolRectangleIR& r : data.rectangles) {
+        if (r.cornerRadiusX > 0.0 || r.cornerRadiusY > 0.0)
+            component.roundRectangles.append(convertRoundRectangle(r));
+        else
+            component.rectangles.append(convertRectangle(r));
+    }
     for (const IR::SymbolCircleIR& c : data.circles)
         component.ellipses.append(convertCircle(c));
     for (const IR::SymbolArcIR& a : data.arcs)
@@ -272,8 +276,16 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
         component.ieeeSymbols.append(convertIeee(ieee));
     for (const IR::SymbolTextIR& t : data.texts)
         component.texts.append(convertText(t));
+    for (const IR::SymbolTextFrameIR& frame : data.textFrames)
+        component.textFrames.append(convertTextFrame(frame));
+    for (const IR::SymbolImageIR& image : data.images)
+        component.images.append(convertImage(image));
     for (const IR::SymbolEllipseIR& e : data.ellipses)
         component.ellipses.append(convertEllipse(e));
+    for (const IR::SymbolPieIR& p : data.pies)
+        component.pies.append(convertPie(p));
+    for (const IR::SymbolEllipticalArcIR& a : data.ellipticalArcs)
+        component.ellipticalArcs.append(convertEllipticalArc(a));
 
     // 添加封装链接，保留多个候选封装
     QStringList footprintNames = data.footprintNames;
@@ -526,6 +538,26 @@ AltiumSchRectangle ExporterAltiumSymbol::convertRectangle(const IR::SymbolRectan
 }
 
 /**
+ * @brief SymbolRectangleIR → AltiumSchRoundRectangle
+ */
+AltiumSchRoundRectangle ExporterAltiumSymbol::convertRoundRectangle(const IR::SymbolRectangleIR& rect) {
+    AltiumSchRoundRectangle altiumRect;
+    altiumRect.locationX = AltiumCoord::mmToRaw(rect.x0);
+    altiumRect.locationY = AltiumCoord::mmToRaw(rect.y0);
+    altiumRect.cornerX = AltiumCoord::mmToRaw(rect.x1);
+    altiumRect.cornerY = AltiumCoord::mmToRaw(rect.y1);
+    altiumRect.cornerXRadius = AltiumCoord::mmToRaw(qMax(0.0, rect.cornerRadiusX));
+    altiumRect.cornerYRadius = AltiumCoord::mmToRaw(qMax(0.0, rect.cornerRadiusY));
+    altiumRect.lineWidth = AltiumCoord::lineWidthMmToIndex(rect.strokeWidth);
+    altiumRect.lineStyle = toAltiumLineStyle(rect.strokeStyle);
+    altiumRect.color = toAltiumColor(rect.strokeColor);
+    altiumRect.areaColor = rect.isFilled ? toAltiumColor(rect.fillColor) : 0xFFFFFF;
+    altiumRect.isSolid = rect.isFilled;
+    altiumRect.ownerPartId = qMax(1, rect.partIndex + 1);
+    return altiumRect;
+}
+
+/**
  * @brief SymbolCircleIR → AltiumSchEllipse
  */
 AltiumSchEllipse ExporterAltiumSymbol::convertCircle(const IR::SymbolCircleIR& circle) {
@@ -680,6 +712,58 @@ AltiumSchText ExporterAltiumSymbol::convertText(const IR::SymbolTextIR& text) {
 }
 
 /**
+ * @brief SymbolTextFrameIR → AltiumSchTextFrame
+ */
+AltiumSchTextFrame ExporterAltiumSymbol::convertTextFrame(const IR::SymbolTextFrameIR& frame) {
+    AltiumSchTextFrame altiumFrame;
+    altiumFrame.locationX = AltiumCoord::mmToRaw(frame.x0);
+    altiumFrame.locationY = AltiumCoord::mmToRaw(frame.y0);
+    altiumFrame.cornerX = AltiumCoord::mmToRaw(frame.x1);
+    altiumFrame.cornerY = AltiumCoord::mmToRaw(frame.y1);
+    altiumFrame.lineWidth = AltiumCoord::lineWidthMmToIndex(frame.strokeWidth);
+    altiumFrame.lineStyle = toAltiumLineStyle(frame.strokeStyle);
+    altiumFrame.color = toAltiumColor(frame.strokeColor);
+    altiumFrame.areaColor = frame.isFilled ? toAltiumColor(frame.fillColor) : 0;
+    altiumFrame.textColor = toAltiumColor(frame.textColor);
+    altiumFrame.fontId = qMax(0, frame.fontId);
+    altiumFrame.orientation = ((frame.orientation % 4) + 4) % 4;
+    altiumFrame.alignment = qMax(0, frame.alignment);
+    altiumFrame.textMargin = AltiumCoord::mmToRaw(qMax(0.0, frame.textMargin));
+    altiumFrame.text = frame.text;
+    altiumFrame.isSolid = frame.isFilled;
+    altiumFrame.showBorder = frame.showBorder;
+    altiumFrame.wordWrap = frame.wordWrap;
+    altiumFrame.clipToRect = frame.clipToRect;
+    altiumFrame.transparent = frame.transparent;
+    altiumFrame.ownerPartId = qMax(1, frame.partIndex + 1);
+    return altiumFrame;
+}
+
+/**
+ * @brief SymbolImageIR → AltiumSchImage
+ */
+AltiumSchImage ExporterAltiumSymbol::convertImage(const IR::SymbolImageIR& image) {
+    AltiumSchImage altiumImage;
+    altiumImage.locationX = AltiumCoord::mmToRaw(image.x0);
+    altiumImage.locationY = AltiumCoord::mmToRaw(image.y0);
+    altiumImage.cornerX = AltiumCoord::mmToRaw(image.x1);
+    altiumImage.cornerY = AltiumCoord::mmToRaw(image.y1);
+    altiumImage.lineWidth = AltiumCoord::lineWidthMmToIndex(image.strokeWidth);
+    altiumImage.lineStyle = toAltiumLineStyle(image.strokeStyle);
+    altiumImage.color = toAltiumColor(image.strokeColor);
+    altiumImage.areaColor = image.isFilled ? toAltiumColor(image.fillColor) : 0;
+    altiumImage.fileName = image.fileName;
+    altiumImage.data = image.data;
+    altiumImage.isSolid = image.isFilled;
+    altiumImage.transparent = image.transparent;
+    altiumImage.showBorder = image.showBorder;
+    altiumImage.keepAspect = image.keepAspect;
+    altiumImage.embedImage = !image.data.isEmpty();
+    altiumImage.ownerPartId = qMax(1, image.partIndex + 1);
+    return altiumImage;
+}
+
+/**
  * @brief SymbolEllipseIR → AltiumSchEllipse
  */
 AltiumSchEllipse ExporterAltiumSymbol::convertEllipse(const IR::SymbolEllipseIR& ellipse) {
@@ -695,6 +779,44 @@ AltiumSchEllipse ExporterAltiumSymbol::convertEllipse(const IR::SymbolEllipseIR&
     altiumEllipse.isSolid = ellipse.isFilled;
     altiumEllipse.ownerPartId = qMax(1, ellipse.partIndex + 1);
     return altiumEllipse;
+}
+
+/**
+ * @brief SymbolPieIR → AltiumSchPie
+ */
+AltiumSchPie ExporterAltiumSymbol::convertPie(const IR::SymbolPieIR& pie) {
+    AltiumSchPie altiumPie;
+    altiumPie.centerX = AltiumCoord::mmToRaw(pie.center.x());
+    altiumPie.centerY = AltiumCoord::mmToRaw(pie.center.y());
+    altiumPie.radius = AltiumCoord::mmToRaw(qMax(0.0, pie.radius));
+    altiumPie.startAngle = pie.startAngle;
+    altiumPie.endAngle = pie.endAngle;
+    altiumPie.lineWidth = AltiumCoord::lineWidthMmToIndex(pie.strokeWidth);
+    altiumPie.lineStyle = toAltiumLineStyle(pie.strokeStyle);
+    altiumPie.color = toAltiumColor(pie.strokeColor);
+    altiumPie.areaColor = pie.isFilled ? toAltiumColor(pie.fillColor) : 0xFFFFFF;
+    altiumPie.isSolid = pie.isFilled;
+    altiumPie.ownerPartId = qMax(1, pie.partIndex + 1);
+    return altiumPie;
+}
+
+/**
+ * @brief SymbolEllipticalArcIR → AltiumSchEllipticalArc
+ */
+AltiumSchEllipticalArc ExporterAltiumSymbol::convertEllipticalArc(const IR::SymbolEllipticalArcIR& arc) {
+    AltiumSchEllipticalArc altiumArc;
+    altiumArc.centerX = AltiumCoord::mmToRaw(arc.center.x());
+    altiumArc.centerY = AltiumCoord::mmToRaw(arc.center.y());
+    altiumArc.radiusX = AltiumCoord::mmToRaw(qMax(0.0, arc.radiusX));
+    altiumArc.radiusY = AltiumCoord::mmToRaw(qMax(0.0, arc.radiusY));
+    altiumArc.startAngle = arc.startAngle;
+    altiumArc.endAngle = arc.endAngle;
+    altiumArc.lineWidth = AltiumCoord::lineWidthMmToIndex(arc.strokeWidth);
+    altiumArc.lineStyle = toAltiumLineStyle(arc.strokeStyle);
+    altiumArc.color = toAltiumColor(arc.strokeColor);
+    altiumArc.areaColor = arc.isFilled ? toAltiumColor(arc.fillColor) : 0xFFFFFF;
+    altiumArc.ownerPartId = qMax(1, arc.partIndex + 1);
+    return altiumArc;
 }
 
 /**
@@ -722,6 +844,10 @@ void ExporterAltiumSymbol::centerComponent(AltiumSchComponent& component) {
         include(rect.locationX, rect.locationY);
         include(rect.cornerX, rect.cornerY);
     }
+    for (const auto& rect : component.roundRectangles) {
+        include(rect.locationX, rect.locationY);
+        include(rect.cornerX, rect.cornerY);
+    }
     for (const auto& line : component.lines) {
         include(line.locationX, line.locationY);
         include(line.cornerX, line.cornerY);
@@ -733,6 +859,14 @@ void ExporterAltiumSymbol::centerComponent(AltiumSchComponent& component) {
     for (const auto& ellipse : component.ellipses) {
         include(ellipse.centerX - ellipse.radiusX, ellipse.centerY - ellipse.radiusY);
         include(ellipse.centerX + ellipse.radiusX, ellipse.centerY + ellipse.radiusY);
+    }
+    for (const auto& pie : component.pies) {
+        include(pie.centerX - pie.radius, pie.centerY - pie.radius);
+        include(pie.centerX + pie.radius, pie.centerY + pie.radius);
+    }
+    for (const auto& arc : component.ellipticalArcs) {
+        include(arc.centerX - arc.radiusX, arc.centerY - arc.radiusY);
+        include(arc.centerX + arc.radiusX, arc.centerY + arc.radiusY);
     }
     for (const auto& polygon : component.polygons)
         for (const QPointF& point : polygon.vertices)
@@ -750,6 +884,14 @@ void ExporterAltiumSymbol::centerComponent(AltiumSchComponent& component) {
         include(ieee.locationX, ieee.locationY);
     for (const auto& text : component.texts)
         include(text.locationX, text.locationY);
+    for (const auto& frame : component.textFrames) {
+        include(frame.locationX, frame.locationY);
+        include(frame.cornerX, frame.cornerY);
+    }
+    for (const auto& image : component.images) {
+        include(image.locationX, image.locationY);
+        include(image.cornerX, image.cornerY);
+    }
     for (const auto& parameter : component.parameters)
         if (parameter.locationX != 0 || parameter.locationY != 0)
             include(parameter.locationX, parameter.locationY);
@@ -779,6 +921,12 @@ void ExporterAltiumSymbol::centerComponent(AltiumSchComponent& component) {
         rect.cornerX -= offsetX;
         rect.cornerY -= offsetY;
     }
+    for (auto& rect : component.roundRectangles) {
+        rect.locationX -= offsetX;
+        rect.locationY -= offsetY;
+        rect.cornerX -= offsetX;
+        rect.cornerY -= offsetY;
+    }
     // 平移线段
     for (auto& line : component.lines) {
         line.locationX -= offsetX;
@@ -795,6 +943,14 @@ void ExporterAltiumSymbol::centerComponent(AltiumSchComponent& component) {
     for (auto& ellipse : component.ellipses) {
         ellipse.centerX -= offsetX;
         ellipse.centerY -= offsetY;
+    }
+    for (auto& pie : component.pies) {
+        pie.centerX -= offsetX;
+        pie.centerY -= offsetY;
+    }
+    for (auto& arc : component.ellipticalArcs) {
+        arc.centerX -= offsetX;
+        arc.centerY -= offsetY;
     }
     // 平移多边形（mmToSchematicUnits 坐标系）
     for (auto& poly : component.polygons) {
@@ -826,6 +982,18 @@ void ExporterAltiumSymbol::centerComponent(AltiumSchComponent& component) {
         text.locationX -= offsetX;
         text.locationY -= offsetY;
     }
+    for (auto& frame : component.textFrames) {
+        frame.locationX -= offsetX;
+        frame.locationY -= offsetY;
+        frame.cornerX -= offsetX;
+        frame.cornerY -= offsetY;
+    }
+    for (auto& image : component.images) {
+        image.locationX -= offsetX;
+        image.locationY -= offsetY;
+        image.cornerX -= offsetX;
+        image.cornerY -= offsetY;
+    }
     for (auto& parameter : component.parameters) {
         parameter.locationX -= offsetX;
         parameter.locationY -= offsetY;
@@ -835,10 +1003,16 @@ void ExporterAltiumSymbol::centerComponent(AltiumSchComponent& component) {
     // 引脚位置为基准；如果引脚位置落在主体边界外，名称就会看起来与图形
     // 脱离。仅修正朝向法向坐标，沿边方向坐标保持不变，因此不会改变引脚
     // 间距。没有矩形主体的符号不强制投影，避免破坏原始几何。
-    if (!component.rectangles.isEmpty()) {
+    if (!component.rectangles.isEmpty() || !component.roundRectangles.isEmpty()) {
         int bodyMinX = INT_MAX, bodyMinY = INT_MAX;
         int bodyMaxX = INT_MIN, bodyMaxY = INT_MIN;
         for (const auto& rect : component.rectangles) {
+            bodyMinX = qMin(bodyMinX, qMin(rect.locationX, rect.cornerX));
+            bodyMinY = qMin(bodyMinY, qMin(rect.locationY, rect.cornerY));
+            bodyMaxX = qMax(bodyMaxX, qMax(rect.locationX, rect.cornerX));
+            bodyMaxY = qMax(bodyMaxY, qMax(rect.locationY, rect.cornerY));
+        }
+        for (const auto& rect : component.roundRectangles) {
             bodyMinX = qMin(bodyMinX, qMin(rect.locationX, rect.cornerX));
             bodyMinY = qMin(bodyMinY, qMin(rect.locationY, rect.cornerY));
             bodyMaxX = qMax(bodyMaxX, qMax(rect.locationX, rect.cornerX));

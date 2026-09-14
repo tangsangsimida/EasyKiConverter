@@ -49,15 +49,21 @@ private:
     void writeComponentRecord(AltiumBinaryWriter& writer, const AltiumSchComponent& component);
     void writePinRecord(AltiumBinaryWriter& writer, const AltiumSchPin& pin, int partId);
     void writeRectangleRecord(AltiumBinaryWriter& writer, const AltiumSchRectangle& rect);
+    void writeRoundRectangleRecord(AltiumBinaryWriter& writer, const AltiumSchRoundRectangle& rect);
     void writeLineRecord(AltiumBinaryWriter& writer, const AltiumSchLine& line);
     void writeArcRecord(AltiumBinaryWriter& writer, const AltiumSchArc& arc);
     void writePolygonRecord(AltiumBinaryWriter& writer, const AltiumSchPolygon& polygon);
     void writeEllipseRecord(AltiumBinaryWriter& writer, const AltiumSchEllipse& ellipse);
+    void writePieRecord(AltiumBinaryWriter& writer, const AltiumSchPie& pie);
+    void writeEllipticalArcRecord(AltiumBinaryWriter& writer, const AltiumSchEllipticalArc& arc);
     void writePolylineRecord(AltiumBinaryWriter& writer, const AltiumSchPolyline& polyline);
     void writePathRecord(AltiumBinaryWriter& writer, const AltiumSchPath& path);
     void writeBezierRecord(AltiumBinaryWriter& writer, const AltiumSchBezier& bezier);
     void writeIeeeRecord(AltiumBinaryWriter& writer, const AltiumSchIeee& ieee);
     void writeTextRecord(AltiumBinaryWriter& writer, const AltiumSchText& text);
+    void writeTextFrameRecord(AltiumBinaryWriter& writer, const AltiumSchTextFrame& frame);
+    void writeImageRecord(AltiumBinaryWriter& writer, const AltiumSchImage& image);
+    void writeImageStorage(OLECompoundWriter& ole, const QList<AltiumSchComponent>& components);
     void writeComponentParameterRecords(AltiumBinaryWriter& writer, const AltiumSchComponent& component);
     void writeImplementationRecords(AltiumBinaryWriter& writer, const AltiumSchComponent& component);
 

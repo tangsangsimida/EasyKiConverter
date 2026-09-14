@@ -2,6 +2,7 @@
 
 #include "AltiumCommon.h"
 
+#include <QByteArray>
 #include <QList>
 #include <QMap>
 #include <QPointF>
@@ -42,6 +43,21 @@ struct AltiumSchRectangle {
     int lineStyle = 0;  ///< 线型（0 实线、1 虚线、2 点线）
     uint32_t color = 0x000000;
     uint32_t areaColor = 0xFFFFFF;  ///< 填充色
+    bool isSolid = true;
+    int ownerPartId = 1;
+};
+
+/**
+ * @brief Altium 符号圆角矩形
+ */
+struct AltiumSchRoundRectangle {
+    int locationX = 0, locationY = 0;
+    int cornerX = 0, cornerY = 0;
+    int cornerXRadius = 0, cornerYRadius = 0;
+    int lineWidth = 0;
+    int lineStyle = 0;
+    uint32_t color = 0x000000;
+    uint32_t areaColor = 0xFFFFFF;
     bool isSolid = true;
     int ownerPartId = 1;
 };
@@ -96,6 +112,37 @@ struct AltiumSchEllipse {
     uint32_t color = 0x000000;
     uint32_t areaColor = 0xFFFFFF;
     bool isSolid = true;
+    int ownerPartId = 1;
+};
+
+/**
+ * @brief Altium 符号扇形
+ */
+struct AltiumSchPie {
+    int centerX = 0, centerY = 0;
+    int radius = 0;
+    double startAngle = 0.0;
+    double endAngle = 360.0;
+    int lineWidth = 0;
+    int lineStyle = 0;
+    uint32_t color = 0x000000;
+    uint32_t areaColor = 0xFFFFFF;
+    bool isSolid = true;
+    int ownerPartId = 1;
+};
+
+/**
+ * @brief Altium 符号椭圆弧
+ */
+struct AltiumSchEllipticalArc {
+    int centerX = 0, centerY = 0;
+    int radiusX = 0, radiusY = 0;
+    double startAngle = 0.0;
+    double endAngle = 360.0;
+    int lineWidth = 0;
+    int lineStyle = 0;
+    uint32_t color = 0x000000;
+    uint32_t areaColor = 0xFFFFFF;
     int ownerPartId = 1;
 };
 
@@ -164,6 +211,50 @@ struct AltiumSchText {
 };
 
 /**
+ * @brief Altium 符号文本框
+ */
+struct AltiumSchTextFrame {
+    int locationX = 0, locationY = 0;
+    int cornerX = 0, cornerY = 0;
+    int lineWidth = 0;
+    int lineStyle = 0;
+    uint32_t color = 0x000000;
+    uint32_t areaColor = 0x000000;
+    uint32_t textColor = 0x000000;
+    int fontId = 0;
+    int orientation = 0;
+    int alignment = 0;
+    int textMargin = 0;
+    QString text;
+    bool isSolid = false;
+    bool showBorder = false;
+    bool wordWrap = false;
+    bool clipToRect = false;
+    bool transparent = false;
+    int ownerPartId = 1;
+};
+
+/**
+ * @brief Altium 符号图片
+ */
+struct AltiumSchImage {
+    int locationX = 0, locationY = 0;
+    int cornerX = 0, cornerY = 0;
+    int lineWidth = 0;
+    int lineStyle = 0;
+    uint32_t color = 0x000000;
+    uint32_t areaColor = 0x000000;
+    QString fileName;
+    QByteArray data;
+    bool isSolid = false;
+    bool transparent = false;
+    bool showBorder = false;
+    bool keepAspect = true;
+    bool embedImage = false;
+    int ownerPartId = 1;
+};
+
+/**
  * @brief Altium 符号参数字段
  * @details 参数使用 RECORD=41 写入 SchLib Data 流。
  */
@@ -199,15 +290,20 @@ struct AltiumSchComponent {
 
     QList<AltiumSchPin> pins;
     QList<AltiumSchRectangle> rectangles;
+    QList<AltiumSchRoundRectangle> roundRectangles;
     QList<AltiumSchLine> lines;
     QList<AltiumSchArc> arcs;
     QList<AltiumSchPolygon> polygons;
     QList<AltiumSchEllipse> ellipses;
+    QList<AltiumSchPie> pies;
+    QList<AltiumSchEllipticalArc> ellipticalArcs;
     QList<AltiumSchPolyline> polylines;
     QList<AltiumSchPath> paths;
     QList<AltiumSchBezier> beziers;
     QList<AltiumSchIeee> ieeeSymbols;
     QList<AltiumSchText> texts;
+    QList<AltiumSchTextFrame> textFrames;
+    QList<AltiumSchImage> images;
 
     /** @brief 封装链接（实现记录） */
     struct Implementation {

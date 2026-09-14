@@ -53,6 +53,11 @@ private:
     AltiumSchRectangle convertRectangle(const IR::SymbolRectangleIR& rect);
 
     /**
+     * @brief SymbolRectangleIR → AltiumSchRoundRectangle 转换
+     */
+    AltiumSchRoundRectangle convertRoundRectangle(const IR::SymbolRectangleIR& rect);
+
+    /**
      * @brief SymbolCircleIR → AltiumSchEllipse 转换
      */
     AltiumSchEllipse convertCircle(const IR::SymbolCircleIR& circle);
@@ -93,9 +98,29 @@ private:
     AltiumSchText convertText(const IR::SymbolTextIR& text);
 
     /**
+     * @brief SymbolTextFrameIR → AltiumSchTextFrame 转换
+     */
+    AltiumSchTextFrame convertTextFrame(const IR::SymbolTextFrameIR& frame);
+
+    /**
+     * @brief SymbolImageIR → AltiumSchImage 转换
+     */
+    AltiumSchImage convertImage(const IR::SymbolImageIR& image);
+
+    /**
      * @brief SymbolEllipseIR → AltiumSchEllipse 转换
      */
     AltiumSchEllipse convertEllipse(const IR::SymbolEllipseIR& ellipse);
+
+    /**
+     * @brief SymbolPieIR → AltiumSchPie 转换
+     */
+    AltiumSchPie convertPie(const IR::SymbolPieIR& pie);
+
+    /**
+     * @brief SymbolEllipticalArcIR → AltiumSchEllipticalArc 转换
+     */
+    AltiumSchEllipticalArc convertEllipticalArc(const IR::SymbolEllipticalArcIR& arc);
 
     /**
      * @brief 将符号图元坐标归一化到原点
