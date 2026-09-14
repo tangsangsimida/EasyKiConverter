@@ -1006,6 +1006,17 @@ private slots:
         QCOMPARE(static_cast<quint8>(footprintData.at(cursor++)), quint8(5));
         QCOMPARE(readU32(footprintData, cursor) & 0x00FFFFFFU, quint32(252));
 
+        AltiumPcbLibReader pcbReader;
+        QVERIFY2(pcbReader.open(pcbPath), qPrintable(pcbReader.errorString()));
+        QVector<AltiumPcbLibReader::PrimitiveRecord> objects;
+        QVERIFY(pcbReader.readFootprintObjects(QStringLiteral("TEST_PAD"), &objects));
+        QCOMPARE(objects.size(), 2);
+        QCOMPARE(objects.at(0).objectId, quint8(AltiumConstants::PCB_OBJECT_PAD));
+        QCOMPARE(objects.at(0).blocks.size(), 6);
+        QCOMPARE(objects.at(1).objectId, quint8(AltiumConstants::PCB_OBJECT_TEXT));
+        QCOMPARE(objects.at(1).blocks.size(), 2);
+        QVERIFY(objects.at(1).blocks.at(1).payload.startsWith(char(5)));
+
         QByteArray wideStrings;
         QVERIFY(readCfbStream(pcbPath, QStringLiteral("TEST_PAD/WideStrings"), wideStrings));
         QVERIFY(wideStrings.contains("ENCODEDTEXT0=82,69,70,42,42"));

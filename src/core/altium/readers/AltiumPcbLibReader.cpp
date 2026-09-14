@@ -10,6 +10,7 @@ namespace {
 int primitiveBlockCount(quint8 objectId) {
     switch (objectId) {
         case AltiumConstants::PCB_OBJECT_ARC:
+        case AltiumConstants::PCB_OBJECT_VIA:
         case AltiumConstants::PCB_OBJECT_TRACK:
         case AltiumConstants::PCB_OBJECT_FILL:
         case AltiumConstants::PCB_OBJECT_REGION:
@@ -22,6 +23,13 @@ int primitiveBlockCount(quint8 objectId) {
         default:
             return -1;
     }
+}
+
+bool isStringBlockPayload(const QByteArray& payload) {
+    AltiumBinaryReader reader(payload);
+    uint8_t stringSize = 0;
+    QByteArray stringData;
+    return reader.readUInt8(&stringSize) && reader.readBytes(stringSize, &stringData) && reader.remaining() == 0;
 }
 
 }  // namespace
@@ -180,6 +188,12 @@ bool AltiumPcbLibReader::readFootprintObjects(int componentIndexValue, QVector<P
             QByteArray payload;
             uint8_t flags = 0;
             if (!reader.readBlock(&payload, &flags) || payload.isEmpty()) {
+                objects->clear();
+                return false;
+            }
+            const bool isPadStringBlock = objectId == AltiumConstants::PCB_OBJECT_PAD && blockIndex < 3;
+            const bool isTextStringBlock = objectId == AltiumConstants::PCB_OBJECT_TEXT && blockIndex == 1;
+            if ((isPadStringBlock || isTextStringBlock) && !isStringBlockPayload(payload)) {
                 objects->clear();
                 return false;
             }
