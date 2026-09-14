@@ -683,6 +683,14 @@ private slots:
         QVERIFY(!writer.write({invalidGeometry}, outputPath));
         QVERIFY(writer.diagnostics().join('\n').contains(QStringLiteral("圆弧半径无效")));
 
+        AltiumSchComponent invalidImageGeometry;
+        invalidImageGeometry.name = QStringLiteral("INVALID_IMAGE_GEOMETRY");
+        AltiumSchImage invalidRotationImage;
+        invalidRotationImage.rotation = std::numeric_limits<double>::quiet_NaN();
+        invalidImageGeometry.images.append(invalidRotationImage);
+        QVERIFY(!writer.write({invalidImageGeometry}, outputPath));
+        QVERIFY(writer.diagnostics().join('\n').contains(QStringLiteral("图片旋转角度无效")));
+
         AltiumSchComponent invalidPolygon;
         invalidPolygon.name = QStringLiteral("INVALID_POLYGON");
         AltiumSchPolygon invalidPolygonData;

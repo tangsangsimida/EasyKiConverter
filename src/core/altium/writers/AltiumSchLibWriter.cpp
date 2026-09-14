@@ -921,6 +921,10 @@ bool AltiumSchLibWriter::validateGeometry(const AltiumSchComponent& component) {
         if (bezier.controlPoints.size() == 4 && !hasFinitePoints(bezier.controlPoints))
             return reject(QStringLiteral("Bézier 控制点包含非有限坐标"));
     }
+    for (const AltiumSchImage& image : component.images) {
+        if (!std::isfinite(image.rotation))
+            return reject(QStringLiteral("图片旋转角度无效"));
+    }
     return true;
 }
 
