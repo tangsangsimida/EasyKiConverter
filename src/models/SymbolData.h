@@ -291,6 +291,15 @@ struct SymbolText {
     bool isLocked;
 };
 
+/**
+ * @brief 符号图元在源数据中的绘制顺序引用
+ * @details type 使用 EasyEDA shape designator（如 P、R、C、T），index 指向对应类型列表中的元素。
+ */
+struct SymbolGraphicOrder {
+    QString type;
+    int index = -1;
+};
+
 // ==================== 符号部分 ====================
 
 /**
@@ -309,6 +318,7 @@ struct SymbolPart {
     QList<SymbolPolygon> polygons;
     QList<SymbolPath> paths;
     QList<SymbolText> texts;
+    QList<SymbolGraphicOrder> graphicOrder;
 };
 
 // ==================== 符号数据 ====================
@@ -449,6 +459,18 @@ public:
         m_texts.append(text);
     }
 
+    QList<SymbolGraphicOrder> graphicOrder() const {
+        return m_graphicOrder;
+    }
+
+    void setGraphicOrder(const QList<SymbolGraphicOrder>& order) {
+        m_graphicOrder = order;
+    }
+
+    void addGraphicOrder(const SymbolGraphicOrder& order) {
+        m_graphicOrder.append(order);
+    }
+
     // 多部分符号接
     QList<SymbolPart> parts() const {
         return m_parts;
@@ -496,6 +518,7 @@ private:
     QList<SymbolPolygon> m_polygons;
     QList<SymbolPath> m_paths;
     QList<SymbolText> m_texts;
+    QList<SymbolGraphicOrder> m_graphicOrder;
     QList<SymbolPart> m_parts;  // 多部分符号的部分列表
 };
 

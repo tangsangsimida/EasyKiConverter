@@ -32,6 +32,13 @@ private slots:
         QCOMPARE(symbol->info().datasheet, QStringLiteral("https://example.test/datasheet.pdf"));
         QCOMPARE(symbol->bbox().width, 120.0);
         QCOMPARE(symbol->bbox().height, 80.0);
+        QCOMPARE(symbol->graphicOrder().size(), 3);
+        QCOMPARE(symbol->graphicOrder().at(0).type, QStringLiteral("R"));
+        QCOMPARE(symbol->graphicOrder().at(0).index, 0);
+        QCOMPARE(symbol->graphicOrder().at(1).type, QStringLiteral("PT"));
+        QCOMPARE(symbol->graphicOrder().at(1).index, 0);
+        QCOMPARE(symbol->graphicOrder().at(2).type, QStringLiteral("P"));
+        QCOMPARE(symbol->graphicOrder().at(2).index, 0);
 
         QCOMPARE(symbol->rectangles().size(), 1);
         QCOMPARE(symbol->rectangles().first().width, 60.0);

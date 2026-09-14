@@ -130,6 +130,19 @@ static bool fromJson(SymbolText& text, const QJsonObject& json) {
     return SymbolShapeSerializer::fromJson(text, json);
 }
 
+static QJsonObject graphicOrderToJson(const SymbolGraphicOrder& order) {
+    QJsonObject json;
+    json["type"] = order.type;
+    json["index"] = order.index;
+    return json;
+}
+
+static bool graphicOrderFromJson(SymbolGraphicOrder& order, const QJsonObject& json) {
+    order.type = json["type"].toString();
+    order.index = json["index"].toInt(-1);
+    return !order.type.isEmpty() && order.index >= 0;
+}
+
 // Class method definitions for shape types (also delegate to SymbolShapeSerializer)
 QJsonObject SymbolDataSerializer::toJson(const SymbolBBox& bbox) {
     return SymbolShapeSerializer::toJson(bbox);
@@ -375,6 +388,11 @@ QJsonObject SymbolDataSerializer::toJson(const SymbolPart& part) {
     }
     json["texts"] = textsArray;
 
+    QJsonArray graphicOrderArray;
+    for (const SymbolGraphicOrder& order : part.graphicOrder)
+        graphicOrderArray.append(graphicOrderToJson(order));
+    json["graphic_order"] = graphicOrderArray;
+
     return json;
 }
 
@@ -482,6 +500,15 @@ bool SymbolDataSerializer::fromJson(SymbolPart& part, const QJsonObject& json) {
         }
     }
 
+    if (json.contains("graphic_order") && json["graphic_order"].isArray()) {
+        part.graphicOrder.clear();
+        for (const QJsonValue& value : json["graphic_order"].toArray()) {
+            SymbolGraphicOrder order;
+            if (value.isObject() && graphicOrderFromJson(order, value.toObject()))
+                part.graphicOrder.append(order);
+        }
+    }
+
     return true;
 }
 
@@ -545,6 +572,11 @@ QJsonObject SymbolDataSerializer::toJson(const SymbolData& data) {
         textsArray.append(toJson(text));
     }
     json["texts"] = textsArray;
+
+    QJsonArray graphicOrderArray;
+    for (const SymbolGraphicOrder& order : data.graphicOrder())
+        graphicOrderArray.append(graphicOrderToJson(order));
+    json["graphic_order"] = graphicOrderArray;
 
     QJsonArray partsArray;
     for (const SymbolPart& part : data.parts()) {
@@ -709,6 +741,16 @@ bool SymbolDataSerializer::fromJson(SymbolData& data, const QJsonObject& json) {
             }
         }
         data.setTexts(texts);
+    }
+
+    if (json.contains("graphic_order") && json["graphic_order"].isArray()) {
+        QList<SymbolGraphicOrder> graphicOrder;
+        for (const QJsonValue& value : json["graphic_order"].toArray()) {
+            SymbolGraphicOrder order;
+            if (value.isObject() && graphicOrderFromJson(order, value.toObject()))
+                graphicOrder.append(order);
+        }
+        data.setGraphicOrder(graphicOrder);
     }
 
     // 读取多部分符号的部分

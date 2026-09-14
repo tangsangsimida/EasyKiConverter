@@ -169,31 +169,40 @@ QSharedPointer<SymbolData> EasyedaSymbolImporter::importSymbolData(const QJsonOb
                                 if (designator == "P") {
                                     // 导入引脚
                                     SymbolPin pin = importPinData(shapeString);
+                                    part.graphicOrder.append({designator, static_cast<int>(part.pins.size())});
                                     part.pins.append(pin);
                                 } else if (designator == "R") {
                                     // 导入矩形
                                     SymbolRectangle rectangle = importRectangleData(shapeString);
+                                    part.graphicOrder.append({designator, static_cast<int>(part.rectangles.size())});
                                     part.rectangles.append(rectangle);
                                 } else if (designator == "C") {
                                     SymbolCircle circle = importCircleData(shapeString);
+                                    part.graphicOrder.append({designator, static_cast<int>(part.circles.size())});
                                     part.circles.append(circle);
                                 } else if (designator == "A") {
                                     SymbolArc arc = importArcData(shapeString);
+                                    part.graphicOrder.append({designator, static_cast<int>(part.arcs.size())});
                                     part.arcs.append(arc);
                                 } else if (designator == "PL") {
                                     SymbolPolyline polyline = importPolylineData(shapeString);
+                                    part.graphicOrder.append({designator, static_cast<int>(part.polylines.size())});
                                     part.polylines.append(polyline);
                                 } else if (designator == "PG") {
                                     SymbolPolygon polygon = importPolygonData(shapeString);
+                                    part.graphicOrder.append({designator, static_cast<int>(part.polygons.size())});
                                     part.polygons.append(polygon);
                                 } else if (designator == "PT") {
                                     SymbolPath path = importPathData(shapeString);
+                                    part.graphicOrder.append({designator, static_cast<int>(part.paths.size())});
                                     part.paths.append(path);
                                 } else if (designator == "T") {
                                     SymbolText text = importTextData(shapeString);
+                                    part.graphicOrder.append({designator, static_cast<int>(part.texts.size())});
                                     part.texts.append(text);
                                 } else if (designator == "E") {
                                     SymbolEllipse ellipse = importEllipseData(shapeString);
+                                    part.graphicOrder.append({designator, static_cast<int>(part.ellipses.size())});
                                     part.ellipses.append(ellipse);
                                 }
                             }
@@ -236,39 +245,48 @@ QSharedPointer<SymbolData> EasyedaSymbolImporter::importSymbolData(const QJsonOb
                     // 导入引脚
                     SymbolPin pin = importPinData(shapeString);
                     qDebug() << "  -> Pin parsed, name:" << pin.name.text;
+                    symbolData->addGraphicOrder({designator, static_cast<int>(symbolData->pins().size())});
                     symbolData->addPin(pin);
                     qDebug() << "  -> Added pin:" << pin.name.text;
                 } else if (designator == "R") {
                     // 导入矩形
                     SymbolRectangle rectangle = importRectangleData(shapeString);
+                    symbolData->addGraphicOrder({designator, static_cast<int>(symbolData->rectangles().size())});
                     symbolData->addRectangle(rectangle);
                     qDebug() << "  -> Added rectangle";
                 } else if (designator == "C") {
                     SymbolCircle circle = importCircleData(shapeString);
+                    symbolData->addGraphicOrder({designator, static_cast<int>(symbolData->circles().size())});
                     symbolData->addCircle(circle);
                     qDebug() << "  -> Added circle";
                 } else if (designator == "A") {
                     SymbolArc arc = importArcData(shapeString);
+                    symbolData->addGraphicOrder({designator, static_cast<int>(symbolData->arcs().size())});
                     symbolData->addArc(arc);
                     qDebug() << "  -> Added arc";
                 } else if (designator == "PL") {
                     SymbolPolyline polyline = importPolylineData(shapeString);
+                    symbolData->addGraphicOrder({designator, static_cast<int>(symbolData->polylines().size())});
                     symbolData->addPolyline(polyline);
                     qDebug() << "  -> Added polyline";
                 } else if (designator == "PG") {
                     SymbolPolygon polygon = importPolygonData(shapeString);
+                    symbolData->addGraphicOrder({designator, static_cast<int>(symbolData->polygons().size())});
                     symbolData->addPolygon(polygon);
                     qDebug() << "  -> Added polygon";
                 } else if (designator == "PT") {
                     SymbolPath path = importPathData(shapeString);
+                    symbolData->addGraphicOrder({designator, static_cast<int>(symbolData->paths().size())});
                     symbolData->addPath(path);
                     qDebug() << "  -> Added path";
                 } else if (designator == "T") {
                     SymbolText text = importTextData(shapeString);
+                    symbolData->addGraphicOrder({designator, static_cast<int>(symbolData->texts().size())});
                     symbolData->addText(text);
                     qDebug() << "  -> Added text:" << text.text;
                 } else if (designator == "E") {
                     SymbolEllipse ellipse = importEllipseData(shapeString);
+                    symbolData->addGraphicOrder({designator, static_cast<int>(symbolData->ellipses().size())});
                     symbolData->addEllipse(ellipse);
                     qDebug() << "  -> Added ellipse";
                 } else {

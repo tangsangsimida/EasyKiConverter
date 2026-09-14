@@ -47,6 +47,7 @@ private slots:
         pin.settings.posY = 20.0;
         pin.name.text = "VCC";
         original.addPin(pin);
+        original.addGraphicOrder({QStringLiteral("P"), 0});
 
         // 序列化
         QJsonObject json = original.toJson();
@@ -61,6 +62,9 @@ private slots:
         QCOMPARE(restored.pins().size(), original.pins().size());
         QCOMPARE(restored.pins().at(0).settings.spicePinNumber, original.pins().at(0).settings.spicePinNumber);
         QCOMPARE(restored.pins().at(0).name.text, original.pins().at(0).name.text);
+        QCOMPARE(restored.graphicOrder().size(), 1);
+        QCOMPARE(restored.graphicOrder().first().type, QStringLiteral("P"));
+        QCOMPARE(restored.graphicOrder().first().index, 0);
     }
 
     void testSymbolValidationReportsAllGeometryIssues() {
