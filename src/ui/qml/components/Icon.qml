@@ -11,14 +11,14 @@ Item {
     height: size
     implicitWidth: size
     implicitHeight: size
+    readonly property string iconBasePath: Qt.resolvedUrl("../../../../resources/icons/")
     function getIconSource() {
         if (iconName.length === 0)
             return "";
-        var basePath = "qrc:/qt/qml/EasyKiconverter_Cpp_Version/resources/icons/";
         if (AppStyle.isDarkMode && iconNameDark.length > 0) {
-            return basePath + iconNameDark + ".svg";
+            return iconBasePath + iconNameDark + ".svg";
         }
-        return basePath + iconName + ".svg";
+        return iconBasePath + iconName + ".svg";
     }
 
     Image {
@@ -32,8 +32,7 @@ Item {
         visible: status === Image.Ready && iconName.length > 0
         onStatusChanged: {
             if (status === Image.Error && iconName.length > 0) {
-                var basePath = "qrc:/qt/qml/EasyKiconverter_Cpp_Version/resources/icons/";
-                iconImage.source = basePath + iconName + ".svg";
+                iconImage.source = iconBasePath + iconName + ".svg";
             }
         }
     }

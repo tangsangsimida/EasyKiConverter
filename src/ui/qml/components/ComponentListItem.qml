@@ -12,9 +12,9 @@ Rectangle {
     property string searchText: ""
     // 导出状态（由父级传入，来自 ExportProgressViewModel）
     property var exportStatus: null
-    readonly property bool isExporting: exportStatus && (exportStatus.status === "in_progress" || exportStatus.status === "pending")
-    readonly property bool exportSuccess: exportStatus && exportStatus.status === "success"
-    readonly property bool exportFailed: exportStatus && exportStatus.status === "failed"
+    readonly property bool isExporting: exportStatus !== null && (exportStatus.status === "in_progress" || exportStatus.status === "pending")
+    readonly property bool exportSuccess: exportStatus !== null && exportStatus.status === "success"
+    readonly property bool exportFailed: exportStatus !== null && exportStatus.status === "failed"
     signal deleteClicked
     signal copyClicked
     signal retryClicked
