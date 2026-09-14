@@ -83,17 +83,22 @@ private slots:
         QCOMPARE(symbolIr.rectangles.first().strokeStyle, IR::StrokeStyle::Dashed);
         QCOMPARE(symbol->paths().size(), 1);
         QCOMPARE(symbol->paths().first().paths,
-                 QStringLiteral("M 0 0 C 0 10 10 10 10 0 L 20 0 Q 25 5 30 0 A 5 5 0 0 0 40 0"));
+                 QStringLiteral("M 0 0 C 0 10 10 10 10 0 L 20 0 Q 25 5 30 0 A 5 5 0 0 0 40 0 A 10 5 0 0 0 60 0"));
         QCOMPARE(symbolIr.paths.size(), 1);
-        QCOMPARE(symbolIr.paths.first().segments.size(), 4);
+        QCOMPARE(symbolIr.paths.first().segments.size(), 5);
         QCOMPARE(symbolIr.paths.first().segments.first().type, IR::SymbolPathSegmentIR::Type::CubicBezier);
         QCOMPARE(symbolIr.paths.first().segments.at(1).type, IR::SymbolPathSegmentIR::Type::Line);
         QCOMPARE(symbolIr.paths.first().segments.at(2).type, IR::SymbolPathSegmentIR::Type::QuadraticBezier);
-        QCOMPARE(symbolIr.paths.first().segments.last().type, IR::SymbolPathSegmentIR::Type::CircularArc);
+        QCOMPARE(symbolIr.paths.first().segments.at(3).type, IR::SymbolPathSegmentIR::Type::CircularArc);
+        QCOMPARE(symbolIr.paths.first().segments.last().type, IR::SymbolPathSegmentIR::Type::EllipticalArc);
         QCOMPARE(symbolIr.paths.first().segments.first().end, QPointF(2.54, 0.0));
         QCOMPARE(symbolIr.paths.first().segments.at(2).control1, QPointF(6.35, -1.27));
         QCOMPARE(symbolIr.paths.first().segments.at(2).end, QPointF(7.62, 0.0));
-        QCOMPARE(symbolIr.paths.first().segments.last().end, QPointF(10.16, 0.0));
+        QCOMPARE(symbolIr.paths.first().segments.at(3).end, QPointF(10.16, 0.0));
+        QCOMPARE(symbolIr.paths.first().segments.last().end, QPointF(15.24, 0.0));
+        QCOMPARE(symbolIr.paths.first().segments.last().arcCenter, QPointF(12.7, 0.0));
+        QCOMPARE(symbolIr.paths.first().segments.last().radiusX, 2.54);
+        QCOMPARE(symbolIr.paths.first().segments.last().radiusY, 1.27);
         QCOMPARE(symbolIr.arcs.size(), 1);
         QCOMPARE(symbolIr.arcs.first().startPoint, QPointF(0.0, 0.0));
         QCOMPARE(symbolIr.arcs.first().endPoint, QPointF(5.08, 0.0));
@@ -241,6 +246,7 @@ private slots:
         QVERIFY(schLibData.contains("RECORD=5"));  // 路径中的三次 Bézier
         QVERIFY(schLibData.contains("RECORD=6"));  // 路径中的线段
         QVERIFY(schLibData.contains("RECORD=12"));  // 原生圆弧
+        QVERIFY(schLibData.contains("RECORD=11"));  // 路径中的椭圆弧
         QVERIFY(schLibData.contains("RECORD=30"));  // 嵌入图片
         QVERIFY(schLibData.contains("RECORD=4"));  // 普通文本
         QVERIFY(schLibData.contains("Text=LABEL"));
@@ -358,8 +364,8 @@ private slots:
         QString actual;
         for (const auto& record : records) {
             if (record.recordType != 1 && record.recordType != 2 && record.recordType != 4 && record.recordType != 5 &&
-                record.recordType != 6 && record.recordType != 10 && record.recordType != 12 &&
-                record.recordType != 30) {
+                record.recordType != 6 && record.recordType != 10 && record.recordType != 11 &&
+                record.recordType != 12 && record.recordType != 30) {
                 continue;
             }
             actual += QStringLiteral("record=%1|owner=%2|display=%3|index=%4")
@@ -391,7 +397,7 @@ private slots:
                 contentIndexes.append(record.indexInSheet);
         }
         QVERIFY(hasBinaryPin);
-        QCOMPARE(contentIndexes, QList<int>({1, 2, 3, 4, 5, 6, 7, 9, 10}));
+        QCOMPARE(contentIndexes, QList<int>({1, 2, 3, 4, 5, 6, 7, 8, 10, 11}));
     }
 
     /**

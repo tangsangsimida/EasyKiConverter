@@ -320,7 +320,7 @@ QList<QPointF> SvgPathParser::parsePath(const QString& path) {
             double cp2x = tokens[i++].toDouble(&okCp2x);
             double cp2y = tokens[i++].toDouble(&okCp2y);
             double endX = tokens[i++].toDouble(&okX);
-            double endY = tokens[i].toDouble(&okY);
+            double endY = tokens[i++].toDouble(&okY);
             if (!okCp2x || !okCp2y || !okX || !okY)
                 continue;
             if (relative) {
@@ -358,7 +358,7 @@ QList<QPointF> SvgPathParser::parsePath(const QString& path) {
             i++;
             double endX = tokens[i].toDouble(&okEndX);
             i++;
-            double endY = tokens[i].toDouble(&okEndY);
+            double endY = tokens[i++].toDouble(&okEndY);
             if (!okCpX || !okCpY || !okEndX || !okEndY) {
                 qWarning() << "Quadratic bezier param parse error";
                 continue;
@@ -399,7 +399,7 @@ QList<QPointF> SvgPathParser::parsePath(const QString& path) {
             bool okX = false, okY = false;
             i++;
             double endX = tokens[i++].toDouble(&okX);
-            double endY = tokens[i].toDouble(&okY);
+            double endY = tokens[i++].toDouble(&okY);
             if (!okX || !okY)
                 continue;
             if (relative) {
