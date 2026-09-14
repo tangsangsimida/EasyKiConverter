@@ -242,7 +242,7 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
         altiumParameter.isHidden = !parameter.visible;
         altiumParameter.readOnly = parameter.readOnly;
         altiumParameter.orientation = toAltiumOrientation(parameter.rotation);
-        altiumParameter.ownerPartId = parameter.partIndex > 0 ? parameter.partIndex + 1 : -1;
+        altiumParameter.ownerPartId = toAltiumOwnerPartId(parameter.partIndex);
         altiumParameter.color = toAltiumColor(parameter.color);
         component.parameters.append(altiumParameter);
     }
@@ -605,7 +605,7 @@ AltiumSchPin ExporterAltiumSymbol::convertPin(const IR::SymbolPinIR& pin) {
             break;
     }
     // Altium 使用 -1 表示 Part Zero 中的公共引脚；普通部件仍使用 1-based 编号。
-    altiumPin.ownerPartId = pin.commonToAllParts ? -1 : qMax(1, pin.partIndex + 1);
+    altiumPin.ownerPartId = pin.commonToAllParts ? -1 : toAltiumOwnerPartId(pin.partIndex);
 
     // 电源引脚检测：EasyEDA 通常不区分电源引脚（type=3/Bidirectional），
     // 通过引脚名称匹配常见电源网络名称，强制设为 Power 类型

@@ -968,6 +968,17 @@ private slots:
         rotatedParameter.value = QStringLiteral("值");
         rotatedParameter.rotation = -90.0;
         rotatedTextSymbol.parameters.append(rotatedParameter);
+        IR::SymbolParameterIR firstPartParameter;
+        firstPartParameter.name = QStringLiteral("第一部件参数");
+        firstPartParameter.value = QStringLiteral("P1");
+        firstPartParameter.partIndex = 0;
+        rotatedTextSymbol.parameters.append(firstPartParameter);
+        IR::SymbolParameterIR commonParameter;
+        commonParameter.name = QStringLiteral("公共参数");
+        commonParameter.value = QStringLiteral("COMMON");
+        commonParameter.partIndex = -1;
+        rotatedTextSymbol.parameters.append(commonParameter);
+        rotatedTextSymbol.partCount = 2;
         const QString rotatedTextPath = QDir(tempDir.path()).filePath(QStringLiteral("rotated-text.SchLib"));
         ExporterAltiumSymbol rotatedTextExporter;
         QVERIFY(rotatedTextExporter.exportSymbolLibrary(
@@ -975,6 +986,10 @@ private slots:
         QByteArray rotatedTextData;
         QVERIFY(readCfbStream(rotatedTextPath, QStringLiteral("ROTATED_TEXT/Data"), rotatedTextData));
         QVERIFY(rotatedTextData.contains("Orientation=3"));
+        QVERIFY(rotatedTextData.contains("NAME=第一部件参数"));
+        QVERIFY(rotatedTextData.contains("NAME=公共参数"));
+        QVERIFY(rotatedTextData.contains("OWNERPARTID=1"));
+        QVERIFY(rotatedTextData.contains("OWNERPARTID=-1"));
     }
 
     /**
