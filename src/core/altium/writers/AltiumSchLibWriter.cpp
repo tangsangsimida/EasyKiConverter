@@ -351,7 +351,7 @@ void AltiumSchLibWriter::writeComponentStorage(OLECompoundWriter& ole,
 
     // 写入引脚
     for (const AltiumSchPin& pin : component.pins) {
-        writePinRecord(writer, pin, pin.ownerPartId);
+        writePinRecord(writer, pin);
     }
 
     // 写入矩形
@@ -459,12 +459,11 @@ void AltiumSchLibWriter::writeComponentRecord(AltiumBinaryWriter& writer, const 
 /**
  * @brief 写入引脚记录 (RECORD=2, 二进制格式)
  */
-void AltiumSchLibWriter::writePinRecord(AltiumBinaryWriter& writer, const AltiumSchPin& pin, int partId) {
+void AltiumSchLibWriter::writePinRecord(AltiumBinaryWriter& writer, const AltiumSchPin& pin) {
     writer.beginBlock(AltiumConstants::SCH_BLOCK_FLAG_BINARY_PIN);
 
     writer.writeInt32(2);  // Record type = 2
     writer.writeUInt8(0);  // Unknown
-    Q_UNUSED(partId);
     writer.writeInt16(static_cast<int16_t>(qBound(-1, pin.ownerPartId, 32767)));  // OwnerPartId，-1 表示公共 Part Zero
     writer.writeUInt8(0);  // OwnerPartDisplayMode
 
@@ -1131,7 +1130,7 @@ int AltiumSchLibWriter::componentParameterRecordCount(const AltiumSchComponent& 
  */
 void AltiumSchLibWriter::addOwnerParams(QMap<QString, QString>& params, int ownerPartId) const {
     params["ISNOTACCESIBLE"] = "T";
-    params["OWNERPARTID"] = QString::number(qMax(1, ownerPartId));
+    params["OWNERPARTID"] = QString::number(ownerPartId < 0 ? -1 : qMax(1, ownerPartId));
 }
 
 }  // namespace EasyKiConverter

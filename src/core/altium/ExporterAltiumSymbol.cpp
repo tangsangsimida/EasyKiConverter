@@ -13,6 +13,18 @@ namespace EasyKiConverter {
 
 namespace {
 
+/**
+ * @brief 将 IR 部件索引转换为 Altium 的部件 ID。
+ * @details 负索引表示公共 Part Zero，普通部件使用从 1 开始的编号。
+ */
+int toAltiumOwnerPartId(int partIndex) {
+    return partIndex < 0 ? -1 : qMax(1, partIndex + 1);
+}
+
+}  // namespace
+
+namespace {
+
 int toAltiumLineStyle(IR::StrokeStyle style) {
     switch (style) {
         case IR::StrokeStyle::Dashed:
@@ -234,7 +246,7 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
             text.anchor = pin.nameAnchor;
             text.isDisplayed = true;
             text.orientation = static_cast<int>(pin.nameRotation / 90.0) % 4;
-            text.ownerPartId = qMax(1, pin.partIndex + 1);
+            text.ownerPartId = pin.commonToAllParts ? -1 : toAltiumOwnerPartId(pin.partIndex);
             component.texts.append(text);
         }
         if (pin.hasNumberPosition && !pin.designator.isEmpty()) {
@@ -246,7 +258,7 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
             text.anchor = pin.numberAnchor;
             text.isDisplayed = true;
             text.orientation = static_cast<int>(pin.numberRotation / 90.0) % 4;
-            text.ownerPartId = qMax(1, pin.partIndex + 1);
+            text.ownerPartId = pin.commonToAllParts ? -1 : toAltiumOwnerPartId(pin.partIndex);
             component.texts.append(text);
         }
     }
@@ -533,7 +545,7 @@ AltiumSchRectangle ExporterAltiumSymbol::convertRectangle(const IR::SymbolRectan
     altiumRect.color = toAltiumColor(rect.strokeColor);
     altiumRect.areaColor = rect.isFilled ? toAltiumColor(rect.fillColor) : 0xFFFFFF;
     altiumRect.isSolid = rect.isFilled;
-    altiumRect.ownerPartId = qMax(1, rect.partIndex + 1);
+    altiumRect.ownerPartId = toAltiumOwnerPartId(rect.partIndex);
     return altiumRect;
 }
 
@@ -553,7 +565,7 @@ AltiumSchRoundRectangle ExporterAltiumSymbol::convertRoundRectangle(const IR::Sy
     altiumRect.color = toAltiumColor(rect.strokeColor);
     altiumRect.areaColor = rect.isFilled ? toAltiumColor(rect.fillColor) : 0xFFFFFF;
     altiumRect.isSolid = rect.isFilled;
-    altiumRect.ownerPartId = qMax(1, rect.partIndex + 1);
+    altiumRect.ownerPartId = toAltiumOwnerPartId(rect.partIndex);
     return altiumRect;
 }
 
@@ -571,7 +583,7 @@ AltiumSchEllipse ExporterAltiumSymbol::convertCircle(const IR::SymbolCircleIR& c
     altiumEllipse.color = toAltiumColor(circle.strokeColor);
     altiumEllipse.areaColor = circle.isFilled ? toAltiumColor(circle.fillColor) : 0xFFFFFF;
     altiumEllipse.isSolid = circle.isFilled;
-    altiumEllipse.ownerPartId = qMax(1, circle.partIndex + 1);
+    altiumEllipse.ownerPartId = toAltiumOwnerPartId(circle.partIndex);
     return altiumEllipse;
 }
 
@@ -607,7 +619,7 @@ AltiumSchArc ExporterAltiumSymbol::convertArc(const IR::SymbolArcIR& arc) {
     altiumArc.lineWidth = AltiumCoord::lineWidthMmToIndex(arc.strokeWidth);
     altiumArc.lineStyle = toAltiumLineStyle(arc.strokeStyle);
     altiumArc.color = toAltiumColor(arc.strokeColor);
-    altiumArc.ownerPartId = qMax(1, arc.partIndex + 1);
+    altiumArc.ownerPartId = toAltiumOwnerPartId(arc.partIndex);
     return altiumArc;
 }
 
@@ -621,7 +633,7 @@ AltiumSchPolygon ExporterAltiumSymbol::convertPolygon(const IR::SymbolPolygonIR&
     altiumPolygon.color = toAltiumColor(polygon.strokeColor);
     altiumPolygon.areaColor = polygon.isFilled ? toAltiumColor(polygon.fillColor) : 0xFFFFFF;
     altiumPolygon.isSolid = polygon.isFilled;
-    altiumPolygon.ownerPartId = qMax(1, polygon.partIndex + 1);
+    altiumPolygon.ownerPartId = toAltiumOwnerPartId(polygon.partIndex);
 
     for (const QPointF& point : polygon.points) {
         altiumPolygon.vertices.append(
@@ -638,7 +650,7 @@ AltiumSchPolyline ExporterAltiumSymbol::convertPolyline(const IR::SymbolPolyline
     altiumPolyline.lineWidth = AltiumCoord::lineWidthMmToIndex(polyline.strokeWidth);
     altiumPolyline.lineStyle = toAltiumLineStyle(polyline.strokeStyle);
     altiumPolyline.color = toAltiumColor(polyline.strokeColor);
-    altiumPolyline.ownerPartId = qMax(1, polyline.partIndex + 1);
+    altiumPolyline.ownerPartId = toAltiumOwnerPartId(polyline.partIndex);
 
     for (const QPointF& point : polyline.points) {
         altiumPolyline.vertices.append(
@@ -655,7 +667,7 @@ AltiumSchPath ExporterAltiumSymbol::convertPath(const IR::SymbolPathIR& path) {
     altiumPath.lineWidth = AltiumCoord::lineWidthMmToIndex(path.strokeWidth);
     altiumPath.lineStyle = toAltiumLineStyle(path.strokeStyle);
     altiumPath.color = toAltiumColor(path.strokeColor);
-    altiumPath.ownerPartId = qMax(1, path.partIndex + 1);
+    altiumPath.ownerPartId = toAltiumOwnerPartId(path.partIndex);
 
     for (const QPointF& point : path.points) {
         altiumPath.vertices.append(
@@ -671,7 +683,7 @@ AltiumSchBezier ExporterAltiumSymbol::convertBezier(const IR::SymbolBezierIR& be
     AltiumSchBezier altiumBezier;
     altiumBezier.lineWidth = AltiumCoord::lineWidthMmToIndex(bezier.strokeWidth);
     altiumBezier.color = toAltiumColor(bezier.strokeColor);
-    altiumBezier.ownerPartId = qMax(1, bezier.partIndex + 1);
+    altiumBezier.ownerPartId = toAltiumOwnerPartId(bezier.partIndex);
     for (const QPointF& point : bezier.controlPoints) {
         altiumBezier.controlPoints.append(
             QPointF(AltiumCoord::mmToSchematicUnits(point.x()), AltiumCoord::mmToSchematicUnits(point.y())));
@@ -691,7 +703,7 @@ AltiumSchIeee ExporterAltiumSymbol::convertIeee(const IR::SymbolIeeeIR& ieee) {
     altiumIeee.orientation = ((ieee.orientation % 4) + 4) % 4;
     altiumIeee.mirrored = ieee.mirrored;
     altiumIeee.color = toAltiumColor(ieee.color);
-    altiumIeee.ownerPartId = qMax(1, ieee.partIndex + 1);
+    altiumIeee.ownerPartId = toAltiumOwnerPartId(ieee.partIndex);
     return altiumIeee;
 }
 
@@ -707,7 +719,7 @@ AltiumSchText ExporterAltiumSymbol::convertText(const IR::SymbolTextIR& text) {
     altiumText.color = toAltiumColor(text.color);
     altiumText.isHidden = !text.visible;
     altiumText.orientation = static_cast<int>(text.rotation / 90.0) % 4;
-    altiumText.ownerPartId = qMax(1, text.partIndex + 1);
+    altiumText.ownerPartId = toAltiumOwnerPartId(text.partIndex);
     return altiumText;
 }
 
@@ -735,7 +747,7 @@ AltiumSchTextFrame ExporterAltiumSymbol::convertTextFrame(const IR::SymbolTextFr
     altiumFrame.wordWrap = frame.wordWrap;
     altiumFrame.clipToRect = frame.clipToRect;
     altiumFrame.transparent = frame.transparent;
-    altiumFrame.ownerPartId = qMax(1, frame.partIndex + 1);
+    altiumFrame.ownerPartId = toAltiumOwnerPartId(frame.partIndex);
     return altiumFrame;
 }
 
@@ -759,7 +771,7 @@ AltiumSchImage ExporterAltiumSymbol::convertImage(const IR::SymbolImageIR& image
     altiumImage.showBorder = image.showBorder;
     altiumImage.keepAspect = image.keepAspect;
     altiumImage.embedImage = !image.data.isEmpty();
-    altiumImage.ownerPartId = qMax(1, image.partIndex + 1);
+    altiumImage.ownerPartId = toAltiumOwnerPartId(image.partIndex);
     return altiumImage;
 }
 
@@ -777,7 +789,7 @@ AltiumSchEllipse ExporterAltiumSymbol::convertEllipse(const IR::SymbolEllipseIR&
     altiumEllipse.color = toAltiumColor(ellipse.strokeColor);
     altiumEllipse.areaColor = ellipse.isFilled ? toAltiumColor(ellipse.fillColor) : 0xFFFFFF;
     altiumEllipse.isSolid = ellipse.isFilled;
-    altiumEllipse.ownerPartId = qMax(1, ellipse.partIndex + 1);
+    altiumEllipse.ownerPartId = toAltiumOwnerPartId(ellipse.partIndex);
     return altiumEllipse;
 }
 
@@ -796,7 +808,7 @@ AltiumSchPie ExporterAltiumSymbol::convertPie(const IR::SymbolPieIR& pie) {
     altiumPie.color = toAltiumColor(pie.strokeColor);
     altiumPie.areaColor = pie.isFilled ? toAltiumColor(pie.fillColor) : 0xFFFFFF;
     altiumPie.isSolid = pie.isFilled;
-    altiumPie.ownerPartId = qMax(1, pie.partIndex + 1);
+    altiumPie.ownerPartId = toAltiumOwnerPartId(pie.partIndex);
     return altiumPie;
 }
 
@@ -815,7 +827,7 @@ AltiumSchEllipticalArc ExporterAltiumSymbol::convertEllipticalArc(const IR::Symb
     altiumArc.lineStyle = toAltiumLineStyle(arc.strokeStyle);
     altiumArc.color = toAltiumColor(arc.strokeColor);
     altiumArc.areaColor = arc.isFilled ? toAltiumColor(arc.fillColor) : 0xFFFFFF;
-    altiumArc.ownerPartId = qMax(1, arc.partIndex + 1);
+    altiumArc.ownerPartId = toAltiumOwnerPartId(arc.partIndex);
     return altiumArc;
 }
 

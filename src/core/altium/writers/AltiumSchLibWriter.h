@@ -47,7 +47,7 @@ private:
 
     // ---- 记录写入 ----
     void writeComponentRecord(AltiumBinaryWriter& writer, const AltiumSchComponent& component);
-    void writePinRecord(AltiumBinaryWriter& writer, const AltiumSchPin& pin, int partId);
+    void writePinRecord(AltiumBinaryWriter& writer, const AltiumSchPin& pin);
     void writeRectangleRecord(AltiumBinaryWriter& writer, const AltiumSchRectangle& rect);
     void writeRoundRectangleRecord(AltiumBinaryWriter& writer, const AltiumSchRoundRectangle& rect);
     void writeLineRecord(AltiumBinaryWriter& writer, const AltiumSchLine& line);

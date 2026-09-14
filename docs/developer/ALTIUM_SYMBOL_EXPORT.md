@@ -12,7 +12,7 @@
 - 符号参数：Value、Description、Manufacturer、Manufacturer Part Number、Datasheet、LCSC、JLCPCB、供应商及自定义参数。
 - 参数控制：参数值、名称、显示/隐藏、只读、位置、旋转角度、字体编号和所属部件。
 - 多部件符号：图形、文本、参数和引脚按 `partIndex` 写入对应部件。
-- 公共引脚：`SymbolPinIR::commonToAllParts` 写入 Altium Part Zero（`OwnerPartId=-1`），适合电源引脚等所有部件共用的连接点。
+- 公共图元：IR 中图元的负 `partIndex` 写入 Altium Part Zero（`OWNERPARTID=-1`）；引脚仍通过 `SymbolPinIR::commonToAllParts` 表示公共连接点，且引脚名称、编号文字会继承该归属。
 - 多候选封装：每个封装生成一个 SchLib implementation，并自动去重。
 - 通用模型关联：支持通过 IR 或来源元数据写入 SPICE、SIM、STEP、VRML 等模型类型、数据文件实体、参数和引脚映射。
 - 模型默认状态：仅第一个实现写入 `ISCURRENT=T`；没有数据文件实体的 SPICE/SIM 等模型不会错误生成 `.PcbLib` 路径。

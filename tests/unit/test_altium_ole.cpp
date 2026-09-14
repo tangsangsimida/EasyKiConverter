@@ -986,6 +986,13 @@ private slots:
         roundedRectangle.cornerRadiusY = 0.2;
         roundedRectangle.partIndex = 1;
         symbol.rectangles.append(roundedRectangle);
+        IR::SymbolRectangleIR commonRectangle;
+        commonRectangle.x0 = -3.0;
+        commonRectangle.y0 = -2.0;
+        commonRectangle.x1 = -2.0;
+        commonRectangle.y1 = -1.0;
+        commonRectangle.partIndex = -1;
+        symbol.rectangles.append(commonRectangle);
         IR::SymbolImageIR image;
         image.x0 = -1.0;
         image.y0 = -0.5;
@@ -1007,6 +1014,7 @@ private slots:
         const int secondPinOffset = pinOffset + 4 + static_cast<int>(readU32(symbolData, pinOffset) & 0x00FFFFFFU);
         QCOMPARE(readU16(symbolData, secondPinOffset + 9), quint16(0xFFFF));
         QVERIFY(symbolData.contains("OWNERPARTID=2"));
+        QVERIFY(symbolData.contains("OWNERPARTID=-1"));
         QVERIFY(symbolData.contains("RECORD=5"));
         QVERIFY(symbolData.contains("LocationCount=4"));
         QVERIFY(symbolData.contains("RECORD=10"));
