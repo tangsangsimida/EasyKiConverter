@@ -15,6 +15,7 @@
 #include "core/altium/ExporterAltiumSymbol.h"
 #include "core/altium/compound/OLECompoundReader.h"
 #include "core/altium/compound/OLECompoundWriter.h"
+#include "core/altium/readers/AltiumSchLibReader.h"
 #include "core/altium/utils/AltiumBinaryReader.h"
 #include "core/altium/utils/AltiumBinaryWriter.h"
 #include "core/altium/utils/AltiumWriterUtils.h"
@@ -882,6 +883,17 @@ private slots:
         QByteArray pcbReaderData;
         QVERIFY(pcbReader.readStream(QStringLiteral("Library/Data"), &pcbReaderData));
         QVERIFY(!pcbReaderData.isEmpty());
+
+        AltiumSchLibReader schLibraryReader;
+        QVERIFY2(schLibraryReader.open(schPath), qPrintable(schLibraryReader.errorString()));
+        const auto schComponents = schLibraryReader.components();
+        QCOMPARE(schComponents.size(), 1);
+        QCOMPARE(schComponents.first().name, QStringLiteral("C2040"));
+        QCOMPARE(schComponents.first().sectionKey, QStringLiteral("C2040"));
+        QCOMPARE(schLibraryReader.headerParameters().value(QStringLiteral("COMPCOUNT")), QStringLiteral("1"));
+        QByteArray componentData;
+        QVERIFY(schLibraryReader.readComponentData(0, &componentData));
+        QVERIFY(componentData.contains("LibReference=C2040"));
     }
 
     /**
@@ -1947,6 +1959,35 @@ private slots:
         QCOMPARE(params.value(QStringLiteral("DESCRIPTION")), QStringLiteral("参数值"));
         QCOMPARE(reader.remaining(), 0);
         QVERIFY(!reader.hasError());
+    }
+
+    /**
+     * @brief 验证 SchLib SectionKeys 能恢复截断和冲突后的存储名称。
+     */
+    void schLibReaderResolvesSectionKeys() {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        AltiumSchComponent first;
+        first.name = QStringLiteral("A/B");
+        AltiumSchComponent second;
+        second.name = QStringLiteral("A:B");
+        const QString path = QDir(tempDir.path()).filePath(QStringLiteral("section-keys.SchLib"));
+        AltiumSchLibWriter writer;
+        QVERIFY(writer.write({first, second}, path, QStringLiteral("section-keys")));
+
+        AltiumSchLibReader reader;
+        QVERIFY2(reader.open(path), qPrintable(reader.errorString()));
+        const auto components = reader.components();
+        QCOMPARE(components.size(), 2);
+        QCOMPARE(components.at(0).name, QStringLiteral("A/B"));
+        QCOMPARE(components.at(1).name, QStringLiteral("A:B"));
+        QVERIFY(components.at(0).sectionKey != components.at(1).sectionKey);
+        QByteArray data;
+        QVERIFY(reader.readComponentData(QStringLiteral("A/B"), &data));
+        QVERIFY(data.contains("LibReference=A/B"));
+        QVERIFY(reader.readComponentData(QStringLiteral("A:B"), &data));
+        QVERIFY(data.contains("LibReference=A:B"));
     }
 };
 

@@ -322,6 +322,8 @@ If Altium library reading and incremental merging are implemented later, add reg
 
 The project now provides `OLECompoundReader` as a read-only CFB/OLE foundation. It validates V3 files, parses FAT/DIFAT, enumerates directory streams, and reads both regular and mini streams. It intentionally exposes raw stream data only; it does not yet interpret SchLib/PcbLib records or enable incremental merging, so the protective rejection for existing Altium libraries remains in place. Future merging must add Altium structure parsing, preservation of unknown streams and metadata, write-back support, and regression coverage using real library samples.
 
+The project now also provides `AltiumSchLibReader`, which parses SchLib FileHeader and SectionKeys data, resolves component names to storage keys, and validates that each declared component has a Data stream. It remains read-only and does not yet cover every graphic record or provide write-back support.
+
 ## Related Documents
 
 - [ADR-001: MVVM Architecture](001-mvvm-architecture.md)
