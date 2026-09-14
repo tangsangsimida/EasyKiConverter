@@ -386,6 +386,16 @@ struct SymbolModelIR {
 };
 
 /**
+ * @brief IR 中的符号图元顺序引用
+ * @details index 是对应图元类型在指定部件中的局部索引。
+ */
+struct SymbolGraphicOrderIR {
+    QString type;
+    int index = -1;
+    int partIndex = 0;
+};
+
+/**
  * @brief 通用符号组件
  *
  * 包含一个符号的所有图形原语和引脚。
@@ -417,6 +427,7 @@ struct SymbolComponentIR {
     QList<SymbolImageIR> images;
     QList<SymbolParameterIR> parameters;
     QList<SymbolModelIR> models;
+    QList<SymbolGraphicOrderIR> graphicOrder;
 
     /** @brief 封装关联名称 */
     QString footprintName;
@@ -465,6 +476,7 @@ struct SymbolComponentIR {
         images.clear();
         parameters.clear();
         models.clear();
+        graphicOrder.clear();
         footprintName.clear();
         footprintNames.clear();
         aliases.clear();

@@ -57,6 +57,10 @@ private slots:
         QCOMPARE(symbolIr.paths.first().segments.first().type, IR::SymbolPathSegmentIR::Type::CubicBezier);
         QCOMPARE(symbolIr.paths.first().segments.last().type, IR::SymbolPathSegmentIR::Type::Line);
         QCOMPARE(symbolIr.paths.first().segments.first().end, QPointF(2.54, 0.0));
+        QCOMPARE(symbolIr.graphicOrder.size(), 3);
+        QCOMPARE(symbolIr.graphicOrder.at(0).type, QStringLiteral("R"));
+        QCOMPARE(symbolIr.graphicOrder.at(1).type, QStringLiteral("PT"));
+        QCOMPARE(symbolIr.graphicOrder.at(2).type, QStringLiteral("P"));
 
         QCOMPARE(symbol->pins().size(), 1);
         const SymbolPin pin = symbol->pins().first();

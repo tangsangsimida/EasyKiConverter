@@ -376,6 +376,8 @@ inline SymbolComponentIR toSymbolIR(const SymbolData& data) {
             convertPolygons(part.polygons, gox, goy, partIdx);
             convertPaths(part.paths, gox, goy, partIdx);
             convertTexts(part.texts, gox, goy, partIdx);
+            for (const SymbolGraphicOrder& order : part.graphicOrder)
+                ir.graphicOrder.append({order.type, order.index, partIdx});
             ++partIdx;
         }
     } else {
@@ -423,6 +425,8 @@ inline SymbolComponentIR toSymbolIR(const SymbolData& data) {
         convertPolygons(data.polygons(), ox, oy);
         convertPaths(data.paths(), ox, oy);
         convertTexts(data.texts(), ox, oy);
+        for (const SymbolGraphicOrder& order : data.graphicOrder())
+            ir.graphicOrder.append({order.type, order.index, 0});
     }
 
     return ir;
