@@ -36,7 +36,7 @@
     },
     "shape": [
       "R~0~0~4~6~60~40~#000000~1~dashed~none~rect1~0",
-      "PT~M 0 0 C 0 10 10 10 10 0 L 20 0~#000000~1~solid~0~path1~0",
+      "PT~M 0 0 C 0 10 10 10 10 0 L 20 0 Q 25 5 30 0 A 5 5 0 0 0 40 0~#000000~1~solid~0~path1~0",
       "A~M 0 0 A 10 10 0 0 0 20 0~#000000~1~solid~none~arc1~0",
       "I~10~20~20~10~0~data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=~0",
       "T~30~40~0~#112233~Arial~7~1~0~0~alphabetic~comment~LABEL~1~start~text1~0",
