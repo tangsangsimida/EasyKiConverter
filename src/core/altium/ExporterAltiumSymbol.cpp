@@ -762,7 +762,7 @@ AltiumSchText ExporterAltiumSymbol::convertText(const IR::SymbolTextIR& text) {
     altiumText.italic = text.italic;
     altiumText.color = toAltiumColor(text.color);
     altiumText.isHidden = !text.visible;
-    altiumText.orientation = static_cast<int>(text.rotation / 90.0) % 4;
+    altiumText.orientation = ((qRound(text.rotation / 90.0) % 4) + 4) % 4;
     altiumText.ownerPartId = toAltiumOwnerPartId(text.partIndex);
     return altiumText;
 }

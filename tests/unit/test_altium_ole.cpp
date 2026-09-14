@@ -955,6 +955,21 @@ private slots:
         QVERIFY(schData.contains(QStringLiteral("测试中文描述").toUtf8()));
         QVERIFY(schData.contains(QStringLiteral("测试厂商").toUtf8()));
         QVERIFY(schData.contains(QStringLiteral("中文文本").toUtf8()));
+
+        IR::SymbolComponentIR rotatedTextSymbol;
+        rotatedTextSymbol.name = QStringLiteral("ROTATED_TEXT");
+        IR::SymbolTextIR rotatedText;
+        rotatedText.text = QStringLiteral("方向");
+        rotatedText.rotation = -90.0;
+        rotatedText.fontSizeMm = 2.5;
+        rotatedTextSymbol.texts.append(rotatedText);
+        const QString rotatedTextPath = QDir(tempDir.path()).filePath(QStringLiteral("rotated-text.SchLib"));
+        ExporterAltiumSymbol rotatedTextExporter;
+        QVERIFY(rotatedTextExporter.exportSymbolLibrary(
+            {rotatedTextSymbol}, QStringLiteral("rotated-text"), rotatedTextPath, false, false));
+        QByteArray rotatedTextData;
+        QVERIFY(readCfbStream(rotatedTextPath, QStringLiteral("ROTATED_TEXT/Data"), rotatedTextData));
+        QVERIFY(rotatedTextData.contains("Orientation=3"));
     }
 
     /**
