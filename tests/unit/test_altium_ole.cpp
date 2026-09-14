@@ -2116,10 +2116,10 @@ private slots:
         partText.text = QStringLiteral("PART_TEXT");
         partText.partIndex = 1;
         symbol.texts.append(partText);
-        AltiumSchParameter partParameter;
+        IR::SymbolParameterIR partParameter;
         partParameter.name = QStringLiteral("PartOnly");
         partParameter.value = QStringLiteral("Part 1 value");
-        partParameter.ownerPartId = 1;
+        partParameter.partIndex = 1;
         symbol.parameters.append(partParameter);
         IR::SymbolImageIR image;
         image.x0 = -1.0;
@@ -2202,9 +2202,11 @@ private slots:
         const int partParameterOffset = symbolData.indexOf("NAME=PartOnly");
         const int partParameterRecordOffset = symbolData.lastIndexOf("|RECORD=41|", partParameterOffset);
         QVERIFY(partParameterOffset > partParameterRecordOffset);
+        const int nextParameterRecordOffset = symbolData.indexOf("|RECORD=", partParameterRecordOffset + 1);
+        QVERIFY(nextParameterRecordOffset > partParameterRecordOffset);
         const QByteArray partParameterRecord =
-            symbolData.mid(partParameterRecordOffset, partParameterOffset - partParameterRecordOffset);
-        QVERIFY(partParameterRecord.contains("OWNERPARTID=1"));
+            symbolData.mid(partParameterRecordOffset, nextParameterRecordOffset - partParameterRecordOffset);
+        QVERIFY(partParameterRecord.contains("OWNERPARTID=2"));
         QVERIFY(partParameterRecord.contains("OWNERPARTDISPLAYMODE=1"));
         QByteArray multipartStorage;
         QVERIFY(readCfbStream(schPath, QStringLiteral("Storage"), multipartStorage));
@@ -2859,7 +2861,7 @@ private slots:
             } else if (record.recordType == 41 &&
                        record.parameters.value(QStringLiteral("NAME")) == QStringLiteral("Custom")) {
                 QCOMPARE(record.ownerPartId, 1);
-                QCOMPARE(record.ownerPartDisplayMode, -1);
+                QCOMPARE(record.ownerPartDisplayMode, 1);
                 foundParameter = true;
             } else if (record.recordType == 41 &&
                        record.parameters.value(QStringLiteral("NAME")) == QStringLiteral("Common")) {
