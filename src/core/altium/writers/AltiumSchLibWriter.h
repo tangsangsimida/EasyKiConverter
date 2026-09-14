@@ -79,11 +79,12 @@ private:
     void addUniqueID(QMap<QString, QString>& params);
     int componentRecordCount(const AltiumSchComponent& component) const;
     int componentParameterRecordCount(const AltiumSchComponent& component) const;
-    void addOwnerParams(QMap<QString, QString>& params, int ownerPartId) const;
+    void addOwnerParams(QMap<QString, QString>& params, int ownerPartId);
 
     // 字体表管理
     QList<AltiumModels::FontEntry> m_fonts;
     int m_uniqueIdCounter = 0;
+    int m_nextIndexInSheet = 0;
     QString m_libraryName;
 };
 

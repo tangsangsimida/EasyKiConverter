@@ -598,6 +598,7 @@ private slots:
         QVERIFY(schData.mid(4).startsWith("|RECORD=1|"));
         QVERIFY(schData.contains("LibReference=C2040"));
         QVERIFY(schData.contains("RECORD=14"));
+        QVERIFY(schData.contains("|RECORD=14|ISNOTACCESIBLE=T|IndexInSheet=1|OWNERPARTID=1|"));
         QVERIFY(schData.contains("LineStyleExt=1"));
         QVERIFY(schData.contains("RECORD=10"));
         QVERIFY(schData.contains("CornerXRadius=1"));
@@ -1030,6 +1031,7 @@ private slots:
         QCOMPARE(readU16(symbolData, secondPinOffset + 9), quint16(0xFFFF));
         QVERIFY(symbolData.contains("OWNERPARTID=2"));
         QVERIFY(symbolData.contains("OWNERPARTID=-1"));
+        QVERIFY(symbolData.contains("IndexInSheet=2"));
         QVERIFY(symbolData.contains("RECORD=5"));
         QVERIFY(symbolData.contains("LocationCount=4"));
         QVERIFY(symbolData.contains("RECORD=10"));

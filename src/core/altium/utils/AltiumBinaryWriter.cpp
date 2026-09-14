@@ -127,7 +127,13 @@ void AltiumBinaryWriter::writePascalString(const QString& str) {
 void AltiumBinaryWriter::writeCStringParameterBlock(const QMap<QString, QString>& params) {
     QString paramStr;
     QList<QString> orderedKeys;
-    for (const QString& preferred : {QStringLiteral("HEADER"), QStringLiteral("RECORD"), QStringLiteral("PATTERN")}) {
+    for (const QString& preferred : {QStringLiteral("HEADER"),
+                                     QStringLiteral("RECORD"),
+                                     QStringLiteral("PATTERN"),
+                                     QStringLiteral("ISNOTACCESIBLE"),
+                                     QStringLiteral("IndexInSheet"),
+                                     QStringLiteral("OWNERPARTID"),
+                                     QStringLiteral("OwnerPartId")}) {
         if (params.contains(preferred))
             orderedKeys.append(preferred);
     }
@@ -158,7 +164,13 @@ void AltiumBinaryWriter::writeCStringParameterBlockUtf8(const QMap<QString, QStr
     // 放在 RECORD/HEADER 前面，从而使合法数据被当作未知记录。保持少量
     // 协议首字段的稳定顺序，其余字段仍使用 QMap 的确定性顺序。
     QList<QString> orderedKeys;
-    for (const QString& preferred : {QStringLiteral("HEADER"), QStringLiteral("RECORD"), QStringLiteral("PATTERN")}) {
+    for (const QString& preferred : {QStringLiteral("HEADER"),
+                                     QStringLiteral("RECORD"),
+                                     QStringLiteral("PATTERN"),
+                                     QStringLiteral("ISNOTACCESIBLE"),
+                                     QStringLiteral("IndexInSheet"),
+                                     QStringLiteral("OWNERPARTID"),
+                                     QStringLiteral("OwnerPartId")}) {
         if (params.contains(preferred))
             orderedKeys.append(preferred);
     }
