@@ -350,15 +350,25 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
         component.arcs.append(arc);
     }
     for (int i = 0; i < data.polygons.size(); ++i) {
-        AltiumSchPolygon polygon = convertPolygon(data.polygons.at(i));
-        polygon.sourceGraphicIndex = sourceIndexForPart(data.polygons, i, data.polygons.at(i).partIndex);
-        polygon.sourcePartIndex = data.polygons.at(i).partIndex;
+        const IR::SymbolPolygonIR& sourcePolygon = data.polygons.at(i);
+        if (!hasFinitePoints(sourcePolygon.points, 3)) {
+            m_diagnostics.append(QStringLiteral("符号 %1 多边形图元 %2 的点列无效，已跳过").arg(data.name).arg(i));
+            continue;
+        }
+        AltiumSchPolygon polygon = convertPolygon(sourcePolygon);
+        polygon.sourceGraphicIndex = sourceIndexForPart(data.polygons, i, sourcePolygon.partIndex);
+        polygon.sourcePartIndex = sourcePolygon.partIndex;
         component.polygons.append(polygon);
     }
     for (int i = 0; i < data.polylines.size(); ++i) {
-        AltiumSchPolyline polyline = convertPolyline(data.polylines.at(i));
-        polyline.sourceGraphicIndex = sourceIndexForPart(data.polylines, i, data.polylines.at(i).partIndex);
-        polyline.sourcePartIndex = data.polylines.at(i).partIndex;
+        const IR::SymbolPolylineIR& sourcePolyline = data.polylines.at(i);
+        if (!hasFinitePoints(sourcePolyline.points, 2)) {
+            m_diagnostics.append(QStringLiteral("符号 %1 折线图元 %2 的点列无效，已跳过").arg(data.name).arg(i));
+            continue;
+        }
+        AltiumSchPolyline polyline = convertPolyline(sourcePolyline);
+        polyline.sourceGraphicIndex = sourceIndexForPart(data.polylines, i, sourcePolyline.partIndex);
+        polyline.sourcePartIndex = sourcePolyline.partIndex;
         component.polylines.append(polyline);
     }
     for (int pathIndex = 0; pathIndex < data.paths.size(); ++pathIndex) {
@@ -485,10 +495,10 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
     }
     for (int bezierIndex = 0; bezierIndex < data.beziers.size(); ++bezierIndex) {
         const IR::SymbolBezierIR& b = data.beziers.at(bezierIndex);
-        if (b.controlPoints.size() == 4) {
+        if (b.controlPoints.size() == 4 && hasFinitePoints(b.controlPoints, 4)) {
             component.beziers.append(convertBezier(b));
         } else {
-            m_diagnostics.append(QStringLiteral("符号 %1 Bézier 图元 %2 的控制点数量为 %3，已跳过")
+            m_diagnostics.append(QStringLiteral("符号 %1 Bézier 图元 %2 的控制点参数无效（数量为 %3），已跳过")
                                      .arg(data.name)
                                      .arg(bezierIndex)
                                      .arg(b.controlPoints.size()));

@@ -1314,7 +1314,27 @@ private slots:
         const QString invalidBezierPath = QDir(tempDir.path()).filePath(QStringLiteral("invalid-bezier.SchLib"));
         QVERIFY(invalidBezierExporter.exportSymbol(invalidBezierSymbol, invalidBezierPath));
         QVERIFY(invalidBezierExporter.diagnostics().contains(
-            QStringLiteral("符号 INVALID_BEZIER Bézier 图元 0 的控制点数量为 2，已跳过")));
+            QStringLiteral("符号 INVALID_BEZIER Bézier 图元 0 的控制点参数无效（数量为 2），已跳过")));
+
+        IR::SymbolComponentIR invalidPrimitivePointsSymbol;
+        invalidPrimitivePointsSymbol.name = QStringLiteral("INVALID_PRIMITIVE_POINTS");
+        IR::SymbolPolylineIR invalidPolyline;
+        invalidPolyline.points = {QPointF(0.0, 0.0)};
+        invalidPrimitivePointsSymbol.polylines.append(invalidPolyline);
+        IR::SymbolBezierIR invalidFiniteBezier;
+        invalidFiniteBezier.controlPoints = {QPointF(0.0, 0.0),
+                                             QPointF(1.0, 0.0),
+                                             QPointF(std::numeric_limits<double>::infinity(), 1.0),
+                                             QPointF(2.0, 0.0)};
+        invalidPrimitivePointsSymbol.beziers.append(invalidFiniteBezier);
+        ExporterAltiumSymbol invalidPrimitivePointsExporter;
+        const QString invalidPrimitivePointsFile =
+            QDir(tempDir.path()).filePath(QStringLiteral("invalid-primitive-points.SchLib"));
+        QVERIFY(invalidPrimitivePointsExporter.exportSymbol(invalidPrimitivePointsSymbol, invalidPrimitivePointsFile));
+        QVERIFY(invalidPrimitivePointsExporter.diagnostics().contains(
+            QStringLiteral("符号 INVALID_PRIMITIVE_POINTS 折线图元 0 的点列无效，已跳过")));
+        QVERIFY(invalidPrimitivePointsExporter.diagnostics().contains(
+            QStringLiteral("符号 INVALID_PRIMITIVE_POINTS Bézier 图元 0 的控制点参数无效（数量为 4），已跳过")));
 
         IR::SymbolComponentIR invalidGeometrySymbol;
         invalidGeometrySymbol.name = QStringLiteral("INVALID_GEOMETRY");
