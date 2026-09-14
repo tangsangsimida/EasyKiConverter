@@ -636,6 +636,12 @@ private slots:
         styledText.italic = true;
         styledText.anchor = QStringLiteral("start");
         symbol.texts.append(styledText);
+        AltiumSchText fallbackFontText;
+        fallbackFontText.locationX = 1600000;
+        fallbackFontText.locationY = 700000;
+        fallbackFontText.text = QStringLiteral("Fallback font");
+        fallbackFontText.fontId = 99;
+        symbol.texts.append(fallbackFontText);
         AltiumSchImage image;
         image.locationX = 1700000;
         image.locationY = 100000;
@@ -665,7 +671,7 @@ private slots:
         QByteArray schHeader;
         QVERIFY(readCfbStream(schPath, QStringLiteral("FileHeader"), schHeader));
         QVERIFY(schHeader.contains("COMPCOUNT=1"));
-        QVERIFY(schHeader.contains("WEIGHT=26"));
+        QVERIFY(schHeader.contains("WEIGHT=27"));
         QVERIFY(schHeader.contains("LIBREF0=C2040"));
         QVERIFY(schHeader.contains("PARTCOUNT0=2"));
         QVERIFY(schHeader.mid(4).startsWith("|HEADER="));
@@ -699,6 +705,14 @@ private slots:
         QVERIFY(schData.contains("RECORD=28"));
         QVERIFY(schData.contains(QStringLiteral("第二行").toUtf8()));
         QVERIFY(schData.contains("FontID=2"));
+        const int fallbackTextOffset = schData.indexOf("Text=Fallback font");
+        const int fallbackRecordOffset = schData.lastIndexOf("|RECORD=4|", fallbackTextOffset);
+        const int nextFallbackRecordOffset = schData.indexOf("|RECORD=", fallbackTextOffset + 1);
+        QVERIFY(fallbackTextOffset > fallbackRecordOffset);
+        QVERIFY(nextFallbackRecordOffset > fallbackRecordOffset);
+        const QByteArray fallbackRecord =
+            schData.mid(fallbackRecordOffset, nextFallbackRecordOffset - fallbackRecordOffset);
+        QVERIFY(fallbackRecord.contains("FontID=1"));
         QVERIFY(schData.contains("FontSize=2.8222"));
         QVERIFY(schData.contains("TextAnchor=start"));
         QVERIFY(schData.contains("Styled label"));

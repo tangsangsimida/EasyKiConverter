@@ -1185,7 +1185,8 @@ void AltiumSchLibWriter::writeTextRecord(AltiumBinaryWriter& writer, const Altiu
         const QString fontName = text.fontName.isEmpty() ? QStringLiteral("Times New Roman") : text.fontName;
         const int fontSize = text.fontSizeMm > 0.0 ? qMax(1, qRound(text.fontSizeMm / MILLIMETERS_PER_POINT)) : 10;
         fontId = getOrAddFont(fontName, fontSize, text.bold, text.italic);
-    }
+    } else if (fontId < 1 || fontId > m_fonts.size())
+        fontId = 1;
     params["FontID"] = QString::number(fontId);
     params["Text"] = text.text;
     if (text.isHidden || !text.isDisplayed)
@@ -1217,7 +1218,7 @@ void AltiumSchLibWriter::writeTextFrameRecord(AltiumBinaryWriter& writer, const 
     addColorParam(params, "Color", frame.color);
     params["AreaColor"] = QString::number(frame.areaColor);
     addColorParam(params, "TextColor", frame.textColor);
-    params["FontID"] = QString::number(frame.fontId);
+    params["FontID"] = QString::number(frame.fontId >= 1 && frame.fontId <= m_fonts.size() ? frame.fontId : 1);
     if (frame.isSolid)
         params["IsSolid"] = "T";
     if (frame.showBorder)
