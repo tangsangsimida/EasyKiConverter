@@ -1574,6 +1574,8 @@ void AltiumSchLibWriter::addContentIndex(QMap<QString, QString>& params) {
  */
 void AltiumSchLibWriter::addOwnerParams(QMap<QString, QString>& params, int ownerPartId) {
     addContentIndex(params);
+    // 当前每个符号只有一个显示模式；显式写出 0，保持多部件图元与引脚的归属语义一致。
+    params["OWNERPARTDISPLAYMODE"] = "0";
     params["OWNERPARTID"] = QString::number(ownerPartId < 0 ? -1 : qMax(1, ownerPartId));
 }
 

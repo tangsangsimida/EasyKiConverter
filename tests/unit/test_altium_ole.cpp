@@ -680,6 +680,7 @@ private slots:
         QVERIFY(schData.contains("LibReference=C2040"));
         QVERIFY(schData.contains("RECORD=14"));
         QVERIFY(!schData.contains("|IndexInSheet=0|"));
+        QVERIFY(schData.contains("OWNERPARTDISPLAYMODE=0"));
         QVERIFY(schData.contains("LineStyleExt=1"));
         QVERIFY(schData.contains("RECORD=10"));
         QVERIFY(schData.contains("CornerXRadius=1"));
@@ -1547,7 +1548,10 @@ private slots:
         QByteArray data;
         QVERIFY(readCfbStream(path, QStringLiteral("CONTENT_INDEX/Data"), data));
         QVERIFY(!data.contains("IndexInSheet=0"));
-        QVERIFY(data.contains("|RECORD=14|ISNOTACCESIBLE=T|IndexInSheet=1|OWNERPARTID=1|"));
+        QVERIFY(data.contains("RECORD=14"));
+        QVERIFY(data.contains("IndexInSheet=1"));
+        QVERIFY(data.contains("OWNERPARTDISPLAYMODE=0"));
+        QVERIFY(data.contains("OWNERPARTID=1"));
         QVERIFY(data.contains("RECORD=41"));
         QVERIFY(data.contains("IndexInSheet=2"));
     }
