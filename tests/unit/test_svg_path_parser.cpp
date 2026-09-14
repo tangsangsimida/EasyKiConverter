@@ -159,9 +159,14 @@ private slots:
 
         const QList<SvgPathSegment> rotatedElliptical =
             SvgPathParser::parseSegments(QStringLiteral("M 0 0 A 10 5 30 0 1 10 10"));
-        QVERIFY(rotatedElliptical.size() > 2);
+        QVERIFY(rotatedElliptical.size() >= 2);
+        QVERIFY(rotatedElliptical.size() < 10);
+        QCOMPARE(rotatedElliptical.first().type, SvgPathSegment::Type::CubicBezier);
+        QCOMPARE(rotatedElliptical.first().start, QPointF(0, 0));
+        QVERIFY(qAbs(rotatedElliptical.last().end.x() - 10.0) < 1e-9);
+        QVERIFY(qAbs(rotatedElliptical.last().end.y() - 10.0) < 1e-9);
         for (const SvgPathSegment& segment : rotatedElliptical)
-            QCOMPARE(segment.type, SvgPathSegment::Type::Line);
+            QCOMPARE(segment.type, SvgPathSegment::Type::CubicBezier);
     }
 
     void invalidOrEmptyPathsReturnNoPoints() {

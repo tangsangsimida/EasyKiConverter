@@ -10,7 +10,7 @@ namespace EasyKiConverter {
 /**
  * @brief SVG 路径中的可导出几何段
  * @details 二次 Bézier、圆形弧和未旋转椭圆弧保留为独立段；旋转椭圆弧
- *          仍展开为直线段，以避免丢失目标格式的旋转语义。
+ *          使用分段三次 Bézier 近似，以保留曲线形状并兼容目标格式。
  */
 struct SvgPathSegment {
     enum class Type { Line, QuadraticBezier, CubicBezier, CircularArc, EllipticalArc };

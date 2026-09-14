@@ -84,6 +84,44 @@ SvgArcGeometry calculateArcGeometry(const QPointF& start,
     return geometry;
 }
 
+QList<SvgPathSegment> approximateRotatedEllipse(const SvgArcGeometry& geometry, double xRotation) {
+    QList<SvgPathSegment> segments;
+    const double segmentAngle = PI / 2.0;
+    const int segmentCount = qMax(1, static_cast<int>(std::ceil(std::abs(geometry.deltaAngle) / segmentAngle)));
+    const double phi = xRotation * PI / 180.0;
+    const double cosPhi = std::cos(phi);
+    const double sinPhi = std::sin(phi);
+    const auto pointAt = [&](double angle) {
+        return QPointF(geometry.center.x() + cosPhi * geometry.radiusX * std::cos(angle) -
+                           sinPhi * geometry.radiusY * std::sin(angle),
+                       geometry.center.y() + sinPhi * geometry.radiusX * std::cos(angle) +
+                           cosPhi * geometry.radiusY * std::sin(angle));
+    };
+    const auto derivativeAt = [&](double angle) {
+        return QPointF(-cosPhi * geometry.radiusX * std::sin(angle) - sinPhi * geometry.radiusY * std::cos(angle),
+                       -sinPhi * geometry.radiusX * std::sin(angle) + cosPhi * geometry.radiusY * std::cos(angle));
+    };
+
+    for (int i = 0; i < segmentCount; ++i) {
+        const double startAngle = geometry.startAngle + geometry.deltaAngle * i / segmentCount;
+        const double endAngle = geometry.startAngle + geometry.deltaAngle * (i + 1) / segmentCount;
+        const double deltaAngle = endAngle - startAngle;
+        const double controlFactor = 4.0 / 3.0 * std::tan(deltaAngle / 4.0);
+        const QPointF start = pointAt(startAngle);
+        const QPointF end = pointAt(endAngle);
+        const QPointF startDerivative = derivativeAt(startAngle);
+        const QPointF endDerivative = derivativeAt(endAngle);
+        SvgPathSegment segment;
+        segment.type = SvgPathSegment::Type::CubicBezier;
+        segment.start = i == 0 ? start : segments.last().end;
+        segment.control1 = start + controlFactor * startDerivative;
+        segment.control2 = end - controlFactor * endDerivative;
+        segment.end = i == segmentCount - 1 ? pointAt(geometry.startAngle + geometry.deltaAngle) : end;
+        segments.append(segment);
+    }
+    return segments;
+}
+
 }  // namespace
 
 QList<QPointF> SvgPathParser::parsePath(const QString& path) {
@@ -613,8 +651,7 @@ QList<SvgPathSegment> SvgPathParser::parseSegments(const QString& path) {
                     end += start;
                 const QList<QPointF> arcPoints =
                     parseArc(start, values[0], values[1], values[2], values[3] != 0, values[4] != 0, end);
-                const bool isCircular = values[0] > 0.0 && qFuzzyCompare(values[0], values[1]) &&
-                                        qFuzzyIsNull(std::sin(values[2] * PI / 180.0));
+                const bool isCircular = values[0] > 0.0 && qFuzzyCompare(values[0], values[1]);
                 if (isCircular && arcPoints.size() >= 3 && start != end) {
                     SvgPathSegment segment;
                     segment.type = SvgPathSegment::Type::CircularArc;
@@ -623,21 +660,24 @@ QList<SvgPathSegment> SvgPathParser::parseSegments(const QString& path) {
                     segment.end = end;
                     segments.append(segment);
                     current = end;
-                } else if (!isCircular && values[0] > 0.0 && values[1] > 0.0 &&
-                           qFuzzyIsNull(std::sin(values[2] * PI / 180.0))) {
+                } else if (!isCircular && values[0] > 0.0 && values[1] > 0.0) {
                     const SvgArcGeometry geometry = calculateArcGeometry(
                         start, values[0], values[1], values[2], values[3] != 0, values[4] != 0, end);
                     if (geometry.valid) {
-                        SvgPathSegment segment;
-                        segment.type = SvgPathSegment::Type::EllipticalArc;
-                        segment.start = start;
-                        segment.arcCenter = geometry.center;
-                        segment.radiusX = geometry.radiusX;
-                        segment.radiusY = geometry.radiusY;
-                        segment.arcStartAngle = geometry.startAngle * 180.0 / PI;
-                        segment.arcEndAngle = (geometry.startAngle + geometry.deltaAngle) * 180.0 / PI;
-                        segment.end = end;
-                        segments.append(segment);
+                        if (qFuzzyIsNull(std::sin(values[2] * PI / 180.0))) {
+                            SvgPathSegment segment;
+                            segment.type = SvgPathSegment::Type::EllipticalArc;
+                            segment.start = start;
+                            segment.arcCenter = geometry.center;
+                            segment.radiusX = geometry.radiusX;
+                            segment.radiusY = geometry.radiusY;
+                            segment.arcStartAngle = geometry.startAngle * 180.0 / PI;
+                            segment.arcEndAngle = (geometry.startAngle + geometry.deltaAngle) * 180.0 / PI;
+                            segment.end = end;
+                            segments.append(segment);
+                        } else {
+                            segments.append(approximateRotatedEllipse(geometry, values[2]));
+                        }
                         current = end;
                     } else {
                         for (const QPointF& point : arcPoints)

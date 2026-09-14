@@ -239,7 +239,7 @@ struct SymbolPolygonIR {
 /**
  * @brief 通用符号路径段
  * @details 二次 Bézier、圆形弧和未旋转椭圆弧保留为原生段，旋转椭圆弧
- *          由解析器提供折线段回退。
+ *          由解析器转换为分段三次 Bézier，以兼容目标格式的曲线记录。
  */
 struct SymbolPathSegmentIR {
     enum class Type { Line, QuadraticBezier, CubicBezier, CircularArc, EllipticalArc };
