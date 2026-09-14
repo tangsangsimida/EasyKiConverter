@@ -357,6 +357,114 @@ void AltiumSchLibWriter::writeSectionKeys(OLECompoundWriter& ole,
 }
 
 /**
+ * @brief 按来源顺序写入单个符号图元
+ * @details 路径可能拆分为多个 Altium 原生记录，因此按 sourceSegmentIndex 重新合并其写出顺序。
+ */
+void AltiumSchLibWriter::writeOrderedGraphic(AltiumBinaryWriter& writer,
+                                             const AltiumSchComponent& component,
+                                             const AltiumSchGraphicOrder& order) {
+    if (order.type == QStringLiteral("P")) {
+        if (order.index >= 0 && order.index < component.pins.size())
+            writePinRecord(writer, component.pins.at(order.index));
+        return;
+    }
+    if (order.type == QStringLiteral("R")) {
+        for (const AltiumSchRoundRectangle& rect : component.roundRectangles) {
+            if (rect.sourceGraphicIndex == order.index) {
+                writeRoundRectangleRecord(writer, rect);
+                return;
+            }
+        }
+        for (const AltiumSchRectangle& rect : component.rectangles) {
+            if (rect.sourceGraphicIndex == order.index) {
+                writeRectangleRecord(writer, rect);
+                return;
+            }
+        }
+        return;
+    }
+    if (order.type == QStringLiteral("C") || order.type == QStringLiteral("E")) {
+        for (const AltiumSchEllipse& ellipse : component.ellipses) {
+            if (ellipse.sourceGraphicType == order.type && ellipse.sourceGraphicIndex == order.index) {
+                writeEllipseRecord(writer, ellipse);
+                return;
+            }
+        }
+        return;
+    }
+    if (order.type == QStringLiteral("A")) {
+        for (const AltiumSchArc& arc : component.arcs) {
+            if (arc.sourceGraphicType == order.type && arc.sourceGraphicIndex == order.index) {
+                writeArcRecord(writer, arc);
+                return;
+            }
+        }
+        return;
+    }
+    if (order.type == QStringLiteral("PL")) {
+        for (const AltiumSchPolyline& polyline : component.polylines) {
+            if (polyline.sourceGraphicIndex == order.index) {
+                writePolylineRecord(writer, polyline);
+                return;
+            }
+        }
+        return;
+    }
+    if (order.type == QStringLiteral("PG")) {
+        if (order.index >= 0 && order.index < component.polygons.size())
+            writePolygonRecord(writer, component.polygons.at(order.index));
+        return;
+    }
+    if (order.type == QStringLiteral("T")) {
+        for (const AltiumSchText& text : component.texts) {
+            if (!text.isPinLabel && text.sourceGraphicIndex == order.index) {
+                writeTextRecord(writer, text);
+                return;
+            }
+        }
+        return;
+    }
+    if (order.type == QStringLiteral("PT")) {
+        for (const AltiumSchPath& path : component.paths) {
+            if (path.sourceGraphicType == order.type && path.sourceGraphicIndex == order.index &&
+                path.sourceSegmentIndex < 0) {
+                writePathRecord(writer, path);
+                return;
+            }
+        }
+        for (int segmentIndex = 0;; ++segmentIndex) {
+            bool found = false;
+            for (const AltiumSchPath& path : component.paths) {
+                if (path.sourceGraphicType == order.type && path.sourceGraphicIndex == order.index &&
+                    path.sourceSegmentIndex == segmentIndex) {
+                    writePathRecord(writer, path);
+                    found = true;
+                    break;
+                }
+            }
+            for (const AltiumSchBezier& bezier : component.beziers) {
+                if (bezier.sourceGraphicType == order.type && bezier.sourceGraphicIndex == order.index &&
+                    bezier.sourceSegmentIndex == segmentIndex) {
+                    writeBezierRecord(writer, bezier);
+                    found = true;
+                    break;
+                }
+            }
+            for (const AltiumSchArc& arc : component.arcs) {
+                if (arc.sourceGraphicType == order.type && arc.sourceGraphicIndex == order.index &&
+                    arc.sourceSegmentIndex == segmentIndex) {
+                    writeArcRecord(writer, arc);
+                    found = true;
+                    break;
+                }
+            }
+            if (!found)
+                break;
+        }
+    }
+}
+
+/**
  * @brief 写入元件存储
  */
 void AltiumSchLibWriter::writeComponentStorage(OLECompoundWriter& ole,
@@ -373,67 +481,114 @@ void AltiumSchLibWriter::writeComponentStorage(OLECompoundWriter& ole,
     // 写入元件记录
     writeComponentRecord(writer, component);
 
-    // 写入引脚
-    for (const AltiumSchPin& pin : component.pins) {
-        writePinRecord(writer, pin);
-    }
+    if (!component.graphicOrder.isEmpty()) {
+        for (const AltiumSchGraphicOrder& order : component.graphicOrder)
+            writeOrderedGraphic(writer, component, order);
+        // 引脚名称和编号是由引脚派生出的文本，不在源 shape 顺序中。
+        for (const AltiumSchText& text : component.texts) {
+            if (text.isPinLabel)
+                writeTextRecord(writer, text);
+        }
+        // 兼容没有来源顺序引用的扩展图元（例如手工构造的 Bézier）。
+        for (const AltiumSchLine& line : component.lines)
+            writeLineRecord(writer, line);
+        for (const AltiumSchPie& pie : component.pies)
+            writePieRecord(writer, pie);
+        for (const AltiumSchEllipticalArc& arc : component.ellipticalArcs)
+            writeEllipticalArcRecord(writer, arc);
+        for (const AltiumSchIeee& ieee : component.ieeeSymbols)
+            writeIeeeRecord(writer, ieee);
+        for (const AltiumSchBezier& bezier : component.beziers) {
+            if (bezier.sourceGraphicType.isEmpty())
+                writeBezierRecord(writer, bezier);
+        }
+        for (const AltiumSchRectangle& rect : component.rectangles) {
+            if (rect.sourceGraphicIndex < 0)
+                writeRectangleRecord(writer, rect);
+        }
+        for (const AltiumSchRoundRectangle& rect : component.roundRectangles) {
+            if (rect.sourceGraphicIndex < 0)
+                writeRoundRectangleRecord(writer, rect);
+        }
+        for (const AltiumSchEllipse& ellipse : component.ellipses) {
+            if (ellipse.sourceGraphicType.isEmpty())
+                writeEllipseRecord(writer, ellipse);
+        }
+        for (const AltiumSchArc& arc : component.arcs) {
+            if (arc.sourceGraphicType.isEmpty())
+                writeArcRecord(writer, arc);
+        }
+        for (const AltiumSchPolyline& polyline : component.polylines) {
+            if (polyline.sourceGraphicIndex < 0)
+                writePolylineRecord(writer, polyline);
+        }
+        for (const AltiumSchPath& path : component.paths) {
+            if (path.sourceGraphicType.isEmpty())
+                writePathRecord(writer, path);
+        }
+    } else {
+        // 写入引脚
+        for (const AltiumSchPin& pin : component.pins) {
+            writePinRecord(writer, pin);
+        }
 
-    // 写入矩形
-    for (const AltiumSchRectangle& rect : component.rectangles) {
-        writeRectangleRecord(writer, rect);
-    }
-    for (const AltiumSchRoundRectangle& rect : component.roundRectangles) {
-        writeRoundRectangleRecord(writer, rect);
-    }
+        // 写入矩形
+        for (const AltiumSchRectangle& rect : component.rectangles) {
+            writeRectangleRecord(writer, rect);
+        }
+        for (const AltiumSchRoundRectangle& rect : component.roundRectangles) {
+            writeRoundRectangleRecord(writer, rect);
+        }
 
-    // 写入线段
-    for (const AltiumSchLine& line : component.lines) {
-        writeLineRecord(writer, line);
-    }
+        // 写入线段
+        for (const AltiumSchLine& line : component.lines) {
+            writeLineRecord(writer, line);
+        }
 
-    // 写入弧线
-    for (const AltiumSchArc& arc : component.arcs) {
-        writeArcRecord(writer, arc);
-    }
+        // 写入弧线
+        for (const AltiumSchArc& arc : component.arcs) {
+            writeArcRecord(writer, arc);
+        }
 
-    // 写入多边形
-    for (const AltiumSchPolygon& polygon : component.polygons) {
-        writePolygonRecord(writer, polygon);
-    }
+        // 写入多边形
+        for (const AltiumSchPolygon& polygon : component.polygons) {
+            writePolygonRecord(writer, polygon);
+        }
 
-    // 写入椭圆
-    for (const AltiumSchEllipse& ellipse : component.ellipses) {
-        writeEllipseRecord(writer, ellipse);
-    }
-    for (const AltiumSchPie& pie : component.pies) {
-        writePieRecord(writer, pie);
-    }
-    for (const AltiumSchEllipticalArc& arc : component.ellipticalArcs) {
-        writeEllipticalArcRecord(writer, arc);
-    }
+        // 写入椭圆
+        for (const AltiumSchEllipse& ellipse : component.ellipses) {
+            writeEllipseRecord(writer, ellipse);
+        }
+        for (const AltiumSchPie& pie : component.pies) {
+            writePieRecord(writer, pie);
+        }
+        for (const AltiumSchEllipticalArc& arc : component.ellipticalArcs) {
+            writeEllipticalArcRecord(writer, arc);
+        }
 
-    // 写入折线
-    for (const AltiumSchPolyline& polyline : component.polylines) {
-        writePolylineRecord(writer, polyline);
-    }
+        // 写入折线
+        for (const AltiumSchPolyline& polyline : component.polylines) {
+            writePolylineRecord(writer, polyline);
+        }
 
-    for (const AltiumSchPath& path : component.paths) {
-        writePathRecord(writer, path);
-    }
+        for (const AltiumSchPath& path : component.paths) {
+            writePathRecord(writer, path);
+        }
 
-    // 写入三次 Bézier 曲线
-    for (const AltiumSchBezier& bezier : component.beziers) {
-        writeBezierRecord(writer, bezier);
-    }
+        // 写入三次 Bézier 曲线
+        for (const AltiumSchBezier& bezier : component.beziers) {
+            writeBezierRecord(writer, bezier);
+        }
 
-    // 写入 IEEE 图形
-    for (const AltiumSchIeee& ieee : component.ieeeSymbols) {
-        writeIeeeRecord(writer, ieee);
-    }
+        // 写入 IEEE 图形
+        for (const AltiumSchIeee& ieee : component.ieeeSymbols) {
+            writeIeeeRecord(writer, ieee);
+        }
 
-    // 写入文本
-    for (const AltiumSchText& text : component.texts) {
-        writeTextRecord(writer, text);
+        // 写入文本
+        for (const AltiumSchText& text : component.texts) {
+            writeTextRecord(writer, text);
+        }
     }
     for (const AltiumSchTextFrame& frame : component.textFrames) {
         writeTextFrameRecord(writer, frame);

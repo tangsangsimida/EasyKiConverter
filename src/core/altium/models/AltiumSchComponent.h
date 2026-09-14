@@ -45,6 +45,7 @@ struct AltiumSchRectangle {
     uint32_t areaColor = 0xFFFFFF;  ///< 填充色
     bool isSolid = true;
     int ownerPartId = 1;
+    int sourceGraphicIndex = -1;
 };
 
 /**
@@ -60,6 +61,7 @@ struct AltiumSchRoundRectangle {
     uint32_t areaColor = 0xFFFFFF;
     bool isSolid = true;
     int ownerPartId = 1;
+    int sourceGraphicIndex = -1;
 };
 
 /**
@@ -86,6 +88,9 @@ struct AltiumSchArc {
     int lineStyle = 0;
     uint32_t color = 0x000000;
     int ownerPartId = 1;
+    QString sourceGraphicType;
+    int sourceGraphicIndex = -1;
+    int sourceSegmentIndex = -1;
 };
 
 /**
@@ -113,6 +118,8 @@ struct AltiumSchEllipse {
     uint32_t areaColor = 0xFFFFFF;
     bool isSolid = true;
     int ownerPartId = 1;
+    QString sourceGraphicType;
+    int sourceGraphicIndex = -1;
 };
 
 /**
@@ -155,6 +162,7 @@ struct AltiumSchPolyline {
     int lineStyle = 0;
     uint32_t color = 0x000000;
     int ownerPartId = 1;
+    int sourceGraphicIndex = -1;
 };
 
 /**
@@ -166,6 +174,9 @@ struct AltiumSchPath {
     int lineStyle = 0;
     uint32_t color = 0x000000;
     int ownerPartId = 1;
+    QString sourceGraphicType;
+    int sourceGraphicIndex = -1;
+    int sourceSegmentIndex = -1;
 };
 
 /**
@@ -177,6 +188,9 @@ struct AltiumSchBezier {
     int lineWidth = 0;
     uint32_t color = 0x000000;
     int ownerPartId = 1;
+    QString sourceGraphicType;
+    int sourceGraphicIndex = -1;
+    int sourceSegmentIndex = -1;
 };
 
 /**
@@ -211,6 +225,18 @@ struct AltiumSchText {
     bool isHidden = false;  ///< 是否强制隐藏文本
     int orientation = 0;  ///< 0-3，表示 0°/90°/180°/270°
     int ownerPartId = 1;
+    bool isPinLabel = false;
+    int sourceGraphicIndex = -1;
+};
+
+/**
+ * @brief Altium 符号图元顺序引用
+ * @details index 指向来源图元类型在所属部件中的局部索引。
+ */
+struct AltiumSchGraphicOrder {
+    QString type;
+    int index = -1;
+    int partIndex = 0;
 };
 
 /**
@@ -307,6 +333,7 @@ struct AltiumSchComponent {
     QList<AltiumSchText> texts;
     QList<AltiumSchTextFrame> textFrames;
     QList<AltiumSchImage> images;
+    QList<AltiumSchGraphicOrder> graphicOrder;
 
     /** @brief 封装链接（实现记录） */
     struct Implementation {

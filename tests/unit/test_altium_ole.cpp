@@ -1058,6 +1058,13 @@ private slots:
         duplicateImage.data = QByteArrayLiteral("multipart-image-duplicate");
         duplicateImage.fileName = QStringLiteral("C:\\assets\\multipart.png");
         symbol.images.append(duplicateImage);
+        symbol.graphicOrder = {
+            {QStringLiteral("P"), 0, 0},
+            {QStringLiteral("R"), 0, 1},
+            {QStringLiteral("PT"), 0, 1},
+            {QStringLiteral("P"), 1, 0},
+            {QStringLiteral("R"), 1, -1},
+        };
 
         const QString schPath = QDir(tempDir.path()).filePath(QStringLiteral("multipart.SchLib"));
         ExporterAltiumSymbol symbolExporter;
@@ -1068,8 +1075,6 @@ private slots:
         QCOMPARE(readU32(symbolData, pinOffset + 4), quint32(2));
         QCOMPARE(readU16(symbolData, pinOffset + 9), quint16(2));
         QCOMPARE(static_cast<uint8_t>(symbolData.at(pinOffset + 15)), static_cast<uint8_t>(5));
-        const int secondPinOffset = pinOffset + 4 + static_cast<int>(readU32(symbolData, pinOffset) & 0x00FFFFFFU);
-        QCOMPARE(readU16(symbolData, secondPinOffset + 9), quint16(0xFFFF));
         QVERIFY(symbolData.contains("OWNERPARTID=2"));
         QVERIFY(symbolData.contains("OWNERPARTID=-1"));
         QVERIFY(symbolData.contains("IndexInSheet=1"));
@@ -1078,6 +1083,12 @@ private slots:
         QVERIFY(symbolData.contains("LocationCount=4"));
         QVERIFY(symbolData.contains("RECORD=10"));
         QVERIFY(symbolData.contains("RECORD=30"));
+        const int roundedRectangleRecord = symbolData.indexOf("RECORD=10");
+        const int pathRecord = symbolData.indexOf("RECORD=6");
+        const int rectangleRecord = symbolData.indexOf("RECORD=14");
+        QVERIFY(roundedRectangleRecord > pinOffset);
+        QVERIFY(pathRecord > roundedRectangleRecord);
+        QVERIFY(rectangleRecord > pathRecord);
         QVERIFY(symbolData.contains("EmbedImage=T"));
         QVERIFY(symbolData.contains("FileName=multipart.png"));
         QVERIFY(symbolData.contains("FileName=multipart_2.png"));

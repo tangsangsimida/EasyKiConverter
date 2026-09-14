@@ -230,6 +230,8 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
     component.partCount = data.partCount;
     component.sourceMetadata = data.sourceMetadata;
     component.aliases = data.aliases;
+    for (const IR::SymbolGraphicOrderIR& order : data.graphicOrder)
+        component.graphicOrder.append({order.type, order.index, order.partIndex});
 
     for (const IR::SymbolParameterIR& parameter : data.parameters) {
         AltiumSchParameter altiumParameter;
@@ -258,6 +260,7 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
             text.isDisplayed = true;
             text.orientation = toAltiumOrientation(pin.nameRotation);
             text.ownerPartId = pin.commonToAllParts ? -1 : toAltiumOwnerPartId(pin.partIndex);
+            text.isPinLabel = true;
             component.texts.append(text);
         }
         if (pin.hasNumberPosition && !pin.designator.isEmpty()) {
@@ -270,29 +273,49 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
             text.isDisplayed = true;
             text.orientation = toAltiumOrientation(pin.numberRotation);
             text.ownerPartId = pin.commonToAllParts ? -1 : toAltiumOwnerPartId(pin.partIndex);
+            text.isPinLabel = true;
             component.texts.append(text);
         }
     }
 
     // 转换图形元素
-    for (const IR::SymbolRectangleIR& r : data.rectangles) {
-        if (r.cornerRadiusX > 0.0 || r.cornerRadiusY > 0.0)
-            component.roundRectangles.append(convertRoundRectangle(r));
-        else
-            component.rectangles.append(convertRectangle(r));
+    for (int i = 0; i < data.rectangles.size(); ++i) {
+        const IR::SymbolRectangleIR& r = data.rectangles.at(i);
+        if (r.cornerRadiusX > 0.0 || r.cornerRadiusY > 0.0) {
+            AltiumSchRoundRectangle rectangle = convertRoundRectangle(r);
+            rectangle.sourceGraphicIndex = i;
+            component.roundRectangles.append(rectangle);
+        } else {
+            AltiumSchRectangle rectangle = convertRectangle(r);
+            rectangle.sourceGraphicIndex = i;
+            component.rectangles.append(rectangle);
+        }
     }
-    for (const IR::SymbolCircleIR& c : data.circles)
-        component.ellipses.append(convertCircle(c));
-    for (const IR::SymbolArcIR& a : data.arcs)
-        component.arcs.append(convertArc(a));
+    for (int i = 0; i < data.circles.size(); ++i) {
+        AltiumSchEllipse ellipse = convertCircle(data.circles.at(i));
+        ellipse.sourceGraphicType = QStringLiteral("C");
+        ellipse.sourceGraphicIndex = i;
+        component.ellipses.append(ellipse);
+    }
+    for (int i = 0; i < data.arcs.size(); ++i) {
+        AltiumSchArc arc = convertArc(data.arcs.at(i));
+        arc.sourceGraphicType = QStringLiteral("A");
+        arc.sourceGraphicIndex = i;
+        component.arcs.append(arc);
+    }
     for (const IR::SymbolPolygonIR& p : data.polygons)
         component.polygons.append(convertPolygon(p));
-    for (const IR::SymbolPolylineIR& p : data.polylines)
-        component.polylines.append(convertPolyline(p));
-    for (const IR::SymbolPathIR& p : data.paths) {
+    for (int i = 0; i < data.polylines.size(); ++i) {
+        AltiumSchPolyline polyline = convertPolyline(data.polylines.at(i));
+        polyline.sourceGraphicIndex = i;
+        component.polylines.append(polyline);
+    }
+    for (int pathIndex = 0; pathIndex < data.paths.size(); ++pathIndex) {
+        const IR::SymbolPathIR& p = data.paths.at(pathIndex);
         // 非填充路径可直接拆分为 Altium 原生线段和 Bézier 记录，避免曲线被
         // 强制膨胀为大量折线；填充路径仍使用闭合点列以保留填充语义。
         if (!p.isFilled && !p.segments.isEmpty()) {
+            int segmentIndex = 0;
             for (const IR::SymbolPathSegmentIR& segment : p.segments) {
                 if (segment.type == IR::SymbolPathSegmentIR::Type::Line) {
                     AltiumSchPath path;
@@ -300,6 +323,9 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
                     path.lineStyle = toAltiumLineStyle(p.strokeStyle);
                     path.color = toAltiumColor(p.strokeColor);
                     path.ownerPartId = toAltiumOwnerPartId(p.partIndex);
+                    path.sourceGraphicType = QStringLiteral("PT");
+                    path.sourceGraphicIndex = pathIndex;
+                    path.sourceSegmentIndex = segmentIndex;
                     path.vertices.append(QPointF(AltiumCoord::mmToSchematicUnits(segment.start.x()),
                                                  AltiumCoord::mmToSchematicUnits(segment.start.y())));
                     path.vertices.append(QPointF(AltiumCoord::mmToSchematicUnits(segment.end.x()),
@@ -312,7 +338,11 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
                     bezier.strokeWidth = p.strokeWidth;
                     bezier.strokeStyle = p.strokeStyle;
                     bezier.partIndex = p.partIndex;
-                    component.beziers.append(convertBezier(bezier));
+                    AltiumSchBezier altiumBezier = convertBezier(bezier);
+                    altiumBezier.sourceGraphicType = QStringLiteral("PT");
+                    altiumBezier.sourceGraphicIndex = pathIndex;
+                    altiumBezier.sourceSegmentIndex = segmentIndex;
+                    component.beziers.append(altiumBezier);
                 } else {
                     IR::SymbolArcIR arc;
                     arc.startPoint = segment.start;
@@ -322,11 +352,19 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
                     arc.strokeWidth = p.strokeWidth;
                     arc.strokeStyle = p.strokeStyle;
                     arc.partIndex = p.partIndex;
-                    component.arcs.append(convertArc(arc));
+                    AltiumSchArc altiumArc = convertArc(arc);
+                    altiumArc.sourceGraphicType = QStringLiteral("PT");
+                    altiumArc.sourceGraphicIndex = pathIndex;
+                    altiumArc.sourceSegmentIndex = segmentIndex;
+                    component.arcs.append(altiumArc);
                 }
+                ++segmentIndex;
             }
         } else {
-            component.paths.append(convertPath(p));
+            AltiumSchPath path = convertPath(p);
+            path.sourceGraphicType = QStringLiteral("PT");
+            path.sourceGraphicIndex = pathIndex;
+            component.paths.append(path);
         }
     }
     for (const IR::SymbolBezierIR& b : data.beziers) {
@@ -335,14 +373,21 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
     }
     for (const IR::SymbolIeeeIR& ieee : data.ieeeSymbols)
         component.ieeeSymbols.append(convertIeee(ieee));
-    for (const IR::SymbolTextIR& t : data.texts)
-        component.texts.append(convertText(t));
+    for (int i = 0; i < data.texts.size(); ++i) {
+        AltiumSchText text = convertText(data.texts.at(i));
+        text.sourceGraphicIndex = i;
+        component.texts.append(text);
+    }
     for (const IR::SymbolTextFrameIR& frame : data.textFrames)
         component.textFrames.append(convertTextFrame(frame));
     for (const IR::SymbolImageIR& image : data.images)
         component.images.append(convertImage(image));
-    for (const IR::SymbolEllipseIR& e : data.ellipses)
-        component.ellipses.append(convertEllipse(e));
+    for (int i = 0; i < data.ellipses.size(); ++i) {
+        AltiumSchEllipse ellipse = convertEllipse(data.ellipses.at(i));
+        ellipse.sourceGraphicType = QStringLiteral("E");
+        ellipse.sourceGraphicIndex = i;
+        component.ellipses.append(ellipse);
+    }
     for (const IR::SymbolPieIR& p : data.pies)
         component.pies.append(convertPie(p));
     for (const IR::SymbolEllipticalArcIR& a : data.ellipticalArcs)
