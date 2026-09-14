@@ -31,6 +31,7 @@ struct AltiumSchPin {
     uint8_t symbolInside = 0;  ///< 引脚内部装饰
     uint8_t symbolOutside = 0;  ///< 引脚外部装饰
     int ownerPartId = 1;  ///< 所属部件（Altium 使用 1-based 编号）
+    int sourcePartIndex = 0;  ///< 来源部件索引（用于恢复源图元的局部顺序）
 };
 
 /**

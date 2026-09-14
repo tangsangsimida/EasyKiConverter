@@ -364,13 +364,19 @@ void AltiumSchLibWriter::writeOrderedGraphic(AltiumBinaryWriter& writer,
                                              const AltiumSchComponent& component,
                                              const AltiumSchGraphicOrder& order) {
     const auto matchesPart = [&order](int sourcePartIndex) { return sourcePartIndex == order.partIndex; };
-    const auto matchesOwner = [&order](int ownerPartId) {
-        return ownerPartId == (order.partIndex < 0 ? -1 : order.partIndex + 1);
-    };
     if (order.type == QStringLiteral("P")) {
-        if (order.index >= 0 && order.index < component.pins.size() &&
-            matchesOwner(component.pins.at(order.index).ownerPartId))
-            writePinRecord(writer, component.pins.at(order.index));
+        int localIndex = 0;
+        for (const AltiumSchPin& pin : component.pins) {
+            const bool matchesSourcePart =
+                order.partIndex < 0 ? pin.ownerPartId == -1 : pin.sourcePartIndex == order.partIndex;
+            if (!matchesSourcePart)
+                continue;
+            if (localIndex == order.index) {
+                writePinRecord(writer, pin);
+                return;
+            }
+            ++localIndex;
+        }
         return;
     }
     if (order.type == QStringLiteral("R")) {

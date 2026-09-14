@@ -1037,6 +1037,12 @@ private slots:
         commonPin.length = 2.54;
         commonPin.commonToAllParts = true;
         symbol.pins.append(commonPin);
+        IR::SymbolPinIR secondPartPin;
+        secondPartPin.name = QStringLiteral("A");
+        secondPartPin.designator = QStringLiteral("1");
+        secondPartPin.length = 2.54;
+        secondPartPin.partIndex = 0;
+        symbol.pins.append(secondPartPin);
         IR::SymbolPathIR path;
         path.points = {QPointF(0, 0), QPointF(1, 1), QPointF(2, 0)};
         path.partIndex = 1;
@@ -1092,7 +1098,8 @@ private slots:
             {QStringLiteral("P"), 0, 1},
             {QStringLiteral("R"), 0, 1},
             {QStringLiteral("PT"), 0, 1},
-            {QStringLiteral("P"), 1, -1},
+            {QStringLiteral("P"), 0, 0},
+            {QStringLiteral("P"), 1, 0},
             {QStringLiteral("R"), 0, -1},
             {QStringLiteral("R"), 0, 0},
             {QStringLiteral("PG"), 0, 1},
@@ -1108,6 +1115,17 @@ private slots:
         QCOMPARE(readU32(symbolData, pinOffset + 4), quint32(2));
         QCOMPARE(readU16(symbolData, pinOffset + 9), quint16(2));
         QCOMPARE(static_cast<uint8_t>(symbolData.at(pinOffset + 15)), static_cast<uint8_t>(5));
+        QList<quint16> orderedPinOwners;
+        for (int offset = pinOffset; offset + 13 <= symbolData.size();) {
+            const int payloadSize = static_cast<int>(readU32(symbolData, offset) & 0x00FFFFFFU);
+            const int nextOffset = offset + 4 + payloadSize;
+            if (payloadSize < 9 || nextOffset > symbolData.size())
+                break;
+            if (readU32(symbolData, offset + 4) == 2)
+                orderedPinOwners.append(readU16(symbolData, offset + 9));
+            offset = nextOffset;
+        }
+        QCOMPARE(orderedPinOwners, QList<quint16>({quint16(2), quint16(0xFFFF), quint16(1)}));
         QVERIFY(symbolData.contains("OWNERPARTID=2"));
         QVERIFY(symbolData.contains("OWNERPARTID=-1"));
         QVERIFY(symbolData.contains("IndexInSheet=1"));

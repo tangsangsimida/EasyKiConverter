@@ -657,6 +657,7 @@ AltiumSchPin ExporterAltiumSymbol::convertPin(const IR::SymbolPinIR& pin) {
     }
     // Altium 使用 -1 表示 Part Zero 中的公共引脚；普通部件仍使用 1-based 编号。
     altiumPin.ownerPartId = pin.commonToAllParts ? -1 : toAltiumOwnerPartId(pin.partIndex);
+    altiumPin.sourcePartIndex = pin.partIndex;
 
     // 电源引脚检测：EasyEDA 通常不区分电源引脚（type=3/Bidirectional），
     // 通过引脚名称匹配常见电源网络名称，强制设为 Power 类型
