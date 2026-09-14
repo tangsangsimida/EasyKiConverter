@@ -19,12 +19,7 @@ bool SymbolData::fromJson(const QJsonObject& json) {
 }
 
 bool SymbolData::isValid() const {
-    // 检查基本字
-    if (m_bbox.x == 0.0 && m_bbox.y == 0.0) {
-        return false;
-    }
-
-    return true;
+    return validationErrors().isEmpty();
 }
 
 QString SymbolData::validate() const {

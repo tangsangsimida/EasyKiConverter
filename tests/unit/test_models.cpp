@@ -116,6 +116,7 @@ private slots:
         symbol.setBbox(SymbolBBox{0.0, 0.0, 10.0, 5.0});
 
         QVERIFY(symbol.validationErrors().isEmpty());
+        QVERIFY(symbol.isValid());
     }
 
     void testFootprintDataRoundTrip() {
