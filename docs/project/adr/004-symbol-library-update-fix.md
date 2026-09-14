@@ -322,9 +322,9 @@ if (!isOverwritten && !isOrphanedSubSymbol)
 
 当前已新增 `OLECompoundReader` 作为只读 CFB/OLE 基础层，能够校验 V3 文件、解析 FAT/DIFAT、枚举目录流，并读取普通流和迷你流。该读取器目前只提供原始流访问，不负责解释 SchLib/PcbLib 的业务记录，也不会改变“已有 Altium 库禁止追加或更新”的保护策略。后续增量合并必须在此基础上增加 Altium 结构解析、保留未知流和元数据的写回能力，并以真实库样本补充回归测试。
 
-当前已进一步增加 `AltiumSchLibReader`，可解析 SchLib 的 FileHeader、SectionKeys、组件名称及组件 Data 流映射，并校验目录中声明的组件是否实际存在。它仍是只读的库级读取能力，尚未覆盖所有图元记录和写回逻辑。
+当前已进一步增加 `AltiumSchLibReader`，可解析 SchLib 的 FileHeader、SectionKeys、组件名称及组件 Data 流映射，并校验目录中声明的组件是否实际存在。组件 Data 现在还可以按长度块拆分为记录，并保留 flags、payload 及完整编码，以便未知记录在后续合并时无损转发。它仍是只读的库级读取能力，尚未解释全部业务字段和提供写回逻辑。
 
-同时已增加 `AltiumPcbLibReader`，可解析 PcbLib 的 FileHeader、Library/Data、SectionKeys 和封装 Storage 映射，并提供封装 Header、Parameters、WideStrings、Data 等流的读取入口。两种库的读取器都只做结构校验和原始流访问，尚未承担增量写回。
+同时已增加 `AltiumPcbLibReader`，可解析 PcbLib 的 FileHeader、Library/Data、SectionKeys 和封装 Storage 映射，并提供封装 Header、Parameters、WideStrings、Data 等流的读取入口。PcbLib 的 Data 流由对象 ID 和对象类型专属子记录组成，不能直接复用 SchLib 的长度块拆分策略。两种库的读取器都只做结构校验和原始流访问，尚未承担增量写回。
 
 ## 相关文档
 

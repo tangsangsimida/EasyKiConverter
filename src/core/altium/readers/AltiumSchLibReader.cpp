@@ -107,6 +107,36 @@ bool AltiumSchLibReader::readComponentData(const QString& componentName, QByteAr
     return readComponentData(componentIndex(componentName), data);
 }
 
+bool AltiumSchLibReader::readComponentRecords(int componentIndexValue, QVector<Record>* records) const {
+    if (records == nullptr)
+        return false;
+    records->clear();
+
+    QByteArray data;
+    if (!readComponentData(componentIndexValue, &data))
+        return false;
+    AltiumBinaryReader reader(data);
+    while (reader.remaining() > 0) {
+        const int startPosition = reader.position();
+        QByteArray payload;
+        uint8_t flags = 0;
+        if (!reader.readBlock(&payload, &flags) || payload.isEmpty()) {
+            records->clear();
+            return false;
+        }
+        Record record;
+        record.flags = flags;
+        record.payload = payload;
+        record.encoded = data.mid(startPosition, reader.position() - startPosition);
+        records->append(record);
+    }
+    return !records->isEmpty();
+}
+
+bool AltiumSchLibReader::readComponentRecords(const QString& componentName, QVector<Record>* records) const {
+    return readComponentRecords(componentIndex(componentName), records);
+}
+
 QString AltiumSchLibReader::errorString() const {
     return m_errorMessage;
 }

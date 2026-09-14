@@ -896,6 +896,12 @@ private slots:
         QByteArray footprintReaderData;
         QVERIFY(pcbLibraryReader.readFootprintStream(0, QStringLiteral("Data"), &footprintReaderData));
         QVERIFY(footprintReaderData.contains("LQFN-56_L7.0-W7.0-P0.4-EP"));
+        QByteArray footprintHeaderReaderData;
+        QVERIFY(pcbLibraryReader.readFootprintStream(0, QStringLiteral("Header"), &footprintHeaderReaderData));
+        AltiumBinaryReader footprintHeaderReader(footprintHeaderReaderData);
+        uint32_t primitiveCount = 0;
+        QVERIFY(footprintHeaderReader.readUInt32(&primitiveCount));
+        QVERIFY(primitiveCount > 0);
 
         AltiumSchLibReader schLibraryReader;
         QVERIFY2(schLibraryReader.open(schPath), qPrintable(schLibraryReader.errorString()));
@@ -907,6 +913,14 @@ private slots:
         QByteArray componentData;
         QVERIFY(schLibraryReader.readComponentData(0, &componentData));
         QVERIFY(componentData.contains("LibReference=C2040"));
+        QVector<AltiumSchLibReader::Record> records;
+        QVERIFY(schLibraryReader.readComponentRecords(0, &records));
+        QCOMPARE(records.size(), headerWeight);
+        QByteArray reconstructedRecords;
+        for (const auto& record : records)
+            reconstructedRecords.append(record.encoded);
+        QCOMPARE(reconstructedRecords, componentData);
+        QVERIFY(records.first().payload.startsWith("|RECORD=1|"));
     }
 
     /**

@@ -20,6 +20,13 @@ public:
         QString sectionKey;
     };
 
+    /** @brief SchLib Data 中的原始记录块 */
+    struct Record {
+        quint8 flags = 0;
+        QByteArray payload;
+        QByteArray encoded;
+    };
+
     /**
      * @brief 打开并解析 SchLib 文件
      * @param filePath 文件路径
@@ -35,6 +42,13 @@ public:
     bool readComponentData(int componentIndex, QByteArray* data) const;
     /** @brief 获取指定组件的 Data 流 */
     bool readComponentData(const QString& componentName, QByteArray* data) const;
+    /**
+     * @brief 拆分指定组件的 Data 记录
+     * @details 不解释记录业务字段，保留每条记录的完整编码，确保未知记录可无损转发。
+     */
+    bool readComponentRecords(int componentIndex, QVector<Record>* records) const;
+    /** @brief 按组件名称拆分 Data 记录 */
+    bool readComponentRecords(const QString& componentName, QVector<Record>* records) const;
     /** @brief 获取最近一次错误说明 */
     QString errorString() const;
     /** @brief 获取是否发生读取错误 */

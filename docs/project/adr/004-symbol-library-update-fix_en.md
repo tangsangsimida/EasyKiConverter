@@ -322,9 +322,9 @@ If Altium library reading and incremental merging are implemented later, add reg
 
 The project now provides `OLECompoundReader` as a read-only CFB/OLE foundation. It validates V3 files, parses FAT/DIFAT, enumerates directory streams, and reads both regular and mini streams. It intentionally exposes raw stream data only; it does not yet interpret SchLib/PcbLib records or enable incremental merging, so the protective rejection for existing Altium libraries remains in place. Future merging must add Altium structure parsing, preservation of unknown streams and metadata, write-back support, and regression coverage using real library samples.
 
-The project now also provides `AltiumSchLibReader`, which parses SchLib FileHeader and SectionKeys data, resolves component names to storage keys, and validates that each declared component has a Data stream. It remains read-only and does not yet cover every graphic record or provide write-back support.
+The project now also provides `AltiumSchLibReader`, which parses SchLib FileHeader and SectionKeys data, resolves component names to storage keys, and validates that each declared component has a Data stream. Component Data can also be split into length-prefixed records while retaining flags, payloads, and complete encodings so unknown records can be forwarded losslessly during future merging. It remains read-only and does not yet interpret every business field or provide write-back support.
 
-The project also provides `AltiumPcbLibReader`, which parses PcbLib FileHeader, Library/Data, SectionKeys, and footprint storage mappings, with access to footprint Header, Parameters, WideStrings, and Data streams. Both readers remain limited to structural validation and raw stream access; incremental write-back is not enabled yet.
+The project also provides `AltiumPcbLibReader`, which parses PcbLib FileHeader, Library/Data, SectionKeys, and footprint storage mappings, with access to footprint Header, Parameters, WideStrings, and Data streams. PcbLib Data consists of object IDs followed by object-type-specific subrecords, so it must not reuse SchLib's length-prefixed record splitter. Both readers remain limited to structural validation and raw stream access; incremental write-back is not enabled yet.
 
 ## Related Documents
 
