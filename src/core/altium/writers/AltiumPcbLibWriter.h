@@ -55,13 +55,13 @@ private:
     void writeWideStrings(QByteArray& buffer, const AltiumPcbComponent& component);
 
     // ---- 图元写入 ----
-    void writePad(AltiumBinaryWriter& writer, const AltiumPcbPad& pad, int componentIndex);
+    void writePad(AltiumBinaryWriter& writer, const AltiumPcbPad& pad);
     void writeTrack(AltiumBinaryWriter& writer, const AltiumPcbTrack& track, int componentIndex);
-    void writeArc(AltiumBinaryWriter& writer, const AltiumPcbArc& arc, int componentIndex);
-    void writeText(AltiumBinaryWriter& writer, const AltiumPcbText& text, int componentIndex);
-    void writeFill(AltiumBinaryWriter& writer, const AltiumPcbFill& fill, int componentIndex);
-    void writeRegion(AltiumBinaryWriter& writer, const AltiumPcbRegion& region, int componentIndex);
-    void writeComponentBody(AltiumBinaryWriter& writer, const AltiumPcbComponentBody& body, int componentIndex);
+    void writeArc(AltiumBinaryWriter& writer, const AltiumPcbArc& arc);
+    void writeText(AltiumBinaryWriter& writer, const AltiumPcbText& text);
+    void writeFill(AltiumBinaryWriter& writer, const AltiumPcbFill& fill);
+    void writeRegion(AltiumBinaryWriter& writer, const AltiumPcbRegion& region);
+    void writeComponentBody(AltiumBinaryWriter& writer, const AltiumPcbComponentBody& body);
 
     // ---- 辅助 ----
     void writeCommonPrimitiveHeader(AltiumBinaryWriter& writer, uint8_t layer, uint16_t flags);

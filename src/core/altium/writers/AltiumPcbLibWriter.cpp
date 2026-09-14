@@ -506,25 +506,25 @@ void AltiumPcbLibWriter::writeFootprintData(QByteArray& buffer, const AltiumPcbC
 
     // 写入所有图元
     for (const AltiumPcbPad& pad : component.pads) {
-        writePad(writer, pad, 0);
+        writePad(writer, pad);
     }
     for (const AltiumPcbTrack& track : component.tracks) {
         writeTrack(writer, track, 0);
     }
     for (const AltiumPcbArc& arc : component.arcs) {
-        writeArc(writer, arc, 0);
+        writeArc(writer, arc);
     }
     for (const AltiumPcbText& text : component.texts) {
-        writeText(writer, text, 0);
+        writeText(writer, text);
     }
     for (const AltiumPcbFill& fill : component.fills) {
-        writeFill(writer, fill, 0);
+        writeFill(writer, fill);
     }
     for (const AltiumPcbRegion& region : component.regions) {
-        writeRegion(writer, region, 0);
+        writeRegion(writer, region);
     }
     for (const AltiumPcbComponentBody& body : component.bodies) {
-        writeComponentBody(writer, body, 0);
+        writeComponentBody(writer, body);
     }
 }
 
@@ -594,7 +594,7 @@ uint16_t AltiumPcbLibWriter::encodePrimitiveFlags(bool isLocked,
  * @brief 写入焊盘记录 (Object ID = 2)
  * @details 完整写入焊盘的主记录和扩展块，包含孔类型、槽孔、圆角等全部属性。
  */
-void AltiumPcbLibWriter::writePad(AltiumBinaryWriter& writer, const AltiumPcbPad& pad, int componentIndex) {
+void AltiumPcbLibWriter::writePad(AltiumBinaryWriter& writer, const AltiumPcbPad& pad) {
     writer.writeUInt8(AltiumConstants::PCB_OBJECT_PAD);
 
     // 子记录 1: Designator
@@ -747,7 +747,7 @@ void AltiumPcbLibWriter::writeTrack(AltiumBinaryWriter& writer, const AltiumPcbT
 /**
  * @brief 写入弧线记录 (Object ID = 1)
  */
-void AltiumPcbLibWriter::writeArc(AltiumBinaryWriter& writer, const AltiumPcbArc& arc, int componentIndex) {
+void AltiumPcbLibWriter::writeArc(AltiumBinaryWriter& writer, const AltiumPcbArc& arc) {
     writer.writeUInt8(AltiumConstants::PCB_OBJECT_ARC);
 
     writer.beginBlock();
@@ -768,7 +768,7 @@ void AltiumPcbLibWriter::writeArc(AltiumBinaryWriter& writer, const AltiumPcbArc
 /**
  * @brief 写入文本记录 (Object ID = 5)
  */
-void AltiumPcbLibWriter::writeText(AltiumBinaryWriter& writer, const AltiumPcbText& text, int componentIndex) {
+void AltiumPcbLibWriter::writeText(AltiumBinaryWriter& writer, const AltiumPcbText& text) {
     writer.writeUInt8(5);  // Object ID
 
     writer.beginBlock();
@@ -819,7 +819,7 @@ void AltiumPcbLibWriter::writeText(AltiumBinaryWriter& writer, const AltiumPcbTe
 /**
  * @brief 写入填充记录 (Object ID = 6, 50 字节)
  */
-void AltiumPcbLibWriter::writeFill(AltiumBinaryWriter& writer, const AltiumPcbFill& fill, int componentIndex) {
+void AltiumPcbLibWriter::writeFill(AltiumBinaryWriter& writer, const AltiumPcbFill& fill) {
     writer.writeUInt8(6);  // Object ID
 
     writer.beginBlock();
@@ -844,7 +844,7 @@ void AltiumPcbLibWriter::writeFill(AltiumBinaryWriter& writer, const AltiumPcbFi
 /**
  * @brief 写入区域记录 (Object ID = 11)
  */
-void AltiumPcbLibWriter::writeRegion(AltiumBinaryWriter& writer, const AltiumPcbRegion& region, int componentIndex) {
+void AltiumPcbLibWriter::writeRegion(AltiumBinaryWriter& writer, const AltiumPcbRegion& region) {
     writer.writeUInt8(AltiumConstants::PCB_OBJECT_REGION);
 
     writer.beginBlock();
@@ -886,9 +886,7 @@ void AltiumPcbLibWriter::writeRegion(AltiumBinaryWriter& writer, const AltiumPcb
 /**
  * @brief 写入 3D 元件体记录 (Object ID = 12)
  */
-void AltiumPcbLibWriter::writeComponentBody(AltiumBinaryWriter& writer,
-                                            const AltiumPcbComponentBody& body,
-                                            int componentIndex) {
+void AltiumPcbLibWriter::writeComponentBody(AltiumBinaryWriter& writer, const AltiumPcbComponentBody& body) {
     writer.writeUInt8(AltiumConstants::PCB_OBJECT_COMPONENT_BODY);
 
     writer.beginBlock();
