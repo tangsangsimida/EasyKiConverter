@@ -882,9 +882,9 @@ private slots:
         symbol.beziers.append(invalidBezier);
 
         AltiumSchComponent::Implementation impl;
-        impl.modelName = QStringLiteral("LQFN-56_L7.0-W7.0-P0.4-EP");
+        impl.modelName = QStringLiteral("模型-高精度");
         impl.modelType = QStringLiteral("PCBLIB");
-        impl.parameters.insert(QStringLiteral("THERMAL_MODEL"), QStringLiteral("default"));
+        impl.parameters.insert(QStringLiteral("热模型"), QStringLiteral("高精度"));
         impl.pinMappings.insert(QStringLiteral("1"), QStringLiteral("A1"));
         symbol.implementations.append(impl);
         AltiumSchComponent::Implementation simulationImpl;
@@ -933,7 +933,10 @@ private slots:
         QVERIFY(schData.contains("DESIMP0=A1"));
         QVERIFY(schData.contains("MODELTYPE=SIM"));
         QVERIFY(schData.contains("DATAFILECOUNT=0"));
-        QVERIFY(schData.contains("THERMAL_MODEL=default"));
+        QVERIFY(schData.contains("%UTF8%MODELNAME="));
+        QVERIFY(schData.contains(QStringLiteral("模型-高精度").toUtf8()));
+        QVERIFY(schData.contains(QStringLiteral("%UTF8%热模型=").toUtf8()));
+        QVERIFY(schData.contains(QStringLiteral("高精度").toUtf8()));
         QVERIFY(schData.contains("RECORD=6"));
         QVERIFY(schData.contains("RECORD=3"));
         QVERIFY(schData.contains("Symbol=18"));

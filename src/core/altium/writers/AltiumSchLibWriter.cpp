@@ -1641,7 +1641,7 @@ void AltiumSchLibWriter::writeImplementationRecords(AltiumBinaryWriter& writer, 
         params["DataFileFormatID"] = "";
         params["Description"] = "";
         params["FileName"] = "";
-        writer.writeCStringParameterBlock(params);
+        writer.writeCStringParameterBlockUtf8(params);
     }
 
     // 每个实现
@@ -1673,14 +1673,14 @@ void AltiumSchLibWriter::writeImplementationRecords(AltiumBinaryWriter& writer, 
             if (implementationIndex == 0)
                 params["ISCURRENT"] = "T";
             addUniqueID(params);
-            writer.writeCStringParameterBlock(params);
+            writer.writeCStringParameterBlockUtf8(params);
         }
 
         // RECORD=46: MapDefinerList（容器）
         {
             QMap<QString, QString> params;
             params["RECORD"] = "46";
-            writer.writeCStringParameterBlock(params);
+            writer.writeCStringParameterBlockUtf8(params);
         }
 
         // RECORD=47: 将每个引脚映射到当前实现。
@@ -1695,7 +1695,7 @@ void AltiumSchLibWriter::writeImplementationRecords(AltiumBinaryWriter& writer, 
             pinMappingParams["DESIMP0"] = mappedPin;
             pinMappingParams["ISTRIVIAL"] = "T";
             addUniqueID(pinMappingParams);
-            writer.writeCStringParameterBlock(pinMappingParams);
+            writer.writeCStringParameterBlockUtf8(pinMappingParams);
         }
 
         // RECORD=48: ImplementationParameters
@@ -1704,7 +1704,7 @@ void AltiumSchLibWriter::writeImplementationRecords(AltiumBinaryWriter& writer, 
             params["RECORD"] = "48";
             for (auto it = impl.parameters.constBegin(); it != impl.parameters.constEnd(); ++it)
                 params[it.key()] = it.value();
-            writer.writeCStringParameterBlock(params);
+            writer.writeCStringParameterBlockUtf8(params);
         }
     }
 }

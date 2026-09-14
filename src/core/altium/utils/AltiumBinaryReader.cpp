@@ -200,7 +200,7 @@ bool AltiumBinaryReader::parseCStringParameterData(const QByteArray& data, QMap<
         const QByteArray key = field.left(separator);
         const QByteArray rawValue = field.mid(separator + 1);
         if (key.startsWith("%UTF8%")) {
-            const QString baseKey = QString::fromLatin1(key.mid(6));
+            const QString baseKey = QString::fromUtf8(key.mid(6));
             (*params)[baseKey] = QString::fromUtf8(rawValue);
         } else {
             (*params)[QString::fromLatin1(key)] = QString::fromLatin1(rawValue);

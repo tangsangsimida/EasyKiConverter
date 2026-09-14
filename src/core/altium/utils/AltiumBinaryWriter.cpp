@@ -183,20 +183,21 @@ void AltiumBinaryWriter::writeCStringParameterBlockUtf8(const QMap<QString, QStr
         auto it = params.constFind(keyName);
         if (it == params.constEnd())
             continue;
-        const QByteArray key = it.key().toLatin1();
+        const QByteArray ansiKey = it.key().toLatin1();
+        const QByteArray utf8Key = it.key().toUtf8();
         QString value = it.value();
         value.replace('|', ' ');
         value.replace(QChar::Null, ' ');
         const QByteArray ansiValue = value.toLatin1();
         encoded += '|';
-        encoded += key;
+        encoded += ansiKey;
         encoded += '=';
         encoded += ansiValue;
 
-        // %UTF8% 参数的值必须是原始 UTF-8 字节，而不是再次 Latin-1 转码。
+        // %UTF8% 参数的键和值都必须使用原始 UTF-8 字节，而不是再次 Latin-1 转码。
         if (QString::fromLatin1(ansiValue) != value) {
             encoded += "|%UTF8%";
-            encoded += key;
+            encoded += utf8Key;
             encoded += '=';
             encoded += value.toUtf8();
         }
