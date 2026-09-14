@@ -31,6 +31,70 @@ bool readOptionalParameterInt(const QMap<QString, QString>& parameters, const QS
     return true;
 }
 
+bool validateGraphicParameters(const QMap<QString, QString>& parameters, int recordType, QString* error) {
+    const auto readInt = [&parameters](const QString& name, bool required, int fallback, int* value) {
+        if (value == nullptr)
+            return false;
+        if (!parameters.contains(name)) {
+            if (required)
+                return false;
+            *value = fallback;
+            return true;
+        }
+        bool ok = false;
+        const int parsed = parameters.value(name).toInt(&ok);
+        if (!ok)
+            return false;
+        *value = parsed;
+        return true;
+    };
+    const auto failValidation = [error](const QString& message) {
+        if (error != nullptr)
+            *error = message;
+        return false;
+    };
+
+    if (recordType == 5 || recordType == 6 || recordType == 7) {
+        const int minimumCount = recordType == 5 ? 4 : (recordType == 7 ? 3 : 2);
+        int locationCount = 0;
+        if (!readInt(QStringLiteral("LocationCount"), true, 0, &locationCount) || locationCount < minimumCount ||
+            locationCount > 100000) {
+            return failValidation(QStringLiteral("LocationCount 无效"));
+        }
+        for (int i = 1; i <= locationCount; ++i) {
+            for (const QString& axis : {QStringLiteral("X"), QStringLiteral("Y")}) {
+                const QString name = QStringLiteral("%1%2").arg(axis).arg(i);
+                int coordinate = 0;
+                if (!readInt(name, false, 0, &coordinate))
+                    return failValidation(QStringLiteral("%1 坐标无效").arg(name));
+            }
+        }
+    }
+
+    if (recordType == 8 || recordType == 9 || recordType == 11) {
+        int radius = 0;
+        if (!readInt(QStringLiteral("Radius"), true, 0, &radius) || radius <= 0)
+            return failValidation(QStringLiteral("Radius 无效"));
+        if (recordType == 8 || recordType == 11) {
+            int secondaryRadius = 0;
+            const bool required = recordType == 11;
+            if (!readInt(QStringLiteral("SecondaryRadius"), required, 0, &secondaryRadius) ||
+                (parameters.contains(QStringLiteral("SecondaryRadius")) && secondaryRadius <= 0)) {
+                return failValidation(QStringLiteral("SecondaryRadius 无效"));
+            }
+        }
+    }
+
+    if (recordType == 10) {
+        for (const QString& name : {QStringLiteral("CornerXRadius"), QStringLiteral("CornerYRadius")}) {
+            int radius = 0;
+            if (!readInt(name, false, 0, &radius) || radius < 0)
+                return failValidation(QStringLiteral("%1 无效").arg(name));
+        }
+    }
+    return true;
+}
+
 bool readBinaryRecordMetadata(const QByteArray& payload,
                               int* recordType,
                               int* ownerPartId,
@@ -308,6 +372,10 @@ bool AltiumSchLibReader::readComponentRecords(int componentIndexValue, QVector<R
                 return failRead(
                     QStringLiteral("SchLib 组件参数记录的 OWNERPARTID 超出部件范围，偏移量 %1").arg(startPosition));
             }
+            QString geometryError;
+            if (!validateGraphicParameters(record.parameters, record.recordType, &geometryError))
+                return failRead(
+                    QStringLiteral("SchLib 组件几何记录无效（%1），偏移量 %2").arg(geometryError).arg(startPosition));
             if (record.indexInSheet < -1 || (record.indexInSheet >= 0 && record.indexInSheet <= lastIndexInSheet)) {
                 return failRead(
                     QStringLiteral("SchLib 组件参数记录的 IndexInSheet 非递增，偏移量 %1").arg(startPosition));

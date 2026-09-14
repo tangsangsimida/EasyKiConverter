@@ -1621,6 +1621,41 @@ private slots:
     }
 
     /**
+     * @brief 验证 SchLib 已知几何记录的半径和点列字段不会静默接受无效值。
+     */
+    void rejectsInvalidSchLibGeometryRecords() {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        OLECompoundWriter writer;
+        QVERIFY(writer.create());
+        QByteArray headerData;
+        AltiumBinaryWriter headerWriter(headerData);
+        headerWriter.writeCStringParameterBlock(
+            {{QStringLiteral("COMPCOUNT"), QStringLiteral("1")}, {QStringLiteral("PARTCOUNT0"), QStringLiteral("2")}});
+        headerWriter.writeInt32(1);
+        headerWriter.writeStringBlock(QStringLiteral("INVALID_GEOMETRY_RECORD"));
+        QVERIFY(writer.writeStream(QStringLiteral("FileHeader"), headerData));
+        QVERIFY(writer.addStorage(QStringLiteral("INVALID_GEOMETRY_RECORD")));
+
+        QByteArray componentData;
+        AltiumBinaryWriter componentWriter(componentData);
+        componentWriter.writeCStringParameterBlock({{QStringLiteral("RECORD"), QStringLiteral("8")},
+                                                    {QStringLiteral("Radius"), QStringLiteral("0")},
+                                                    {QStringLiteral("SecondaryRadius"), QStringLiteral("1")}});
+        QVERIFY(writer.writeStream(QStringLiteral("INVALID_GEOMETRY_RECORD"), QStringLiteral("Data"), componentData));
+        const QString path = QDir(tempDir.path()).filePath(QStringLiteral("invalid-geometry-record.SchLib"));
+        QVERIFY(writer.saveToFile(path));
+
+        AltiumSchLibReader reader;
+        QVERIFY2(reader.open(path), qPrintable(reader.errorString()));
+        QVector<AltiumSchLibReader::Record> records;
+        QVERIFY(!reader.readComponentRecords(QStringLiteral("INVALID_GEOMETRY_RECORD"), &records));
+        QVERIFY(records.isEmpty());
+        QVERIFY(reader.errorString().contains(QStringLiteral("Radius 无效")));
+    }
+
+    /**
      * @brief 验证 PcbLib 封装写入 UniqueIdPrimitiveInformation 流
      * @details 验证 Header 中的图元计数和 Data 中的 PRIMITIVEOBJECTID 条目
      */
