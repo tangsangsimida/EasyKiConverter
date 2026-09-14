@@ -1031,6 +1031,79 @@ private slots:
     }
 
     /**
+     * @brief 验证 PcbLib 损坏图元不会被结构化读取器误解析
+     * @details 覆盖公共头部截断和 Pad 字符串子块长度错误，并确认原始 Data 流仍可回退读取。
+     */
+    void rejectsMalformedPcbLibPrimitiveObjects() {
+        const auto writeMalformedLibrary = [](const QString& filePath, const QByteArray& footprintData) {
+            OLECompoundWriter writer;
+            if (!writer.create() || !writer.writeStream(QStringLiteral("FileHeader"), [&] {
+                    QByteArray data;
+                    AltiumBinaryWriter binaryWriter(data);
+                    binaryWriter.writeInt32(27);
+                    binaryWriter.writePascalShortString(QStringLiteral("PCB 6.0 Binary Library File"));
+                    return data;
+                }()))
+                return false;
+
+            if (!writer.addStorage(QStringLiteral("Library")))
+                return false;
+            QByteArray libraryData;
+            AltiumBinaryWriter libraryWriter(libraryData);
+            libraryWriter.beginBlock();
+            libraryWriter.writeBytes(QByteArrayLiteral("KIND=Protel_Advanced_PCB"));
+            libraryWriter.endBlock();
+            libraryWriter.writeUInt32(1);
+            libraryWriter.writeStringBlock(QStringLiteral("BROKEN"));
+            if (!writer.writeStream(QStringLiteral("Library"), QStringLiteral("Data"), libraryData))
+                return false;
+            if (!writer.addStorage(QStringLiteral("BROKEN")) ||
+                !writer.writeStream(QStringLiteral("BROKEN"), QStringLiteral("Data"), footprintData))
+                return false;
+            return writer.saveToFile(filePath);
+        };
+
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        QByteArray truncatedHeaderData;
+        AltiumBinaryWriter truncatedHeaderWriter(truncatedHeaderData);
+        truncatedHeaderWriter.writeStringBlock(QStringLiteral("BROKEN"));
+        truncatedHeaderWriter.writeUInt8(AltiumConstants::PCB_OBJECT_TRACK);
+        truncatedHeaderWriter.beginBlock();
+        truncatedHeaderWriter.writeBytes(QByteArray(12, '\0'));
+        truncatedHeaderWriter.endBlock();
+        const QString truncatedHeaderPath = QDir(tempDir.path()).filePath(QStringLiteral("truncated-header.PcbLib"));
+        QVERIFY(writeMalformedLibrary(truncatedHeaderPath, truncatedHeaderData));
+
+        AltiumPcbLibReader truncatedHeaderReader;
+        QVERIFY2(truncatedHeaderReader.open(truncatedHeaderPath), qPrintable(truncatedHeaderReader.errorString()));
+        QVector<AltiumPcbLibReader::PrimitiveRecord> objects;
+        QVERIFY(!truncatedHeaderReader.readFootprintObjects(QStringLiteral("BROKEN"), &objects));
+        QVERIFY(objects.isEmpty());
+        QByteArray rawData;
+        QVERIFY(truncatedHeaderReader.readFootprintStream(QStringLiteral("BROKEN"), QStringLiteral("Data"), &rawData));
+        QCOMPARE(rawData, truncatedHeaderData);
+
+        QByteArray malformedStringData;
+        AltiumBinaryWriter malformedStringWriter(malformedStringData);
+        malformedStringWriter.writeStringBlock(QStringLiteral("BROKEN"));
+        malformedStringWriter.writeUInt8(AltiumConstants::PCB_OBJECT_PAD);
+        malformedStringWriter.beginBlock();
+        malformedStringWriter.writeBytes(QByteArrayLiteral("bad"));
+        malformedStringWriter.endBlock();
+        const QString malformedStringPath = QDir(tempDir.path()).filePath(QStringLiteral("malformed-string.PcbLib"));
+        QVERIFY(writeMalformedLibrary(malformedStringPath, malformedStringData));
+
+        AltiumPcbLibReader malformedStringReader;
+        QVERIFY2(malformedStringReader.open(malformedStringPath), qPrintable(malformedStringReader.errorString()));
+        QVERIFY(!malformedStringReader.readFootprintObjects(QStringLiteral("BROKEN"), &objects));
+        QVERIFY(objects.isEmpty());
+        QVERIFY(malformedStringReader.readFootprintStream(0, QStringLiteral("Data"), &rawData));
+        QCOMPARE(rawData, malformedStringData);
+    }
+
+    /**
      * @brief 验证 PcbLib 封装写入 UniqueIdPrimitiveInformation 流
      * @details 验证 Header 中的图元计数和 Data 中的 PRIMITIVEOBJECTID 条目
      */
