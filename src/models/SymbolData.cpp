@@ -2,6 +2,10 @@
 
 #include "SymbolDataSerializer.h"
 
+#include <QRegularExpression>
+
+#include <cmath>
+
 namespace EasyKiConverter {
 
 SymbolData::SymbolData() : m_info(), m_bbox() {}
@@ -24,25 +28,85 @@ bool SymbolData::isValid() const {
 }
 
 QString SymbolData::validate() const {
-    // 验证符号信息
-    if (m_info.name.isEmpty()) {
-        return "Symbol name is empty";
-    }
+    const QStringList errors = validationErrors();
+    return errors.isEmpty() ? QString() : errors.first();
+}
 
-    // 验证边界
-    if (m_bbox.x == 0.0 && m_bbox.y == 0.0) {
-        return "Symbol bbox is empty";
-    }
-
-    // 验证引脚
-    for (int i = 0; i < m_pins.size(); ++i) {
-        const SymbolPin& pin = m_pins[i];
-        if (pin.settings.spicePinNumber.isEmpty()) {
-            return QString("Pin %1 has empty number").arg(i);
+QStringList SymbolData::validationErrors() const {
+    QStringList errors;
+    const auto addError = [&](const QString& message) { errors.append(message); };
+    const auto isFinite = [](double value) { return std::isfinite(value); };
+    const auto validatePointList = [&](const QList<QPointF>& points, const QString& type, int index, int minimum) {
+        if (points.size() < minimum) {
+            addError(QString("%1 %2 has fewer than %3 points").arg(type).arg(index).arg(minimum));
+            return;
         }
-    }
+        for (const QPointF& point : points) {
+            if (!isFinite(point.x()) || !isFinite(point.y())) {
+                addError(QString("%1 %2 contains a non-finite point").arg(type).arg(index));
+                break;
+            }
+        }
+    };
+    const auto validateFlatPointString = [&](const QString& value, const QString& type, int index, int minimum) {
+        const QStringList parts =
+            value.trimmed().split(QRegularExpression(QStringLiteral("[\\s,]+")), Qt::SkipEmptyParts);
+        if (parts.size() < minimum * 2 || parts.size() % 2 != 0) {
+            addError(QString("%1 %2 has an invalid point list").arg(type).arg(index));
+            return;
+        }
+        for (const QString& part : parts) {
+            bool ok = false;
+            const double coordinate = part.toDouble(&ok);
+            if (!ok || !isFinite(coordinate)) {
+                addError(QString("%1 %2 contains an invalid coordinate").arg(type).arg(index));
+                break;
+            }
+        }
+    };
 
-    return QString();  // 空字符串表示验证通过
+    if (m_info.name.trimmed().isEmpty())
+        addError(QStringLiteral("Symbol name is empty"));
+    if (m_bbox.x == 0.0 && m_bbox.y == 0.0)
+        addError(QStringLiteral("Symbol bbox is empty"));
+    if (!isFinite(m_bbox.x) || !isFinite(m_bbox.y) || !isFinite(m_bbox.width) || !isFinite(m_bbox.height))
+        addError(QStringLiteral("Symbol bbox contains a non-finite value"));
+
+    for (int i = 0; i < m_pins.size(); ++i) {
+        if (m_pins[i].settings.spicePinNumber.trimmed().isEmpty())
+            addError(QString("Pin %1 has empty number").arg(i));
+    }
+    for (int i = 0; i < m_rectangles.size(); ++i) {
+        const SymbolRectangle& rectangle = m_rectangles[i];
+        if (!isFinite(rectangle.width) || !isFinite(rectangle.height) || rectangle.width <= 0.0 ||
+            rectangle.height <= 0.0)
+            addError(QString("Rectangle %1 has a non-positive size").arg(i));
+        if (!isFinite(rectangle.rx) || !isFinite(rectangle.ry) || rectangle.rx < 0.0 || rectangle.ry < 0.0)
+            addError(QString("Rectangle %1 has a negative or non-finite corner radius").arg(i));
+    }
+    for (int i = 0; i < m_circles.size(); ++i) {
+        if (!isFinite(m_circles[i].radius) || m_circles[i].radius <= 0.0)
+            addError(QString("Circle %1 has a non-positive radius").arg(i));
+    }
+    for (int i = 0; i < m_ellipses.size(); ++i) {
+        if (!isFinite(m_ellipses[i].radiusX) || !isFinite(m_ellipses[i].radiusY) || m_ellipses[i].radiusX <= 0.0 ||
+            m_ellipses[i].radiusY <= 0.0)
+            addError(QString("Ellipse %1 has a non-positive radius").arg(i));
+    }
+    for (int i = 0; i < m_arcs.size(); ++i)
+        validatePointList(m_arcs[i].path, QStringLiteral("Arc"), i, 3);
+    for (int i = 0; i < m_polylines.size(); ++i)
+        validateFlatPointString(m_polylines[i].points, QStringLiteral("Polyline"), i, 2);
+    for (int i = 0; i < m_polygons.size(); ++i)
+        validateFlatPointString(m_polygons[i].points, QStringLiteral("Polygon"), i, 3);
+    for (int i = 0; i < m_paths.size(); ++i)
+        if (m_paths[i].paths.trimmed().isEmpty())
+            addError(QString("Path %1 has no commands").arg(i));
+    for (int i = 0; i < m_texts.size(); ++i)
+        if (m_texts[i].text.trimmed().isEmpty())
+            addError(QString("Text %1 is empty").arg(i));
+
+    return errors;
 }
 
 void SymbolData::clear() {

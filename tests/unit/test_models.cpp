@@ -63,6 +63,34 @@ private slots:
         QCOMPARE(restored.pins().at(0).name.text, original.pins().at(0).name.text);
     }
 
+    void testSymbolValidationReportsAllGeometryIssues() {
+        SymbolData symbol;
+        SymbolInfo info;
+        info.name = QStringLiteral("INVALID_SYMBOL");
+        symbol.setInfo(info);
+        symbol.setBbox(SymbolBBox{1.0, 1.0, 10.0, 10.0});
+
+        SymbolRectangle rectangle;
+        rectangle.width = 0.0;
+        rectangle.height = 2.0;
+        rectangle.rx = -1.0;
+        rectangle.ry = 0.0;
+        symbol.addRectangle(rectangle);
+
+        SymbolPath path;
+        symbol.addPath(path);
+        SymbolText text;
+        symbol.addText(text);
+
+        const QStringList errors = symbol.validationErrors();
+        QVERIFY(errors.size() >= 3);
+        QVERIFY(errors.contains(QStringLiteral("Rectangle 0 has a non-positive size")));
+        QVERIFY(errors.contains(QStringLiteral("Rectangle 0 has a negative or non-finite corner radius")));
+        QVERIFY(errors.contains(QStringLiteral("Path 0 has no commands")));
+        QVERIFY(errors.contains(QStringLiteral("Text 0 is empty")));
+        QCOMPARE(symbol.validate(), errors.first());
+    }
+
     void testFootprintDataRoundTrip() {
         FootprintData original;
 

@@ -474,6 +474,13 @@ public:
     bool isValid() const;
     QString validate() const;
 
+    /**
+     * @brief 返回所有可诊断的符号数据问题
+     * @details 与只返回首个错误的 validate() 不同，该接口用于导出前一次性展示所有异常图元。
+     * @return 验证错误列表；为空表示未发现问题
+     */
+    QStringList validationErrors() const;
+
     // 清空数据
     void clear();
 
