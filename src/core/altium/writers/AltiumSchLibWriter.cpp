@@ -740,10 +740,25 @@ bool AltiumSchLibWriter::hasCompleteGraphicOrder(const AltiumSchComponent& compo
         if (index >= 0)
             expected.insert(key(type, index, partIndex));
     };
-    for (const AltiumSchRectangle& rect : component.rectangles)
-        addIndexed(QStringLiteral("R"), rect.sourceGraphicIndex, rect.sourcePartIndex);
-    for (const AltiumSchRoundRectangle& rect : component.roundRectangles)
-        addIndexed(QStringLiteral("R"), rect.sourceGraphicIndex, rect.sourcePartIndex);
+    QSet<QString> rectangleOrderKeys;
+    const auto addRectangleOrder = [&expected, &rectangleOrderKeys, &key](int index, int partIndex) {
+        if (index < 0)
+            return true;
+        const QString orderKey = key(QStringLiteral("R"), index, partIndex);
+        if (rectangleOrderKeys.contains(orderKey))
+            return false;
+        rectangleOrderKeys.insert(orderKey);
+        expected.insert(orderKey);
+        return true;
+    };
+    for (const AltiumSchRectangle& rect : component.rectangles) {
+        if (!addRectangleOrder(rect.sourceGraphicIndex, rect.sourcePartIndex))
+            return false;
+    }
+    for (const AltiumSchRoundRectangle& rect : component.roundRectangles) {
+        if (!addRectangleOrder(rect.sourceGraphicIndex, rect.sourcePartIndex))
+            return false;
+    }
     for (const AltiumSchEllipse& ellipse : component.ellipses)
         addIndexed(ellipse.sourceGraphicType, ellipse.sourceGraphicIndex, ellipse.sourcePartIndex);
     for (const AltiumSchArc& arc : component.arcs)

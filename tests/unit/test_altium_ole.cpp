@@ -2766,6 +2766,40 @@ private slots:
     }
 
     /**
+     * @brief 验证普通矩形与圆角矩形索引冲突时回退并保留全部图元。
+     */
+    void conflictingRectangleOrderFallsBackWithoutDroppingGraphics() {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        AltiumSchComponent symbol;
+        symbol.name = QStringLiteral("CONFLICTING_RECTANGLE_ORDER");
+        AltiumSchRectangle rectangle;
+        rectangle.sourceGraphicIndex = 0;
+        rectangle.sourcePartIndex = 0;
+        rectangle.cornerX = 100000;
+        symbol.rectangles.append(rectangle);
+        AltiumSchRoundRectangle roundRectangle;
+        roundRectangle.sourceGraphicIndex = 0;
+        roundRectangle.sourcePartIndex = 0;
+        roundRectangle.cornerX = 200000;
+        roundRectangle.cornerY = 200000;
+        symbol.roundRectangles.append(roundRectangle);
+        symbol.graphicOrder = {{QStringLiteral("R"), 0, 0}};
+
+        AltiumSchLibWriter writer;
+        const QString path = QDir(tempDir.path()).filePath(QStringLiteral("conflicting-rectangle-order.SchLib"));
+        QVERIFY(writer.write({symbol}, path, QStringLiteral("conflicting-rectangle-order")));
+        QVERIFY(writer.diagnostics().contains(QStringLiteral(
+            "符号 CONFLICTING_RECTANGLE_ORDER 的 graphicOrder 不完整或包含无效引用，已回退到默认图元顺序")));
+
+        QByteArray data;
+        QVERIFY(readCfbStream(path, QStringLiteral("CONFLICTING_RECTANGLE_ORDER/Data"), data));
+        QCOMPARE(data.count(QByteArrayLiteral("RECORD=14")), 1);
+        QCOMPARE(data.count(QByteArrayLiteral("RECORD=10")), 1);
+    }
+
+    /**
      * @brief 路径分段编号出现缺口时仍按实际索引写出全部图元。
      */
     void gappedPathSegmentsPreserveGraphics() {
