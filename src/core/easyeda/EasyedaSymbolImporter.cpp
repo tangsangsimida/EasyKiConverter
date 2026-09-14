@@ -10,6 +10,7 @@
 #include <QDebug>
 #include <QJsonArray>
 #include <QJsonDocument>
+#include <QUrl>
 
 namespace EasyKiConverter {
 
@@ -200,6 +201,10 @@ QSharedPointer<SymbolData> EasyedaSymbolImporter::importSymbolData(const QJsonOb
                                     SymbolPath path = importPathData(shapeString);
                                     part.graphicOrder.append({designator, static_cast<int>(part.paths.size())});
                                     part.paths.append(path);
+                                } else if (designator == "I") {
+                                    SymbolImage image = importImageData(shapeString);
+                                    part.graphicOrder.append({designator, static_cast<int>(part.images.size())});
+                                    part.images.append(image);
                                 } else if (designator == "T") {
                                     SymbolText text = importTextData(shapeString);
                                     part.graphicOrder.append({designator, static_cast<int>(part.texts.size())});
@@ -292,6 +297,11 @@ QSharedPointer<SymbolData> EasyedaSymbolImporter::importSymbolData(const QJsonOb
                     symbolData->addGraphicOrder({designator, static_cast<int>(symbolData->paths().size())});
                     symbolData->addPath(path);
                     qDebug() << "  -> Added path";
+                } else if (designator == "I") {
+                    SymbolImage image = importImageData(shapeString);
+                    symbolData->addGraphicOrder({designator, static_cast<int>(symbolData->images().size())});
+                    symbolData->addImage(image);
+                    qDebug() << "  -> Added image";
                 } else if (designator == "T") {
                     SymbolText text = importTextData(shapeString);
                     symbolData->addGraphicOrder({designator, static_cast<int>(symbolData->texts().size())});
@@ -537,6 +547,47 @@ SymbolPath EasyedaSymbolImporter::importPathData(const QString& pathData) {
     }
 
     return path;
+}
+
+SymbolImage EasyedaSymbolImporter::importImageData(const QString& imageData) {
+    SymbolImage image;
+    const QStringList fields = EasyedaUtils::parseDataString(imageData);
+    if (fields.size() < 7)
+        return image;
+
+    image.posX = fields[1].toDouble();
+    image.posY = fields[2].toDouble();
+    image.width = fields[3].toDouble();
+    image.height = fields[4].toDouble();
+    image.rotation = fields[5].toDouble();
+    image.source = fields[6];
+    image.isLocked = fields.size() > 7 ? EasyedaUtils::stringToBool(fields[7]) : false;
+
+    if (image.source.startsWith(QStringLiteral("data:"), Qt::CaseInsensitive)) {
+        const int comma = image.source.indexOf(',');
+        if (comma > 5) {
+            const QString metadata = image.source.mid(5, comma - 5);
+            const QByteArray payload = image.source.mid(comma + 1).toUtf8();
+            if (metadata.contains(QStringLiteral(";base64"), Qt::CaseInsensitive))
+                image.data = QByteArray::fromBase64(payload);
+            else
+                image.data = QUrl::fromPercentEncoding(payload).toUtf8();
+
+            const QString mimeType = metadata.section(';', 0, 0).toLower();
+            QString extension;
+            if (mimeType == QStringLiteral("image/svg+xml"))
+                extension = QStringLiteral("svg");
+            else if (mimeType.startsWith(QStringLiteral("image/")))
+                extension = mimeType.mid(6);
+            image.fileName =
+                extension.isEmpty() ? QStringLiteral("image.bin") : QStringLiteral("image.%1").arg(extension);
+        }
+    } else {
+        image.fileName = QUrl(image.source).fileName();
+        if (image.fileName.isEmpty())
+            image.fileName = image.source;
+    }
+    return image;
 }
 
 SymbolText EasyedaSymbolImporter::importTextData(const QString& textData) {

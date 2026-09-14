@@ -210,6 +210,14 @@ bool SymbolDataSerializer::fromJson(SymbolPath& path, const QJsonObject& json) {
     return SymbolShapeSerializer::fromJson(path, json);
 }
 
+QJsonObject SymbolDataSerializer::toJson(const SymbolImage& image) {
+    return SymbolShapeSerializer::toJson(image);
+}
+
+bool SymbolDataSerializer::fromJson(SymbolImage& image, const QJsonObject& json) {
+    return SymbolShapeSerializer::fromJson(image, json);
+}
+
 QJsonObject SymbolDataSerializer::toJson(const SymbolText& text) {
     return SymbolShapeSerializer::toJson(text);
 }
@@ -385,6 +393,11 @@ QJsonObject SymbolDataSerializer::toJson(const SymbolPart& part) {
     }
     json["paths"] = pathsArray;
 
+    QJsonArray imagesArray;
+    for (const SymbolImage& image : part.images)
+        imagesArray.append(toJson(image));
+    json["images"] = imagesArray;
+
     QJsonArray textsArray;
     for (const SymbolText& text : part.texts) {
         textsArray.append(toJson(text));
@@ -493,6 +506,16 @@ bool SymbolDataSerializer::fromJson(SymbolPart& part, const QJsonObject& json) {
         }
     }
 
+    if (json.contains("images")) {
+        QJsonArray imagesArray = json["images"].toArray();
+        part.images.clear();
+        for (const QJsonValue& value : imagesArray) {
+            SymbolImage image;
+            if (fromJson(image, value.toObject()))
+                part.images.append(image);
+        }
+    }
+
     if (json.contains("texts")) {
         QJsonArray textsArray = json["texts"].toArray();
         part.texts.clear();
@@ -570,6 +593,11 @@ QJsonObject SymbolDataSerializer::toJson(const SymbolData& data) {
         pathsArray.append(toJson(path));
     }
     json["paths"] = pathsArray;
+
+    QJsonArray imagesArray;
+    for (const SymbolImage& image : data.images())
+        imagesArray.append(toJson(image));
+    json["images"] = imagesArray;
 
     QJsonArray textsArray;
     for (const SymbolText& text : data.texts()) {
@@ -730,6 +758,19 @@ bool SymbolDataSerializer::fromJson(SymbolData& data, const QJsonObject& json) {
             }
         }
         data.setPaths(paths);
+    }
+
+    // 读取图片
+    if (json.contains("images") && json["images"].isArray()) {
+        QList<SymbolImage> images;
+        for (const QJsonValue& value : json["images"].toArray()) {
+            if (value.isObject()) {
+                SymbolImage image;
+                if (fromJson(image, value.toObject()))
+                    images.append(image);
+            }
+        }
+        data.setImages(images);
     }
 
     // 读取文本

@@ -348,6 +348,7 @@ struct SymbolTextFrameIR {
 struct SymbolImageIR {
     double x0 = 0.0, y0 = 0.0;  ///< 边界第一角点（mm）
     double x1 = 0.0, y1 = 0.0;  ///< 边界第二角点（mm）
+    double rotation = 0.0;  ///< 旋转角度（度）
     QString fileName;  ///< 图片文件名或外部路径
     QByteArray data;  ///< 图片原始字节；非空时可嵌入
     QColor strokeColor = Qt::black;

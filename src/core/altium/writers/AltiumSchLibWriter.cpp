@@ -484,6 +484,15 @@ void AltiumSchLibWriter::writeOrderedGraphic(AltiumBinaryWriter& writer,
         }
         return;
     }
+    if (order.type == QStringLiteral("I")) {
+        for (const AltiumSchImage& image : component.images) {
+            if (image.sourceGraphicIndex == order.index && matchesPart(image.sourcePartIndex)) {
+                writeImageRecord(writer, image);
+                return;
+            }
+        }
+        return;
+    }
     if (order.type == QStringLiteral("PT")) {
         for (const AltiumSchPath& path : component.paths) {
             if (path.sourceGraphicType == order.type && path.sourceGraphicIndex == order.index &&
@@ -560,6 +569,10 @@ void AltiumSchLibWriter::writeComponentStorage(OLECompoundWriter& ole,
     writeComponentRecord(writer, component);
 
     const bool useGraphicOrder = !component.graphicOrder.isEmpty() && hasCompleteGraphicOrder(component);
+    const bool hasImageOrder = std::any_of(
+        component.graphicOrder.cbegin(), component.graphicOrder.cend(), [](const AltiumSchGraphicOrder& order) {
+            return order.type == QStringLiteral("I");
+        });
     if (!component.graphicOrder.isEmpty() && !useGraphicOrder) {
         m_diagnostics.append(
             QStringLiteral("符号 %1 的 graphicOrder 不完整或包含无效引用，已回退到默认图元顺序").arg(component.name));
@@ -619,6 +632,10 @@ void AltiumSchLibWriter::writeComponentStorage(OLECompoundWriter& ole,
         for (const AltiumSchPath& path : component.paths) {
             if (path.sourceGraphicType.isEmpty())
                 writePathRecord(writer, path);
+        }
+        for (const AltiumSchImage& image : component.images) {
+            if (image.sourceGraphicIndex < 0)
+                writeImageRecord(writer, image);
         }
     } else {
         // 写入引脚
@@ -688,7 +705,8 @@ void AltiumSchLibWriter::writeComponentStorage(OLECompoundWriter& ole,
         writeTextFrameRecord(writer, frame);
     }
     for (const AltiumSchImage& image : component.images) {
-        writeImageRecord(writer, image);
+        if (!useGraphicOrder || !hasImageOrder || image.sourceGraphicIndex < 0)
+            writeImageRecord(writer, image);
     }
 
     writeComponentParameterRecords(writer, component);
@@ -741,6 +759,14 @@ bool AltiumSchLibWriter::hasCompleteGraphicOrder(const AltiumSchComponent& compo
     for (const AltiumSchText& text : component.texts) {
         if (!text.isPinLabel)
             addIndexed(QStringLiteral("T"), text.sourceGraphicIndex, text.sourcePartIndex);
+    }
+    const bool hasImageOrder = std::any_of(
+        component.graphicOrder.cbegin(), component.graphicOrder.cend(), [](const AltiumSchGraphicOrder& order) {
+            return order.type == QStringLiteral("I");
+        });
+    if (hasImageOrder) {
+        for (const AltiumSchImage& image : component.images)
+            addIndexed(QStringLiteral("I"), image.sourceGraphicIndex, image.sourcePartIndex);
     }
     const auto addPathSegment = [&pathSegments, &unsplitPaths, &key](
                                     const QString& type, int index, int segmentIndex, int partIndex) {
@@ -1430,6 +1456,8 @@ void AltiumSchLibWriter::writeImageRecord(AltiumBinaryWriter& writer, const Alti
     addCoordParam(params, "Location.Y", image.locationY);
     addCoordParam(params, "Corner.X", image.cornerX);
     addCoordParam(params, "Corner.Y", image.cornerY);
+    if (image.rotation != 0.0)
+        params["Rotation"] = QString::number(image.rotation, 'f', 3);
     if (image.lineWidth != 0)
         params["LineWidth"] = QString::number(image.lineWidth);
     if (image.lineStyle != 0)

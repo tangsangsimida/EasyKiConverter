@@ -270,6 +270,22 @@ struct SymbolPath {
 };
 
 /**
+ * @brief EasyEDA 符号图片
+ * @details source 保存外部 URL 或原始 data URL；data 非空时表示可直接嵌入的图片数据。
+ */
+struct SymbolImage {
+    double posX = 0.0;
+    double posY = 0.0;
+    double width = 0.0;
+    double height = 0.0;
+    double rotation = 0.0;
+    QString source;
+    QString fileName;
+    QByteArray data;
+    bool isLocked = false;
+};
+
+/**
  * @brief 文本
  */
 struct SymbolText {
@@ -318,6 +334,7 @@ struct SymbolPart {
     QList<SymbolPolyline> polylines;
     QList<SymbolPolygon> polygons;
     QList<SymbolPath> paths;
+    QList<SymbolImage> images;
     QList<SymbolText> texts;
     QList<SymbolGraphicOrder> graphicOrder;
 };
@@ -448,6 +465,18 @@ public:
         m_paths.append(path);
     }
 
+    QList<SymbolImage> images() const {
+        return m_images;
+    }
+
+    void setImages(const QList<SymbolImage>& images) {
+        m_images = images;
+    }
+
+    void addImage(const SymbolImage& image) {
+        m_images.append(image);
+    }
+
     QList<SymbolText> texts() const {
         return m_texts;
     }
@@ -518,6 +547,7 @@ private:
     QList<SymbolPolyline> m_polylines;
     QList<SymbolPolygon> m_polygons;
     QList<SymbolPath> m_paths;
+    QList<SymbolImage> m_images;
     QList<SymbolText> m_texts;
     QList<SymbolGraphicOrder> m_graphicOrder;
     QList<SymbolPart> m_parts;  // 多部分符号的部分列表

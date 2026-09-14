@@ -284,6 +284,7 @@ struct AltiumSchTextFrame {
 struct AltiumSchImage {
     int locationX = 0, locationY = 0;
     int cornerX = 0, cornerY = 0;
+    double rotation = 0.0;
     int lineWidth = 0;
     int lineStyle = 0;
     uint32_t color = 0x000000;
@@ -296,6 +297,8 @@ struct AltiumSchImage {
     bool keepAspect = true;
     bool embedImage = false;
     int ownerPartId = 1;
+    int sourceGraphicIndex = -1;
+    int sourcePartIndex = 0;
 };
 
 /**

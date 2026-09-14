@@ -14,6 +14,21 @@
 using namespace EasyKiConverter;
 using namespace EasyKiConverter::Test;
 
+namespace {
+
+QByteArray restoreQtCompressionHeader(const QByteArray& compressed, int uncompressedSize) {
+    QByteArray withHeader;
+    withHeader.reserve(compressed.size() + 4);
+    withHeader.append(static_cast<char>((uncompressedSize >> 24) & 0xFF));
+    withHeader.append(static_cast<char>((uncompressedSize >> 16) & 0xFF));
+    withHeader.append(static_cast<char>((uncompressedSize >> 8) & 0xFF));
+    withHeader.append(static_cast<char>(uncompressedSize & 0xFF));
+    withHeader.append(compressed);
+    return withHeader;
+}
+
+}  // namespace
+
 class TestEasyedaImporterFixtures : public QObject {
     Q_OBJECT
 
@@ -36,17 +51,19 @@ private slots:
         QCOMPARE(symbol->info().datasheet, QStringLiteral("https://example.test/datasheet.pdf"));
         QCOMPARE(symbol->bbox().width, 120.0);
         QCOMPARE(symbol->bbox().height, 80.0);
-        QCOMPARE(symbol->graphicOrder().size(), 5);
+        QCOMPARE(symbol->graphicOrder().size(), 6);
         QCOMPARE(symbol->graphicOrder().at(0).type, QStringLiteral("R"));
         QCOMPARE(symbol->graphicOrder().at(0).index, 0);
         QCOMPARE(symbol->graphicOrder().at(1).type, QStringLiteral("PT"));
         QCOMPARE(symbol->graphicOrder().at(1).index, 0);
         QCOMPARE(symbol->graphicOrder().at(2).type, QStringLiteral("A"));
         QCOMPARE(symbol->graphicOrder().at(2).index, 0);
-        QCOMPARE(symbol->graphicOrder().at(3).type, QStringLiteral("T"));
+        QCOMPARE(symbol->graphicOrder().at(3).type, QStringLiteral("I"));
         QCOMPARE(symbol->graphicOrder().at(3).index, 0);
-        QCOMPARE(symbol->graphicOrder().at(4).type, QStringLiteral("P"));
+        QCOMPARE(symbol->graphicOrder().at(4).type, QStringLiteral("T"));
         QCOMPARE(symbol->graphicOrder().at(4).index, 0);
+        QCOMPARE(symbol->graphicOrder().at(5).type, QStringLiteral("P"));
+        QCOMPARE(symbol->graphicOrder().at(5).index, 0);
 
         QCOMPARE(symbol->texts().size(), 1);
         QCOMPARE(symbol->texts().first().text, QStringLiteral("LABEL"));
@@ -74,12 +91,21 @@ private slots:
         QCOMPARE(symbolIr.arcs.size(), 1);
         QCOMPARE(symbolIr.arcs.first().startPoint, QPointF(0.0, 0.0));
         QCOMPARE(symbolIr.arcs.first().endPoint, QPointF(5.08, 0.0));
-        QCOMPARE(symbolIr.graphicOrder.size(), 5);
+        QCOMPARE(symbolIr.images.size(), 1);
+        QCOMPARE(symbolIr.images.first().fileName, QStringLiteral("image.png"));
+        QVERIFY(!symbolIr.images.first().data.isEmpty());
+        SymbolData restored;
+        QVERIFY(restored.fromJson(symbol->toJson()));
+        QCOMPARE(restored.images().size(), 1);
+        QCOMPARE(restored.images().first().fileName, QStringLiteral("image.png"));
+        QCOMPARE(restored.images().first().data, symbol->images().first().data);
+        QCOMPARE(symbolIr.graphicOrder.size(), 6);
         QCOMPARE(symbolIr.graphicOrder.at(0).type, QStringLiteral("R"));
         QCOMPARE(symbolIr.graphicOrder.at(1).type, QStringLiteral("PT"));
         QCOMPARE(symbolIr.graphicOrder.at(2).type, QStringLiteral("A"));
-        QCOMPARE(symbolIr.graphicOrder.at(3).type, QStringLiteral("T"));
-        QCOMPARE(symbolIr.graphicOrder.at(4).type, QStringLiteral("P"));
+        QCOMPARE(symbolIr.graphicOrder.at(3).type, QStringLiteral("I"));
+        QCOMPARE(symbolIr.graphicOrder.at(4).type, QStringLiteral("T"));
+        QCOMPARE(symbolIr.graphicOrder.at(5).type, QStringLiteral("P"));
         QCOMPARE(symbolIr.texts.size(), 1);
         QCOMPARE(symbolIr.texts.first().text, QStringLiteral("LABEL"));
         QCOMPARE(symbolIr.texts.first().anchor, QStringLiteral("start"));
@@ -118,7 +144,7 @@ private slots:
         EasyedaSymbolImporter importer;
         const QSharedPointer<SymbolData> symbol = importer.importSymbolData(fixture);
         QVERIFY(symbol);
-        QCOMPARE(symbol->graphicOrder().size(), 6);
+        QCOMPARE(symbol->graphicOrder().size(), 7);
         QCOMPARE(symbol->graphicOrder().last().type, QStringLiteral("UNKNOWN"));
         QCOMPARE(symbol->graphicOrder().last().index, -1);
 
@@ -179,6 +205,7 @@ private slots:
         QVERIFY(!symbolIr.rectangles.isEmpty());
         QVERIFY(!symbolIr.paths.isEmpty());
         QVERIFY(!symbolIr.arcs.isEmpty());
+        QVERIFY(!symbolIr.images.isEmpty());
         QVERIFY(!symbolIr.pins.isEmpty());
         QCOMPARE(symbolIr.sourceMetadata.value(QStringLiteral("manufacturer")), QStringLiteral("Fixture Inc"));
         QCOMPARE(symbolIr.sourceMetadata.value(QStringLiteral("lcscId")), QStringLiteral("C12345"));
@@ -208,6 +235,7 @@ private slots:
         QVERIFY(schLibData.contains("RECORD=5"));  // 路径中的三次 Bézier
         QVERIFY(schLibData.contains("RECORD=6"));  // 路径中的线段
         QVERIFY(schLibData.contains("RECORD=12"));  // 原生圆弧
+        QVERIFY(schLibData.contains("RECORD=30"));  // 嵌入图片
         QVERIFY(schLibData.contains("RECORD=4"));  // 普通文本
         QVERIFY(schLibData.contains("Text=LABEL"));
         QVERIFY(schLibData.contains("TextAnchor=start"));
@@ -220,6 +248,13 @@ private slots:
         QVERIFY2(reader.open(outputPath), qPrintable(reader.errorString()));
         QCOMPARE(reader.components().size(), 1);
         QCOMPARE(reader.components().first().name, QStringLiteral("FIXTURE_SYMBOL"));
+        QVector<AltiumSchLibReader::ImageStorageEntry> imageEntries;
+        QVERIFY2(reader.readImageStorage(&imageEntries), qPrintable(reader.errorString()));
+        QCOMPARE(imageEntries.size(), 1);
+        QCOMPARE(imageEntries.first().name, QStringLiteral("image.png"));
+        QCOMPARE(qUncompress(restoreQtCompressionHeader(imageEntries.first().compressedData,
+                                                        symbolIr.images.first().data.size())),
+                 symbolIr.images.first().data);
         const QVector<AltiumSchLibReader::FontInfo> fonts = reader.fonts();
         bool foundArialFont = false;
         for (const auto& font : fonts) {
@@ -317,7 +352,8 @@ private slots:
         QString actual;
         for (const auto& record : records) {
             if (record.recordType != 1 && record.recordType != 2 && record.recordType != 4 && record.recordType != 5 &&
-                record.recordType != 6 && record.recordType != 10 && record.recordType != 12) {
+                record.recordType != 6 && record.recordType != 10 && record.recordType != 12 &&
+                record.recordType != 30) {
                 continue;
             }
             actual += QStringLiteral("record=%1|owner=%2|display=%3|index=%4")
@@ -349,7 +385,7 @@ private slots:
                 contentIndexes.append(record.indexInSheet);
         }
         QVERIFY(hasBinaryPin);
-        QCOMPARE(contentIndexes, QList<int>({1, 2, 3, 4, 6, 7}));
+        QCOMPARE(contentIndexes, QList<int>({1, 2, 3, 4, 5, 7, 8}));
     }
 
     /**

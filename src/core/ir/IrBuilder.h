@@ -284,6 +284,22 @@ inline SymbolComponentIR toSymbolIR(const SymbolData& data) {
         }
     };
 
+    // 转换图片。嵌入 data 保留原始字节，外部资源保留源 URL/文件名。
+    auto convertImages = [&](const QList<SymbolImage>& images, double originX, double originY, int partIdx = 0) {
+        for (const auto& image : images) {
+            SymbolImageIR imageIR;
+            imageIR.x0 = (image.posX - originX) * EASYEDA_PX_TO_MM;
+            imageIR.y0 = -(image.posY - originY) * EASYEDA_PX_TO_MM;
+            imageIR.x1 = (image.posX + image.width - originX) * EASYEDA_PX_TO_MM;
+            imageIR.y1 = -(image.posY + image.height - originY) * EASYEDA_PX_TO_MM;
+            imageIR.rotation = image.rotation;
+            imageIR.fileName = image.data.isEmpty() ? image.source : image.fileName;
+            imageIR.data = image.data;
+            imageIR.partIndex = partIdx;
+            ir.images.append(imageIR);
+        }
+    };
+
     // 转换辅助 lambda：处理文本
     auto convertTexts = [&](const QList<SymbolText>& texts, double originX, double originY, int partIdx = 0) {
         for (const auto& text : texts) {
@@ -400,6 +416,7 @@ inline SymbolComponentIR toSymbolIR(const SymbolData& data) {
             convertPolylines(part.polylines, gox, goy, irPartIndex);
             convertPolygons(part.polygons, gox, goy, irPartIndex);
             convertPaths(part.paths, gox, goy, irPartIndex);
+            convertImages(part.images, gox, goy, irPartIndex);
             convertTexts(part.texts, gox, goy, irPartIndex);
             for (const SymbolGraphicOrder& order : part.graphicOrder)
                 ir.graphicOrder.append({order.type, order.index, irPartIndex});
@@ -450,6 +467,7 @@ inline SymbolComponentIR toSymbolIR(const SymbolData& data) {
         convertPolylines(data.polylines(), ox, oy);
         convertPolygons(data.polygons(), ox, oy);
         convertPaths(data.paths(), ox, oy);
+        convertImages(data.images(), ox, oy);
         convertTexts(data.texts(), ox, oy);
         for (const SymbolGraphicOrder& order : data.graphicOrder())
             ir.graphicOrder.append({order.type, order.index, 0});

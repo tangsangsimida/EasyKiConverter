@@ -71,6 +71,13 @@ QStringList SymbolData::validationErrors() const {
             !QStringList{QStringLiteral("start"), QStringLiteral("middle"), QStringLiteral("end")}.contains(anchor))
             addError(QString("%1Text %2 has an unsupported anchor %3").arg(prefix).arg(index).arg(text.anchor));
     };
+    const auto validateImage = [&](const SymbolImage& image, const QString& prefix, int index) {
+        if (!isFinite(image.posX) || !isFinite(image.posY) || !isFinite(image.width) || !isFinite(image.height) ||
+            !isFinite(image.rotation) || image.width == 0.0 || image.height == 0.0)
+            addError(QString("%1Image %2 has invalid bounds or rotation").arg(prefix).arg(index));
+        if (image.source.trimmed().isEmpty() && image.fileName.trimmed().isEmpty() && image.data.isEmpty())
+            addError(QString("%1Image %2 has no resource").arg(prefix).arg(index));
+    };
     const auto validateGraphicOrder =
         [&](const QList<SymbolGraphicOrder>& order, const QString& prefix, const auto& countForType) {
             QStringList seen;
@@ -145,6 +152,8 @@ QStringList SymbolData::validationErrors() const {
                 addError(QString("%1Path %2 has no commands").arg(prefix).arg(i));
         for (int i = 0; i < part.texts.size(); ++i)
             validateText(part.texts[i], prefix, i);
+        for (int i = 0; i < part.images.size(); ++i)
+            validateImage(part.images[i], prefix, i);
         validateGraphicOrder(part.graphicOrder, prefix, [&](const QString& type) -> int {
             if (type == QStringLiteral("P"))
                 return part.pins.size();
@@ -164,6 +173,8 @@ QStringList SymbolData::validationErrors() const {
                 return part.paths.size();
             if (type == QStringLiteral("T"))
                 return part.texts.size();
+            if (type == QStringLiteral("I"))
+                return part.images.size();
             return -1;
         });
     };
@@ -218,6 +229,8 @@ QStringList SymbolData::validationErrors() const {
             addError(QString("Path %1 has no commands").arg(i));
     for (int i = 0; i < m_texts.size(); ++i)
         validateText(m_texts[i], QString(), i);
+    for (int i = 0; i < m_images.size(); ++i)
+        validateImage(m_images[i], QString(), i);
     validateGraphicOrder(m_graphicOrder, QString(), [&](const QString& type) -> int {
         if (type == QStringLiteral("P"))
             return m_pins.size();
@@ -237,6 +250,8 @@ QStringList SymbolData::validationErrors() const {
             return m_paths.size();
         if (type == QStringLiteral("T"))
             return m_texts.size();
+        if (type == QStringLiteral("I"))
+            return m_images.size();
         return -1;
     });
     for (int i = 0; i < m_parts.size(); ++i)
@@ -256,6 +271,7 @@ void SymbolData::clear() {
     m_polylines.clear();
     m_polygons.clear();
     m_paths.clear();
+    m_images.clear();
     m_texts.clear();
     m_graphicOrder.clear();
     m_parts.clear();

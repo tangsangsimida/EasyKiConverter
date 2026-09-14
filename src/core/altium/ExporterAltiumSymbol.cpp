@@ -642,12 +642,16 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
         const bool validBounds = std::isfinite(image.x0) && std::isfinite(image.y0) && std::isfinite(image.x1) &&
                                  std::isfinite(image.y1) && image.x0 != image.x1 && image.y0 != image.y1;
         const bool hasSource = !image.fileName.trimmed().isEmpty() || !image.data.isEmpty();
-        if (!validBounds || !hasSource || !std::isfinite(image.strokeWidth) || image.strokeWidth < 0.0) {
+        if (!validBounds || !hasSource || !std::isfinite(image.rotation) || !std::isfinite(image.strokeWidth) ||
+            image.strokeWidth < 0.0) {
             m_diagnostics.append(
                 QStringLiteral("符号 %1 图片图元 %2 的边界、线宽或资源无效，已跳过").arg(data.name).arg(i));
             continue;
         }
-        component.images.append(convertImage(image));
+        AltiumSchImage altiumImage = convertImage(image);
+        altiumImage.sourceGraphicIndex = sourceIndexForPart(data.images, i, image.partIndex);
+        altiumImage.sourcePartIndex = image.partIndex;
+        component.images.append(altiumImage);
     }
     for (int i = 0; i < data.ellipses.size(); ++i) {
         const IR::SymbolEllipseIR& sourceEllipse = data.ellipses.at(i);
@@ -1167,6 +1171,7 @@ AltiumSchImage ExporterAltiumSymbol::convertImage(const IR::SymbolImageIR& image
     altiumImage.locationY = AltiumCoord::mmToRaw(image.y0);
     altiumImage.cornerX = AltiumCoord::mmToRaw(image.x1);
     altiumImage.cornerY = AltiumCoord::mmToRaw(image.y1);
+    altiumImage.rotation = image.rotation;
     altiumImage.lineWidth = AltiumCoord::lineWidthMmToIndex(image.strokeWidth);
     altiumImage.lineStyle = toAltiumLineStyle(image.strokeStyle);
     altiumImage.color = toAltiumColor(image.strokeColor);

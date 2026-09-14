@@ -243,6 +243,35 @@ bool SymbolShapeSerializer::fromJson(SymbolPath& path, const QJsonObject& json) 
     return true;
 }
 
+// ==================== SymbolImage ====================
+
+QJsonObject SymbolShapeSerializer::toJson(const SymbolImage& image) {
+    QJsonObject json;
+    json["pos_x"] = image.posX;
+    json["pos_y"] = image.posY;
+    json["width"] = image.width;
+    json["height"] = image.height;
+    json["rotation"] = image.rotation;
+    json["source"] = image.source;
+    json["file_name"] = image.fileName;
+    json["data_base64"] = QString::fromLatin1(image.data.toBase64());
+    json["is_locked"] = image.isLocked;
+    return json;
+}
+
+bool SymbolShapeSerializer::fromJson(SymbolImage& image, const QJsonObject& json) {
+    image.posX = json["pos_x"].toDouble(0.0);
+    image.posY = json["pos_y"].toDouble(0.0);
+    image.width = json["width"].toDouble(0.0);
+    image.height = json["height"].toDouble(0.0);
+    image.rotation = json["rotation"].toDouble(0.0);
+    image.source = json["source"].toString();
+    image.fileName = json["file_name"].toString();
+    image.data = QByteArray::fromBase64(json["data_base64"].toString().toLatin1());
+    image.isLocked = json["is_locked"].toBool(false);
+    return true;
+}
+
 // ==================== SymbolText ====================
 
 QJsonObject SymbolShapeSerializer::toJson(const SymbolText& text) {
