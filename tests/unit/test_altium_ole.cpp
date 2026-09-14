@@ -21,6 +21,7 @@
 #include <QByteArray>
 #include <QDir>
 #include <QFile>
+#include <QMap>
 #include <QProcess>
 #include <QSet>
 #include <QStandardPaths>
@@ -303,6 +304,71 @@ bool readCfbStream(const QString& filePath,
                  ? readMiniStream(data, fat, miniFat, miniStream, entry.startSector, entry.streamSize)
                  : readRegularStream(data, fat, entry.startSector, entry.streamSize);
     return output.size() == static_cast<int>(entry.streamSize);
+}
+
+/**
+ * @brief 解析 SchLib /Storage 中的嵌入图片条目
+ * @param storage Storage 流数据
+ * @param compressedImages 输出图片名到原始 zlib 数据的映射
+ * @return 条目结构和长度均有效时返回 true
+ */
+bool parseAltiumImageStorage(const QByteArray& storage, QMap<QString, QByteArray>& compressedImages) {
+    compressedImages.clear();
+    if (storage.size() < 4)
+        return false;
+
+    const int headerSize = static_cast<int>(readU32(storage, 0) & 0x00FFFFFFU);
+    int offset = 4 + headerSize;
+    if (offset > storage.size())
+        return false;
+
+    while (offset < storage.size()) {
+        if (offset + 4 > storage.size())
+            return false;
+        const quint32 blockHeader = readU32(storage, offset);
+        if ((blockHeader >> 24) != 1)
+            return false;
+        const int entrySize = static_cast<int>(blockHeader & 0x00FFFFFFU);
+        const int entryOffset = offset + 4;
+        const int entryEnd = entryOffset + entrySize;
+        if (entrySize < 6 || entryEnd > storage.size())
+            return false;
+        if (static_cast<quint8>(storage.at(entryOffset)) != 0xD0)
+            return false;
+
+        const int nameLength = static_cast<quint8>(storage.at(entryOffset + 1));
+        const int compressedLengthOffset = entryOffset + 2 + nameLength;
+        if (compressedLengthOffset + 4 > entryEnd)
+            return false;
+        const QString name = QString::fromLocal8Bit(storage.constData() + entryOffset + 2, nameLength);
+        if (name.isEmpty() || compressedImages.contains(name))
+            return false;
+
+        const int compressedLength = static_cast<int>(readU32(storage, compressedLengthOffset));
+        const int compressedOffset = compressedLengthOffset + 4;
+        if (compressedLength != entryEnd - compressedOffset)
+            return false;
+        compressedImages.insert(name, storage.mid(compressedOffset, compressedLength));
+        offset = entryEnd;
+    }
+    return offset == storage.size();
+}
+
+/**
+ * @brief 为去除 Qt 长度前缀的 zlib 数据恢复 qUncompress 输入
+ * @param compressed 原始 zlib 数据
+ * @param uncompressedSize 解压后的字节数
+ * @return 带 Qt 长度前缀的压缩数据
+ */
+QByteArray restoreQtCompressionHeader(const QByteArray& compressed, int uncompressedSize) {
+    QByteArray withHeader;
+    withHeader.reserve(compressed.size() + 4);
+    withHeader.append(static_cast<char>((uncompressedSize >> 24) & 0xFF));
+    withHeader.append(static_cast<char>((uncompressedSize >> 16) & 0xFF));
+    withHeader.append(static_cast<char>((uncompressedSize >> 8) & 0xFF));
+    withHeader.append(static_cast<char>(uncompressedSize & 0xFF));
+    withHeader.append(compressed);
+    return withHeader;
 }
 
 /**
@@ -1153,6 +1219,16 @@ private slots:
         QVERIFY(readCfbStream(schPath, QStringLiteral("Storage"), multipartStorage));
         QVERIFY(multipartStorage.contains("multipart.png"));
         QVERIFY(multipartStorage.contains("multipart_2.png"));
+        QMap<QString, QByteArray> compressedImages;
+        QVERIFY(parseAltiumImageStorage(multipartStorage, compressedImages));
+        QCOMPARE(compressedImages.keys(),
+                 QStringList({QStringLiteral("multipart.png"), QStringLiteral("multipart_2.png")}));
+        QCOMPARE(qUncompress(restoreQtCompressionHeader(compressedImages.value(QStringLiteral("multipart.png")),
+                                                        QByteArrayLiteral("multipart-image").size())),
+                 QByteArrayLiteral("multipart-image"));
+        QCOMPARE(qUncompress(restoreQtCompressionHeader(compressedImages.value(QStringLiteral("multipart_2.png")),
+                                                        QByteArrayLiteral("multipart-image-duplicate").size())),
+                 QByteArrayLiteral("multipart-image-duplicate"));
 
         AltiumSchComponent diagnosticSymbol;
         diagnosticSymbol.name = QStringLiteral("IMAGE_DIAGNOSTICS");
