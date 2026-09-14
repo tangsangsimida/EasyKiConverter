@@ -1373,6 +1373,29 @@ private slots:
         QVERIFY(invalidArcGeometryExporter.diagnostics().contains(
             QStringLiteral("符号 INVALID_ARC_GEOMETRY 椭圆弧图元 0 的几何参数无效，已跳过")));
 
+        IR::SymbolComponentIR invalidTextSymbol;
+        invalidTextSymbol.name = QStringLiteral("INVALID_TEXT_DATA");
+        IR::SymbolTextIR invalidText;
+        invalidText.text = QStringLiteral("label");
+        invalidText.position = QPointF(std::numeric_limits<double>::quiet_NaN(), 0.0);
+        invalidTextSymbol.texts.append(invalidText);
+        IR::SymbolTextFrameIR invalidTextFrame;
+        invalidTextFrame.textMargin = -1.0;
+        invalidTextSymbol.textFrames.append(invalidTextFrame);
+        IR::SymbolParameterIR invalidParameter;
+        invalidParameter.name = QStringLiteral("Custom");
+        invalidParameter.position = QPointF(0.0, std::numeric_limits<double>::infinity());
+        invalidTextSymbol.parameters.append(invalidParameter);
+        ExporterAltiumSymbol invalidTextExporter;
+        const QString invalidTextPath = QDir(tempDir.path()).filePath(QStringLiteral("invalid-text-data.SchLib"));
+        QVERIFY(invalidTextExporter.exportSymbol(invalidTextSymbol, invalidTextPath));
+        QVERIFY(invalidTextExporter.diagnostics().contains(
+            QStringLiteral("符号 INVALID_TEXT_DATA 文本图元 0 的内容或几何参数无效，已跳过")));
+        QVERIFY(invalidTextExporter.diagnostics().contains(
+            QStringLiteral("符号 INVALID_TEXT_DATA 文本框图元 0 的几何参数无效，已跳过")));
+        QVERIFY(invalidTextExporter.diagnostics().contains(
+            QStringLiteral("符号 INVALID_TEXT_DATA 参数 Custom 的位置、旋转角度或名称无效，已跳过")));
+
         IR::SymbolComponentIR invalidPathSymbol;
         invalidPathSymbol.name = QStringLiteral("INVALID_PATH_SEGMENT");
         IR::SymbolPathIR invalidPath;

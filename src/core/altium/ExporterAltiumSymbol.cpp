@@ -257,6 +257,13 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
     };
 
     for (const IR::SymbolParameterIR& parameter : data.parameters) {
+        if (!isFinitePoint(parameter.position) || !std::isfinite(parameter.rotation) ||
+            parameter.name.trimmed().isEmpty()) {
+            m_diagnostics.append(QStringLiteral("符号 %1 参数 %2 的位置、旋转角度或名称无效，已跳过")
+                                     .arg(data.name)
+                                     .arg(parameter.name));
+            continue;
+        }
         AltiumSchParameter altiumParameter;
         altiumParameter.name = parameter.name;
         altiumParameter.value = parameter.value;
@@ -272,34 +279,51 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
 
     // 转换引脚
     for (const IR::SymbolPinIR& pin : data.pins) {
+        if (!isFinitePoint(pin.position) || !std::isfinite(pin.length)) {
+            m_diagnostics.append(
+                QStringLiteral("符号 %1 引脚 %2 的位置或长度无效，已跳过").arg(data.name).arg(pin.designator));
+            continue;
+        }
         component.pins.append(convertPin(pin));
         if (pin.hasNamePosition && !pin.name.isEmpty()) {
-            AltiumSchText text;
-            text.locationX = AltiumCoord::mmToRaw(pin.namePosition.x());
-            text.locationY = AltiumCoord::mmToRaw(pin.namePosition.y());
-            text.text = pin.name;
-            text.fontSizeMm = pin.nameFontSizeMm;
-            text.anchor = pin.nameAnchor;
-            text.isDisplayed = true;
-            text.orientation = toAltiumOrientation(pin.nameRotation);
-            text.ownerPartId = pin.commonToAllParts ? -1 : toAltiumOwnerPartId(pin.partIndex);
-            text.isPinLabel = true;
-            text.sourcePartIndex = pin.commonToAllParts ? -1 : pin.partIndex;
-            component.texts.append(text);
+            if (!isFinitePoint(pin.namePosition) || !std::isfinite(pin.nameFontSizeMm) || pin.nameFontSizeMm < 0.0 ||
+                !std::isfinite(pin.nameRotation)) {
+                m_diagnostics.append(
+                    QStringLiteral("符号 %1 引脚 %2 名称文本参数无效，已跳过").arg(data.name).arg(pin.designator));
+            } else {
+                AltiumSchText text;
+                text.locationX = AltiumCoord::mmToRaw(pin.namePosition.x());
+                text.locationY = AltiumCoord::mmToRaw(pin.namePosition.y());
+                text.text = pin.name;
+                text.fontSizeMm = pin.nameFontSizeMm;
+                text.anchor = pin.nameAnchor;
+                text.isDisplayed = true;
+                text.orientation = toAltiumOrientation(pin.nameRotation);
+                text.ownerPartId = pin.commonToAllParts ? -1 : toAltiumOwnerPartId(pin.partIndex);
+                text.isPinLabel = true;
+                text.sourcePartIndex = pin.commonToAllParts ? -1 : pin.partIndex;
+                component.texts.append(text);
+            }
         }
         if (pin.hasNumberPosition && !pin.designator.isEmpty()) {
-            AltiumSchText text;
-            text.locationX = AltiumCoord::mmToRaw(pin.numberPosition.x());
-            text.locationY = AltiumCoord::mmToRaw(pin.numberPosition.y());
-            text.text = pin.designator;
-            text.fontSizeMm = pin.numberFontSizeMm;
-            text.anchor = pin.numberAnchor;
-            text.isDisplayed = true;
-            text.orientation = toAltiumOrientation(pin.numberRotation);
-            text.ownerPartId = pin.commonToAllParts ? -1 : toAltiumOwnerPartId(pin.partIndex);
-            text.isPinLabel = true;
-            text.sourcePartIndex = pin.commonToAllParts ? -1 : pin.partIndex;
-            component.texts.append(text);
+            if (!isFinitePoint(pin.numberPosition) || !std::isfinite(pin.numberFontSizeMm) ||
+                pin.numberFontSizeMm < 0.0 || !std::isfinite(pin.numberRotation)) {
+                m_diagnostics.append(
+                    QStringLiteral("符号 %1 引脚 %2 编号文本参数无效，已跳过").arg(data.name).arg(pin.designator));
+            } else {
+                AltiumSchText text;
+                text.locationX = AltiumCoord::mmToRaw(pin.numberPosition.x());
+                text.locationY = AltiumCoord::mmToRaw(pin.numberPosition.y());
+                text.text = pin.designator;
+                text.fontSizeMm = pin.numberFontSizeMm;
+                text.anchor = pin.numberAnchor;
+                text.isDisplayed = true;
+                text.orientation = toAltiumOrientation(pin.numberRotation);
+                text.ownerPartId = pin.commonToAllParts ? -1 : toAltiumOwnerPartId(pin.partIndex);
+                text.isPinLabel = true;
+                text.sourcePartIndex = pin.commonToAllParts ? -1 : pin.partIndex;
+                component.texts.append(text);
+            }
         }
     }
 
@@ -507,13 +531,28 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
     for (const IR::SymbolIeeeIR& ieee : data.ieeeSymbols)
         component.ieeeSymbols.append(convertIeee(ieee));
     for (int i = 0; i < data.texts.size(); ++i) {
-        AltiumSchText text = convertText(data.texts.at(i));
-        text.sourceGraphicIndex = sourceIndexForPart(data.texts, i, data.texts.at(i).partIndex);
-        text.sourcePartIndex = data.texts.at(i).partIndex;
+        const IR::SymbolTextIR& sourceText = data.texts.at(i);
+        if (sourceText.text.trimmed().isEmpty() || !isFinitePoint(sourceText.position) ||
+            !std::isfinite(sourceText.rotation) ||
+            (sourceText.visible && (!std::isfinite(sourceText.fontSizeMm) || sourceText.fontSizeMm < 0.0))) {
+            m_diagnostics.append(
+                QStringLiteral("符号 %1 文本图元 %2 的内容或几何参数无效，已跳过").arg(data.name).arg(i));
+            continue;
+        }
+        AltiumSchText text = convertText(sourceText);
+        text.sourceGraphicIndex = sourceIndexForPart(data.texts, i, sourceText.partIndex);
+        text.sourcePartIndex = sourceText.partIndex;
         component.texts.append(text);
     }
-    for (const IR::SymbolTextFrameIR& frame : data.textFrames)
+    for (int i = 0; i < data.textFrames.size(); ++i) {
+        const IR::SymbolTextFrameIR& frame = data.textFrames.at(i);
+        if (!std::isfinite(frame.x0) || !std::isfinite(frame.y0) || !std::isfinite(frame.x1) ||
+            !std::isfinite(frame.y1) || !std::isfinite(frame.textMargin) || frame.textMargin < 0.0) {
+            m_diagnostics.append(QStringLiteral("符号 %1 文本框图元 %2 的几何参数无效，已跳过").arg(data.name).arg(i));
+            continue;
+        }
         component.textFrames.append(convertTextFrame(frame));
+    }
     for (const IR::SymbolImageIR& image : data.images)
         component.images.append(convertImage(image));
     for (int i = 0; i < data.ellipses.size(); ++i) {
