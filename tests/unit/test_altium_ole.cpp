@@ -2800,6 +2800,35 @@ private slots:
     }
 
     /**
+     * @brief 验证同类图元来源索引冲突时不会静默丢失记录。
+     */
+    void conflictingPolygonOrderFallsBackWithoutDroppingGraphics() {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        AltiumSchComponent symbol;
+        symbol.name = QStringLiteral("CONFLICTING_POLYGON_ORDER");
+        for (const int offset : {0, 100000}) {
+            AltiumSchPolygon polygon;
+            polygon.sourceGraphicIndex = 0;
+            polygon.sourcePartIndex = 0;
+            polygon.vertices = {QPointF(offset, 0), QPointF(offset + 10000, 0), QPointF(offset, 10000)};
+            symbol.polygons.append(polygon);
+        }
+        symbol.graphicOrder = {{QStringLiteral("PG"), 0, 0}};
+
+        AltiumSchLibWriter writer;
+        const QString path = QDir(tempDir.path()).filePath(QStringLiteral("conflicting-polygon-order.SchLib"));
+        QVERIFY(writer.write({symbol}, path, QStringLiteral("conflicting-polygon-order")));
+        QVERIFY(writer.diagnostics().contains(QStringLiteral(
+            "符号 CONFLICTING_POLYGON_ORDER 的 graphicOrder 不完整或包含无效引用，已回退到默认图元顺序")));
+
+        QByteArray data;
+        QVERIFY(readCfbStream(path, QStringLiteral("CONFLICTING_POLYGON_ORDER/Data"), data));
+        QCOMPARE(data.count(QByteArrayLiteral("RECORD=7")), 2);
+    }
+
+    /**
      * @brief 路径分段编号出现缺口时仍按实际索引写出全部图元。
      */
     void gappedPathSegmentsPreserveGraphics() {

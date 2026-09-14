@@ -736,48 +736,61 @@ bool AltiumSchLibWriter::hasCompleteGraphicOrder(const AltiumSchComponent& compo
             expected.insert(key(QStringLiteral("P"), commonPinIndexes[-1]++, -1));
     }
 
-    const auto addIndexed = [&expected, &key](const QString& type, int index, int partIndex) {
-        if (index >= 0)
-            expected.insert(key(type, index, partIndex));
-    };
-    QSet<QString> rectangleOrderKeys;
-    const auto addRectangleOrder = [&expected, &rectangleOrderKeys, &key](int index, int partIndex) {
+    const auto addUniqueIndexed = [&expected, &key](const QString& type, int index, int partIndex) {
         if (index < 0)
             return true;
-        const QString orderKey = key(QStringLiteral("R"), index, partIndex);
-        if (rectangleOrderKeys.contains(orderKey))
+        const QString orderKey = key(type, index, partIndex);
+        if (expected.contains(orderKey))
             return false;
-        rectangleOrderKeys.insert(orderKey);
         expected.insert(orderKey);
         return true;
     };
+    const auto addUniqueNonPathIndexed = [&addUniqueIndexed, &expected, &key](
+                                             const QString& type, int index, int partIndex) {
+        if (type == QStringLiteral("PT")) {
+            if (index >= 0)
+                expected.insert(key(type, index, partIndex));
+            return true;
+        }
+        return addUniqueIndexed(type, index, partIndex);
+    };
     for (const AltiumSchRectangle& rect : component.rectangles) {
-        if (!addRectangleOrder(rect.sourceGraphicIndex, rect.sourcePartIndex))
+        if (!addUniqueIndexed(QStringLiteral("R"), rect.sourceGraphicIndex, rect.sourcePartIndex))
             return false;
     }
     for (const AltiumSchRoundRectangle& rect : component.roundRectangles) {
-        if (!addRectangleOrder(rect.sourceGraphicIndex, rect.sourcePartIndex))
+        if (!addUniqueIndexed(QStringLiteral("R"), rect.sourceGraphicIndex, rect.sourcePartIndex))
             return false;
     }
-    for (const AltiumSchEllipse& ellipse : component.ellipses)
-        addIndexed(ellipse.sourceGraphicType, ellipse.sourceGraphicIndex, ellipse.sourcePartIndex);
-    for (const AltiumSchArc& arc : component.arcs)
-        addIndexed(arc.sourceGraphicType, arc.sourceGraphicIndex, arc.sourcePartIndex);
-    for (const AltiumSchPolyline& polyline : component.polylines)
-        addIndexed(QStringLiteral("PL"), polyline.sourceGraphicIndex, polyline.sourcePartIndex);
-    for (const AltiumSchPolygon& polygon : component.polygons)
-        addIndexed(QStringLiteral("PG"), polygon.sourceGraphicIndex, polygon.sourcePartIndex);
+    for (const AltiumSchEllipse& ellipse : component.ellipses) {
+        if (!addUniqueNonPathIndexed(ellipse.sourceGraphicType, ellipse.sourceGraphicIndex, ellipse.sourcePartIndex))
+            return false;
+    }
+    for (const AltiumSchArc& arc : component.arcs) {
+        if (!addUniqueNonPathIndexed(arc.sourceGraphicType, arc.sourceGraphicIndex, arc.sourcePartIndex))
+            return false;
+    }
+    for (const AltiumSchPolyline& polyline : component.polylines) {
+        if (!addUniqueIndexed(QStringLiteral("PL"), polyline.sourceGraphicIndex, polyline.sourcePartIndex))
+            return false;
+    }
+    for (const AltiumSchPolygon& polygon : component.polygons) {
+        if (!addUniqueIndexed(QStringLiteral("PG"), polygon.sourceGraphicIndex, polygon.sourcePartIndex))
+            return false;
+    }
     for (const AltiumSchText& text : component.texts) {
-        if (!text.isPinLabel)
-            addIndexed(QStringLiteral("T"), text.sourceGraphicIndex, text.sourcePartIndex);
+        if (!text.isPinLabel && !addUniqueIndexed(QStringLiteral("T"), text.sourceGraphicIndex, text.sourcePartIndex))
+            return false;
     }
     const bool hasImageOrder = std::any_of(
         component.graphicOrder.cbegin(), component.graphicOrder.cend(), [](const AltiumSchGraphicOrder& order) {
             return order.type == QStringLiteral("I");
         });
     if (hasImageOrder) {
-        for (const AltiumSchImage& image : component.images)
-            addIndexed(QStringLiteral("I"), image.sourceGraphicIndex, image.sourcePartIndex);
+        for (const AltiumSchImage& image : component.images) {
+            if (!addUniqueIndexed(QStringLiteral("I"), image.sourceGraphicIndex, image.sourcePartIndex))
+                return false;
+        }
     }
     const auto addPathSegment = [&pathSegments, &unsplitPaths, &key](
                                     const QString& type, int index, int segmentIndex, int partIndex) {
@@ -790,18 +803,21 @@ bool AltiumSchLibWriter::hasCompleteGraphicOrder(const AltiumSchComponent& compo
             pathSegments[pathKey].insert(segmentIndex);
     };
     for (const AltiumSchPath& path : component.paths) {
-        addIndexed(path.sourceGraphicType, path.sourceGraphicIndex, path.sourcePartIndex);
+        if (path.sourceGraphicIndex >= 0)
+            expected.insert(key(path.sourceGraphicType, path.sourceGraphicIndex, path.sourcePartIndex));
         addPathSegment(path.sourceGraphicType, path.sourceGraphicIndex, path.sourceSegmentIndex, path.sourcePartIndex);
     }
     for (const AltiumSchBezier& bezier : component.beziers) {
         if (bezier.controlPoints.size() == 4) {
-            addIndexed(bezier.sourceGraphicType, bezier.sourceGraphicIndex, bezier.sourcePartIndex);
+            if (bezier.sourceGraphicIndex >= 0)
+                expected.insert(key(bezier.sourceGraphicType, bezier.sourceGraphicIndex, bezier.sourcePartIndex));
             addPathSegment(
                 bezier.sourceGraphicType, bezier.sourceGraphicIndex, bezier.sourceSegmentIndex, bezier.sourcePartIndex);
         }
     }
     for (const AltiumSchEllipticalArc& arc : component.ellipticalArcs) {
-        addIndexed(arc.sourceGraphicType, arc.sourceGraphicIndex, arc.sourcePartIndex);
+        if (!addUniqueNonPathIndexed(arc.sourceGraphicType, arc.sourceGraphicIndex, arc.sourcePartIndex))
+            return false;
         addPathSegment(arc.sourceGraphicType, arc.sourceGraphicIndex, arc.sourceSegmentIndex, arc.sourcePartIndex);
     }
     for (const AltiumSchArc& arc : component.arcs)
