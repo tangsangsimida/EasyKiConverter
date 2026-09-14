@@ -605,6 +605,11 @@ private slots:
         AltiumSchComponent invalidPartCount;
         invalidPartCount.name = QStringLiteral("INVALID_PART_COUNT");
         invalidPartCount.partCount = 0;
+        AltiumSchText invalidFontSizeText;
+        invalidFontSizeText.text = QStringLiteral("invalid font size");
+        invalidFontSizeText.fontName = QStringLiteral("Arial");
+        invalidFontSizeText.fontSizeMm = std::numeric_limits<double>::infinity();
+        invalidPartCount.texts.append(invalidFontSizeText);
         AltiumSchPin invalidOwnerPin;
         invalidOwnerPin.name = QStringLiteral("A");
         invalidOwnerPin.designator = QStringLiteral("1");
@@ -619,6 +624,7 @@ private slots:
         QVERIFY(writer.diagnostics().join('\n').contains(QStringLiteral("partCount 无效")));
         QVERIFY(writer.diagnostics().join('\n').contains(QStringLiteral("引脚 OWNERPARTID=0 无效")));
         QVERIFY(writer.diagnostics().join('\n').contains(QStringLiteral("图元 OWNERPARTID=0 无效")));
+        QVERIFY(writer.diagnostics().join('\n').contains(QStringLiteral("文本字体大小无效")));
 
         QByteArray header;
         QVERIFY(readCfbStream(outputPath, QStringLiteral("FileHeader"), header));

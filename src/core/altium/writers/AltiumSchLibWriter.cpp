@@ -175,10 +175,11 @@ void AltiumSchLibWriter::registerTextFonts(const QList<AltiumSchComponent>& comp
     constexpr double MILLIMETERS_PER_POINT = 25.4 / 72.0;
     for (const AltiumSchComponent& component : components) {
         for (const AltiumSchText& text : component.texts) {
-            if (text.fontName.isEmpty() && text.fontId > 0 && text.fontSizeMm <= 0.0)
+            const bool hasValidFontSize = std::isfinite(text.fontSizeMm) && text.fontSizeMm > 0.0;
+            if (text.fontName.isEmpty() && text.fontId > 0 && !hasValidFontSize)
                 continue;
             const QString fontName = text.fontName.isEmpty() ? QStringLiteral("Times New Roman") : text.fontName;
-            const int fontSize = text.fontSizeMm > 0.0 ? qMax(1, qRound(text.fontSizeMm / MILLIMETERS_PER_POINT)) : 10;
+            const int fontSize = hasValidFontSize ? qMax(1, qRound(text.fontSizeMm / MILLIMETERS_PER_POINT)) : 10;
             getOrAddFont(fontName, fontSize, text.bold, text.italic);
         }
         for (const AltiumSchParameter& parameter : component.parameters) {
@@ -1217,6 +1218,13 @@ void AltiumSchLibWriter::writeTextRecord(AltiumBinaryWriter& writer, const Altiu
     addCoordParam(params, "Location.X", text.locationX);
     addCoordParam(params, "Location.Y", text.locationY);
 
+    const bool hasValidFontSize = std::isfinite(text.fontSizeMm) && text.fontSizeMm > 0.0;
+    if (text.fontSizeMm != 0.0 && !hasValidFontSize) {
+        const QString diagnostic = QStringLiteral("Altium SchLib 文本字体大小无效，已回退为默认字体大小");
+        m_diagnostics.append(diagnostic);
+        qWarning() << "AltiumSchLibWriter:" << diagnostic;
+    }
+
     if (text.orientation != 0)
         params["Orientation"] = QString::number(text.orientation);
     addColorParam(params, "Color", text.color);
@@ -1224,7 +1232,7 @@ void AltiumSchLibWriter::writeTextRecord(AltiumBinaryWriter& writer, const Altiu
     if (!text.fontName.isEmpty() || fontId <= 0) {
         constexpr double MILLIMETERS_PER_POINT = 25.4 / 72.0;
         const QString fontName = text.fontName.isEmpty() ? QStringLiteral("Times New Roman") : text.fontName;
-        const int fontSize = text.fontSizeMm > 0.0 ? qMax(1, qRound(text.fontSizeMm / MILLIMETERS_PER_POINT)) : 10;
+        const int fontSize = hasValidFontSize ? qMax(1, qRound(text.fontSizeMm / MILLIMETERS_PER_POINT)) : 10;
         fontId = getOrAddFont(fontName, fontSize, text.bold, text.italic);
     } else if (fontId < 1 || fontId > m_fonts.size())
         fontId = 1;
@@ -1234,7 +1242,7 @@ void AltiumSchLibWriter::writeTextRecord(AltiumBinaryWriter& writer, const Altiu
         params["IsHidden"] = "T";
     if (!text.anchor.isEmpty())
         params["TextAnchor"] = text.anchor;
-    if (text.fontSizeMm > 0.0)
+    if (hasValidFontSize)
         params["FontSize"] = QString::number(text.fontSizeMm, 'f', 4);
 
     addUniqueID(params);
