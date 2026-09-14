@@ -52,6 +52,11 @@ void unregisterTempDirectoryUser(const QString& path) {
         g_tempDirectoryUsers.erase(it);
 }
 
+bool hasTempDirectoryUsers(const QString& path) {
+    QMutexLocker locker(&g_tempDirectoryUsersMutex);
+    return g_tempDirectoryUsers.value(path, 0) > 0;
+}
+
 bool hasOtherTempDirectoryUsers(const QString& path) {
     QMutexLocker locker(&g_tempDirectoryUsersMutex);
     return g_tempDirectoryUsers.value(path, 0) > 1;
@@ -245,7 +250,7 @@ TempFileManager::~TempFileManager() {
     const QString releasedTempDirectory = m_registeredTempDirectory;
     unregisterTempDirectoryUser(releasedTempDirectory);
     m_registeredTempDirectory.clear();
-    if (!releasedTempDirectory.isEmpty() && !hasOtherTempDirectoryUsers(releasedTempDirectory)) {
+    if (!releasedTempDirectory.isEmpty() && !hasTempDirectoryUsers(releasedTempDirectory)) {
         QDir tempDir(releasedTempDirectory);
         if (tempDir.exists() && tempDir.isEmpty())
             QDir().rmdir(releasedTempDirectory);
