@@ -389,13 +389,73 @@ AltiumSchPin ExporterAltiumSymbol::convertPin(const IR::SymbolPinIR& pin) {
             altiumPin.symbolOutside = 6;
             break;
         case IR::PinDecoration::GroupLine:
-            altiumPin.symbolOutside = 34;  // Bidirectional Signal Flow
+            altiumPin.symbolOutside = 15;  // Group Line
             break;
         case IR::PinDecoration::FlagRight:
             altiumPin.symbolOutside = 33;  // Left Right Signal Flow
             break;
         case IR::PinDecoration::FlagLeft:
             altiumPin.symbolOutside = 2;  // Right Left Signal Flow
+            break;
+        case IR::PinDecoration::ShiftRight:
+            altiumPin.symbolInside = 7;
+            break;
+        case IR::PinDecoration::HighCurrent:
+            altiumPin.symbolInside = 11;
+            break;
+        case IR::PinDecoration::Schmitt:
+            altiumPin.symbolInside = 13;
+            break;
+        case IR::PinDecoration::Delay:
+            altiumPin.symbolInside = 14;
+            break;
+        case IR::PinDecoration::ActiveLowOutput:
+            altiumPin.symbolOuterEdge = 17;
+            break;
+        case IR::PinDecoration::OpenCollectorPullUp:
+            altiumPin.symbolInside = 22;
+            break;
+        case IR::PinDecoration::OpenEmitterPullUp:
+            altiumPin.symbolInside = 24;
+            break;
+        case IR::PinDecoration::DigitalInput:
+            altiumPin.symbolOutside = 25;
+            break;
+        case IR::PinDecoration::GroupBinary:
+            altiumPin.symbolOutside = 16;
+            break;
+        case IR::PinDecoration::InputOutput:
+            altiumPin.symbolOutside = 31;
+            break;
+        case IR::PinDecoration::OpenCircuitOutput:
+            altiumPin.symbolInside = 32;
+            break;
+        case IR::PinDecoration::Pi:
+            altiumPin.symbolOutside = 18;
+            break;
+        case IR::PinDecoration::GreaterEqual:
+            altiumPin.symbolOutside = 19;
+            break;
+        case IR::PinDecoration::LessEqual:
+            altiumPin.symbolOutside = 20;
+            break;
+        case IR::PinDecoration::Sigma:
+            altiumPin.symbolOutside = 21;
+            break;
+        case IR::PinDecoration::And:
+            altiumPin.symbolOutside = 26;
+            break;
+        case IR::PinDecoration::Inverter:
+            altiumPin.symbolOutside = 27;
+            break;
+        case IR::PinDecoration::Or:
+            altiumPin.symbolOutside = 28;
+            break;
+        case IR::PinDecoration::Xor:
+            altiumPin.symbolOutside = 29;
+            break;
+        case IR::PinDecoration::BidirectionalSignalFlow:
+            altiumPin.symbolOutside = 34;
             break;
         default:
             break;
