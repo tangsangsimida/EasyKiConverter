@@ -59,6 +59,35 @@ QStringList SymbolData::validationErrors() const {
             }
         }
     };
+    const auto validateGraphicOrder =
+        [&](const QList<SymbolGraphicOrder>& order, const QString& prefix, const auto& countForType) {
+            QStringList seen;
+            for (int i = 0; i < order.size(); ++i) {
+                const SymbolGraphicOrder& reference = order.at(i);
+                const int typeCount = countForType(reference.type);
+                if (typeCount < 0) {
+                    addError(QString("%1Graphic order %2 has unknown type %3").arg(prefix).arg(i).arg(reference.type));
+                    continue;
+                }
+                if (reference.index < 0 || reference.index >= typeCount) {
+                    addError(QString("%1Graphic order %2 has out-of-range %3 index %4")
+                                 .arg(prefix)
+                                 .arg(i)
+                                 .arg(reference.type)
+                                 .arg(reference.index));
+                    continue;
+                }
+                const QString key = reference.type + QChar(':') + QString::number(reference.index);
+                if (seen.contains(key))
+                    addError(QString("%1Graphic order %2 duplicates %3 index %4")
+                                 .arg(prefix)
+                                 .arg(i)
+                                 .arg(reference.type)
+                                 .arg(reference.index));
+                else
+                    seen.append(key);
+            }
+        };
     const auto validatePart = [&](const SymbolPart& part, int partIndex) {
         const QString prefix = QStringLiteral("Part %1 ").arg(partIndex);
         if (!isFinite(part.originX) || !isFinite(part.originY))
@@ -105,6 +134,27 @@ QStringList SymbolData::validationErrors() const {
         for (int i = 0; i < part.texts.size(); ++i)
             if (part.texts[i].text.trimmed().isEmpty())
                 addError(QString("%1Text %2 is empty").arg(prefix).arg(i));
+        validateGraphicOrder(part.graphicOrder, prefix, [&](const QString& type) -> int {
+            if (type == QStringLiteral("P"))
+                return part.pins.size();
+            if (type == QStringLiteral("R"))
+                return part.rectangles.size();
+            if (type == QStringLiteral("C"))
+                return part.circles.size();
+            if (type == QStringLiteral("A"))
+                return part.arcs.size();
+            if (type == QStringLiteral("E"))
+                return part.ellipses.size();
+            if (type == QStringLiteral("PL"))
+                return part.polylines.size();
+            if (type == QStringLiteral("PG"))
+                return part.polygons.size();
+            if (type == QStringLiteral("PT"))
+                return part.paths.size();
+            if (type == QStringLiteral("T"))
+                return part.texts.size();
+            return -1;
+        });
     };
 
     if (m_info.name.trimmed().isEmpty())
@@ -158,6 +208,27 @@ QStringList SymbolData::validationErrors() const {
     for (int i = 0; i < m_texts.size(); ++i)
         if (m_texts[i].text.trimmed().isEmpty())
             addError(QString("Text %1 is empty").arg(i));
+    validateGraphicOrder(m_graphicOrder, QString(), [&](const QString& type) -> int {
+        if (type == QStringLiteral("P"))
+            return m_pins.size();
+        if (type == QStringLiteral("R"))
+            return m_rectangles.size();
+        if (type == QStringLiteral("C"))
+            return m_circles.size();
+        if (type == QStringLiteral("A"))
+            return m_arcs.size();
+        if (type == QStringLiteral("E"))
+            return m_ellipses.size();
+        if (type == QStringLiteral("PL"))
+            return m_polylines.size();
+        if (type == QStringLiteral("PG"))
+            return m_polygons.size();
+        if (type == QStringLiteral("PT"))
+            return m_paths.size();
+        if (type == QStringLiteral("T"))
+            return m_texts.size();
+        return -1;
+    });
     for (int i = 0; i < m_parts.size(); ++i)
         validatePart(m_parts[i], i);
 

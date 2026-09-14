@@ -129,6 +129,28 @@ private slots:
         QVERIFY(!symbol.isValid());
     }
 
+    void testSymbolValidationChecksGraphicOrderReferences() {
+        SymbolData symbol;
+        SymbolInfo info;
+        info.name = QStringLiteral("INVALID_ORDER_SYMBOL");
+        symbol.setInfo(info);
+        symbol.setBbox(SymbolBBox{0.0, 0.0, 10.0, 10.0});
+
+        SymbolRectangle rectangle;
+        rectangle.width = 1.0;
+        rectangle.height = 1.0;
+        symbol.addRectangle(rectangle);
+        symbol.addGraphicOrder({QStringLiteral("R"), 0});
+        symbol.addGraphicOrder({QStringLiteral("R"), 0});
+        symbol.addGraphicOrder({QStringLiteral("PT"), 0});
+        symbol.addGraphicOrder({QStringLiteral("UNKNOWN"), 0});
+
+        const QStringList errors = symbol.validationErrors();
+        QVERIFY(errors.contains(QStringLiteral("Graphic order 1 duplicates R index 0")));
+        QVERIFY(errors.contains(QStringLiteral("Graphic order 2 has out-of-range PT index 0")));
+        QVERIFY(errors.contains(QStringLiteral("Graphic order 3 has unknown type UNKNOWN")));
+    }
+
     void testSymbolValidationAcceptsOriginBasedBoundingBox() {
         SymbolData symbol;
         SymbolInfo info;
