@@ -1418,8 +1418,9 @@ void AltiumSchLibWriter::writeComponentParameterRecords(AltiumBinaryWriter& writ
     for (const ParameterField& field : componentParameterFields(component)) {
         QMap<QString, QString> parameterParams;
         parameterParams["RECORD"] = "41";
-        parameterParams["OWNERPARTID"] = QString::number(field.ownerPartId);
-        if (field.ownerPartId >= 1)
+        const int ownerPartId = field.ownerPartId < 0 ? -1 : qMax(1, field.ownerPartId);
+        parameterParams["OWNERPARTID"] = QString::number(ownerPartId);
+        if (ownerPartId >= 1)
             addContentIndex(parameterParams);
         if (field.hasLocation) {
             addCoordParam(parameterParams, "LOCATION.X", field.locationX);

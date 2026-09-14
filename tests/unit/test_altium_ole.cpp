@@ -1538,7 +1538,7 @@ private slots:
         AltiumSchParameter parameter;
         parameter.name = QStringLiteral("Custom");
         parameter.value = QStringLiteral("value");
-        parameter.ownerPartId = 1;
+        parameter.ownerPartId = 0;
         symbol.parameters.append(parameter);
 
         AltiumSchLibWriter writer;
@@ -1554,11 +1554,15 @@ private slots:
         QVERIFY(data.contains("OWNERPARTID=1"));
         QVERIFY(data.contains("RECORD=41"));
         QVERIFY(data.contains("IndexInSheet=2"));
-        const int parameterOffset = data.indexOf("RECORD=41");
+        const int customParameterOffset = data.indexOf("NAME=Custom");
+        const int parameterOffset = data.lastIndexOf("|RECORD=41|", customParameterOffset);
         const int nextRecordOffset = data.indexOf("|RECORD=", parameterOffset + 1);
         QVERIFY(parameterOffset >= 0);
+        QVERIFY(customParameterOffset > parameterOffset);
         QVERIFY(nextRecordOffset > parameterOffset);
-        QVERIFY(!data.mid(parameterOffset, nextRecordOffset - parameterOffset).contains("ISNOTACCESIBLE"));
+        const QByteArray parameterRecord = data.mid(parameterOffset, nextRecordOffset - parameterOffset);
+        QVERIFY(parameterRecord.contains("OWNERPARTID=1"));
+        QVERIFY(!parameterRecord.contains("ISNOTACCESIBLE"));
     }
 };
 
