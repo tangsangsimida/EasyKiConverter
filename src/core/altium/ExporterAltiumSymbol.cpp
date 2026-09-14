@@ -4,6 +4,7 @@
 #include "utils/AltiumLayerMap.h"
 
 #include <QDebug>
+#include <QFile>
 #include <QSet>
 
 #include <algorithm>
@@ -214,6 +215,14 @@ bool ExporterAltiumSymbol::exportSymbolLibrary(const QList<IR::SymbolComponentIR
                                                bool updateMode,
                                                const QString& libraryDescription) {
     m_diagnostics.clear();
+    if ((appendMode || updateMode) && QFile::exists(filePath)) {
+        const QString diagnostic =
+            QStringLiteral("Altium SchLib 暂不支持在已有库上追加或更新，已拒绝覆盖: %1").arg(filePath);
+        m_diagnostics.append(diagnostic);
+        qWarning() << "ExporterAltiumSymbol:" << diagnostic;
+        return false;
+    }
+
     QList<AltiumSchComponent> components;
     for (const IR::SymbolComponentIR& symbol : symbols) {
         components.append(convertSymbol(symbol));

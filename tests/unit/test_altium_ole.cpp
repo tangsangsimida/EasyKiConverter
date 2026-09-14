@@ -1149,6 +1149,35 @@ private slots:
     }
 
     /**
+     * @brief 验证 Altium 不会静默覆盖已有库
+     */
+    void rejectsUnsupportedAltiumLibraryMerge() {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        const QString outputPath = QDir(tempDir.path()).filePath(QStringLiteral("existing.SchLib"));
+        QFile existingFile(outputPath);
+        QVERIFY(existingFile.open(QIODevice::WriteOnly));
+        const QByteArray originalData = QByteArrayLiteral("existing-library");
+        QCOMPARE(existingFile.write(originalData), originalData.size());
+        existingFile.close();
+
+        IR::SymbolComponentIR symbol;
+        symbol.name = QStringLiteral("NEW_SYMBOL");
+        ExporterAltiumSymbol exporter;
+        QVERIFY(!exporter.exportSymbolLibrary({symbol}, QStringLiteral("existing"), outputPath, true, false));
+        QVERIFY(!exporter.diagnostics().isEmpty());
+        QVERIFY(exporter.diagnostics().first().contains(QStringLiteral("暂不支持")));
+
+        QVERIFY(existingFile.open(QIODevice::ReadOnly));
+        QCOMPARE(existingFile.readAll(), originalData);
+        existingFile.close();
+
+        QVERIFY(!exporter.exportSymbolLibrary({symbol}, QStringLiteral("existing"), outputPath, false, true));
+        QVERIFY(!exporter.diagnostics().isEmpty());
+    }
+
+    /**
      * @brief 验证导出器保持多部件结构和折线逐段展开逻辑
      * @details 符号多部件的 OWNERPARTID 正确映射，封装折线按段写入 Track，
      *          安装孔转为非电镀 MultiLayer pad，板框保留层和线宽
