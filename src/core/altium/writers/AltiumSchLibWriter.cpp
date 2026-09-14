@@ -1474,7 +1474,6 @@ void AltiumSchLibWriter::prepareImageStorageNames(const QList<AltiumSchComponent
             QString sourceName = image.fileName;
             sourceName.replace('\\', '/');
             const QString embeddedName = QFileInfo(sourceName).fileName();
-            const QByteArray encodedName = embeddedName.toLocal8Bit();
             if (image.data.isEmpty()) {
                 const QString diagnostic = QStringLiteral("组件 %1 图片 %2 的嵌入数据为空，已跳过 Storage")
                                                .arg(component.name)
@@ -1483,8 +1482,7 @@ void AltiumSchLibWriter::prepareImageStorageNames(const QList<AltiumSchComponent
                 qWarning() << "AltiumSchLibWriter:" << diagnostic;
                 continue;
             }
-            if (embeddedName.isEmpty() || embeddedName == QStringLiteral(".") || embeddedName == QStringLiteral("..") ||
-                embeddedName.contains('|') || embeddedName.contains(QChar::Null) || encodedName.size() > 255) {
+            if (!AltiumWriterUtils::isValidImageStorageName(embeddedName)) {
                 const QString diagnostic = QStringLiteral("组件 %1 图片 %2 的嵌入文件名无效: %3，已跳过 Storage")
                                                .arg(component.name)
                                                .arg(imageIndex)

@@ -13,6 +13,24 @@ namespace EasyKiConverter {
 namespace AltiumWriterUtils {
 
 /**
+ * @brief 校验嵌入图片在 SchLib Storage 中使用的文件名。
+ * @param name 不包含目录的文件名
+ * @return 文件名是否符合 Storage 和 Windows 文件名约束
+ */
+inline bool isValidImageStorageName(const QString& name) {
+    if (name.isEmpty() || name == QStringLiteral(".") || name == QStringLiteral("..") || name.size() > 255)
+        return false;
+    if (name.contains(QChar::Null) || name.contains(QChar('\n')) || name.contains(QChar('\r')) ||
+        name.contains(QChar('\t')))
+        return false;
+    for (const QChar ch : name) {
+        if (ch.unicode() < 0x20 || QStringLiteral("<>:\"/\\|?*").contains(ch))
+            return false;
+    }
+    return name.toLocal8Bit().size() <= 255;
+}
+
+/**
  * @brief 获取元件的 Section Key（OLE 存储键）
  * @param name 元件名称
  * @return 符合 CFB 31 字符限制的安全键名
