@@ -621,6 +621,21 @@ private slots:
         QByteArray imageStorage;
         QVERIFY(readCfbStream(schPath, QStringLiteral("Storage"), imageStorage));
         QVERIFY(imageStorage.contains("logo.png"));
+        const int imageNameOffset = imageStorage.indexOf("logo.png");
+        QVERIFY(imageNameOffset >= 2);
+        QCOMPARE(static_cast<uint8_t>(imageStorage.at(imageNameOffset - 2)), static_cast<uint8_t>(0xD0));
+        QCOMPARE(static_cast<uint8_t>(imageStorage.at(imageNameOffset - 1)), static_cast<uint8_t>(8));
+        const int imageLengthOffset = imageNameOffset + 8;
+        QVERIFY(imageLengthOffset + 4 <= imageStorage.size());
+        const quint32 compressedLength = readU32(imageStorage, imageLengthOffset);
+        const int imageDataOffset = imageLengthOffset + 4;
+        QVERIFY(compressedLength > 0);
+        QVERIFY(imageDataOffset + static_cast<int>(compressedLength) <= imageStorage.size());
+        QByteArray expectedSize(4, '\0');
+        expectedSize[3] = static_cast<char>(image.data.size());
+        const QByteArray restoredImage =
+            qUncompress(expectedSize + imageStorage.mid(imageDataOffset, compressedLength));
+        QCOMPARE(restoredImage, image.data);
         QVERIFY(schData.contains("Mirror=T"));
         QVERIFY(schData.contains("OWNERPARTID=1"));
         QVERIFY(schData.contains("PartCount=2"));
