@@ -4,6 +4,8 @@
 
 #include <QSet>
 
+#include <zlib.h>
+
 namespace EasyKiConverter {
 
 namespace {
@@ -41,6 +43,37 @@ bool readBinaryRecordMetadata(const QByteArray& payload, int* recordType, int* o
     *recordType = type;
     *ownerPartId = owner;
     return true;
+}
+
+constexpr qint64 kMaxImageDecompressedSize = 512LL * 1024LL * 1024LL;
+
+bool isValidZlibPayload(const QByteArray& compressedData) {
+    if (compressedData.isEmpty())
+        return false;
+
+    z_stream stream{};
+    if (inflateInit(&stream) != Z_OK)
+        return false;
+
+    stream.next_in = reinterpret_cast<Bytef*>(const_cast<char*>(compressedData.constData()));
+    stream.avail_in = static_cast<uInt>(compressedData.size());
+    QByteArray buffer(8192, Qt::Uninitialized);
+    qint64 decompressedSize = 0;
+    int result = Z_OK;
+    while (result == Z_OK) {
+        stream.next_out = reinterpret_cast<Bytef*>(buffer.data());
+        stream.avail_out = static_cast<uInt>(buffer.size());
+        result = inflate(&stream, Z_NO_FLUSH);
+        decompressedSize += buffer.size() - stream.avail_out;
+        if (decompressedSize > kMaxImageDecompressedSize) {
+            inflateEnd(&stream);
+            return false;
+        }
+    }
+
+    const bool valid = result == Z_STREAM_END && stream.avail_in == 0;
+    inflateEnd(&stream);
+    return valid;
 }
 
 }  // namespace
@@ -326,6 +359,12 @@ bool AltiumSchLibReader::readImageStorage(QVector<ImageStorageEntry>* entries) c
             compressedSize > static_cast<quint32>(entryReader.remaining()) ||
             !entryReader.readBytes(static_cast<int>(compressedSize), &compressedData) || entryReader.remaining() != 0) {
             m_errorMessage = QStringLiteral("SchLib 图片 Storage 条目内容无效");
+            entries->clear();
+            return false;
+        }
+
+        if (!isValidZlibPayload(compressedData)) {
+            m_errorMessage = QStringLiteral("SchLib 图片 Storage 压缩数据无效");
             entries->clear();
             return false;
         }

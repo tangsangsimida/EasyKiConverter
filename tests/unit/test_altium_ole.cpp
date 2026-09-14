@@ -1187,6 +1187,7 @@ private slots:
         QVERIFY(writer.writeStream(QStringLiteral("BROKEN"), QStringLiteral("Data"), malformedData));
         QByteArray malformedStorage;
         AltiumBinaryWriter storageWriter(malformedStorage);
+        const QByteArray validCompressedData = qCompress(QByteArrayLiteral("valid-image-data"), 9).mid(4);
         storageWriter.writeCStringParameterBlock({{QStringLiteral("HEADER"), QStringLiteral("Icon storage")},
                                                   {QStringLiteral("Weight"), QStringLiteral("2")}});
         for (int i = 0; i < 2; ++i) {
@@ -1194,8 +1195,8 @@ private slots:
             storageWriter.writeUInt8(0xD0);
             storageWriter.writeUInt8(5);
             storageWriter.writeBytes(QByteArrayLiteral("x.png"));
-            storageWriter.writeUInt32(1);
-            storageWriter.writeUInt8(0x78);
+            storageWriter.writeUInt32(static_cast<quint32>(validCompressedData.size()));
+            storageWriter.writeBytes(validCompressedData);
             storageWriter.endBlock();
         }
         QVERIFY(writer.writeStream(QStringLiteral("Storage"), malformedStorage));
@@ -1216,6 +1217,48 @@ private slots:
         QByteArray rawData;
         QVERIFY(reader.readComponentData(QStringLiteral("BROKEN"), &rawData));
         QCOMPARE(rawData, malformedData);
+    }
+
+    /**
+     * @brief 验证 SchLib 图片 Storage 的损坏压缩数据会被拒绝
+     */
+    void rejectsCorruptSchLibImageCompression() {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        OLECompoundWriter writer;
+        QVERIFY(writer.create());
+        QByteArray headerData;
+        AltiumBinaryWriter headerWriter(headerData);
+        headerWriter.writeCStringParameterBlock({{QStringLiteral("COMPCOUNT"), QStringLiteral("1")}});
+        headerWriter.writeInt32(1);
+        headerWriter.writeStringBlock(QStringLiteral("BROKEN"));
+        QVERIFY(writer.writeStream(QStringLiteral("FileHeader"), headerData));
+        QVERIFY(writer.addStorage(QStringLiteral("BROKEN")));
+        QVERIFY(writer.writeStream(QStringLiteral("BROKEN"), QStringLiteral("Data"), QByteArray()));
+
+        QByteArray storageData;
+        AltiumBinaryWriter storageWriter(storageData);
+        storageWriter.writeCStringParameterBlock({{QStringLiteral("HEADER"), QStringLiteral("Icon storage")},
+                                                  {QStringLiteral("Weight"), QStringLiteral("1")}});
+        storageWriter.beginBlock(1);
+        storageWriter.writeUInt8(0xD0);
+        storageWriter.writeUInt8(5);
+        storageWriter.writeBytes(QByteArrayLiteral("x.png"));
+        storageWriter.writeUInt32(1);
+        storageWriter.writeUInt8(0x78);
+        storageWriter.endBlock();
+        QVERIFY(writer.writeStream(QStringLiteral("Storage"), storageData));
+
+        const QString path = QDir(tempDir.path()).filePath(QStringLiteral("corrupt-image.SchLib"));
+        QVERIFY(writer.saveToFile(path));
+
+        AltiumSchLibReader reader;
+        QVERIFY2(reader.open(path), qPrintable(reader.errorString()));
+        QVector<AltiumSchLibReader::ImageStorageEntry> entries;
+        QVERIFY(!reader.readImageStorage(&entries));
+        QVERIFY(entries.isEmpty());
+        QVERIFY(reader.errorString().contains(QStringLiteral("压缩数据无效")));
     }
 
     /**

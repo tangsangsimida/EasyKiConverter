@@ -55,3 +55,9 @@ target_link_libraries(EasyKiConverterAltium
         EasyKiConverterModels
         EasyKiConverterIR
 )
+
+if(TARGET ZLIB::ZLIB)
+    target_link_libraries(EasyKiConverterAltium PUBLIC ZLIB::ZLIB)
+else()
+    target_link_libraries(EasyKiConverterAltium PUBLIC ${ZLIB_LIBRARY})
+endif()
