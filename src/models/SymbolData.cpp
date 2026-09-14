@@ -73,7 +73,7 @@ QStringList SymbolData::validationErrors() const {
     };
     const auto validateImage = [&](const SymbolImage& image, const QString& prefix, int index) {
         if (!isFinite(image.posX) || !isFinite(image.posY) || !isFinite(image.width) || !isFinite(image.height) ||
-            !isFinite(image.rotation) || image.width == 0.0 || image.height == 0.0)
+            !isFinite(image.rotation) || image.width <= 0.0 || image.height <= 0.0)
             addError(QString("%1Image %2 has invalid bounds or rotation").arg(prefix).arg(index));
         if (image.source.trimmed().isEmpty() && image.fileName.trimmed().isEmpty() && image.data.isEmpty())
             addError(QString("%1Image %2 has no resource").arg(prefix).arg(index));

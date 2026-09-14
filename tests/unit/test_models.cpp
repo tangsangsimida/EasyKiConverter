@@ -7,6 +7,7 @@
 #include "models/SymbolData.h"
 #include "models/SymbolDataSerializer.h"
 
+#include <QByteArray>
 #include <QFile>
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -86,13 +87,19 @@ private slots:
         symbol.addPath(path);
         SymbolText text;
         symbol.addText(text);
+        SymbolImage image;
+        image.width = -1.0;
+        image.height = 2.0;
+        image.data = QByteArrayLiteral("image-data");
+        symbol.addImage(image);
 
         const QStringList errors = symbol.validationErrors();
-        QVERIFY(errors.size() >= 3);
+        QVERIFY(errors.size() >= 4);
         QVERIFY(errors.contains(QStringLiteral("Rectangle 0 has a non-positive size")));
         QVERIFY(errors.contains(QStringLiteral("Rectangle 0 has a negative or non-finite corner radius")));
         QVERIFY(errors.contains(QStringLiteral("Path 0 has no commands")));
         QVERIFY(errors.contains(QStringLiteral("Text 0 is empty")));
+        QVERIFY(errors.contains(QStringLiteral("Image 0 has invalid bounds or rotation")));
         QCOMPARE(symbol.validate(), errors.first());
     }
 
@@ -107,10 +114,16 @@ private slots:
         part.unitNumber = 1;
         SymbolPath invalidPath;
         part.paths.append(invalidPath);
+        SymbolImage invalidImage;
+        invalidImage.width = 1.0;
+        invalidImage.height = -2.0;
+        invalidImage.data = QByteArrayLiteral("image-data");
+        part.images.append(invalidImage);
         symbol.addPart(part);
 
         const QStringList errors = symbol.validationErrors();
         QVERIFY(errors.contains(QStringLiteral("Part 0 Path 0 has no commands")));
+        QVERIFY(errors.contains(QStringLiteral("Part 0 Image 0 has invalid bounds or rotation")));
     }
 
     void testSymbolValidationChecksPinGeometry() {
