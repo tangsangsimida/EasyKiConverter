@@ -35,13 +35,21 @@ private slots:
         QCOMPARE(symbol->info().datasheet, QStringLiteral("https://example.test/datasheet.pdf"));
         QCOMPARE(symbol->bbox().width, 120.0);
         QCOMPARE(symbol->bbox().height, 80.0);
-        QCOMPARE(symbol->graphicOrder().size(), 3);
+        QCOMPARE(symbol->graphicOrder().size(), 4);
         QCOMPARE(symbol->graphicOrder().at(0).type, QStringLiteral("R"));
         QCOMPARE(symbol->graphicOrder().at(0).index, 0);
         QCOMPARE(symbol->graphicOrder().at(1).type, QStringLiteral("PT"));
         QCOMPARE(symbol->graphicOrder().at(1).index, 0);
-        QCOMPARE(symbol->graphicOrder().at(2).type, QStringLiteral("P"));
+        QCOMPARE(symbol->graphicOrder().at(2).type, QStringLiteral("T"));
         QCOMPARE(symbol->graphicOrder().at(2).index, 0);
+        QCOMPARE(symbol->graphicOrder().at(3).type, QStringLiteral("P"));
+        QCOMPARE(symbol->graphicOrder().at(3).index, 0);
+
+        QCOMPARE(symbol->texts().size(), 1);
+        QCOMPARE(symbol->texts().first().text, QStringLiteral("LABEL"));
+        QCOMPARE(symbol->texts().first().anchor, QStringLiteral("start"));
+        QCOMPARE(symbol->texts().first().font, QStringLiteral("Arial"));
+        QCOMPARE(symbol->texts().first().textSize, 7.0);
 
         QCOMPARE(symbol->rectangles().size(), 1);
         QCOMPARE(symbol->rectangles().first().width, 60.0);
@@ -60,10 +68,14 @@ private slots:
         QCOMPARE(symbolIr.paths.first().segments.first().type, IR::SymbolPathSegmentIR::Type::CubicBezier);
         QCOMPARE(symbolIr.paths.first().segments.last().type, IR::SymbolPathSegmentIR::Type::Line);
         QCOMPARE(symbolIr.paths.first().segments.first().end, QPointF(2.54, 0.0));
-        QCOMPARE(symbolIr.graphicOrder.size(), 3);
+        QCOMPARE(symbolIr.graphicOrder.size(), 4);
         QCOMPARE(symbolIr.graphicOrder.at(0).type, QStringLiteral("R"));
         QCOMPARE(symbolIr.graphicOrder.at(1).type, QStringLiteral("PT"));
-        QCOMPARE(symbolIr.graphicOrder.at(2).type, QStringLiteral("P"));
+        QCOMPARE(symbolIr.graphicOrder.at(2).type, QStringLiteral("T"));
+        QCOMPARE(symbolIr.graphicOrder.at(3).type, QStringLiteral("P"));
+        QCOMPARE(symbolIr.texts.size(), 1);
+        QCOMPARE(symbolIr.texts.first().text, QStringLiteral("LABEL"));
+        QCOMPARE(symbolIr.texts.first().anchor, QStringLiteral("start"));
 
         QCOMPARE(symbol->pins().size(), 1);
         const SymbolPin pin = symbol->pins().first();
@@ -94,6 +106,9 @@ private slots:
         QVERIFY(!symbolIr.rectangles.isEmpty());
         QVERIFY(!symbolIr.paths.isEmpty());
         QVERIFY(!symbolIr.pins.isEmpty());
+        QCOMPARE(symbolIr.texts.size(), 1);
+        QCOMPARE(symbolIr.texts.first().text, QStringLiteral("LABEL"));
+        QCOMPARE(symbolIr.texts.first().anchor, QStringLiteral("start"));
 
         QTemporaryDir tempDir;
         QVERIFY(tempDir.isValid());
@@ -110,6 +125,9 @@ private slots:
         QVERIFY(schLibData.contains("RECORD=10"));  // 圆角矩形
         QVERIFY(schLibData.contains("RECORD=5"));  // 路径中的三次 Bézier
         QVERIFY(schLibData.contains("RECORD=6"));  // 路径中的线段
+        QVERIFY(schLibData.contains("RECORD=4"));  // 普通文本
+        QVERIFY(schLibData.contains("Text=LABEL"));
+        QVERIFY(schLibData.contains("TextAnchor=start"));
         QVERIFY(schLibData.contains(QByteArray::fromHex("02000000")));  // 二进制引脚记录类型
         QVERIFY(schLibData.contains("IndexInSheet=1"));
         QVERIFY(schLibData.contains("IndexInSheet=2"));
