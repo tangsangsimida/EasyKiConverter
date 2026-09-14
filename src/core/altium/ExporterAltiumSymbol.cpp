@@ -360,6 +360,12 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
     }
     for (int i = 0; i < data.arcs.size(); ++i) {
         const IR::SymbolArcIR& sourceArc = data.arcs.at(i);
+        if (!isFinitePoint(sourceArc.startPoint) || !isFinitePoint(sourceArc.midPoint) ||
+            !isFinitePoint(sourceArc.endPoint) || !std::isfinite(sourceArc.strokeWidth) ||
+            sourceArc.strokeWidth < 0.0) {
+            m_diagnostics.append(QStringLiteral("符号 %1 圆弧图元 %2 的点列或线宽无效，已跳过").arg(data.name).arg(i));
+            continue;
+        }
         const double determinant = 2.0 * (sourceArc.startPoint.x() * (sourceArc.midPoint.y() - sourceArc.endPoint.y()) +
                                           sourceArc.midPoint.x() * (sourceArc.endPoint.y() - sourceArc.startPoint.y()) +
                                           sourceArc.endPoint.x() * (sourceArc.startPoint.y() - sourceArc.midPoint.y()));
@@ -528,8 +534,14 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
                                      .arg(b.controlPoints.size()));
         }
     }
-    for (const IR::SymbolIeeeIR& ieee : data.ieeeSymbols)
+    for (int i = 0; i < data.ieeeSymbols.size(); ++i) {
+        const IR::SymbolIeeeIR& ieee = data.ieeeSymbols.at(i);
+        if (!isFinitePoint(ieee.position)) {
+            m_diagnostics.append(QStringLiteral("符号 %1 IEEE 图形 %2 的位置无效，已跳过").arg(data.name).arg(i));
+            continue;
+        }
         component.ieeeSymbols.append(convertIeee(ieee));
+    }
     for (int i = 0; i < data.texts.size(); ++i) {
         const IR::SymbolTextIR& sourceText = data.texts.at(i);
         if (sourceText.text.trimmed().isEmpty() || !isFinitePoint(sourceText.position) ||

@@ -1408,6 +1408,22 @@ private slots:
         QVERIFY(invalidImageExporter.diagnostics().contains(
             QStringLiteral("符号 INVALID_IMAGE_DATA 图片图元 0 的边界、线宽或资源无效，已跳过")));
 
+        IR::SymbolComponentIR invalidArcSymbol;
+        invalidArcSymbol.name = QStringLiteral("INVALID_ARC_DATA");
+        IR::SymbolArcIR invalidArc;
+        invalidArc.startPoint = QPointF(std::numeric_limits<double>::quiet_NaN(), 0.0);
+        invalidArcSymbol.arcs.append(invalidArc);
+        IR::SymbolIeeeIR invalidIeee;
+        invalidIeee.position = QPointF(0.0, std::numeric_limits<double>::infinity());
+        invalidArcSymbol.ieeeSymbols.append(invalidIeee);
+        ExporterAltiumSymbol invalidArcExporter;
+        const QString invalidArcPath = QDir(tempDir.path()).filePath(QStringLiteral("invalid-arc-data.SchLib"));
+        QVERIFY(invalidArcExporter.exportSymbol(invalidArcSymbol, invalidArcPath));
+        QVERIFY(invalidArcExporter.diagnostics().contains(
+            QStringLiteral("符号 INVALID_ARC_DATA 圆弧图元 0 的点列或线宽无效，已跳过")));
+        QVERIFY(invalidArcExporter.diagnostics().contains(
+            QStringLiteral("符号 INVALID_ARC_DATA IEEE 图形 0 的位置无效，已跳过")));
+
         IR::SymbolComponentIR invalidPathSymbol;
         invalidPathSymbol.name = QStringLiteral("INVALID_PATH_SEGMENT");
         IR::SymbolPathIR invalidPath;
