@@ -5,6 +5,7 @@
 #include <QDebug>
 #include <QDir>
 #include <QFile>
+#include <QHash>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -29,6 +30,32 @@ struct BackupEntry {
 
 constexpr int kDefaultBackupRetentionDays = 3;
 constexpr int kDefaultMaxBackupSets = 3;
+
+QMutex g_tempDirectoryUsersMutex;
+QHash<QString, int> g_tempDirectoryUsers;
+
+void registerTempDirectoryUser(const QString& path) {
+    if (path.isEmpty())
+        return;
+    QMutexLocker locker(&g_tempDirectoryUsersMutex);
+    ++g_tempDirectoryUsers[path];
+}
+
+void unregisterTempDirectoryUser(const QString& path) {
+    if (path.isEmpty())
+        return;
+    QMutexLocker locker(&g_tempDirectoryUsersMutex);
+    auto it = g_tempDirectoryUsers.find(path);
+    if (it == g_tempDirectoryUsers.end())
+        return;
+    if (--it.value() <= 0)
+        g_tempDirectoryUsers.erase(it);
+}
+
+bool hasOtherTempDirectoryUsers(const QString& path) {
+    QMutexLocker locker(&g_tempDirectoryUsersMutex);
+    return g_tempDirectoryUsers.value(path, 0) > 1;
+}
 
 QString backupRootPath() {
     QString appDataPath = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
@@ -215,11 +242,18 @@ TempFileManager::~TempFileManager() {
         }
     }
     m_tempFiles.clear();
-    // 注意：不调用 cleanupEmptyTempDirectoryLocked()，因为其他 Stage 可能还在使用 .tmp 目录
+    unregisterTempDirectoryUser(m_registeredTempDirectory);
+    m_registeredTempDirectory.clear();
 }
 
 void TempFileManager::setOutputPath(const QString& outputPath) {
     QMutexLocker locker(&m_mutex);
+    const QString newTempDirectory = outputPath.isEmpty() ? QString() : QDir(outputPath).filePath(m_tempDirName);
+    if (newTempDirectory != m_registeredTempDirectory) {
+        unregisterTempDirectoryUser(m_registeredTempDirectory);
+        registerTempDirectoryUser(newTempDirectory);
+        m_registeredTempDirectory = newTempDirectory;
+    }
     m_outputPath = outputPath;
 }
 
@@ -694,6 +728,11 @@ bool TempFileManager::cleanupEmptyTempDirectoryLocked() const {
     QDir dir(tempDir);
     if (!dir.exists()) {
         return true;
+    }
+
+    // 多个导出阶段共享同一个 .tmp 根目录，不能由其中一个阶段提前删除。
+    if (hasOtherTempDirectoryUsers(tempDir)) {
+        return false;
     }
 
     const QFileInfoList entries =

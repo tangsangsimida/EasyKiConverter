@@ -1,10 +1,13 @@
+#include "core/altium/ExporterAltiumSymbol.h"
 #include "core/easyeda/EasyedaFootprintImporter.h"
 #include "core/easyeda/EasyedaSymbolImporter.h"
 #include "core/ir/SymbolDataConverter.h"
 #include "tests/common/TestPaths.hpp"
 
+#include <QFileInfo>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QTemporaryDir>
 #include <QTest>
 
 using namespace EasyKiConverter;
@@ -71,6 +74,35 @@ private slots:
         QCOMPARE(pin.settings.type, PinType::Input);
         QCOMPARE(pin.name.text, QStringLiteral("VCC"));
         QCOMPARE(pin.pinPath.path, QStringLiteral("M 10 20 h 20"));
+    }
+
+    /**
+     * @brief 验证真实 EasyEDA 源数据能够完整写出为 Altium SchLib
+     * @details 覆盖源 JSON、SymbolData、通用 IR 和 SchLib 导出之间的完整链路。
+     */
+    void testSymbolFixtureExportsThroughCompleteAltiumChain() {
+        QString error;
+        const QJsonObject fixture = loadFixtureObject(QStringLiteral("easyeda/symbol_basic.json"), &error);
+        QVERIFY2(error.isEmpty(), qPrintable(error));
+
+        EasyedaSymbolImporter importer;
+        const QSharedPointer<SymbolData> symbol = importer.importSymbolData(fixture);
+        QVERIFY(symbol);
+
+        const IR::SymbolComponentIR symbolIr = IR::toSymbolIR(*symbol);
+        QVERIFY(!symbolIr.name.isEmpty());
+        QVERIFY(!symbolIr.rectangles.isEmpty());
+        QVERIFY(!symbolIr.paths.isEmpty());
+        QVERIFY(!symbolIr.pins.isEmpty());
+
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+        const QString outputPath = QDir(tempDir.path()).filePath(QStringLiteral("fixture.SchLib"));
+        ExporterAltiumSymbol exporter;
+        QVERIFY(exporter.exportSymbolLibrary({symbolIr}, QStringLiteral("fixture"), outputPath, false, false));
+        QVERIFY(QFileInfo::exists(outputPath));
+        QVERIFY(QFileInfo(outputPath).size() > 0);
+        QVERIFY(exporter.diagnostics().isEmpty());
     }
 
     void testFootprintFixtureImportsMetadataAndGeometry() {

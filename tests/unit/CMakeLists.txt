@@ -444,6 +444,7 @@ target_link_libraries(test_easyeda_importer_fixtures PRIVATE
 )
 target_include_directories(test_easyeda_importer_fixtures PRIVATE
     ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}/src/core/altium
     ${CMAKE_SOURCE_DIR}
 )
 add_test(NAME test_easyeda_importer_fixtures COMMAND test_easyeda_importer_fixtures)
