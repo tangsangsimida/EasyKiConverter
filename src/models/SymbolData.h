@@ -7,6 +7,7 @@
 #include <QPointF>
 #include <QRectF>
 #include <QString>
+#include <QStringList>
 
 namespace EasyKiConverter {
 
@@ -36,6 +37,7 @@ struct SymbolInfo {
     QString datasheet;
     QString lcscId;
     QString jlcId;
+    QStringList aliases;
 
     // EasyEDA API 原始字段
     QString uuid;

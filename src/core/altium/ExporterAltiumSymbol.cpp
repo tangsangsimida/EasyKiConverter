@@ -194,6 +194,21 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
     component.designatorPrefix = data.designatorPrefix;
     component.partCount = data.partCount;
     component.sourceMetadata = data.sourceMetadata;
+    component.aliases = data.aliases;
+
+    for (const IR::SymbolParameterIR& parameter : data.parameters) {
+        AltiumSchParameter altiumParameter;
+        altiumParameter.name = parameter.name;
+        altiumParameter.value = parameter.value;
+        altiumParameter.locationX = AltiumCoord::mmToRaw(parameter.position.x());
+        altiumParameter.locationY = AltiumCoord::mmToRaw(parameter.position.y());
+        altiumParameter.isHidden = !parameter.visible;
+        altiumParameter.readOnly = parameter.readOnly;
+        altiumParameter.orientation = static_cast<int>(parameter.rotation / 90.0) % 4;
+        altiumParameter.ownerPartId = parameter.partIndex > 0 ? parameter.partIndex + 1 : -1;
+        altiumParameter.color = toAltiumColor(parameter.color);
+        component.parameters.append(altiumParameter);
+    }
 
     // 转换引脚
     for (const IR::SymbolPinIR& pin : data.pins) {
@@ -242,12 +257,20 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
     for (const IR::SymbolEllipseIR& e : data.ellipses)
         component.ellipses.append(convertEllipse(e));
 
-    // 添加封装链接
-    if (!data.footprintName.isEmpty()) {
+    // 添加封装链接，保留多个候选封装
+    QStringList footprintNames = data.footprintNames;
+    if (footprintNames.isEmpty() && !data.footprintName.isEmpty())
+        footprintNames.append(data.footprintName);
+    QSet<QString> uniqueFootprints;
+    for (const QString& footprintName : footprintNames) {
+        const QString normalizedName = footprintName.trimmed();
+        if (normalizedName.isEmpty() || uniqueFootprints.contains(normalizedName))
+            continue;
         AltiumSchComponent::Implementation impl;
-        impl.modelName = data.footprintName;
+        impl.modelName = normalizedName;
         impl.modelType = "PCBLIB";
         component.implementations.append(impl);
+        uniqueFootprints.insert(normalizedName);
     }
 
     // 坐标归一化：将符号中心移到原点
@@ -281,13 +304,24 @@ AltiumSchPin ExporterAltiumSymbol::convertPin(const IR::SymbolPinIR& pin) {
     altiumPin.color = toAltiumColor(QColor(Qt::black));
     // EasyEDA 的反相圆点位于引脚外侧，时钟标记贴近主体内侧。
     // 优先从 style 语义层获取，兼容旧 hasDot/hasClock 字段。
-    if (pin.style.inverted || pin.hasDot)
+    if (pin.style.inverted || pin.style.activeLow || pin.hasDot)
         altiumPin.symbolOuterEdge = 1;  // Dot
     if (pin.style.clock || pin.hasClock)
         altiumPin.symbolInnerEdge = 3;  // Clock
 
     // 处理更丰富的 PinDecoration 枚举
     switch (pin.style.decoration) {
+        case IR::PinDecoration::Dot:
+        case IR::PinDecoration::ActiveLow:
+            altiumPin.symbolOuterEdge = 1;
+            break;
+        case IR::PinDecoration::Clock:
+            altiumPin.symbolInnerEdge = 3;
+            break;
+        case IR::PinDecoration::InvertedClock:
+            altiumPin.symbolInnerEdge = 3;
+            altiumPin.symbolOuterEdge = 1;
+            break;
         case IR::PinDecoration::OpenCollector:
             altiumPin.symbolOuterEdge = 8;
             break;
@@ -496,9 +530,6 @@ AltiumSchEllipse ExporterAltiumSymbol::convertEllipse(const IR::SymbolEllipseIR&
  *          Altium Designer 中保持相对位置。
  */
 void ExporterAltiumSymbol::centerComponent(AltiumSchComponent& component) {
-    if (component.pins.isEmpty())
-        return;
-
     int minX = INT_MAX, minY = INT_MAX, maxX = INT_MIN, maxY = INT_MIN;
     auto include = [&](int x, int y) {
         minX = qMin(minX, x);
@@ -506,11 +537,21 @@ void ExporterAltiumSymbol::centerComponent(AltiumSchComponent& component) {
         maxX = qMax(maxX, x);
         maxY = qMax(maxY, y);
     };
-    for (const auto& pin : component.pins)
+    auto includeSchematicPoint = [&](const QPointF& point) {
+        include(static_cast<int>(std::lround(point.x() * 1000.0)), static_cast<int>(std::lround(point.y() * 1000.0)));
+    };
+    for (const auto& pin : component.pins) {
         include(pin.locationX, pin.locationY);
+        const QPointF connection = computePinConnectionPoint(pin);
+        include(static_cast<int>(connection.x()), static_cast<int>(connection.y()));
+    }
     for (const auto& rect : component.rectangles) {
         include(rect.locationX, rect.locationY);
         include(rect.cornerX, rect.cornerY);
+    }
+    for (const auto& line : component.lines) {
+        include(line.locationX, line.locationY);
+        include(line.cornerX, line.cornerY);
     }
     for (const auto& arc : component.arcs) {
         include(arc.centerX - arc.radius, arc.centerY - arc.radius);
@@ -520,6 +561,20 @@ void ExporterAltiumSymbol::centerComponent(AltiumSchComponent& component) {
         include(ellipse.centerX - ellipse.radiusX, ellipse.centerY - ellipse.radiusY);
         include(ellipse.centerX + ellipse.radiusX, ellipse.centerY + ellipse.radiusY);
     }
+    for (const auto& polygon : component.polygons)
+        for (const QPointF& point : polygon.vertices)
+            includeSchematicPoint(point);
+    for (const auto& polyline : component.polylines)
+        for (const QPointF& point : polyline.vertices)
+            includeSchematicPoint(point);
+    for (const auto& path : component.paths)
+        for (const QPointF& point : path.vertices)
+            includeSchematicPoint(point);
+    for (const auto& text : component.texts)
+        include(text.locationX, text.locationY);
+    for (const auto& parameter : component.parameters)
+        if (parameter.locationX != 0 || parameter.locationY != 0)
+            include(parameter.locationX, parameter.locationY);
     if (minX == INT_MAX)
         return;
 
@@ -545,6 +600,13 @@ void ExporterAltiumSymbol::centerComponent(AltiumSchComponent& component) {
         rect.locationY -= offsetY;
         rect.cornerX -= offsetX;
         rect.cornerY -= offsetY;
+    }
+    // 平移线段
+    for (auto& line : component.lines) {
+        line.locationX -= offsetX;
+        line.locationY -= offsetY;
+        line.cornerX -= offsetX;
+        line.cornerY -= offsetY;
     }
     // 平移弧线
     for (auto& arc : component.arcs) {
@@ -576,6 +638,10 @@ void ExporterAltiumSymbol::centerComponent(AltiumSchComponent& component) {
     for (auto& text : component.texts) {
         text.locationX -= offsetX;
         text.locationY -= offsetY;
+    }
+    for (auto& parameter : component.parameters) {
+        parameter.locationX -= offsetX;
+        parameter.locationY -= offsetY;
     }
 
     // 统一引脚与主体的法向锚点。Altium 的 Pin Name/Number 都以二进制

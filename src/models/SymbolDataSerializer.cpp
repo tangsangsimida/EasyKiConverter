@@ -224,6 +224,7 @@ QJsonObject SymbolDataSerializer::toJson(const SymbolInfo& info) {
     json["datasheet"] = info.datasheet;
     json["lcsc_id"] = info.lcscId;
     json["jlc_id"] = info.jlcId;
+    json["aliases"] = QJsonArray::fromStringList(info.aliases);
 
     // EasyEDA API 原始字段
     json["uuid"] = info.uuid;
@@ -271,6 +272,9 @@ bool SymbolDataSerializer::fromJson(SymbolInfo& info, const QJsonObject& json) {
     info.datasheet = json["datasheet"].toString();
     info.lcscId = json["lcsc_id"].toString();
     info.jlcId = json["jlc_id"].toString();
+    info.aliases.clear();
+    for (const QJsonValue& alias : json["aliases"].toArray())
+        info.aliases.append(alias.toString());
 
     // EasyEDA API 原始字段
     info.uuid = json["uuid"].toString();

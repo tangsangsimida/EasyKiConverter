@@ -6,6 +6,7 @@
 #include <QMap>
 #include <QPointF>
 #include <QString>
+#include <QStringList>
 
 namespace EasyKiConverter {
 
@@ -130,6 +131,23 @@ struct AltiumSchText {
 };
 
 /**
+ * @brief Altium 符号参数字段
+ * @details 参数使用 RECORD=41 写入 SchLib Data 流。
+ */
+struct AltiumSchParameter {
+    QString name;  ///< 参数名称
+    QString value;  ///< 参数值
+    int locationX = 0;  ///< 参数位置 X（原始单位）
+    int locationY = 0;  ///< 参数位置 Y（原始单位）
+    int fontId = 1;  ///< Altium 字体编号
+    uint32_t color = 0x000000;  ///< 颜色（0x00BBGGRR）
+    bool isHidden = true;  ///< 是否隐藏
+    bool readOnly = false;  ///< 是否只读
+    int orientation = 0;  ///< 0-3，表示 0°/90°/180°/270°
+    int ownerPartId = -1;  ///< 所属部件，-1 表示所有部件
+};
+
+/**
  * @brief Altium 符号元件
  * @details IR 与 SchLib 二进制协议之间的强类型边界，包含图元、引脚及实现关系。
  */
@@ -141,6 +159,10 @@ struct AltiumSchComponent {
 
     /** @brief 符号参数（如制造商、料号、Datasheet 和来源元数据） */
     QMap<QString, QString> sourceMetadata;
+    /** @brief 显式参数字段 */
+    QList<AltiumSchParameter> parameters;
+    /** @brief 符号别名 */
+    QStringList aliases;
 
     QList<AltiumSchPin> pins;
     QList<AltiumSchRectangle> rectangles;

@@ -491,6 +491,12 @@ private slots:
         symbol.partCount = 1;
         symbol.sourceMetadata.insert(QStringLiteral("manufacturer"), QStringLiteral("Example Corp"));
         symbol.sourceMetadata.insert(QStringLiteral("lcscId"), QStringLiteral("C2040"));
+        symbol.aliases = {QStringLiteral("C2040_ALIAS")};
+        AltiumSchParameter parameter;
+        parameter.name = QStringLiteral("Temperature Coefficient");
+        parameter.value = QStringLiteral("±50ppm/K");
+        parameter.readOnly = true;
+        symbol.parameters.append(parameter);
 
         AltiumSchPin pin;
         pin.name = QStringLiteral("A");
@@ -526,7 +532,7 @@ private slots:
         QByteArray schHeader;
         QVERIFY(readCfbStream(schPath, QStringLiteral("FileHeader"), schHeader));
         QVERIFY(schHeader.contains("COMPCOUNT=1"));
-        QVERIFY(schHeader.contains("WEIGHT=12"));
+        QVERIFY(schHeader.contains("WEIGHT=14"));
         QVERIFY(schHeader.contains("LIBREF0=C2040"));
         QVERIFY(schHeader.contains("PARTCOUNT0=2"));
         QVERIFY(schHeader.mid(4).startsWith("|HEADER="));
@@ -548,6 +554,12 @@ private slots:
         QVERIFY(schData.contains("NAME=Manufacturer"));
         QVERIFY(schData.contains("TEXT=Example Corp"));
         QVERIFY(schData.contains("NAME=LCSC Part"));
+        QVERIFY(schData.contains("NAME=Aliases"));
+        QVERIFY(schData.contains("Aliases=C2040_ALIAS"));
+        QVERIFY(schData.contains("C2040_ALIAS"));
+        QVERIFY(schData.contains("NAME=Temperature Coefficient"));
+        QVERIFY(schData.contains("IsHidden=T"));
+        QVERIFY(schData.contains("READONLYSTATE=1"));
 
         AltiumPcbComponent footprint;
         footprint.name = QStringLiteral("LQFN-56_L7.0-W7.0-P0.4-EP");

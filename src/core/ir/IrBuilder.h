@@ -40,9 +40,12 @@ inline SymbolComponentIR toSymbolIR(const SymbolData& data) {
     ir.name = data.info().name;
     ir.description = data.info().description;
     ir.designatorPrefix = data.info().prefix;
+    ir.aliases = data.info().aliases;
 
     // 封装关联
     ir.footprintName = data.info().package;
+    if (!ir.footprintName.isEmpty())
+        ir.footprintNames.append(ir.footprintName);
 
     // EasyEDA 特有字段 -> sourceMetadata
     if (!data.info().lcscId.isEmpty())

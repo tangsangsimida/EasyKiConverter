@@ -34,6 +34,18 @@ QSharedPointer<SymbolData> EasyedaSymbolImporter::importSymbolData(const QJsonOb
     info.updateTime = cadData["updateTime"].toVariant().toLongLong();
     info.updatedAt = cadData["updated_at"].toString();
 
+    // 兼容 API 返回的 aliases 数组或逗号分隔字符串。
+    const QJsonValue aliasesValue = cadData.value(QStringLiteral("aliases"));
+    if (aliasesValue.isArray()) {
+        for (const QJsonValue& alias : aliasesValue.toArray())
+            if (!alias.toString().trimmed().isEmpty())
+                info.aliases.append(alias.toString().trimmed());
+    } else if (aliasesValue.isString()) {
+        for (const QString& alias : aliasesValue.toString().split(',', Qt::SkipEmptyParts))
+            if (!alias.trimmed().isEmpty())
+                info.aliases.append(alias.trimmed());
+    }
+
     // 导入符号信息（从 dataStr.head.c_para 中获取）
     if (cadData.contains("dataStr")) {
         QJsonObject dataStr = cadData["dataStr"].toObject();
@@ -64,6 +76,9 @@ QSharedPointer<SymbolData> EasyedaSymbolImporter::importSymbolData(const QJsonOb
                 info.supplier = c_para["Supplier"].toString();
                 info.manufacturerPart = c_para["Manufacturer Part"].toString();
                 info.jlcpcbPartClass = c_para["JLCPCB Part Class"].toString();
+                const QString alias = c_para.value(QStringLiteral("Alias")).toString().trimmed();
+                if (!alias.isEmpty() && !info.aliases.contains(alias))
+                    info.aliases.append(alias);
             }
         }
 

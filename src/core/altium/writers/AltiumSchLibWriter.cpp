@@ -12,7 +12,20 @@ namespace EasyKiConverter {
 
 namespace {
 
-using ParameterField = QPair<QString, QString>;
+struct ParameterField {
+    QString name;
+    QString value;
+    int locationX = 0;
+    int locationY = 0;
+    int fontId = 1;
+    uint32_t color = 0x000000;
+    bool hasLocation = false;
+    bool hasVisibility = false;
+    bool isHidden = true;
+    bool readOnly = false;
+    int orientation = 0;
+    int ownerPartId = -1;
+};
 
 /**
  * @brief 将来源元数据转换为 Altium 可编辑的参数字段。
@@ -36,21 +49,49 @@ QList<ParameterField> componentParameterFields(const AltiumSchComponent& compone
 
     QList<ParameterField> fields;
     QSet<QString> names;
+    const auto appendField = [&](const QString& name,
+                                 const QString& value,
+                                 bool hasLocation = false,
+                                 int locationX = 0,
+                                 int locationY = 0,
+                                 bool hasVisibility = false,
+                                 bool isHidden = true,
+                                 bool readOnly = false,
+                                 int orientation = 0,
+                                 int ownerPartId = -1,
+                                 int fontId = 1,
+                                 uint32_t color = 0x000000) {
+        if (name.trimmed().isEmpty() || value.trimmed().isEmpty() || names.contains(name))
+            return;
+        ParameterField field;
+        field.name = name.trimmed();
+        field.value = value.trimmed();
+        field.hasLocation = hasLocation;
+        field.locationX = locationX;
+        field.locationY = locationY;
+        field.hasVisibility = hasVisibility;
+        field.isHidden = isHidden;
+        field.readOnly = readOnly;
+        field.orientation = orientation;
+        field.ownerPartId = ownerPartId;
+        field.fontId = fontId;
+        field.color = color;
+        fields.append(field);
+        names.insert(field.name);
+    };
 
     QString value = component.sourceMetadata.value(QStringLiteral("value")).trimmed();
     if (value.isEmpty())
         value = component.name.trimmed();
     if (!value.isEmpty()) {
-        fields.append({QStringLiteral("Comment"), value});
-        names.insert(QStringLiteral("Comment"));
+        appendField(QStringLiteral("Comment"), value);
     }
 
     QString description = component.sourceMetadata.value(QStringLiteral("description")).trimmed();
     if (description.isEmpty())
         description = component.description.trimmed();
     if (!description.isEmpty()) {
-        fields.append({QStringLiteral("Description"), description});
-        names.insert(QStringLiteral("Description"));
+        appendField(QStringLiteral("Description"), description);
     }
 
     for (auto it = component.sourceMetadata.constBegin(); it != component.sourceMetadata.constEnd(); ++it) {
@@ -59,11 +100,28 @@ QList<ParameterField> componentParameterFields(const AltiumSchComponent& compone
             continue;
 
         const QString name = knownNames.value(it.key(), it.key()).trimmed();
-        if (name.isEmpty() || names.contains(name))
-            continue;
+        appendField(name, value);
+    }
 
-        fields.append({name, value});
-        names.insert(name);
+    if (!component.aliases.isEmpty())
+        appendField(QStringLiteral("Aliases"), component.aliases.join(QStringLiteral(", ")));
+
+    for (const AltiumSchParameter& parameter : component.parameters) {
+        QString name = parameter.name.trimmed();
+        if (name.compare(QStringLiteral("Value"), Qt::CaseInsensitive) == 0)
+            name = QStringLiteral("Comment");
+        appendField(name,
+                    parameter.value,
+                    parameter.locationX != 0 || parameter.locationY != 0,
+                    parameter.locationX,
+                    parameter.locationY,
+                    true,
+                    parameter.isHidden,
+                    parameter.readOnly,
+                    parameter.orientation,
+                    parameter.ownerPartId,
+                    parameter.fontId,
+                    parameter.color);
     }
     return fields;
 }
@@ -371,6 +429,8 @@ void AltiumSchLibWriter::writeComponentRecord(AltiumBinaryWriter& writer, const 
     params["SheetPartFileName"] = "*";
     params["TargetFileName"] = "*";
     params["ALLPINCOUNT"] = QString::number(component.pins.size());
+    if (!component.aliases.isEmpty())
+        params["Aliases"] = component.aliases.join(",");
 
     addUniqueID(params);
     writer.writeCStringParameterBlockUtf8(params);
@@ -654,13 +714,25 @@ void AltiumSchLibWriter::writeComponentParameterRecords(AltiumBinaryWriter& writ
     for (const ParameterField& field : componentParameterFields(component)) {
         QMap<QString, QString> parameterParams;
         parameterParams["RECORD"] = "41";
-        parameterParams["OWNERPARTID"] = "-1";
-        parameterParams["LOCATION.X_FRAC"] = "-5";
-        parameterParams["LOCATION.Y_FRAC"] = "-15";
-        parameterParams["COLOR"] = "8388608";
-        parameterParams["FONTID"] = "1";
-        parameterParams["TEXT"] = field.second;
-        parameterParams["NAME"] = field.first;
+        parameterParams["OWNERPARTID"] = QString::number(field.ownerPartId);
+        if (field.hasLocation) {
+            addCoordParam(parameterParams, "LOCATION.X", field.locationX);
+            addCoordParam(parameterParams, "LOCATION.Y", field.locationY);
+        } else {
+            parameterParams["LOCATION.X_FRAC"] = "-5";
+            parameterParams["LOCATION.Y_FRAC"] = "-15";
+        }
+        if (field.color != 0)
+            parameterParams["COLOR"] = QString::number(field.color);
+        parameterParams["FONTID"] = QString::number(field.fontId);
+        parameterParams["TEXT"] = field.value;
+        parameterParams["NAME"] = field.name;
+        if (field.orientation != 0)
+            parameterParams["Orientation"] = QString::number(field.orientation);
+        if (field.hasVisibility && field.isHidden)
+            parameterParams["IsHidden"] = "T";
+        if (field.readOnly)
+            parameterParams["READONLYSTATE"] = "1";
         addUniqueID(parameterParams);
         writer.writeCStringParameterBlockUtf8(parameterParams);
     }

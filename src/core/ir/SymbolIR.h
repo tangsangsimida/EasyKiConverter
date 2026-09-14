@@ -18,6 +18,7 @@
 #include <QPointF>
 #include <QRectF>
 #include <QString>
+#include <QStringList>
 
 namespace EasyKiConverter {
 namespace IR {
@@ -221,6 +222,23 @@ struct SymbolTextIR {
 };
 
 /**
+ * @brief 符号参数字段
+ * @details 用于表达 Value、Datasheet 以及供应商自定义属性，参数名称和值
+ *          与图形数据分离，便于各导出器按目标格式映射。
+ */
+struct SymbolParameterIR {
+    QString name;  ///< 参数名称
+    QString value;  ///< 参数值
+    bool visible = false;  ///< 是否在符号图面显示
+    bool readOnly = false;  ///< 是否禁止在目标 EDA 中编辑
+    QPointF position;  ///< 参数位置（mm）
+    double fontSizeMm = 0.0;  ///< 字体大小（mm，0 表示默认）
+    QColor color = Qt::black;  ///< 参数颜色
+    double rotation = 0.0;  ///< 旋转角度（度）
+    int partIndex = 0;  ///< 所属部件索引
+};
+
+/**
  * @brief 通用符号组件
  *
  * 包含一个符号的所有图形原语和引脚。
@@ -244,9 +262,15 @@ struct SymbolComponentIR {
     QList<SymbolPolygonIR> polygons;
     QList<SymbolPathIR> paths;
     QList<SymbolTextIR> texts;
+    QList<SymbolParameterIR> parameters;
 
     /** @brief 封装关联名称 */
     QString footprintName;
+    /** @brief 多个候选封装名称（为空时使用 footprintName） */
+    QStringList footprintNames;
+
+    /** @brief 符号别名列表 */
+    QStringList aliases;
 
     /** @brief 来源平台特有元数据（如 LCSC ID、制造商等） */
     QMap<QString, QString> sourceMetadata;
@@ -278,7 +302,10 @@ struct SymbolComponentIR {
         polygons.clear();
         paths.clear();
         texts.clear();
+        parameters.clear();
         footprintName.clear();
+        footprintNames.clear();
+        aliases.clear();
         sourceMetadata.clear();
     }
 };
