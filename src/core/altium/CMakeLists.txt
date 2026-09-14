@@ -23,6 +23,8 @@ target_sources(EasyKiConverterAltium
         compound/OLECompoundWriter.cpp
 
         # 工具类
+        utils/AltiumBinaryReader.h
+        utils/AltiumBinaryReader.cpp
         utils/AltiumBinaryWriter.h
         utils/AltiumBinaryWriter.cpp
         utils/AltiumCoord.h

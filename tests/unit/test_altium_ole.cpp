@@ -15,6 +15,8 @@
 #include "core/altium/ExporterAltiumSymbol.h"
 #include "core/altium/compound/OLECompoundReader.h"
 #include "core/altium/compound/OLECompoundWriter.h"
+#include "core/altium/utils/AltiumBinaryReader.h"
+#include "core/altium/utils/AltiumBinaryWriter.h"
 #include "core/altium/utils/AltiumWriterUtils.h"
 #include "core/altium/writers/AltiumPcbLibWriter.h"
 #include "core/altium/writers/AltiumSchLibWriter.h"
@@ -1890,6 +1892,61 @@ private slots:
         QVERIFY(reader.hasError());
         QVERIFY(!reader.errorString().isEmpty());
         QVERIFY(reader.streamPaths().isEmpty());
+    }
+
+    /**
+     * @brief 验证 Altium 二进制读写器的基础块和 Unicode 参数往返。
+     */
+    void binaryReaderRoundTripsWriterFormats() {
+        QByteArray buffer;
+        AltiumBinaryWriter writer(buffer);
+        writer.writeInt16(-1234);
+        writer.writeUInt32(0xA1B2C3D4U);
+        writer.writeFloat(1.25F);
+        writer.writeDouble(-3.5);
+        writer.beginBlock(7);
+        writer.writeBytes(QByteArrayLiteral("payload"));
+        writer.endBlock();
+        writer.writePascalShortString(QStringLiteral("短文本"));
+        writer.writeStringBlock(QStringLiteral("string-block"));
+        writer.writePascalString(QStringLiteral("pascal-block"));
+        writer.writeCStringParameterBlockUtf8({{QStringLiteral("ASCII"), QStringLiteral("value")},
+                                               {QStringLiteral("DESCRIPTION"), QStringLiteral("参数值")}});
+
+        AltiumBinaryReader reader(buffer);
+        int16_t signedValue = 0;
+        uint32_t unsignedValue = 0;
+        float floatValue = 0.0F;
+        double doubleValue = 0.0;
+        QVERIFY(reader.readInt16(&signedValue));
+        QVERIFY(reader.readUInt32(&unsignedValue));
+        QVERIFY(reader.readFloat(&floatValue));
+        QVERIFY(reader.readDouble(&doubleValue));
+        QCOMPARE(signedValue, int16_t(-1234));
+        QCOMPARE(unsignedValue, uint32_t(0xA1B2C3D4U));
+        QCOMPARE(floatValue, 1.25F);
+        QCOMPARE(doubleValue, -3.5);
+
+        QByteArray payload;
+        uint8_t flags = 0;
+        QVERIFY(reader.readBlock(&payload, &flags));
+        QCOMPARE(flags, uint8_t(7));
+        QCOMPARE(payload, QByteArrayLiteral("payload"));
+
+        QString value;
+        QVERIFY(reader.readPascalShortString(&value));
+        QCOMPARE(value, QStringLiteral("???"));  // Writer 的 Pascal 短字符串使用 Latin-1。
+        QVERIFY(reader.readStringBlock(&value));
+        QCOMPARE(value, QStringLiteral("string-block"));
+        QVERIFY(reader.readPascalString(&value));
+        QCOMPARE(value, QStringLiteral("pascal-block"));
+
+        QMap<QString, QString> params;
+        QVERIFY(reader.readCStringParameterBlock(&params));
+        QCOMPARE(params.value(QStringLiteral("ASCII")), QStringLiteral("value"));
+        QCOMPARE(params.value(QStringLiteral("DESCRIPTION")), QStringLiteral("参数值"));
+        QCOMPARE(reader.remaining(), 0);
+        QVERIFY(!reader.hasError());
     }
 };
 
