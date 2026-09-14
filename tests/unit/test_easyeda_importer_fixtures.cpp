@@ -43,6 +43,13 @@ private slots:
         QVERIFY(symbolIr.rectangles.first().cornerRadiusX > 0.0);
         QVERIFY(symbolIr.rectangles.first().cornerRadiusY > 0.0);
         QCOMPARE(symbolIr.rectangles.first().strokeStyle, IR::StrokeStyle::Dashed);
+        QCOMPARE(symbol->paths().size(), 1);
+        QCOMPARE(symbol->paths().first().paths, QStringLiteral("M 0 0 C 0 10 10 10 10 0 L 20 0"));
+        QCOMPARE(symbolIr.paths.size(), 1);
+        QCOMPARE(symbolIr.paths.first().segments.size(), 2);
+        QCOMPARE(symbolIr.paths.first().segments.first().type, IR::SymbolPathSegmentIR::Type::CubicBezier);
+        QCOMPARE(symbolIr.paths.first().segments.last().type, IR::SymbolPathSegmentIR::Type::Line);
+        QCOMPARE(symbolIr.paths.first().segments.first().end, QPointF(2.54, 0.0));
 
         QCOMPARE(symbol->pins().size(), 1);
         const SymbolPin pin = symbol->pins().first();

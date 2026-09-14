@@ -229,6 +229,22 @@ inline SymbolComponentIR toSymbolIR(const SymbolData& data) {
             pathIR.points = GeometryNormalizer::parseSimpleSvgPath(path.paths);
             QPointF originMm(originX * EASYEDA_PX_TO_MM, originY * EASYEDA_PX_TO_MM);
             pathIR.points = GeometryNormalizer::transformPoints(pathIR.points, originMm);
+            const auto transformSegmentPoint = [&](const QPointF& point) {
+                return GeometryNormalizer::transformPoints({point * EASYEDA_PX_TO_MM}, originMm).value(0);
+            };
+            for (const SvgPathSegment& sourceSegment : SvgPathParser::parseSegments(path.paths)) {
+                SymbolPathSegmentIR segment;
+                segment.type = sourceSegment.type == SvgPathSegment::Type::CubicBezier
+                                   ? SymbolPathSegmentIR::Type::CubicBezier
+                                   : SymbolPathSegmentIR::Type::Line;
+                segment.start = transformSegmentPoint(sourceSegment.start);
+                segment.end = transformSegmentPoint(sourceSegment.end);
+                if (segment.type == SymbolPathSegmentIR::Type::CubicBezier) {
+                    segment.control1 = transformSegmentPoint(sourceSegment.control1);
+                    segment.control2 = transformSegmentPoint(sourceSegment.control2);
+                }
+                pathIR.segments.append(segment);
+            }
             // SVG Z 命令闭合路径
             if (path.paths.contains('Z', Qt::CaseInsensitive) && pathIR.points.size() >= 2) {
                 if (pathIR.points.first() != pathIR.points.last()) {

@@ -237,11 +237,26 @@ struct SymbolPolygonIR {
 };
 
 /**
+ * @brief 通用符号路径段
+ * @details 二次 Bézier 在进入 IR 前转换为三次 Bézier；暂不支持原生椭圆弧时由解析器提供折线段回退。
+ */
+struct SymbolPathSegmentIR {
+    enum class Type { Line, CubicBezier };
+
+    Type type = Type::Line;
+    QPointF start;
+    QPointF control1;
+    QPointF control2;
+    QPointF end;
+};
+
+/**
  * @brief 通用符号路径
- * @note 替代 SymbolPath::paths SVG 路径字符串，坐标已解析为点序列
+ * @note 同时保留点列兼容 KiCad 等导出器，并提供段列供支持原生曲线的导出器使用。
  */
 struct SymbolPathIR {
     QList<QPointF> points;  ///< 路径坐标序列（已解析，单位 mm）
+    QList<SymbolPathSegmentIR> segments;  ///< 原生直线/Bézier 段（已解析，单位 mm）
     QColor strokeColor = Qt::black;
     double strokeWidth = 0.0;
     StrokeStyle strokeStyle = StrokeStyle::Solid;

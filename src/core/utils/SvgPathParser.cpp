@@ -365,6 +365,223 @@ QList<QPointF> SvgPathParser::parsePath(const QString& path) {
     return points;
 }
 
+QList<SvgPathSegment> SvgPathParser::parseSegments(const QString& path) {
+    QList<SvgPathSegment> segments;
+    if (path.isEmpty())
+        return segments;
+
+    const QStringList tokens = splitPath(path);
+    QPointF current;
+    QPointF subpathStart;
+    QPointF lastCubicControl;
+    QPointF lastQuadraticControl;
+    QChar previousCommand;
+    bool hasCurrent = false;
+    bool hasSubpath = false;
+
+    auto isNumber = [&](int index) {
+        if (index >= tokens.size())
+            return false;
+        bool ok = false;
+        tokens.at(index).toDouble(&ok);
+        return ok;
+    };
+    auto readNumbers = [&](int& index, int count, QList<double>& values) {
+        if (index + count > tokens.size())
+            return false;
+        values.clear();
+        values.reserve(count);
+        for (int n = 0; n < count; ++n) {
+            bool ok = false;
+            const double value = tokens.at(index++).toDouble(&ok);
+            if (!ok)
+                return false;
+            values.append(value);
+        }
+        return true;
+    };
+    auto addLine = [&](const QPointF& end) {
+        if (!hasCurrent) {
+            current = end;
+            return;
+        }
+        if (current == end)
+            return;
+        SvgPathSegment segment;
+        segment.type = SvgPathSegment::Type::Line;
+        segment.start = current;
+        segment.end = end;
+        segments.append(segment);
+        current = end;
+    };
+    auto addCubic = [&](const QPointF& control1, const QPointF& control2, const QPointF& end) {
+        if (!hasCurrent)
+            return;
+        SvgPathSegment segment;
+        segment.type = SvgPathSegment::Type::CubicBezier;
+        segment.start = current;
+        segment.control1 = control1;
+        segment.control2 = control2;
+        segment.end = end;
+        segments.append(segment);
+        current = end;
+    };
+
+    int index = 0;
+    while (index < tokens.size()) {
+        const QString commandToken = tokens.at(index++);
+        if (commandToken.isEmpty() || commandToken.at(0).isDigit() || commandToken.at(0) == '.' ||
+            commandToken.at(0) == '+' || commandToken.at(0) == '-') {
+            continue;
+        }
+        const QChar command = commandToken.at(0).toUpper();
+        const bool relative = commandToken.at(0).isLower();
+
+        if (command == 'M') {
+            bool first = true;
+            while (isNumber(index) && isNumber(index + 1)) {
+                QList<double> values;
+                if (!readNumbers(index, 2, values))
+                    break;
+                QPointF point(values[0], values[1]);
+                if (relative && hasCurrent)
+                    point += current;
+                if (first) {
+                    current = point;
+                    subpathStart = point;
+                    hasCurrent = true;
+                    hasSubpath = true;
+                    first = false;
+                } else {
+                    addLine(point);
+                }
+            }
+            previousCommand = 'M';
+            continue;
+        }
+
+        if (command == 'Z') {
+            if (hasCurrent && hasSubpath)
+                addLine(subpathStart);
+            previousCommand = 'Z';
+            continue;
+        }
+
+        if (command == 'L') {
+            while (isNumber(index) && isNumber(index + 1)) {
+                QList<double> values;
+                if (!readNumbers(index, 2, values))
+                    break;
+                QPointF point(values[0], values[1]);
+                if (relative)
+                    point += current;
+                addLine(point);
+            }
+            previousCommand = 'L';
+            continue;
+        }
+
+        if (command == 'H' || command == 'V') {
+            while (isNumber(index)) {
+                QList<double> values;
+                if (!readNumbers(index, 1, values))
+                    break;
+                QPointF point = current;
+                if (command == 'H')
+                    point.setX(relative ? current.x() + values[0] : values[0]);
+                else
+                    point.setY(relative ? current.y() + values[0] : values[0]);
+                addLine(point);
+            }
+            previousCommand = command;
+            continue;
+        }
+
+        const int groupSize = command == 'A'                       ? 7
+                              : command == 'C'                     ? 6
+                              : (command == 'S' || command == 'Q') ? 4
+                              : command == 'T'                     ? 2
+                                                                   : 0;
+        if (groupSize == 0) {
+            qWarning() << "SVG: Unknown segment command:" << command;
+            continue;
+        }
+
+        while (isNumber(index)) {
+            QList<double> values;
+            if (!readNumbers(index, groupSize, values)) {
+                qWarning() << "SVG: Invalid segment parameters for command:" << command;
+                break;
+            }
+            if (!hasCurrent) {
+                qWarning() << "SVG: Segment command without origin point:" << command;
+                continue;
+            }
+            const QPointF start = current;
+            if (command == 'A') {
+                QPointF end(values[5], values[6]);
+                if (relative)
+                    end += start;
+                const QList<QPointF> arcPoints =
+                    parseArc(start, values[0], values[1], values[2], values[3] != 0, values[4] != 0, end);
+                for (const QPointF& point : arcPoints)
+                    addLine(point);
+            } else if (command == 'C' || command == 'S' || command == 'Q' || command == 'T') {
+                QPointF control1;
+                QPointF control2;
+                QPointF end;
+                if (command == 'C') {
+                    control1 = QPointF(values[0], values[1]);
+                    control2 = QPointF(values[2], values[3]);
+                    end = QPointF(values[4], values[5]);
+                    if (relative) {
+                        control1 += start;
+                        control2 += start;
+                        end += start;
+                    }
+                } else if (command == 'S') {
+                    control1 =
+                        (previousCommand == 'C' || previousCommand == 'S')
+                            ? QPointF(2.0 * start.x() - lastCubicControl.x(), 2.0 * start.y() - lastCubicControl.y())
+                            : start;
+                    control2 = QPointF(values[0], values[1]);
+                    end = QPointF(values[2], values[3]);
+                    if (relative) {
+                        control2 += start;
+                        end += start;
+                    }
+                } else {
+                    QPointF quadraticControl;
+                    if (command == 'Q') {
+                        quadraticControl = QPointF(values[0], values[1]);
+                        end = QPointF(values[2], values[3]);
+                        if (relative) {
+                            quadraticControl += start;
+                            end += start;
+                        }
+                    } else {
+                        quadraticControl = (previousCommand == 'Q' || previousCommand == 'T')
+                                               ? QPointF(2.0 * start.x() - lastQuadraticControl.x(),
+                                                         2.0 * start.y() - lastQuadraticControl.y())
+                                               : start;
+                        end = QPointF(values[0], values[1]);
+                        if (relative)
+                            end += start;
+                    }
+                    control1 = start + (quadraticControl - start) * (2.0 / 3.0);
+                    control2 = end + (quadraticControl - end) * (2.0 / 3.0);
+                    lastQuadraticControl = quadraticControl;
+                }
+                addCubic(control1, control2, end);
+                if (command == 'C' || command == 'S')
+                    lastCubicControl = control2;
+            }
+            previousCommand = command;
+        }
+    }
+    return segments;
+}
+
 QStringList SvgPathParser::splitPath(const QString& path) {
     // 将命令字母前后添加空格，然后按空格分
     QString processed = path;

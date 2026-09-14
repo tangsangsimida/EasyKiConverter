@@ -36,6 +36,7 @@
     },
     "shape": [
       "R~0~0~4~6~60~40~#000000~1~dashed~none~rect1~0",
+      "PT~M 0 0 C 0 10 10 10 10 0 L 20 0~#000000~1~solid~0~path1~0",
       "P~show~1~1~10~20~0~pin1~0^^10~20^^M 10 20 h 20~#000000^^show~14~20~0~VCC~start~Arial~7^^hide~0~0~~1^^unused^^hide~"
     ]
   }

@@ -278,8 +278,36 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
         component.polygons.append(convertPolygon(p));
     for (const IR::SymbolPolylineIR& p : data.polylines)
         component.polylines.append(convertPolyline(p));
-    for (const IR::SymbolPathIR& p : data.paths)
-        component.paths.append(convertPath(p));
+    for (const IR::SymbolPathIR& p : data.paths) {
+        // 非填充路径可直接拆分为 Altium 原生线段和 Bézier 记录，避免曲线被
+        // 强制膨胀为大量折线；填充路径仍使用闭合点列以保留填充语义。
+        if (!p.isFilled && !p.segments.isEmpty()) {
+            for (const IR::SymbolPathSegmentIR& segment : p.segments) {
+                if (segment.type == IR::SymbolPathSegmentIR::Type::Line) {
+                    AltiumSchPath path;
+                    path.lineWidth = AltiumCoord::lineWidthMmToIndex(p.strokeWidth);
+                    path.lineStyle = toAltiumLineStyle(p.strokeStyle);
+                    path.color = toAltiumColor(p.strokeColor);
+                    path.ownerPartId = toAltiumOwnerPartId(p.partIndex);
+                    path.vertices.append(QPointF(AltiumCoord::mmToSchematicUnits(segment.start.x()),
+                                                 AltiumCoord::mmToSchematicUnits(segment.start.y())));
+                    path.vertices.append(QPointF(AltiumCoord::mmToSchematicUnits(segment.end.x()),
+                                                 AltiumCoord::mmToSchematicUnits(segment.end.y())));
+                    component.paths.append(path);
+                } else {
+                    IR::SymbolBezierIR bezier;
+                    bezier.controlPoints = {segment.start, segment.control1, segment.control2, segment.end};
+                    bezier.strokeColor = p.strokeColor;
+                    bezier.strokeWidth = p.strokeWidth;
+                    bezier.strokeStyle = p.strokeStyle;
+                    bezier.partIndex = p.partIndex;
+                    component.beziers.append(convertBezier(bezier));
+                }
+            }
+        } else {
+            component.paths.append(convertPath(p));
+        }
+    }
     for (const IR::SymbolBezierIR& b : data.beziers) {
         if (b.controlPoints.size() == 4)
             component.beziers.append(convertBezier(b));
