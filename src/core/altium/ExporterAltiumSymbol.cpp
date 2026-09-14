@@ -553,8 +553,18 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
         }
         component.textFrames.append(convertTextFrame(frame));
     }
-    for (const IR::SymbolImageIR& image : data.images)
+    for (int i = 0; i < data.images.size(); ++i) {
+        const IR::SymbolImageIR& image = data.images.at(i);
+        const bool validBounds = std::isfinite(image.x0) && std::isfinite(image.y0) && std::isfinite(image.x1) &&
+                                 std::isfinite(image.y1) && image.x0 != image.x1 && image.y0 != image.y1;
+        const bool hasSource = !image.fileName.trimmed().isEmpty() || !image.data.isEmpty();
+        if (!validBounds || !hasSource || !std::isfinite(image.strokeWidth) || image.strokeWidth < 0.0) {
+            m_diagnostics.append(
+                QStringLiteral("符号 %1 图片图元 %2 的边界、线宽或资源无效，已跳过").arg(data.name).arg(i));
+            continue;
+        }
         component.images.append(convertImage(image));
+    }
     for (int i = 0; i < data.ellipses.size(); ++i) {
         const IR::SymbolEllipseIR& sourceEllipse = data.ellipses.at(i);
         if (!isFinitePoint(sourceEllipse.center) || !std::isfinite(sourceEllipse.radiusX) ||

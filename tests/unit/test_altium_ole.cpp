@@ -1396,6 +1396,18 @@ private slots:
         QVERIFY(invalidTextExporter.diagnostics().contains(
             QStringLiteral("符号 INVALID_TEXT_DATA 参数 Custom 的位置、旋转角度或名称无效，已跳过")));
 
+        IR::SymbolComponentIR invalidImageSymbol;
+        invalidImageSymbol.name = QStringLiteral("INVALID_IMAGE_DATA");
+        IR::SymbolImageIR invalidImage;
+        invalidImage.x1 = std::numeric_limits<double>::quiet_NaN();
+        invalidImage.fileName = QStringLiteral("image.png");
+        invalidImageSymbol.images.append(invalidImage);
+        ExporterAltiumSymbol invalidImageExporter;
+        const QString invalidImagePath = QDir(tempDir.path()).filePath(QStringLiteral("invalid-image-data.SchLib"));
+        QVERIFY(invalidImageExporter.exportSymbol(invalidImageSymbol, invalidImagePath));
+        QVERIFY(invalidImageExporter.diagnostics().contains(
+            QStringLiteral("符号 INVALID_IMAGE_DATA 图片图元 0 的边界、线宽或资源无效，已跳过")));
+
         IR::SymbolComponentIR invalidPathSymbol;
         invalidPathSymbol.name = QStringLiteral("INVALID_PATH_SEGMENT");
         IR::SymbolPathIR invalidPath;
