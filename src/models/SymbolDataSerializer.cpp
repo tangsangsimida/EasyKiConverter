@@ -333,6 +333,7 @@ QJsonObject SymbolDataSerializer::toJson(const SymbolPart& part) {
     json["unit_number"] = part.unitNumber;
     json["origin_x"] = part.originX;
     json["origin_y"] = part.originY;
+    json["common_to_all_parts"] = part.commonToAllParts;
 
     QJsonArray pinsArray;
     for (const SymbolPin& pin : part.pins) {
@@ -400,6 +401,7 @@ bool SymbolDataSerializer::fromJson(SymbolPart& part, const QJsonObject& json) {
     part.unitNumber = json["unit_number"].toInt(0);
     part.originX = json["origin_x"].toDouble(0.0);
     part.originY = json["origin_y"].toDouble(0.0);
+    part.commonToAllParts = json["common_to_all_parts"].toBool(false);
 
     if (json.contains("pins")) {
         QJsonArray pinsArray = json["pins"].toArray();

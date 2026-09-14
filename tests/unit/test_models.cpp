@@ -1,5 +1,6 @@
 #include "core/easyeda/EasyedaFootprintImporter.h"
 #include "core/ir/Model3DDataConverter.h"
+#include "core/ir/SymbolDataConverter.h"
 #include "core/kicad/Exporter3DModel.h"
 #include "models/FootprintData.h"
 #include "models/FootprintDataSerializer.h"
@@ -127,6 +128,51 @@ private slots:
         const QStringList errors = symbol.validationErrors();
         QVERIFY(errors.contains(QStringLiteral("Pin 0 has a non-finite position")));
         QVERIFY(!symbol.isValid());
+    }
+
+    void testCommonPartRoundTripAndIrMapping() {
+        SymbolData symbol;
+        SymbolInfo info;
+        info.name = QStringLiteral("COMMON_PART_SYMBOL");
+        symbol.setInfo(info);
+        symbol.setBbox(SymbolBBox{0.0, 0.0, 20.0, 20.0});
+
+        SymbolPart commonPart;
+        commonPart.unitNumber = 0;
+        commonPart.commonToAllParts = true;
+        SymbolPin commonPin;
+        commonPin.settings.spicePinNumber = QStringLiteral("VCC");
+        commonPin.settings.posX = 0.0;
+        commonPin.settings.posY = 0.0;
+        commonPart.pins.append(commonPin);
+        commonPart.graphicOrder.append({QStringLiteral("P"), 0});
+
+        SymbolPart visiblePart;
+        visiblePart.unitNumber = 1;
+        SymbolPin visiblePin;
+        visiblePin.settings.spicePinNumber = QStringLiteral("IN");
+        visiblePin.settings.posX = 10.0;
+        visiblePin.settings.posY = 0.0;
+        visiblePart.pins.append(visiblePin);
+        visiblePart.graphicOrder.append({QStringLiteral("P"), 0});
+
+        symbol.addPart(commonPart);
+        symbol.addPart(visiblePart);
+
+        SymbolData restored;
+        QVERIFY(restored.fromJson(symbol.toJson()));
+        QCOMPARE(restored.parts().size(), 2);
+        QVERIFY(restored.parts().first().commonToAllParts);
+
+        const IR::SymbolComponentIR ir = IR::toSymbolIR(restored);
+        QCOMPARE(ir.partCount, 1);
+        QCOMPARE(ir.pins.size(), 2);
+        QVERIFY(ir.pins.at(0).commonToAllParts);
+        QCOMPARE(ir.pins.at(0).partIndex, -1);
+        QVERIFY(!ir.pins.at(1).commonToAllParts);
+        QCOMPARE(ir.pins.at(1).partIndex, 0);
+        QCOMPARE(ir.graphicOrder.at(0).partIndex, -1);
+        QCOMPARE(ir.graphicOrder.at(1).partIndex, 0);
     }
 
     void testSymbolValidationChecksTextGeometry() {

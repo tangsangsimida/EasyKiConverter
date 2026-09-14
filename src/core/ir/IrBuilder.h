@@ -22,6 +22,7 @@
 
 #include <QRegularExpression>
 
+#include <algorithm>
 #include <cmath>
 #include <limits>
 
@@ -72,7 +73,11 @@ inline SymbolComponentIR toSymbolIR(const SymbolData& data) {
         ir.sourceMetadata["jlcpcbPartClass"] = data.info().jlcpcbPartClass;
 
     // 转换辅助 lambda：处理单个 part 的引脚
-    auto convertPins = [&](const QList<SymbolPin>& pins, double originX, double originY, int partIdx = 0) {
+    auto convertPins = [&](const QList<SymbolPin>& pins,
+                           double originX,
+                           double originY,
+                           int partIdx = 0,
+                           bool commonToAllParts = false) {
         for (const auto& pin : pins) {
             SymbolPinIR pir;
             pir.name = pin.name.text;
@@ -130,7 +135,8 @@ inline SymbolComponentIR toSymbolIR(const SymbolData& data) {
                 pir.style.decoration = PinDecoration::Clock;
             }
 
-            pir.partIndex = partIdx;
+            pir.partIndex = commonToAllParts ? -1 : partIdx;
+            pir.commonToAllParts = commonToAllParts;
             ir.pins.append(pir);
         }
     };
@@ -327,7 +333,10 @@ inline SymbolComponentIR toSymbolIR(const SymbolData& data) {
 
     // 处理单部件或多部件符号
     if (data.isMultiPart()) {
-        ir.partCount = data.parts().size();
+        ir.partCount = qMax(
+            1, static_cast<int>(std::count_if(data.parts().cbegin(), data.parts().cend(), [](const SymbolPart& part) {
+                return !part.commonToAllParts;
+            })));
         int partIdx = 0;
         for (const auto& part : data.parts()) {
             // 图形使用 part 的显式原点（通常为 0,0）
@@ -378,20 +387,23 @@ inline SymbolComponentIR toSymbolIR(const SymbolData& data) {
                     poy = minY;
             }
 
-            // 引脚使用几何边界框原点
-            convertPins(part.pins, pox, poy, partIdx);
+            const int irPartIndex = part.commonToAllParts ? -1 : partIdx;
+
+            // 引脚使用几何边界框原点；公共部件进入 Part Zero。
+            convertPins(part.pins, pox, poy, partIdx, part.commonToAllParts);
             // 图形使用 part 显式原点
-            convertRectangles(part.rectangles, gox, goy, partIdx);
-            convertCircles(part.circles, gox, goy, partIdx);
-            convertEllipses(part.ellipses, gox, goy, partIdx);
-            convertArcs(part.arcs, gox, goy, partIdx);
-            convertPolylines(part.polylines, gox, goy, partIdx);
-            convertPolygons(part.polygons, gox, goy, partIdx);
-            convertPaths(part.paths, gox, goy, partIdx);
-            convertTexts(part.texts, gox, goy, partIdx);
+            convertRectangles(part.rectangles, gox, goy, irPartIndex);
+            convertCircles(part.circles, gox, goy, irPartIndex);
+            convertEllipses(part.ellipses, gox, goy, irPartIndex);
+            convertArcs(part.arcs, gox, goy, irPartIndex);
+            convertPolylines(part.polylines, gox, goy, irPartIndex);
+            convertPolygons(part.polygons, gox, goy, irPartIndex);
+            convertPaths(part.paths, gox, goy, irPartIndex);
+            convertTexts(part.texts, gox, goy, irPartIndex);
             for (const SymbolGraphicOrder& order : part.graphicOrder)
-                ir.graphicOrder.append({order.type, order.index, partIdx});
-            ++partIdx;
+                ir.graphicOrder.append({order.type, order.index, irPartIndex});
+            if (!part.commonToAllParts)
+                ++partIdx;
         }
     } else {
         const SymbolBBox bbox = data.bbox();

@@ -142,6 +142,10 @@ QSharedPointer<SymbolData> EasyedaSymbolImporter::importSymbolData(const QJsonOb
 
                         SymbolPart part;
                         part.unitNumber = i;
+                        part.commonToAllParts = subpart.value(QStringLiteral("commonToAllParts")).toBool(false) ||
+                                                subpart.value(QStringLiteral("common_to_all_parts")).toBool(false) ||
+                                                subpart.value(QStringLiteral("isCommon")).toBool(false) ||
+                                                subpart.value(QStringLiteral("is_common")).toBool(false);
 
                         // 设置子部分的坐标原点（从 EasyEDA head 字段）
                         if (subpartDataStr.contains("head")) {

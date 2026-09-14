@@ -309,6 +309,7 @@ struct SymbolPart {
     int unitNumber = 0;  // 部分编号（从 0 开始）
     double originX = 0.0;  // 子部分的坐标原点 X（从 EasyEDA head.x）
     double originY = 0.0;  // 子部分的坐标原点 Y（从 EasyEDA head.y）
+    bool commonToAllParts = false;  // 是否为公共 Part Zero；序列化键为 common_to_all_parts
     QList<SymbolPin> pins;
     QList<SymbolRectangle> rectangles;
     QList<SymbolCircle> circles;
