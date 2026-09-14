@@ -220,7 +220,14 @@ private slots:
         QVERIFY(!symbol->parts().at(1).commonToAllParts);
         QVERIFY(!symbol->parts().at(2).commonToAllParts);
 
-        const IR::SymbolComponentIR symbolIr = IR::toSymbolIR(*symbol);
+        SymbolData restored;
+        QVERIFY(restored.fromJson(symbol->toJson()));
+        QCOMPARE(restored.parts().size(), 3);
+        QVERIFY(restored.parts().at(0).commonToAllParts);
+        QCOMPARE(restored.parts().at(1).graphicOrder.size(), 2);
+        QCOMPARE(restored.parts().at(2).graphicOrder.size(), 2);
+
+        const IR::SymbolComponentIR symbolIr = IR::toSymbolIR(restored);
         QCOMPARE(symbolIr.partCount, 2);
         QCOMPARE(symbolIr.pins.size(), 3);
         QCOMPARE(symbolIr.rectangles.size(), 3);
