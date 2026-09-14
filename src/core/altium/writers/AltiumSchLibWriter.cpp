@@ -900,7 +900,7 @@ bool AltiumSchLibWriter::validateGeometry(const AltiumSchComponent& component) {
 
 bool AltiumSchLibWriter::validatePartOwnership(const AltiumSchComponent& component) {
     const int partCount = qMax(1, component.partCount);
-    const auto isOutOfRange = [partCount](int ownerPartId) { return ownerPartId > partCount; };
+    const auto isOutOfRange = [partCount](int ownerPartId) { return ownerPartId < -1 || ownerPartId > partCount; };
     const auto reject = [this, &component](const QString& context, int ownerPartId) {
         m_diagnostics.append(QStringLiteral("Altium SchLib 组件 %1 的%2 OWNERPARTID=%3 超出部件范围，已拒绝写入")
                                  .arg(component.name, context)
