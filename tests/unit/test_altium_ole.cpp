@@ -660,6 +660,43 @@ private slots:
             if (record.recordType == 2 || record.recordType == 9)
                 QCOMPARE(record.ownerPartId, 1);
         }
+
+        AltiumPcbComponent invalidPcb;
+        invalidPcb.name = QStringLiteral("INVALID_PCB_FLOATS");
+        AltiumPcbPad invalidPad;
+        invalidPad.rotation = std::numeric_limits<double>::quiet_NaN();
+        invalidPad.holeRotation = std::numeric_limits<double>::infinity();
+        invalidPcb.pads.append(invalidPad);
+        AltiumPcbArc invalidPcbArc;
+        invalidPcbArc.startAngle = std::numeric_limits<double>::infinity();
+        invalidPcbArc.endAngle = std::numeric_limits<double>::quiet_NaN();
+        invalidPcb.arcs.append(invalidPcbArc);
+        AltiumPcbText invalidPcbText;
+        invalidPcbText.rotation = std::numeric_limits<double>::quiet_NaN();
+        invalidPcb.texts.append(invalidPcbText);
+        AltiumPcbFill invalidPcbFill;
+        invalidPcbFill.rotation = std::numeric_limits<double>::infinity();
+        invalidPcb.fills.append(invalidPcbFill);
+        AltiumPcbRegion invalidPcbRegion;
+        invalidPcbRegion.vertices.append(QPointF(std::numeric_limits<double>::quiet_NaN(), 0.0));
+        invalidPcb.regions.append(invalidPcbRegion);
+        AltiumPcbComponentBody invalidBody;
+        invalidBody.bodyOpacity3d = std::numeric_limits<double>::infinity();
+        invalidBody.model2dRotation = std::numeric_limits<double>::quiet_NaN();
+        invalidBody.outline.append(QPointF(0.0, std::numeric_limits<double>::quiet_NaN()));
+        invalidPcb.bodies.append(invalidBody);
+        AltiumPcbComponent::Model3D invalidModel;
+        invalidModel.name = QStringLiteral("invalid.step");
+        invalidModel.rotX = std::numeric_limits<double>::infinity();
+        invalidPcb.models.append(invalidModel);
+        AltiumPcbLibWriter pcbWriter;
+        const QString pcbOutputPath = QDir(tempDir.path()).filePath(QStringLiteral("invalid-floats.PcbLib"));
+        QVERIFY(pcbWriter.write({invalidPcb}, pcbOutputPath));
+        QVERIFY(pcbWriter.diagnostics().join('\n').contains(QStringLiteral("焊盘旋转角度无效")));
+        QVERIFY(pcbWriter.diagnostics().join('\n').contains(QStringLiteral("焊盘孔旋转角度无效")));
+        QVERIFY(pcbWriter.diagnostics().join('\n').contains(QStringLiteral("PCB 弧线起始角度无效")));
+        QVERIFY(pcbWriter.diagnostics().join('\n').contains(QStringLiteral("PCB 弧线结束角度无效")));
+        QVERIFY(pcbWriter.diagnostics().join('\n').contains(QStringLiteral("3D 元件体不透明度无效")));
     }
 
     /**

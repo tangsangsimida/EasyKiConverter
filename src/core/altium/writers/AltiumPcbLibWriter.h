@@ -28,6 +28,14 @@ public:
                const QString& filePath,
                const QString& libraryName = QString());
 
+    /**
+     * @brief 获取最近一次写入产生的非致命诊断
+     * @return 被修正的非有限浮点字段诊断列表
+     */
+    QStringList diagnostics() const {
+        return m_diagnostics;
+    }
+
 private:
     // ---- 文件级写入 ----
     void writeFileHeader(OLECompoundWriter& ole);
@@ -62,12 +70,14 @@ private:
     void writeUniqueIdPrimitiveInformation(QByteArray& buffer, const AltiumPcbComponent& component);
     void writeExtendedPrimitiveInformation(QByteArray& buffer, const AltiumPcbComponent& component);
     uint32_t toV7LayerId(uint8_t layer) const;
+    double normalizeFiniteValue(double value, double fallback, const QString& context);
     int countPrimitives(const AltiumPcbComponent& component) const;
     QString buildLibraryMetadata(const QString& filePath) const;
 
     // 广字符串管理
     int addWideString(const QString& text);
     QStringList m_wideStrings;
+    QStringList m_diagnostics;
 };
 
 }  // namespace EasyKiConverter

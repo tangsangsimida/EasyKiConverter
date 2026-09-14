@@ -11,6 +11,8 @@
 #include <QLocale>
 #include <QtEndian>
 
+#include <cmath>
+
 namespace EasyKiConverter {
 
 /**
@@ -41,12 +43,24 @@ uint32_t AltiumPcbLibWriter::toV7LayerId(uint8_t layer) const {
     return AltiumLayerMap::toV7LayerId(layer);
 }
 
+double AltiumPcbLibWriter::normalizeFiniteValue(double value, double fallback, const QString& context) {
+    if (std::isfinite(value))
+        return value;
+
+    const QString diagnostic =
+        QStringLiteral("Altium PcbLib %1无效，已规范化为 %2").arg(context).arg(fallback, 0, 'f', 6);
+    m_diagnostics.append(diagnostic);
+    qWarning() << "AltiumPcbLibWriter:" << diagnostic;
+    return fallback;
+}
+
 /**
  * @brief 写入 PcbLib 文件
  */
 bool AltiumPcbLibWriter::write(const QList<AltiumPcbComponent>& components,
                                const QString& filePath,
                                const QString& libraryName) {
+    m_diagnostics.clear();
     if (components.isEmpty()) {
         qWarning() << "AltiumPcbLibWriter: Refusing to write an empty library";
         return false;
@@ -333,10 +347,11 @@ void AltiumPcbLibWriter::writeModelsStorage(OLECompoundWriter& ole, const QList<
         const QString metadata =
             QString("EMBED=TRUE|MODELSOURCE=Undefined|ID=%1|ROTX=%2|ROTY=%3|ROTZ=%4|DZ=%5|CHECKSUM=0|NAME=%6")
                 .arg(id,
-                     QString::number(model.rotX, 'f', 6),
-                     QString::number(model.rotY, 'f', 6),
-                     QString::number(model.rotZ, 'f', 6),
-                     QString::number(AltiumCoord::mmToRaw(model.dz)),
+                     QString::number(normalizeFiniteValue(model.rotX, 0.0, QStringLiteral("3D 模型 X 旋转")), 'f', 6),
+                     QString::number(normalizeFiniteValue(model.rotY, 0.0, QStringLiteral("3D 模型 Y 旋转")), 'f', 6),
+                     QString::number(normalizeFiniteValue(model.rotZ, 0.0, QStringLiteral("3D 模型 Z 旋转")), 'f', 6),
+                     QString::number(
+                         AltiumCoord::mmToRaw(normalizeFiniteValue(model.dz, 0.0, QStringLiteral("3D 模型 Z 偏移")))),
                      model.name);
         QByteArray encoded = metadata.toLatin1();
         encoded.append('\0');
@@ -571,7 +586,7 @@ void AltiumPcbLibWriter::writePad(AltiumBinaryWriter& writer, const AltiumPcbPad
         writer.writeUInt8(pad.shapeBot);
 
         // 旋转 + 电镀
-        writer.writeDouble(pad.rotation);
+        writer.writeDouble(normalizeFiniteValue(pad.rotation, 0.0, QStringLiteral("焊盘旋转角度")));
         writer.writeUInt8(pad.isPlated ? 1 : 0);
 
         // 补齐主记录固定布局（61 字节之后的字段）
@@ -628,7 +643,7 @@ void AltiumPcbLibWriter::writePadExtendedBlock(AltiumBinaryWriter& writer, const
     // 孔元数据
     writer.writeUInt8(pad.holeType);
     writer.writeInt32(pad.holeSlotLengthRaw);
-    writer.writeDouble(pad.holeRotation);
+    writer.writeDouble(normalizeFiniteValue(pad.holeRotation, 0.0, QStringLiteral("焊盘孔旋转角度")));
 
     // 保留区域
     writer.writeBytes(QByteArray(32 * 4, 0));
@@ -690,8 +705,8 @@ void AltiumPcbLibWriter::writeArc(AltiumBinaryWriter& writer, const AltiumPcbArc
         writer.writeInt32(arc.centerX);
         writer.writeInt32(arc.centerY);
         writer.writeInt32(arc.radius);
-        writer.writeDouble(arc.startAngle);
-        writer.writeDouble(arc.endAngle);
+        writer.writeDouble(normalizeFiniteValue(arc.startAngle, 0.0, QStringLiteral("PCB 弧线起始角度")));
+        writer.writeDouble(normalizeFiniteValue(arc.endAngle, 360.0, QStringLiteral("PCB 弧线结束角度")));
         writer.writeInt32(arc.width);
     }
     writer.endBlock();
@@ -712,7 +727,7 @@ void AltiumPcbLibWriter::writeText(AltiumBinaryWriter& writer, const AltiumPcbTe
         writer.writeInt32(text.locationY);
         writer.writeInt32(text.height);
         writer.writeInt16(0);  // font ID
-        writer.writeDouble(text.rotation);
+        writer.writeDouble(normalizeFiniteValue(text.rotation, 0.0, QStringLiteral("PCB 文本旋转角度")));
         writer.writeUInt8(text.isMirrored ? 1 : 0);
         writer.writeInt32(text.strokeWidth);
         writer.writeUInt8(0);  // is comment
@@ -763,7 +778,7 @@ void AltiumPcbLibWriter::writeFill(AltiumBinaryWriter& writer, const AltiumPcbFi
         writer.writeInt32(fill.corner1Y);
         writer.writeInt32(fill.corner2X);
         writer.writeInt32(fill.corner2Y);
-        writer.writeDouble(fill.rotation);
+        writer.writeDouble(normalizeFiniteValue(fill.rotation, 0.0, QStringLiteral("PCB 填充旋转角度")));
         writer.writeInt32(0);  // solder mask expansion
         writer.writeUInt8(0);  // paste mask expansion
         writer.writeUInt32(toV7LayerId(fill.layer));
@@ -808,8 +823,8 @@ void AltiumPcbLibWriter::writeRegion(AltiumBinaryWriter& writer, const AltiumPcb
         // 轮廓顶点
         writer.writeUInt32(static_cast<uint32_t>(region.vertices.size()));
         for (const QPointF& v : region.vertices) {
-            writer.writeDouble(v.x());
-            writer.writeDouble(v.y());
+            writer.writeDouble(normalizeFiniteValue(v.x(), 0.0, QStringLiteral("PCB 区域 X 坐标")));
+            writer.writeDouble(normalizeFiniteValue(v.y(), 0.0, QStringLiteral("PCB 区域 Y 坐标")));
         }
     }
     writer.endBlock();
@@ -852,7 +867,8 @@ void AltiumPcbLibWriter::writeComponentBody(AltiumBinaryWriter& writer,
         params["STANDOFFHEIGHT"] = QString::number(body.standoffHeightRaw / 10000.0, 'f', 4) + "mil";
         params["OVERALLHEIGHT"] = QString::number(body.overallHeightRaw / 10000.0, 'f', 4) + "mil";
         params["BODYCOLOR3D"] = QString::number(body.bodyColor3d);
-        params["BODYOPACITY3D"] = QString::number(body.bodyOpacity3d, 'f', 3);
+        params["BODYOPACITY3D"] =
+            QString::number(normalizeFiniteValue(body.bodyOpacity3d, 1.0, QStringLiteral("3D 元件体不透明度")), 'f', 3);
         params["BODYPROJECTION"] = QString::number(body.bodyProjection);
         params["IDENTIFIER"] = "";
         params["TEXTURE"] = "";
@@ -867,10 +883,14 @@ void AltiumPcbLibWriter::writeComponentBody(AltiumBinaryWriter& writer,
         params["MODEL.NAME"] = body.modelName;
         params["MODEL.2D.X"] = QString::number(body.model2dRotX / 10000.0, 'f', 4) + "mil";
         params["MODEL.2D.Y"] = QString::number(body.model2dRotY / 10000.0, 'f', 4) + "mil";
-        params["MODEL.2D.ROTATION"] = QString::number(body.model2dRotation, 'f', 3);
-        params["MODEL.3D.ROTX"] = QString::number(body.model3dRotX, 'f', 3);
-        params["MODEL.3D.ROTY"] = QString::number(body.model3dRotY, 'f', 3);
-        params["MODEL.3D.ROTZ"] = QString::number(body.model3dRotZ, 'f', 3);
+        params["MODEL.2D.ROTATION"] = QString::number(
+            normalizeFiniteValue(body.model2dRotation, 0.0, QStringLiteral("3D 元件体二维旋转")), 'f', 3);
+        params["MODEL.3D.ROTX"] =
+            QString::number(normalizeFiniteValue(body.model3dRotX, 0.0, QStringLiteral("3D 元件体 X 旋转")), 'f', 3);
+        params["MODEL.3D.ROTY"] =
+            QString::number(normalizeFiniteValue(body.model3dRotY, 0.0, QStringLiteral("3D 元件体 Y 旋转")), 'f', 3);
+        params["MODEL.3D.ROTZ"] =
+            QString::number(normalizeFiniteValue(body.model3dRotZ, 0.0, QStringLiteral("3D 元件体 Z 旋转")), 'f', 3);
         params["MODEL.3D.DZ"] = QString::number(body.model3dDzRaw / 10000.0, 'f', 4) + "mil";
         params["MODEL.MODELTYPE"] = QString::number(body.modelType);
         params["MODEL.MODELSOURCE"] = body.modelSource;
@@ -879,8 +899,8 @@ void AltiumPcbLibWriter::writeComponentBody(AltiumBinaryWriter& writer,
         // 轮廓顶点
         writer.writeUInt32(static_cast<uint32_t>(body.outline.size()));
         for (const QPointF& v : body.outline) {
-            writer.writeDouble(v.x());
-            writer.writeDouble(v.y());
+            writer.writeDouble(normalizeFiniteValue(v.x(), 0.0, QStringLiteral("3D 元件体轮廓 X 坐标")));
+            writer.writeDouble(normalizeFiniteValue(v.y(), 0.0, QStringLiteral("3D 元件体轮廓 Y 坐标")));
         }
     }
     writer.endBlock();
