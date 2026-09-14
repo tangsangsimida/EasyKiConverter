@@ -1561,7 +1561,6 @@ int AltiumSchLibWriter::componentParameterRecordCount(const AltiumSchComponent& 
  * @details 首条内容记录的索引 0 由 Altium 隐含表示，因此不写出字段。
  */
 void AltiumSchLibWriter::addContentIndex(QMap<QString, QString>& params) {
-    params["ISNOTACCESIBLE"] = "T";
     if (m_nextIndexInSheet != 0)
         params["IndexInSheet"] = QString::number(m_nextIndexInSheet);
     ++m_nextIndexInSheet;
@@ -1573,6 +1572,7 @@ void AltiumSchLibWriter::addContentIndex(QMap<QString, QString>& params) {
  * @param ownerPartId 所属部件 ID
  */
 void AltiumSchLibWriter::addOwnerParams(QMap<QString, QString>& params, int ownerPartId) {
+    params["ISNOTACCESIBLE"] = "T";
     addContentIndex(params);
     // 当前每个符号只有一个显示模式；真实 SchLib 样本使用从 1 开始的显示模式编号。
     params["OWNERPARTDISPLAYMODE"] = "1";

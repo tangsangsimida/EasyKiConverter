@@ -1554,6 +1554,11 @@ private slots:
         QVERIFY(data.contains("OWNERPARTID=1"));
         QVERIFY(data.contains("RECORD=41"));
         QVERIFY(data.contains("IndexInSheet=2"));
+        const int parameterOffset = data.indexOf("RECORD=41");
+        const int nextRecordOffset = data.indexOf("|RECORD=", parameterOffset + 1);
+        QVERIFY(parameterOffset >= 0);
+        QVERIFY(nextRecordOffset > parameterOffset);
+        QVERIFY(!data.mid(parameterOffset, nextRecordOffset - parameterOffset).contains("ISNOTACCESIBLE"));
     }
 };
 
