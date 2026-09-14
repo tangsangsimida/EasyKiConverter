@@ -715,7 +715,11 @@ AltiumSchText ExporterAltiumSymbol::convertText(const IR::SymbolTextIR& text) {
     altiumText.locationX = AltiumCoord::mmToRaw(text.position.x());
     altiumText.locationY = AltiumCoord::mmToRaw(text.position.y());
     altiumText.text = text.text;
-    altiumText.fontId = 1;
+    altiumText.fontId = 0;
+    altiumText.fontName = text.fontFamily;
+    altiumText.fontSizeMm = text.fontSizeMm;
+    altiumText.bold = text.bold;
+    altiumText.italic = text.italic;
     altiumText.color = toAltiumColor(text.color);
     altiumText.isHidden = !text.visible;
     altiumText.orientation = static_cast<int>(text.rotation / 90.0) % 4;

@@ -559,6 +559,16 @@ private slots:
         textFrame.fontId = 1;
         textFrame.showBorder = true;
         symbol.textFrames.append(textFrame);
+        AltiumSchText styledText;
+        styledText.locationX = 1500000;
+        styledText.locationY = 700000;
+        styledText.text = QStringLiteral("Styled label");
+        styledText.fontId = 0;
+        styledText.fontName = QStringLiteral("Arial");
+        styledText.fontSizeMm = 25.4 / 72.0 * 8.0;
+        styledText.bold = true;
+        styledText.italic = true;
+        symbol.texts.append(styledText);
         AltiumSchImage image;
         image.locationX = 1700000;
         image.locationY = 100000;
@@ -588,10 +598,14 @@ private slots:
         QByteArray schHeader;
         QVERIFY(readCfbStream(schPath, QStringLiteral("FileHeader"), schHeader));
         QVERIFY(schHeader.contains("COMPCOUNT=1"));
-        QVERIFY(schHeader.contains("WEIGHT=25"));
+        QVERIFY(schHeader.contains("WEIGHT=26"));
         QVERIFY(schHeader.contains("LIBREF0=C2040"));
         QVERIFY(schHeader.contains("PARTCOUNT0=2"));
         QVERIFY(schHeader.mid(4).startsWith("|HEADER="));
+        QVERIFY(schHeader.contains("FontName2=Arial"));
+        QVERIFY(schHeader.contains("Size2=8"));
+        QVERIFY(schHeader.contains("Bold2=T"));
+        QVERIFY(schHeader.contains("Italic2=T"));
 
         QByteArray schData;
         QVERIFY(readCfbStream(schPath, QStringLiteral("C2040/Data"), schData));
@@ -616,6 +630,9 @@ private slots:
         QVERIFY(schData.contains("SecondaryRadius=1"));
         QVERIFY(schData.contains("RECORD=28"));
         QVERIFY(schData.contains(QStringLiteral("第二行").toUtf8()));
+        QVERIFY(schData.contains("FontID=2"));
+        QVERIFY(schData.contains("FontSize=2.8222"));
+        QVERIFY(schData.contains("Styled label"));
         QVERIFY(schData.contains("RECORD=30"));
         QVERIFY(schData.contains("EmbedImage=T"));
         QVERIFY(schData.contains("FileName=logo.png"));

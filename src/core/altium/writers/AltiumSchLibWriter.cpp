@@ -160,6 +160,23 @@ int AltiumSchLibWriter::getOrAddFont(const QString& fontName, int fontSize, bool
 }
 
 /**
+ * @brief 预注册符号文本使用的字体。
+ * @details FileHeader 在 Data 流之前写入，因此所有动态字体必须提前加入字体表。
+ */
+void AltiumSchLibWriter::registerTextFonts(const QList<AltiumSchComponent>& components) {
+    constexpr double MILLIMETERS_PER_POINT = 25.4 / 72.0;
+    for (const AltiumSchComponent& component : components) {
+        for (const AltiumSchText& text : component.texts) {
+            if (text.fontName.isEmpty() && text.fontId > 0 && text.fontSizeMm <= 0.0)
+                continue;
+            const QString fontName = text.fontName.isEmpty() ? QStringLiteral("Times New Roman") : text.fontName;
+            const int fontSize = text.fontSizeMm > 0.0 ? qMax(1, qRound(text.fontSizeMm / MILLIMETERS_PER_POINT)) : 10;
+            getOrAddFont(fontName, fontSize, text.bold, text.italic);
+        }
+    }
+}
+
+/**
  * @brief 添加坐标参数（DXP 单位 + 小数部分）
  */
 void AltiumSchLibWriter::addCoordParam(QMap<QString, QString>& params, const QString& key, int raw) {
@@ -208,6 +225,7 @@ bool AltiumSchLibWriter::write(const QList<AltiumSchComponent>& components,
 
     // 确保有默认字体
     getOrAddFont("Times New Roman", 10);
+    registerTextFonts(components);
 
     OLECompoundWriter ole;
     if (!ole.create()) {
@@ -830,7 +848,14 @@ void AltiumSchLibWriter::writeTextRecord(AltiumBinaryWriter& writer, const Altiu
     if (text.orientation != 0)
         params["Orientation"] = QString::number(text.orientation);
     addColorParam(params, "Color", text.color);
-    params["FontID"] = QString::number(text.fontId);
+    int fontId = text.fontId;
+    if (!text.fontName.isEmpty() || fontId <= 0) {
+        constexpr double MILLIMETERS_PER_POINT = 25.4 / 72.0;
+        const QString fontName = text.fontName.isEmpty() ? QStringLiteral("Times New Roman") : text.fontName;
+        const int fontSize = text.fontSizeMm > 0.0 ? qMax(1, qRound(text.fontSizeMm / MILLIMETERS_PER_POINT)) : 10;
+        fontId = getOrAddFont(fontName, fontSize, text.bold, text.italic);
+    }
+    params["FontID"] = QString::number(fontId);
     params["Text"] = text.text;
     if (text.isHidden || !text.isDisplayed)
         params["IsHidden"] = "T";
