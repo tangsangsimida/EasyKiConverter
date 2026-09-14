@@ -103,6 +103,16 @@ private slots:
         QVERIFY(QFileInfo::exists(outputPath));
         QVERIFY(QFileInfo(outputPath).size() > 0);
         QVERIFY(exporter.diagnostics().isEmpty());
+
+        QFile outputFile(outputPath);
+        QVERIFY(outputFile.open(QIODevice::ReadOnly));
+        const QByteArray schLibData = outputFile.readAll();
+        QVERIFY(schLibData.contains("RECORD=10"));  // 圆角矩形
+        QVERIFY(schLibData.contains("RECORD=5"));  // 路径中的三次 Bézier
+        QVERIFY(schLibData.contains("RECORD=6"));  // 路径中的线段
+        QVERIFY(schLibData.contains(QByteArray::fromHex("02000000")));  // 二进制引脚记录类型
+        QVERIFY(schLibData.contains("IndexInSheet=1"));
+        QVERIFY(schLibData.contains("IndexInSheet=2"));
     }
 
     void testFootprintFixtureImportsMetadataAndGeometry() {
