@@ -1085,6 +1085,25 @@ private slots:
         QVERIFY(diagnosticWriter.diagnostics().contains(
             QStringLiteral("组件 IMAGE_DIAGNOSTICS 图片 1 的嵌入文件名无效: bad|name.png，已跳过 Storage")));
 
+        IR::SymbolComponentIR nativeArcSymbol;
+        nativeArcSymbol.name = QStringLiteral("NATIVE_ARC");
+        IR::SymbolPathIR nativeArcPath;
+        nativeArcPath.strokeWidth = 0.1;
+        IR::SymbolPathSegmentIR nativeArcSegment;
+        nativeArcSegment.type = IR::SymbolPathSegmentIR::Type::CircularArc;
+        nativeArcSegment.start = QPointF(0.0, 0.0);
+        nativeArcSegment.arcMid = QPointF(1.0, 1.0);
+        nativeArcSegment.end = QPointF(2.0, 0.0);
+        nativeArcPath.segments.append(nativeArcSegment);
+        nativeArcSymbol.paths.append(nativeArcPath);
+        const QString nativeArcPathFile = QDir(tempDir.path()).filePath(QStringLiteral("native-arc.SchLib"));
+        ExporterAltiumSymbol nativeArcExporter;
+        QVERIFY(nativeArcExporter.exportSymbolLibrary(
+            {nativeArcSymbol}, QStringLiteral("native-arc"), nativeArcPathFile, false, false));
+        QByteArray nativeArcData;
+        QVERIFY(readCfbStream(nativeArcPathFile, QStringLiteral("NATIVE_ARC/Data"), nativeArcData));
+        QVERIFY(nativeArcData.contains("RECORD=12"));
+
         IR::FootprintComponentIR footprint;
         footprint.name = QStringLiteral("SEGMENTS");
         IR::FootprintTrackIR polyline;

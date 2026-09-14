@@ -124,6 +124,23 @@ private slots:
         QCOMPARE(segments.at(3).end, QPointF(0, 0));
     }
 
+    void preservesCircularArcSegmentsAndFallsBackForEllipses() {
+        const QList<SvgPathSegment> circular =
+            SvgPathParser::parseSegments(QStringLiteral("M 0 0 A 10 10 0 0 1 10 10"));
+        QCOMPARE(circular.size(), 1);
+        QCOMPARE(circular.first().type, SvgPathSegment::Type::CircularArc);
+        QCOMPARE(circular.first().start, QPointF(0, 0));
+        QCOMPARE(circular.first().end, QPointF(10, 10));
+        QVERIFY(circular.first().arcMid.x() > 6.0);
+        QVERIFY(circular.first().arcMid.y() < 5.0);
+
+        const QList<SvgPathSegment> elliptical =
+            SvgPathParser::parseSegments(QStringLiteral("M 0 0 A 10 5 0 0 1 10 10"));
+        QVERIFY(elliptical.size() > 2);
+        for (const SvgPathSegment& segment : elliptical)
+            QCOMPARE(segment.type, SvgPathSegment::Type::Line);
+    }
+
     void invalidOrEmptyPathsReturnNoPoints() {
         QVERIFY(SvgPathParser::parsePath(QString()).isEmpty());
         QVERIFY(SvgPathParser::parsePath(QStringLiteral("Q 1 2")).isEmpty());

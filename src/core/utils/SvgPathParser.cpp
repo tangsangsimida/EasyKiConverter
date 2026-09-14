@@ -524,8 +524,20 @@ QList<SvgPathSegment> SvgPathParser::parseSegments(const QString& path) {
                     end += start;
                 const QList<QPointF> arcPoints =
                     parseArc(start, values[0], values[1], values[2], values[3] != 0, values[4] != 0, end);
-                for (const QPointF& point : arcPoints)
-                    addLine(point);
+                const bool isCircular = values[0] > 0.0 && qFuzzyCompare(values[0], values[1]) &&
+                                        qFuzzyIsNull(std::sin(values[2] * PI / 180.0));
+                if (isCircular && arcPoints.size() >= 3 && start != end) {
+                    SvgPathSegment segment;
+                    segment.type = SvgPathSegment::Type::CircularArc;
+                    segment.start = start;
+                    segment.arcMid = arcPoints.at(arcPoints.size() / 2);
+                    segment.end = end;
+                    segments.append(segment);
+                    current = end;
+                } else {
+                    for (const QPointF& point : arcPoints)
+                        addLine(point);
+                }
             } else if (command == 'C' || command == 'S' || command == 'Q' || command == 'T') {
                 QPointF control1;
                 QPointF control2;

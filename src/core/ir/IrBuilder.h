@@ -234,14 +234,19 @@ inline SymbolComponentIR toSymbolIR(const SymbolData& data) {
             };
             for (const SvgPathSegment& sourceSegment : SvgPathParser::parseSegments(path.paths)) {
                 SymbolPathSegmentIR segment;
-                segment.type = sourceSegment.type == SvgPathSegment::Type::CubicBezier
-                                   ? SymbolPathSegmentIR::Type::CubicBezier
-                                   : SymbolPathSegmentIR::Type::Line;
+                if (sourceSegment.type == SvgPathSegment::Type::CubicBezier)
+                    segment.type = SymbolPathSegmentIR::Type::CubicBezier;
+                else if (sourceSegment.type == SvgPathSegment::Type::CircularArc)
+                    segment.type = SymbolPathSegmentIR::Type::CircularArc;
+                else
+                    segment.type = SymbolPathSegmentIR::Type::Line;
                 segment.start = transformSegmentPoint(sourceSegment.start);
                 segment.end = transformSegmentPoint(sourceSegment.end);
                 if (segment.type == SymbolPathSegmentIR::Type::CubicBezier) {
                     segment.control1 = transformSegmentPoint(sourceSegment.control1);
                     segment.control2 = transformSegmentPoint(sourceSegment.control2);
+                } else if (segment.type == SymbolPathSegmentIR::Type::CircularArc) {
+                    segment.arcMid = transformSegmentPoint(sourceSegment.arcMid);
                 }
                 pathIR.segments.append(segment);
             }

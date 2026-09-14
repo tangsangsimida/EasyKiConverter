@@ -296,7 +296,7 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
                     path.vertices.append(QPointF(AltiumCoord::mmToSchematicUnits(segment.end.x()),
                                                  AltiumCoord::mmToSchematicUnits(segment.end.y())));
                     component.paths.append(path);
-                } else {
+                } else if (segment.type == IR::SymbolPathSegmentIR::Type::CubicBezier) {
                     IR::SymbolBezierIR bezier;
                     bezier.controlPoints = {segment.start, segment.control1, segment.control2, segment.end};
                     bezier.strokeColor = p.strokeColor;
@@ -304,6 +304,16 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
                     bezier.strokeStyle = p.strokeStyle;
                     bezier.partIndex = p.partIndex;
                     component.beziers.append(convertBezier(bezier));
+                } else {
+                    IR::SymbolArcIR arc;
+                    arc.startPoint = segment.start;
+                    arc.midPoint = segment.arcMid;
+                    arc.endPoint = segment.end;
+                    arc.strokeColor = p.strokeColor;
+                    arc.strokeWidth = p.strokeWidth;
+                    arc.strokeStyle = p.strokeStyle;
+                    arc.partIndex = p.partIndex;
+                    component.arcs.append(convertArc(arc));
                 }
             }
         } else {

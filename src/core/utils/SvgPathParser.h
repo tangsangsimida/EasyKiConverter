@@ -9,16 +9,17 @@ namespace EasyKiConverter {
 
 /**
  * @brief SVG 路径中的可导出几何段
- * @details 二次 Bézier 会在解析时转换为三次 Bézier；圆弧暂时展开为直线段，
- *          以便不改变现有填充和闭合路径的兼容行为。
+ * @details 二次 Bézier 会在解析时转换为三次 Bézier；圆形、未旋转的圆弧保留为
+ *          原生圆弧段，其余椭圆弧仍展开为直线段以保持兼容性。
  */
 struct SvgPathSegment {
-    enum class Type { Line, CubicBezier };
+    enum class Type { Line, CubicBezier, CircularArc };
 
     Type type = Type::Line;
     QPointF start;
     QPointF control1;
     QPointF control2;
+    QPointF arcMid;
     QPointF end;
 };
 
