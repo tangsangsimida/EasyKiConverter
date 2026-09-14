@@ -13,7 +13,7 @@
 - 参数控制：参数值、名称、显示/隐藏、只读、位置、旋转角度、字体编号和所属部件。
 - 文本字体：普通文本支持字体族、字号、粗体和斜体，并在 SchLib `FileHeader` 中动态登记字体表；旋转角度按最近的 90° 方向归一化为 Altium `Orientation=0..3`。
 - 多部件符号：图形、文本、参数和引脚按 `partIndex` 写入对应部件。
-- 公共图元：`SymbolPart::commonToAllParts` 会在缓存序列化和 `IrBuilder` 阶段保留，转换为 IR 的负 `partIndex`；最终写入 Altium Part Zero（`OWNERPARTID=-1`）。公共部件中的引脚会设置 `SymbolPinIR::commonToAllParts`，其名称、编号文字也会继承该归属。文本图元同时写出 `OWNERPARTDISPLAYMODE=0`，与当前单显示模式的引脚记录保持一致。
+- 公共图元：`SymbolPart::commonToAllParts` 会在缓存序列化和 `IrBuilder` 阶段保留，转换为 IR 的负 `partIndex`；最终写入 Altium Part Zero（`OWNERPARTID=-1`）。公共部件中的引脚会设置 `SymbolPinIR::commonToAllParts`，其名称、编号文字也会继承该归属。文本图元同时写出 `OWNERPARTDISPLAYMODE=1`，与当前单显示模式的引脚记录保持一致。
 - `IndexInSheet`：图元、二进制引脚和归属于具体部件的用户参数共享组件内从 `0` 开始的内容记录计数；首条内容记录隐含索引 `0`，后续文本记录和用户参数写出 `IndexInSheet`。二进制引脚虽然没有文本字段，但会推进同一计数器；组件记录、Designator、公共参数和实现记录不占用该计数。
 - 多候选封装：每个封装生成一个 SchLib implementation，并自动去重。
 - 通用模型关联：支持通过 IR 或来源元数据写入 SPICE、SIM、STEP、VRML 等模型类型、数据文件实体、参数和引脚映射。
