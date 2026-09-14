@@ -324,7 +324,7 @@ if (!isOverwritten && !isOrphanedSubSymbol)
 
 当前已进一步增加 `AltiumSchLibReader`，可解析 SchLib 的 FileHeader、SectionKeys、组件名称及组件 Data 流映射，并校验目录中声明的组件是否实际存在。组件 Data 现在还可以按长度块拆分为记录，并保留 flags、payload 及完整编码；对 C 字符串参数记录额外提供结构化参数映射，以便检查 `RECORD`、`OWNERPARTID` 和 `IndexInSheet` 等字段。未知或二进制记录仍保持原始形式，以便后续合并时无损转发。它仍是只读的库级读取能力，尚未解释全部业务字段和提供写回逻辑。
 
-同时已增加 `AltiumPcbLibReader`，可解析 PcbLib 的 FileHeader、Library/Data、SectionKeys 和封装 Storage 映射，并提供封装 Header、Parameters、WideStrings、Data 等流的读取入口。PcbLib 的 Data 流由对象 ID 和对象类型专属子记录组成，不能直接复用 SchLib 的长度块拆分策略。读取器现在可以安全扫描项目已知对象类型并保留对象及其子块的完整编码，同时校验 Pad/Text 的字符串子块格式；遇到未知对象 ID 或损坏子块时会失败并要求调用方回退到原始流。两种库的读取器都只做结构校验和原始流访问，尚未承担增量写回。
+同时已增加 `AltiumPcbLibReader`，可解析 PcbLib 的 FileHeader、Library/Data、SectionKeys 和封装 Storage 映射，并提供封装 Header、Parameters、WideStrings、Data 等流的读取入口。PcbLib 的 Data 流由对象 ID 和对象类型专属子记录组成，不能直接复用 SchLib 的长度块拆分策略。读取器现在可以安全扫描项目已知对象类型并保留对象及其子块的完整编码，同时校验 Pad/Text 的字符串子块格式和图元主块的 13 字节公共头部，并提供 Layer、Flags 字段。遇到未知对象 ID、损坏子块或缺少公共头部时会失败并要求调用方回退到原始流。两种库的读取器都只做结构校验和原始流访问，尚未承担增量写回。
 
 ## 相关文档
 

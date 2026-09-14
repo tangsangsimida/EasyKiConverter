@@ -34,6 +34,8 @@ public:
      */
     struct PrimitiveRecord {
         quint8 objectId = 0;
+        quint8 layer = 0;  ///< 图元公共头部中的层编号
+        quint16 primitiveFlags = 0;  ///< 图元公共头部中的标志位
         QVector<PrimitiveBlock> blocks;
         QByteArray encoded;
     };

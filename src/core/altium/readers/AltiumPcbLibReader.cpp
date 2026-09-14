@@ -32,6 +32,15 @@ bool isStringBlockPayload(const QByteArray& payload) {
     return reader.readUInt8(&stringSize) && reader.readBytes(stringSize, &stringData) && reader.remaining() == 0;
 }
 
+bool readCommonPrimitiveHeader(const QByteArray& payload, quint8* layer, quint16* flags) {
+    if (layer == nullptr || flags == nullptr)
+        return false;
+
+    AltiumBinaryReader reader(payload);
+    QByteArray objectIndexes;
+    return reader.readUInt8(layer) && reader.readUInt16(flags) && reader.readBytes(10, &objectIndexes);
+}
+
 }  // namespace
 
 bool AltiumPcbLibReader::fail(const QString& message) {
@@ -194,6 +203,12 @@ bool AltiumPcbLibReader::readFootprintObjects(int componentIndexValue, QVector<P
             const bool isPadStringBlock = objectId == AltiumConstants::PCB_OBJECT_PAD && blockIndex < 3;
             const bool isTextStringBlock = objectId == AltiumConstants::PCB_OBJECT_TEXT && blockIndex == 1;
             if ((isPadStringBlock || isTextStringBlock) && !isStringBlockPayload(payload)) {
+                objects->clear();
+                return false;
+            }
+            const bool isMainBlock = (objectId == AltiumConstants::PCB_OBJECT_PAD && blockIndex == 4) ||
+                                     (objectId != AltiumConstants::PCB_OBJECT_PAD && blockIndex == 0);
+            if (isMainBlock && !readCommonPrimitiveHeader(payload, &object.layer, &object.primitiveFlags)) {
                 objects->clear();
                 return false;
             }

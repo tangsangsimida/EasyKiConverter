@@ -901,8 +901,12 @@ private slots:
         QVERIFY(pcbLibraryReader.readFootprintObjects(0, &footprintObjects));
         QCOMPARE(footprintObjects.size(), 2);
         QCOMPARE(footprintObjects.at(0).objectId, quint8(AltiumConstants::PCB_OBJECT_PAD));
+        QCOMPARE(footprintObjects.at(0).layer, quint8(1));
+        QVERIFY(footprintObjects.at(0).primitiveFlags != 0);
         QCOMPARE(footprintObjects.at(0).blocks.size(), 6);
         QCOMPARE(footprintObjects.at(1).objectId, quint8(AltiumConstants::PCB_OBJECT_TRACK));
+        QCOMPARE(footprintObjects.at(1).layer, quint8(33));
+        QCOMPARE(footprintObjects.at(1).primitiveFlags, quint16(0x0C));
         QCOMPARE(footprintObjects.at(1).blocks.size(), 1);
         QByteArray reconstructedFootprintObjects;
         for (const auto& object : footprintObjects)
@@ -1012,8 +1016,12 @@ private slots:
         QVERIFY(pcbReader.readFootprintObjects(QStringLiteral("TEST_PAD"), &objects));
         QCOMPARE(objects.size(), 2);
         QCOMPARE(objects.at(0).objectId, quint8(AltiumConstants::PCB_OBJECT_PAD));
+        QCOMPARE(objects.at(0).layer, quint8(74));
+        QCOMPARE(objects.at(0).primitiveFlags, quint16(0x0C));
         QCOMPARE(objects.at(0).blocks.size(), 6);
         QCOMPARE(objects.at(1).objectId, quint8(AltiumConstants::PCB_OBJECT_TEXT));
+        QCOMPARE(objects.at(1).layer, quint8(33));
+        QCOMPARE(objects.at(1).primitiveFlags, quint16(0x08));
         QCOMPARE(objects.at(1).blocks.size(), 2);
         QVERIFY(objects.at(1).blocks.at(1).payload.startsWith(char(5)));
 
