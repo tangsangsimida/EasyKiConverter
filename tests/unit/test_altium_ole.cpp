@@ -1354,6 +1354,25 @@ private slots:
         QVERIFY(invalidGeometryExporter.diagnostics().contains(
             QStringLiteral("符号 INVALID_GEOMETRY 圆弧图元 0 三点退化，已使用安全回退圆心")));
 
+        IR::SymbolComponentIR invalidArcGeometrySymbol;
+        invalidArcGeometrySymbol.name = QStringLiteral("INVALID_ARC_GEOMETRY");
+        IR::SymbolPieIR invalidPie;
+        invalidPie.radius = -1.0;
+        invalidPie.startAngle = std::numeric_limits<double>::quiet_NaN();
+        invalidArcGeometrySymbol.pies.append(invalidPie);
+        IR::SymbolEllipticalArcIR invalidEllipticalArc;
+        invalidEllipticalArc.radiusX = 0.0;
+        invalidEllipticalArc.radiusY = 1.0;
+        invalidArcGeometrySymbol.ellipticalArcs.append(invalidEllipticalArc);
+        ExporterAltiumSymbol invalidArcGeometryExporter;
+        const QString invalidArcGeometryPath =
+            QDir(tempDir.path()).filePath(QStringLiteral("invalid-arc-geometry.SchLib"));
+        QVERIFY(invalidArcGeometryExporter.exportSymbol(invalidArcGeometrySymbol, invalidArcGeometryPath));
+        QVERIFY(invalidArcGeometryExporter.diagnostics().contains(
+            QStringLiteral("符号 INVALID_ARC_GEOMETRY 扇形图元 0 的几何参数无效，已跳过")));
+        QVERIFY(invalidArcGeometryExporter.diagnostics().contains(
+            QStringLiteral("符号 INVALID_ARC_GEOMETRY 椭圆弧图元 0 的几何参数无效，已跳过")));
+
         IR::SymbolComponentIR invalidPathSymbol;
         invalidPathSymbol.name = QStringLiteral("INVALID_PATH_SEGMENT");
         IR::SymbolPathIR invalidPath;

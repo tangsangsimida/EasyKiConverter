@@ -517,16 +517,37 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
     for (const IR::SymbolImageIR& image : data.images)
         component.images.append(convertImage(image));
     for (int i = 0; i < data.ellipses.size(); ++i) {
-        AltiumSchEllipse ellipse = convertEllipse(data.ellipses.at(i));
+        const IR::SymbolEllipseIR& sourceEllipse = data.ellipses.at(i);
+        if (!isFinitePoint(sourceEllipse.center) || !std::isfinite(sourceEllipse.radiusX) ||
+            !std::isfinite(sourceEllipse.radiusY) || sourceEllipse.radiusX <= 0.0 || sourceEllipse.radiusY <= 0.0) {
+            m_diagnostics.append(QStringLiteral("符号 %1 椭圆图元 %2 的几何参数无效，已跳过").arg(data.name).arg(i));
+            continue;
+        }
+        AltiumSchEllipse ellipse = convertEllipse(sourceEllipse);
         ellipse.sourceGraphicType = QStringLiteral("E");
-        ellipse.sourceGraphicIndex = sourceIndexForPart(data.ellipses, i, data.ellipses.at(i).partIndex);
-        ellipse.sourcePartIndex = data.ellipses.at(i).partIndex;
+        ellipse.sourceGraphicIndex = sourceIndexForPart(data.ellipses, i, sourceEllipse.partIndex);
+        ellipse.sourcePartIndex = sourceEllipse.partIndex;
         component.ellipses.append(ellipse);
     }
-    for (const IR::SymbolPieIR& p : data.pies)
-        component.pies.append(convertPie(p));
-    for (const IR::SymbolEllipticalArcIR& a : data.ellipticalArcs)
-        component.ellipticalArcs.append(convertEllipticalArc(a));
+    for (int i = 0; i < data.pies.size(); ++i) {
+        const IR::SymbolPieIR& sourcePie = data.pies.at(i);
+        if (!isFinitePoint(sourcePie.center) || !std::isfinite(sourcePie.radius) || sourcePie.radius <= 0.0 ||
+            !std::isfinite(sourcePie.startAngle) || !std::isfinite(sourcePie.endAngle)) {
+            m_diagnostics.append(QStringLiteral("符号 %1 扇形图元 %2 的几何参数无效，已跳过").arg(data.name).arg(i));
+            continue;
+        }
+        component.pies.append(convertPie(sourcePie));
+    }
+    for (int i = 0; i < data.ellipticalArcs.size(); ++i) {
+        const IR::SymbolEllipticalArcIR& sourceArc = data.ellipticalArcs.at(i);
+        if (!isFinitePoint(sourceArc.center) || !std::isfinite(sourceArc.radiusX) ||
+            !std::isfinite(sourceArc.radiusY) || sourceArc.radiusX <= 0.0 || sourceArc.radiusY <= 0.0 ||
+            !std::isfinite(sourceArc.startAngle) || !std::isfinite(sourceArc.endAngle)) {
+            m_diagnostics.append(QStringLiteral("符号 %1 椭圆弧图元 %2 的几何参数无效，已跳过").arg(data.name).arg(i));
+            continue;
+        }
+        component.ellipticalArcs.append(convertEllipticalArc(sourceArc));
+    }
 
     // 添加封装链接，保留多个候选封装
     QStringList footprintNames = data.footprintNames;
