@@ -851,7 +851,7 @@ private slots:
         AltiumSchText styledText;
         styledText.locationX = 1500000;
         styledText.locationY = 700000;
-        styledText.text = QStringLiteral("Styled label");
+        styledText.text = QStringLiteral("标签 α");
         styledText.fontId = 0;
         styledText.fontName = QStringLiteral("Arial");
         styledText.fontSizeMm = 25.4 / 72.0 * 8.0;
@@ -957,7 +957,7 @@ private slots:
         QVERIFY(fallbackRecord.contains("FontID=1"));
         QVERIFY(schData.contains("FontSize=2.8222"));
         QVERIFY(schData.contains("TextAnchor=start"));
-        QVERIFY(schData.contains("Styled label"));
+        QVERIFY(schData.contains(QStringLiteral("标签 α").toUtf8()));
         QVERIFY(schData.contains("RECORD=30"));
         QVERIFY(schData.contains("EmbedImage=T"));
         QVERIFY(schData.contains("FileName=logo.png"));
@@ -992,6 +992,7 @@ private slots:
                  qPrintable(imageReader.errorString()));
         bool foundUnicodeImplementation = false;
         bool foundUnicodeImplementationParameters = false;
+        bool foundUnicodeText = false;
         for (const AltiumSchLibReader::Record& record : implementationRecords) {
             if (record.recordType == 45 &&
                 record.parameters.value(QStringLiteral("MODELNAME")) == QStringLiteral("模型-高精度")) {
@@ -1001,9 +1002,12 @@ private slots:
                 record.parameters.value(QStringLiteral("热模型")) == QStringLiteral("高精度")) {
                 foundUnicodeImplementationParameters = true;
             }
+            if (record.recordType == 4 && record.parameters.value(QStringLiteral("Text")) == QStringLiteral("标签 α"))
+                foundUnicodeText = true;
         }
         QVERIFY(foundUnicodeImplementation);
         QVERIFY(foundUnicodeImplementationParameters);
+        QVERIFY(foundUnicodeText);
         QVERIFY(schData.contains("Mirror=T"));
         QVERIFY(schData.contains("OWNERPARTID=1"));
         QVERIFY(schData.contains("PartCount=2"));
