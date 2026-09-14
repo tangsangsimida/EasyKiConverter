@@ -664,10 +664,15 @@ private slots:
         AltiumPcbComponent invalidPcb;
         invalidPcb.name = QStringLiteral("INVALID_PCB_FLOATS");
         AltiumPcbPad invalidPad;
+        invalidPad.sizeTopX = invalidPad.sizeTopY = 1000;
+        invalidPad.sizeMidX = invalidPad.sizeMidY = 1000;
+        invalidPad.sizeBotX = invalidPad.sizeBotY = 1000;
+        invalidPad.holeSize = 1000;
         invalidPad.rotation = std::numeric_limits<double>::quiet_NaN();
         invalidPad.holeRotation = std::numeric_limits<double>::infinity();
         invalidPcb.pads.append(invalidPad);
         AltiumPcbArc invalidPcbArc;
+        invalidPcbArc.radius = 1000;
         invalidPcbArc.startAngle = std::numeric_limits<double>::infinity();
         invalidPcbArc.endAngle = std::numeric_limits<double>::quiet_NaN();
         invalidPcb.arcs.append(invalidPcbArc);
@@ -679,6 +684,8 @@ private slots:
         invalidPcb.fills.append(invalidPcbFill);
         AltiumPcbRegion invalidPcbRegion;
         invalidPcbRegion.vertices.append(QPointF(std::numeric_limits<double>::quiet_NaN(), 0.0));
+        invalidPcbRegion.vertices.append(QPointF(1000.0, 0.0));
+        invalidPcbRegion.vertices.append(QPointF(0.0, 1000.0));
         invalidPcb.regions.append(invalidPcbRegion);
         AltiumPcbComponentBody invalidBody;
         invalidBody.bodyOpacity3d = std::numeric_limits<double>::infinity();
@@ -709,6 +716,16 @@ private slots:
         const QString footprintOutputPath = QDir(tempDir.path()).filePath(QStringLiteral("invalid-footprint.PcbLib"));
         QVERIFY(footprintExporter.exportFootprint(invalidFootprint, footprintOutputPath));
         QVERIFY(footprintExporter.diagnostics().join('\n').contains(QStringLiteral("焊盘旋转角度无效")));
+
+        AltiumPcbLibWriter invalidInputWriter;
+        AltiumPcbComponent unnamedPcb;
+        QVERIFY(!invalidInputWriter.write({unnamedPcb}, pcbOutputPath));
+        QVERIFY(invalidInputWriter.diagnostics().join('\n').contains(QStringLiteral("封装名称为空")));
+        AltiumPcbComponent invalidPadPcb;
+        invalidPadPcb.name = QStringLiteral("INVALID_PAD_SIZE");
+        invalidPadPcb.pads.append(AltiumPcbPad());
+        QVERIFY(!invalidInputWriter.write({invalidPadPcb}, pcbOutputPath));
+        QVERIFY(invalidInputWriter.diagnostics().join('\n').contains(QStringLiteral("非正焊盘尺寸")));
     }
 
     /**

@@ -54,6 +54,42 @@ double AltiumPcbLibWriter::normalizeFiniteValue(double value, double fallback, c
     return fallback;
 }
 
+bool AltiumPcbLibWriter::validateComponents(const QList<AltiumPcbComponent>& components, const QString& filePath) {
+    auto reject = [this](const QString& diagnostic) {
+        m_diagnostics.append(diagnostic);
+        qWarning() << "AltiumPcbLibWriter:" << diagnostic;
+        return false;
+    };
+
+    if (components.isEmpty())
+        return reject(QStringLiteral("Altium PcbLib 输入封装为空，已拒绝写入"));
+    if (filePath.trimmed().isEmpty())
+        return reject(QStringLiteral("Altium PcbLib 输出路径为空，已拒绝写入"));
+
+    for (const AltiumPcbComponent& component : components) {
+        if (component.name.trimmed().isEmpty())
+            return reject(QStringLiteral("Altium PcbLib 封装名称为空，已拒绝写入"));
+
+        for (const AltiumPcbPad& pad : component.pads) {
+            if (pad.sizeTopX <= 0 || pad.sizeTopY <= 0 || pad.sizeMidX <= 0 || pad.sizeMidY <= 0 || pad.sizeBotX <= 0 ||
+                pad.sizeBotY <= 0) {
+                return reject(QStringLiteral("Altium PcbLib 封装 %1 包含非正焊盘尺寸，已拒绝写入").arg(component.name));
+            }
+            if (!pad.isSMD && pad.holeSize <= 0)
+                return reject(QStringLiteral("Altium PcbLib 封装 %1 包含非正通孔尺寸，已拒绝写入").arg(component.name));
+        }
+        for (const AltiumPcbArc& arc : component.arcs) {
+            if (arc.radius <= 0)
+                return reject(QStringLiteral("Altium PcbLib 封装 %1 包含非正弧线半径，已拒绝写入").arg(component.name));
+        }
+        for (const AltiumPcbRegion& region : component.regions) {
+            if (region.vertices.size() < 3)
+                return reject(QStringLiteral("Altium PcbLib 封装 %1 区域顶点不足，已拒绝写入").arg(component.name));
+        }
+    }
+    return true;
+}
+
 /**
  * @brief 写入 PcbLib 文件
  */
@@ -61,8 +97,7 @@ bool AltiumPcbLibWriter::write(const QList<AltiumPcbComponent>& components,
                                const QString& filePath,
                                const QString& libraryName) {
     m_diagnostics.clear();
-    if (components.isEmpty()) {
-        qWarning() << "AltiumPcbLibWriter: Refusing to write an empty library";
+    if (!validateComponents(components, filePath)) {
         return false;
     }
     m_wideStrings.clear();

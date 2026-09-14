@@ -71,6 +71,7 @@ private:
     void writeExtendedPrimitiveInformation(QByteArray& buffer, const AltiumPcbComponent& component);
     uint32_t toV7LayerId(uint8_t layer) const;
     double normalizeFiniteValue(double value, double fallback, const QString& context);
+    bool validateComponents(const QList<AltiumPcbComponent>& components, const QString& filePath);
     int countPrimitives(const AltiumPcbComponent& component) const;
     QString buildLibraryMetadata(const QString& filePath) const;
 
