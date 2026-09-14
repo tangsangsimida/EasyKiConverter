@@ -501,7 +501,9 @@ void AltiumSchLibWriter::writeComponentStorage(OLECompoundWriter& ole,
     // 构建 Data 流
     QByteArray data;
     AltiumBinaryWriter writer(data);
-    m_nextIndexInSheet = 1;
+    // Altium 对图元和二进制引脚使用同一个从 0 开始的内容记录计数器。
+    // 首条内容记录隐含索引 0，文本记录因此省略 IndexInSheet=0。
+    m_nextIndexInSheet = 0;
 
     // 写入元件记录
     writeComponentRecord(writer, component);
@@ -869,6 +871,8 @@ void AltiumSchLibWriter::writePinRecord(AltiumBinaryWriter& writer, const Altium
     writer.writePascalShortString("");
 
     writer.endBlock();
+    // 二进制引脚没有文本形式的 IndexInSheet，但仍占用共享内容记录序号。
+    ++m_nextIndexInSheet;
 }
 
 /**
@@ -1047,7 +1051,6 @@ void AltiumSchLibWriter::writePieRecord(AltiumBinaryWriter& writer, const Altium
         params["AreaColor"] = QString::number(pie.areaColor);
     if (pie.isSolid)
         params["IsSolid"] = "T";
-    addUniqueID(params);
     writer.writeCStringParameterBlock(params);
 }
 
@@ -1160,7 +1163,6 @@ void AltiumSchLibWriter::writeIeeeRecord(AltiumBinaryWriter& writer, const Altiu
     if (ieee.mirrored)
         params["Mirror"] = "T";
     addColorParam(params, "Color", ieee.color);
-    addUniqueID(params);
     writer.writeCStringParameterBlock(params);
 }
 
@@ -1562,7 +1564,8 @@ int AltiumSchLibWriter::componentParameterRecordCount(const AltiumSchComponent& 
  */
 void AltiumSchLibWriter::addOwnerParams(QMap<QString, QString>& params, int ownerPartId) {
     params["ISNOTACCESIBLE"] = "T";
-    params["IndexInSheet"] = QString::number(m_nextIndexInSheet);
+    if (m_nextIndexInSheet != 0)
+        params["IndexInSheet"] = QString::number(m_nextIndexInSheet);
     params["OWNERPARTID"] = QString::number(ownerPartId < 0 ? -1 : qMax(1, ownerPartId));
     ++m_nextIndexInSheet;
 }

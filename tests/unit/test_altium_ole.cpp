@@ -679,7 +679,7 @@ private slots:
         QVERIFY(schData.mid(4).startsWith("|RECORD=1|"));
         QVERIFY(schData.contains("LibReference=C2040"));
         QVERIFY(schData.contains("RECORD=14"));
-        QVERIFY(schData.contains("|RECORD=14|ISNOTACCESIBLE=T|IndexInSheet=1|OWNERPARTID=1|"));
+        QVERIFY(!schData.contains("|IndexInSheet=0|"));
         QVERIFY(schData.contains("LineStyleExt=1"));
         QVERIFY(schData.contains("RECORD=10"));
         QVERIFY(schData.contains("CornerXRadius=1"));
@@ -1478,9 +1478,9 @@ private slots:
     }
 
     /**
-     * @brief 验证 Pie 和 IEEE 图元同样带有可编辑记录所需的唯一标识。
+     * @brief 验证 Pie 和 IEEE 图元遵循无 UniqueID 的兼容记录格式。
      */
-    void pieAndIeeeRecordsHaveUniqueIds() {
+    void pieAndIeeeRecordsOmitUniqueIds() {
         QTemporaryDir tempDir;
         QVERIFY(tempDir.isValid());
 
@@ -1505,8 +1505,10 @@ private slots:
         const int ieeeOffset = data.indexOf("RECORD=3");
         QVERIFY(pieOffset >= 0);
         QVERIFY(ieeeOffset >= 0);
-        QVERIFY(data.mid(pieOffset, 256).contains("UniqueID="));
-        QVERIFY(data.mid(ieeeOffset, 256).contains("UniqueID="));
+        QVERIFY(!data.mid(pieOffset, ieeeOffset - pieOffset).contains("UniqueID="));
+        const int nextRecordOffset = data.indexOf("|RECORD=", ieeeOffset + 1);
+        QVERIFY(nextRecordOffset > ieeeOffset);
+        QVERIFY(!data.mid(ieeeOffset, nextRecordOffset - ieeeOffset).contains("UniqueID="));
     }
 };
 
