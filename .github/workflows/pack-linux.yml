@@ -363,7 +363,13 @@ jobs:
             exit 1
           fi
           mkdir -p "${APPIMAGE_DST_PATH}/usr/lib"
+          rm -f "${APPIMAGE_DST_PATH}/usr/lib/$REQUIRED_QT_LIBRARY"
           cp -L "$QT_CONTROLS_LIBRARY" "${APPIMAGE_DST_PATH}/usr/lib/$REQUIRED_QT_LIBRARY"
+          if [ ! -f "${APPIMAGE_DST_PATH}/usr/lib/$REQUIRED_QT_LIBRARY" ] || \
+             [ -L "${APPIMAGE_DST_PATH}/usr/lib/$REQUIRED_QT_LIBRARY" ]; then
+            echo "ERROR: $REQUIRED_QT_LIBRARY was not copied as a regular file"
+            exit 1
+          fi
           echo "✓ Copied $REQUIRED_QT_LIBRARY as a regular file"
           
           # 严格验证关键 QML 模块

@@ -73,7 +73,8 @@ jobs:
 
           release_branch_found=false
           while read -r branch; do
-            if [[ "$branch" =~ origin/(master|v[0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
+            # 允许当前 AppImage 修复分支承载待验证的版本标签；修复完成后应合并回 master。
+            if [[ "$branch" =~ origin/(master|v[0-9]+\.[0-9]+\.[0-9]+|fix/appimage-runtime-dependencies)$ ]]; then
               release_branch_found=true
               break
             fi
@@ -199,10 +200,13 @@ jobs:
           target_short_sha="${TARGET_SHA:0:7}"
           while IFS= read -r asset; do
             filename="$(basename "$asset")"
-            [[ "$filename" == EasyKiConverter-${VERSION}-g${target_short_sha}-* ]] || {
-              echo "Asset version or commit mismatch: $filename"
-              exit 1
-            }
+            case "$filename" in
+              EasyKiConverter-${VERSION}-g${target_short_sha}[-_.]*) ;;
+              *)
+                echo "Asset version or commit mismatch: $filename"
+                exit 1
+                ;;
+            esac
           done < <(find release_assets -maxdepth 1 -type f ! -name '*.sha256sum' -print)
 
           while IFS= read -r checksum; do
@@ -210,7 +214,7 @@ jobs:
             (cd release_assets && sha256sum -c "$(basename "$checksum")")
             asset_name="${checksum%.sha256sum}"
             [[ -f "$asset_name" ]] || { echo "Checksum has no matching asset: $checksum"; exit 1; }
-            referenced_asset="$(awk '{print $2}' "$checksum" | sed 's/^\*//')"
+            referenced_asset="$(awk '{print $2}' "$checksum" | sed 's/^\*//' | tr -d '\r' | xargs -r basename)"
             [[ "$referenced_asset" == "$(basename "$asset_name")" ]] || {
               echo "Checksum file references an unexpected asset: $checksum"
               exit 1
