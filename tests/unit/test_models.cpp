@@ -91,6 +91,23 @@ private slots:
         QCOMPARE(symbol.validate(), errors.first());
     }
 
+    void testSymbolValidationChecksMultipartGeometry() {
+        SymbolData symbol;
+        SymbolInfo info;
+        info.name = QStringLiteral("MULTIPART_SYMBOL");
+        symbol.setInfo(info);
+        symbol.setBbox(SymbolBBox{1.0, 1.0, 10.0, 10.0});
+
+        SymbolPart part;
+        part.unitNumber = 1;
+        SymbolPath invalidPath;
+        part.paths.append(invalidPath);
+        symbol.addPart(part);
+
+        const QStringList errors = symbol.validationErrors();
+        QVERIFY(errors.contains(QStringLiteral("Part 0 Path 0 has no commands")));
+    }
+
     void testFootprintDataRoundTrip() {
         FootprintData original;
 

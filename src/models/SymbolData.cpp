@@ -64,6 +64,40 @@ QStringList SymbolData::validationErrors() const {
             }
         }
     };
+    const auto validatePart = [&](const SymbolPart& part, int partIndex) {
+        const QString prefix = QStringLiteral("Part %1 ").arg(partIndex);
+        for (int i = 0; i < part.pins.size(); ++i) {
+            if (part.pins[i].settings.spicePinNumber.trimmed().isEmpty())
+                addError(QString("%1Pin %2 has empty number").arg(prefix).arg(i));
+        }
+        for (int i = 0; i < part.rectangles.size(); ++i) {
+            const SymbolRectangle& rectangle = part.rectangles[i];
+            if (!isFinite(rectangle.width) || !isFinite(rectangle.height) || rectangle.width <= 0.0 ||
+                rectangle.height <= 0.0)
+                addError(QString("%1Rectangle %2 has a non-positive size").arg(prefix).arg(i));
+            if (!isFinite(rectangle.rx) || !isFinite(rectangle.ry) || rectangle.rx < 0.0 || rectangle.ry < 0.0)
+                addError(QString("%1Rectangle %2 has a negative or non-finite corner radius").arg(prefix).arg(i));
+        }
+        for (int i = 0; i < part.circles.size(); ++i)
+            if (!isFinite(part.circles[i].radius) || part.circles[i].radius <= 0.0)
+                addError(QString("%1Circle %2 has a non-positive radius").arg(prefix).arg(i));
+        for (int i = 0; i < part.ellipses.size(); ++i)
+            if (!isFinite(part.ellipses[i].radiusX) || !isFinite(part.ellipses[i].radiusY) ||
+                part.ellipses[i].radiusX <= 0.0 || part.ellipses[i].radiusY <= 0.0)
+                addError(QString("%1Ellipse %2 has a non-positive radius").arg(prefix).arg(i));
+        for (int i = 0; i < part.arcs.size(); ++i)
+            validatePointList(part.arcs[i].path, prefix + QStringLiteral("Arc"), i, 3);
+        for (int i = 0; i < part.polylines.size(); ++i)
+            validateFlatPointString(part.polylines[i].points, prefix + QStringLiteral("Polyline"), i, 2);
+        for (int i = 0; i < part.polygons.size(); ++i)
+            validateFlatPointString(part.polygons[i].points, prefix + QStringLiteral("Polygon"), i, 3);
+        for (int i = 0; i < part.paths.size(); ++i)
+            if (part.paths[i].paths.trimmed().isEmpty())
+                addError(QString("%1Path %2 has no commands").arg(prefix).arg(i));
+        for (int i = 0; i < part.texts.size(); ++i)
+            if (part.texts[i].text.trimmed().isEmpty())
+                addError(QString("%1Text %2 is empty").arg(prefix).arg(i));
+    };
 
     if (m_info.name.trimmed().isEmpty())
         addError(QStringLiteral("Symbol name is empty"));
@@ -105,6 +139,8 @@ QStringList SymbolData::validationErrors() const {
     for (int i = 0; i < m_texts.size(); ++i)
         if (m_texts[i].text.trimmed().isEmpty())
             addError(QString("Text %1 is empty").arg(i));
+    for (int i = 0; i < m_parts.size(); ++i)
+        validatePart(m_parts[i], i);
 
     return errors;
 }
