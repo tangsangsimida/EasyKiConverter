@@ -1104,6 +1104,15 @@ private slots:
             QStringLiteral("组件 IMAGE_DIAGNOSTICS 图片 0 的嵌入数据为空，已跳过 Storage")));
         QVERIFY(diagnosticWriter.diagnostics().contains(
             QStringLiteral("组件 IMAGE_DIAGNOSTICS 图片 1 的嵌入文件名无效: bad|name.png，已跳过 Storage")));
+        AltiumSchImage oversizedNameImage;
+        oversizedNameImage.embedImage = true;
+        oversizedNameImage.fileName = QString(256, QLatin1Char('a')) + QStringLiteral(".png");
+        oversizedNameImage.data = QByteArrayLiteral("image");
+        diagnosticSymbol.images.append(oversizedNameImage);
+        const QString oversizedDiagnosticPath = QDir(tempDir.path()).filePath(QStringLiteral("oversized-image.SchLib"));
+        QVERIFY(
+            diagnosticWriter.write({diagnosticSymbol}, oversizedDiagnosticPath, QStringLiteral("IMAGE_DIAGNOSTICS")));
+        QVERIFY(diagnosticWriter.diagnostics().join('\n').contains(QStringLiteral("图片 2 的嵌入文件名无效")));
 
         IR::SymbolComponentIR nativeArcSymbol;
         nativeArcSymbol.name = QStringLiteral("NATIVE_ARC");
