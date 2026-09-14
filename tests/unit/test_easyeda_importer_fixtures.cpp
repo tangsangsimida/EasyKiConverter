@@ -178,6 +178,80 @@ private slots:
         QVERIFY(foundBinaryPin);
     }
 
+    /**
+     * @brief 验证真实 EasyEDA 多部件符号的公共部件归属能够完整写入 SchLib
+     * @details 覆盖公共 Part 0、两个普通部件、图形和引脚的 OWNERPARTID 映射。
+     */
+    void testMultipartSymbolFixturePreservesPartOwnership() {
+        QString error;
+        const QJsonObject fixture = loadFixtureObject(QStringLiteral("easyeda/symbol_multipart.json"), &error);
+        QVERIFY2(error.isEmpty(), qPrintable(error));
+
+        EasyedaSymbolImporter importer;
+        const QSharedPointer<SymbolData> symbol = importer.importSymbolData(fixture);
+        QVERIFY(symbol);
+        QCOMPARE(symbol->parts().size(), 3);
+        QVERIFY(symbol->parts().at(0).commonToAllParts);
+        QVERIFY(!symbol->parts().at(1).commonToAllParts);
+        QVERIFY(!symbol->parts().at(2).commonToAllParts);
+
+        const IR::SymbolComponentIR symbolIr = IR::toSymbolIR(*symbol);
+        QCOMPARE(symbolIr.partCount, 2);
+        QCOMPARE(symbolIr.pins.size(), 3);
+        QCOMPARE(symbolIr.rectangles.size(), 3);
+
+        int commonPinCount = 0;
+        int partOnePinCount = 0;
+        int partTwoPinCount = 0;
+        for (const auto& pin : symbolIr.pins) {
+            if (pin.partIndex == -1) {
+                ++commonPinCount;
+            } else if (pin.partIndex == 0) {
+                ++partOnePinCount;
+            } else if (pin.partIndex == 1) {
+                ++partTwoPinCount;
+            }
+        }
+        QCOMPARE(commonPinCount, 1);
+        QCOMPARE(partOnePinCount, 1);
+        QCOMPARE(partTwoPinCount, 1);
+
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+        const QString outputPath = QDir(tempDir.path()).filePath(QStringLiteral("multipart.SchLib"));
+        ExporterAltiumSymbol exporter;
+        QVERIFY(exporter.exportSymbolLibrary({symbolIr}, QStringLiteral("multipart"), outputPath, false, false));
+        QVERIFY2(exporter.diagnostics().isEmpty(), qPrintable(exporter.diagnostics().join('\n')));
+
+        AltiumSchLibReader reader;
+        QVERIFY2(reader.open(outputPath), qPrintable(reader.errorString()));
+        QCOMPARE(reader.components().size(), 1);
+        QCOMPARE(reader.components().first().partCount, 2);
+
+        QVector<AltiumSchLibReader::Record> records;
+        QVERIFY(reader.readComponentRecords(QStringLiteral("MULTIPART_SYMBOL"), &records));
+        int commonRecordCount = 0;
+        int partOneRecordCount = 0;
+        int partTwoRecordCount = 0;
+        int binaryPinCount = 0;
+        for (const auto& record : records) {
+            if (record.ownerPartId == -1)
+                ++commonRecordCount;
+            else if (record.ownerPartId == 1)
+                ++partOneRecordCount;
+            else if (record.ownerPartId == 2)
+                ++partTwoRecordCount;
+            if (!record.hasParameters && record.payload.size() >= 4 &&
+                static_cast<unsigned char>(record.payload.at(0)) == static_cast<unsigned char>(2)) {
+                ++binaryPinCount;
+            }
+        }
+        QVERIFY(commonRecordCount >= 2);
+        QVERIFY(partOneRecordCount >= 2);
+        QVERIFY(partTwoRecordCount >= 2);
+        QCOMPARE(binaryPinCount, 3);
+    }
+
     void testFootprintFixtureImportsMetadataAndGeometry() {
         QString error;
         const QJsonObject fixture = loadFixtureObject(QStringLiteral("easyeda/footprint_basic.json"), &error);
