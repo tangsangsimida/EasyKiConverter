@@ -762,6 +762,21 @@ bool AltiumSchLibWriter::hasCompleteGraphicOrder(const AltiumSchComponent& compo
     for (const AltiumSchArc& arc : component.arcs)
         addPathSegment(arc.sourceGraphicType, arc.sourceGraphicIndex, arc.sourceSegmentIndex, arc.sourcePartIndex);
 
+    // 这些图元只有在来源类型和索引同时有效时才能由 writeOrderedGraphic() 写出。
+    // 否则应回退到默认顺序，避免来源类型非空但索引缺失的图元被静默丢弃。
+    const auto hasUnresolvedOrderedGraphic = [](const auto& graphics) {
+        for (const auto& graphic : graphics) {
+            if (!graphic.sourceGraphicType.isEmpty() && graphic.sourceGraphicIndex < 0)
+                return true;
+        }
+        return false;
+    };
+    if (hasUnresolvedOrderedGraphic(component.ellipses) || hasUnresolvedOrderedGraphic(component.arcs) ||
+        hasUnresolvedOrderedGraphic(component.paths) || hasUnresolvedOrderedGraphic(component.beziers) ||
+        hasUnresolvedOrderedGraphic(component.ellipticalArcs)) {
+        return false;
+    }
+
     for (const AltiumSchGraphicOrder& order : component.graphicOrder) {
         if (order.index < 0 || order.type.isEmpty())
             return false;

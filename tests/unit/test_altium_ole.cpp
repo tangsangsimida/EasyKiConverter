@@ -2545,6 +2545,42 @@ private slots:
     }
 
     /**
+     * @brief 来源图元索引缺失时回退，避免有序写出丢失弧线。
+     */
+    void unresolvedOrderedGraphicFallsBackWithoutDroppingGraphics() {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        AltiumSchComponent symbol;
+        symbol.name = QStringLiteral("UNRESOLVED_ORDER");
+
+        AltiumSchRectangle rectangle;
+        rectangle.sourceGraphicIndex = 0;
+        rectangle.sourcePartIndex = 0;
+        rectangle.cornerX = 100000;
+        symbol.rectangles.append(rectangle);
+
+        AltiumSchArc arc;
+        arc.radius = 50000;
+        arc.sourceGraphicType = QStringLiteral("A");
+        arc.sourceGraphicIndex = -1;
+        arc.sourcePartIndex = 0;
+        symbol.arcs.append(arc);
+        symbol.graphicOrder = {{QStringLiteral("R"), 0, 0}};
+
+        AltiumSchLibWriter writer;
+        const QString path = QDir(tempDir.path()).filePath(QStringLiteral("unresolved-order.SchLib"));
+        QVERIFY(writer.write({symbol}, path, QStringLiteral("unresolved-order")));
+        QVERIFY(writer.diagnostics().contains(
+            QStringLiteral("符号 UNRESOLVED_ORDER 的 graphicOrder 不完整或包含无效引用，已回退到默认图元顺序")));
+
+        QByteArray data;
+        QVERIFY(readCfbStream(path, QStringLiteral("UNRESOLVED_ORDER/Data"), data));
+        QCOMPARE(data.count(QByteArrayLiteral("RECORD=14")), 1);
+        QCOMPARE(data.count(QByteArrayLiteral("RECORD=12")), 1);
+    }
+
+    /**
      * @brief 验证 Pie 和 IEEE 图元遵循无 UniqueID 的兼容记录格式。
      */
     void pieAndIeeeRecordsOmitUniqueIds() {
