@@ -952,15 +952,25 @@ void AltiumSchLibWriter::prepareImageStorageNames(const QList<AltiumSchComponent
     QSet<QString> usedNames;
     for (const AltiumSchComponent& component : components) {
         for (const AltiumSchImage& image : component.images) {
-            if (!image.embedImage || image.data.isEmpty() || image.fileName.isEmpty() ||
-                image.fileName.toLocal8Bit().size() > 255)
+            if (!image.embedImage)
                 continue;
 
-            const QFileInfo fileInfo(image.fileName);
+            QString sourceName = image.fileName;
+            sourceName.replace('\\', '/');
+            const QString embeddedName = QFileInfo(sourceName).fileName();
+            const QByteArray encodedName = embeddedName.toLocal8Bit();
+            if (image.data.isEmpty() || embeddedName.isEmpty() || embeddedName == QStringLiteral(".") ||
+                embeddedName == QStringLiteral("..") || embeddedName.contains('|') ||
+                embeddedName.contains(QChar::Null) || encodedName.size() > 255) {
+                qWarning() << "AltiumSchLibWriter: Ignoring invalid embedded image name" << image.fileName;
+                continue;
+            }
+
+            const QFileInfo fileInfo(embeddedName);
             const QString suffix = fileInfo.suffix();
             QString baseName =
-                suffix.isEmpty() ? image.fileName : image.fileName.left(image.fileName.size() - suffix.size() - 1);
-            QString candidate = image.fileName;
+                suffix.isEmpty() ? embeddedName : embeddedName.left(embeddedName.size() - suffix.size() - 1);
+            QString candidate = embeddedName;
             int duplicateIndex = 1;
             while (usedNames.contains(candidate.toCaseFolded())) {
                 ++duplicateIndex;

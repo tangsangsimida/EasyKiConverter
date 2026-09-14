@@ -1036,6 +1036,7 @@ private slots:
         symbol.images.append(image);
         IR::SymbolImageIR duplicateImage = image;
         duplicateImage.data = QByteArrayLiteral("multipart-image-duplicate");
+        duplicateImage.fileName = QStringLiteral("C:\\assets\\multipart.png");
         symbol.images.append(duplicateImage);
 
         const QString schPath = QDir(tempDir.path()).filePath(QStringLiteral("multipart.SchLib"));
