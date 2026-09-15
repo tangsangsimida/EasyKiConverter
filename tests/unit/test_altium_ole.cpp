@@ -2212,6 +2212,66 @@ private slots:
     }
 
     /**
+     * @brief 验证 SchLib 矩形类记录的退化边界和负文本边距会被读取器拒绝。
+     */
+    void rejectsDegenerateSchLibBounds() {
+        const auto verifyRejectedRecord =
+            [](const QMap<QString, QString>& parameters, const QString& expectedMessage, const QString& componentName) {
+                QTemporaryDir tempDir;
+                QVERIFY(tempDir.isValid());
+
+                OLECompoundWriter writer;
+                QVERIFY(writer.create());
+                QByteArray headerData;
+                AltiumBinaryWriter headerWriter(headerData);
+                headerWriter.writeCStringParameterBlock({{QStringLiteral("COMPCOUNT"), QStringLiteral("1")}});
+                headerWriter.writeInt32(1);
+                headerWriter.writeStringBlock(componentName);
+                QVERIFY(writer.writeStream(QStringLiteral("FileHeader"), headerData));
+                QVERIFY(writer.addStorage(componentName));
+
+                QByteArray componentData;
+                AltiumBinaryWriter componentWriter(componentData);
+                componentWriter.writeCStringParameterBlock(parameters);
+                QVERIFY(writer.writeStream(componentName, QStringLiteral("Data"), componentData));
+                const QString path = QDir(tempDir.path()).filePath(componentName + QStringLiteral(".SchLib"));
+                QVERIFY(writer.saveToFile(path));
+
+                AltiumSchLibReader reader;
+                QVERIFY2(reader.open(path), qPrintable(reader.errorString()));
+                QVector<AltiumSchLibReader::Record> records;
+                QVERIFY(!reader.readComponentRecords(componentName, &records));
+                QVERIFY(records.isEmpty());
+                QVERIFY(reader.errorString().contains(expectedMessage));
+            };
+
+        const QMap<QString, QString> degenerateBounds = {{QStringLiteral("Location.X"), QStringLiteral("1")},
+                                                         {QStringLiteral("Location.Y"), QStringLiteral("2")},
+                                                         {QStringLiteral("Corner.X"), QStringLiteral("1")},
+                                                         {QStringLiteral("Corner.Y"), QStringLiteral("3")}};
+        for (const auto& testCase : {
+                 std::pair{QStringLiteral("10"), QStringLiteral("圆角矩形边界尺寸无效")},
+                 std::pair{QStringLiteral("13"), QStringLiteral("线段边界尺寸无效")},
+                 std::pair{QStringLiteral("14"), QStringLiteral("矩形边界尺寸无效")},
+                 std::pair{QStringLiteral("28"), QStringLiteral("文本框边界尺寸无效")},
+             }) {
+            auto parameters = degenerateBounds;
+            parameters.insert(QStringLiteral("RECORD"), testCase.first);
+            verifyRejectedRecord(parameters, testCase.second, QStringLiteral("DEGENERATE_") + testCase.first);
+        }
+
+        auto negativeMargin = QMap<QString, QString>{{QStringLiteral("RECORD"), QStringLiteral("28")},
+                                                     {QStringLiteral("TextMargin"), QStringLiteral("-1")}};
+        verifyRejectedRecord(negativeMargin, QStringLiteral("TextMargin 无效"), QStringLiteral("NEGATIVE_MARGIN"));
+
+        auto negativeFractionalMargin =
+            QMap<QString, QString>{{QStringLiteral("RECORD"), QStringLiteral("28")},
+                                   {QStringLiteral("TextMargin_Frac"), QStringLiteral("-1")}};
+        verifyRejectedRecord(
+            negativeFractionalMargin, QStringLiteral("TextMargin 无效"), QStringLiteral("NEGATIVE_FRACTIONAL_MARGIN"));
+    }
+
+    /**
      * @brief 验证 PcbLib 封装写入 UniqueIdPrimitiveInformation 流
      * @details 验证 Header 中的图元计数和 Data 中的 PRIMITIVEOBJECTID 条目
      */

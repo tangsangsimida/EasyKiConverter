@@ -54,6 +54,39 @@ bool validateGraphicParameters(const QMap<QString, QString>& parameters, int rec
             *error = message;
         return false;
     };
+    const auto readCoordinate = [&readInt](const QString& name, qint64* value) {
+        if (value == nullptr)
+            return false;
+        int integer = 0;
+        int fraction = 0;
+        if (!readInt(name, true, 0, &integer) || !readInt(name + QStringLiteral("_Frac"), false, 0, &fraction) ||
+            fraction <= -100000 || fraction >= 100000)
+            return false;
+        *value = static_cast<qint64>(integer) * 100000 + fraction;
+        return true;
+    };
+    const auto validateBounds = [&]() {
+        const QStringList coordinateNames = {QStringLiteral("Location.X"),
+                                             QStringLiteral("Location.Y"),
+                                             QStringLiteral("Corner.X"),
+                                             QStringLiteral("Corner.Y")};
+        bool hasCoordinate = false;
+        for (const QString& name : coordinateNames)
+            hasCoordinate = hasCoordinate || parameters.contains(name);
+        if (!hasCoordinate)
+            return true;
+
+        qint64 locationX = 0;
+        qint64 locationY = 0;
+        qint64 cornerX = 0;
+        qint64 cornerY = 0;
+        if (!readCoordinate(QStringLiteral("Location.X"), &locationX) ||
+            !readCoordinate(QStringLiteral("Location.Y"), &locationY) ||
+            !readCoordinate(QStringLiteral("Corner.X"), &cornerX) ||
+            !readCoordinate(QStringLiteral("Corner.Y"), &cornerY))
+            return false;
+        return locationX != cornerX && locationY != cornerY;
+    };
 
     if (recordType == 5 || recordType == 6 || recordType == 7) {
         const int minimumCount = recordType == 5 ? 4 : (recordType == 7 ? 3 : 2);
@@ -87,11 +120,28 @@ bool validateGraphicParameters(const QMap<QString, QString>& parameters, int rec
     }
 
     if (recordType == 10) {
+        if (!validateBounds())
+            return failValidation(QStringLiteral("圆角矩形边界尺寸无效"));
         for (const QString& name : {QStringLiteral("CornerXRadius"), QStringLiteral("CornerYRadius")}) {
             int radius = 0;
             if (!readInt(name, false, 0, &radius) || radius < 0)
                 return failValidation(QStringLiteral("%1 无效").arg(name));
         }
+    }
+    if (recordType == 13 && !validateBounds())
+        return failValidation(QStringLiteral("线段边界尺寸无效"));
+    if (recordType == 14 && !validateBounds())
+        return failValidation(QStringLiteral("矩形边界尺寸无效"));
+    if (recordType == 28) {
+        if (!validateBounds())
+            return failValidation(QStringLiteral("文本框边界尺寸无效"));
+        int textMargin = 0;
+        int textMarginFraction = 0;
+        if (!readInt(QStringLiteral("TextMargin"), false, 0, &textMargin) ||
+            !readInt(QStringLiteral("TextMargin_Frac"), false, 0, &textMarginFraction) ||
+            textMarginFraction <= -100000 || textMarginFraction >= 100000 ||
+            (textMargin < 0 || (textMargin == 0 && textMarginFraction < 0)))
+            return failValidation(QStringLiteral("TextMargin 无效"));
     }
     return true;
 }
