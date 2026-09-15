@@ -1010,7 +1010,7 @@ void AltiumPcbLibWriter::writeComponentBody(AltiumBinaryWriter& writer, const Al
         writer.writeUInt8(0);  // reserved
 
         QMap<QString, QString> params;
-        params["V7_LAYER"] = body.layerName;
+        params["V7_LAYER"] = normalizedLayer;
         params["NAME"] = body.name;
         params["KIND"] = QString::number(body.kind);
         params["SUBPOLYINDEX"] = QString::number(body.subpolyIndex);

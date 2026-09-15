@@ -2083,7 +2083,7 @@ private slots:
         footprint.models.append(model);
 
         AltiumPcbComponentBody body;
-        body.layerName = QStringLiteral("MECHANICAL1");
+        body.layerName = QStringLiteral(" mechanical1 ");
         body.name = QStringLiteral("__BODY__");
         body.modelId = QStringLiteral("{12345678-1234-1234-1234-123456789012}");
         body.modelName = model.name;
@@ -2155,6 +2155,8 @@ private slots:
             } else if (object.objectId == AltiumConstants::PCB_OBJECT_COMPONENT_BODY) {
                 foundStructuredBody = true;
                 QVERIFY(object.hasComponentBodyFields);
+                QCOMPARE(object.componentBody.parameters.value(QStringLiteral("V7_LAYER")),
+                         QStringLiteral("MECHANICAL1"));
                 QCOMPARE(object.componentBody.parameters.value(QStringLiteral("MODEL.NAME")), body.modelName);
                 QCOMPARE(object.componentBody.outline.size(), body.outline.size());
                 QCOMPARE(object.componentBody.outline.last(), body.outline.last());
