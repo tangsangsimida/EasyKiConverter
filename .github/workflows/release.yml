@@ -250,20 +250,45 @@ jobs:
             echo
             echo "## 下载"
             echo
-            echo "| 平台 | 架构/格式 | 文件 |"
-            echo "| --- | --- | --- |"
-            while IFS= read -r asset; do
-              filename="$(basename "$asset")"
-              [[ "$filename" == *.sha256sum ]] && continue
-              descriptor="$(echo "$filename" | sed -E 's/^EasyKiConverter-[^-]+-g[0-9a-f]+[._-]//; s/\.(AppImage|deb|rpm|pkg\.tar\.zst|zip|exe|msix|dmg)$//')"
-              case "$filename" in
-                *win64*|*-setup.exe|*.msix) platform="Windows" ;;
-                *.AppImage|*.deb|*.rpm|*.pkg.tar.zst) platform="Linux" ;;
-                *.dmg) platform="macOS" ;;
-                *) platform="其他" ;;
+            echo "| 平台 | 架构 | 格式 | 文件 |"
+            echo "| --- | --- | --- | --- |"
+
+            release_row() {
+              local platform="$1"
+              local filename="$2"
+              local architecture
+              local format
+
+              case "$platform:$filename" in
+                "Windows:"*-win64-arm64.zip) architecture="arm64"; format="便携版 ZIP" ;;
+                "Windows:"*-win64.zip) architecture="amd64"; format="便携版 ZIP" ;;
+                "Windows:"*-arm64-setup.exe) architecture="arm64"; format="安装程序 EXE" ;;
+                "Windows:"*-x64-setup.exe) architecture="amd64"; format="安装程序 EXE" ;;
+                "Windows:"*-arm64.msix) architecture="arm64"; format="MSIX" ;;
+                "Windows:"*-x64.msix) architecture="amd64"; format="MSIX" ;;
+                "Linux:"*aarch64.AppImage) architecture="arm64"; format="AppImage" ;;
+                "Linux:"*x86_64.AppImage) architecture="amd64"; format="AppImage" ;;
+                "Linux:"*_arm64.deb) architecture="arm64"; format="DEB" ;;
+                "Linux:"*_amd64.deb) architecture="amd64"; format="DEB" ;;
+                "Linux:"*_aarch64.rpm) architecture="arm64"; format="RPM" ;;
+                "Linux:"*_x86_64.rpm) architecture="amd64"; format="RPM" ;;
+                "Linux:"*_aarch64.pkg.tar.zst) architecture="arm64"; format="Arch Linux" ;;
+                "Linux:"*_x86_64.pkg.tar.zst) architecture="amd64"; format="Arch Linux" ;;
+                "macOS:"*-arm64.dmg) architecture="arm64"; format="DMG" ;;
+                "macOS:"*-intel.dmg) architecture="intel"; format="DMG" ;;
+                *) return 0 ;;
               esac
-              echo "| $platform | $descriptor | [$filename](https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG_NAME}/${filename}) |"
-            done < <(find release_assets -maxdepth 1 -type f -print | sort)
+
+              echo "| $platform | $architecture | $format | [$filename](https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG_NAME}/${filename}) |"
+            }
+
+            for platform in Windows Linux macOS; do
+              while IFS= read -r asset; do
+                filename="$(basename "$asset")"
+                [[ "$filename" == *.sha256sum ]] && continue
+                release_row "$platform" "$filename"
+              done < <(find release_assets -maxdepth 1 -type f -print | sort)
+            done
             echo
             echo "## 重要变化"
             echo
