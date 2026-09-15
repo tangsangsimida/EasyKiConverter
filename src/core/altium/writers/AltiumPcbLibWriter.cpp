@@ -132,6 +132,7 @@ bool AltiumPcbLibWriter::validateComponents(const QList<AltiumPcbComponent>& com
             if (region.vertices.size() < 3)
                 return reject(QStringLiteral("Altium PcbLib 封装 %1 区域顶点不足，已拒绝写入").arg(component.name));
         }
+        QSet<QString> modelIds;
         for (const AltiumPcbComponent::Model3D& model : component.models) {
             if (model.name.trimmed().isEmpty())
                 return reject(
@@ -139,6 +140,12 @@ bool AltiumPcbLibWriter::validateComponents(const QList<AltiumPcbComponent>& com
             if (model.stepData.isEmpty())
                 return reject(
                     QStringLiteral("Altium PcbLib 封装 %1 的 3D 模型数据为空，已拒绝写入").arg(component.name));
+            const QString modelId = model.id.trimmed().toCaseFolded();
+            if (!modelId.isEmpty() && modelIds.contains(modelId))
+                return reject(
+                    QStringLiteral("Altium PcbLib 封装 %1 的 3D 模型 ID 重复，已拒绝写入").arg(component.name));
+            if (!modelId.isEmpty())
+                modelIds.insert(modelId);
         }
         for (const AltiumPcbComponentBody& body : component.bodies) {
             if (body.kind < 0 || body.kind > 2)
