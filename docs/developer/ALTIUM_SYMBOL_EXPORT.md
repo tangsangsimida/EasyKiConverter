@@ -85,3 +85,17 @@ QT_QPA_PLATFORM=offscreen python3 tools/python/build_project.py --test
 ```
 
 当前单元、集成和 UI 测试均应通过，且 SchLib 测试会验证参数记录、UTF-8 文本、别名和 `WEIGHT` 计数。
+
+## Windows + Altium Designer 手工验证清单
+
+自动化测试只能确认 OLE 流、记录字段、压缩数据和来源链路满足当前读取器的结构约束，不能替代目标版本 Altium Designer 的实际打开验证。发布前应在 Windows 环境使用与用户相同或更高版本的 Altium Designer 执行以下检查：
+
+1. 使用 EasyKiConverter 从 EasyEDA fixture 或真实元件导出 `.SchLib`，并保存导出日志及详细报告。
+2. 在 Altium Designer 中打开库，确认没有损坏提示、恢复提示或无法解析的记录警告。
+3. 放置单部件符号，检查引脚名称、编号、方向、电气类型、圆点/时钟装饰、圆角矩形、原生曲线、文本和图片显示。
+4. 放置多部件符号，分别切换公共 Part、Part A 和 Part B，确认公共图元在所有部件显示，普通图元和参数只属于对应部件。
+5. 检查参数编辑器中的 Value、Description、制造商字段和自定义参数，确认字体族、字号、粗体、斜体、显示状态和只读状态符合预期。
+6. 对包含重复图片文件名、非 ASCII 文本和长文件名的库执行保存、关闭、重新打开，确认图片仍可显示且文件名没有碰撞。
+7. 将库保存为新的 Altium 文件后重新打开，并再次运行读取器测试或人工检查，确认保存过程没有丢失图元、参数和部件归属。
+
+每次人工验证应记录 Altium Designer 版本、Windows 架构、输入 fixture/元件 ID、输出文件哈希和结果；未完成上述实机检查前，不应在发布说明中宣称已通过 Altium Designer 兼容性验证。
