@@ -233,9 +233,13 @@ bool validatePrimitiveFields(const AltiumPcbLibReader::PrimitiveRecord& object, 
     if (object.hasArcFields) {
         if (object.arc.radius <= 0)
             return reject(QStringLiteral("PcbLib 弧线半径必须为正"));
+        if (object.arc.width <= 0)
+            return reject(QStringLiteral("PcbLib 弧线宽度必须为正"));
         if (!std::isfinite(object.arc.startAngle) || !std::isfinite(object.arc.endAngle))
             return reject(QStringLiteral("PcbLib 弧线角度必须为有限值"));
     }
+    if (object.hasTrackFields && object.track.width <= 0)
+        return reject(QStringLiteral("PcbLib 走线宽度必须为正"));
     if (object.hasPadFields) {
         const auto& pad = object.pad;
         if (pad.sizeTopX <= 0 || pad.sizeTopY <= 0 || pad.sizeMidX <= 0 || pad.sizeMidY <= 0 || pad.sizeBotX <= 0 ||
@@ -248,8 +252,12 @@ bool validatePrimitiveFields(const AltiumPcbLibReader::PrimitiveRecord& object, 
     }
     if (object.hasFillFields && !std::isfinite(object.fill.rotation))
         return reject(QStringLiteral("PcbLib 填充旋转角度必须为有限值"));
-    if (object.hasTextFields && !std::isfinite(object.textFields.rotation))
-        return reject(QStringLiteral("PcbLib 文本旋转角度必须为有限值"));
+    if (object.hasTextFields) {
+        if (object.textFields.height <= 0 || object.textFields.strokeWidth < 0)
+            return reject(QStringLiteral("PcbLib 文本尺寸必须有效"));
+        if (!std::isfinite(object.textFields.rotation))
+            return reject(QStringLiteral("PcbLib 文本旋转角度必须为有限值"));
+    }
     if (object.hasRegionFields) {
         if (object.region.vertices.size() < 3)
             return reject(QStringLiteral("PcbLib 区域至少需要三个顶点"));

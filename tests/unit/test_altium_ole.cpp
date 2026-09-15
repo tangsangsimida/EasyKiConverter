@@ -1882,6 +1882,53 @@ private slots:
         QVERIFY2(invalidLayerReader.open(invalidLayerPath), qPrintable(invalidLayerReader.errorString()));
         QVERIFY(!invalidLayerReader.readFootprintObjects(QStringLiteral("BROKEN"), &objects));
         QVERIFY(invalidLayerReader.errorString().contains(QStringLiteral("图元层号必须在 1..74")));
+
+        QByteArray invalidTrackWidthData;
+        AltiumBinaryWriter invalidTrackWidthWriter(invalidTrackWidthData);
+        invalidTrackWidthWriter.writeStringBlock(QStringLiteral("BROKEN"));
+        invalidTrackWidthWriter.writeUInt8(AltiumConstants::PCB_OBJECT_TRACK);
+        invalidTrackWidthWriter.beginBlock();
+        invalidTrackWidthWriter.writeUInt8(1);
+        invalidTrackWidthWriter.writeUInt16(0);
+        invalidTrackWidthWriter.writeBytes(QByteArray(10, '\0'));
+        for (int i = 0; i < 4; ++i)
+            invalidTrackWidthWriter.writeInt32(0);
+        invalidTrackWidthWriter.writeInt32(0);
+        invalidTrackWidthWriter.writeUInt16(0);
+        invalidTrackWidthWriter.writeUInt8(0);
+        invalidTrackWidthWriter.endBlock();
+        const QString invalidTrackWidthPath =
+            QDir(tempDir.path()).filePath(QStringLiteral("invalid-track-width.PcbLib"));
+        QVERIFY(writeMalformedLibrary(invalidTrackWidthPath, invalidTrackWidthData));
+
+        AltiumPcbLibReader invalidTrackWidthReader;
+        QVERIFY2(invalidTrackWidthReader.open(invalidTrackWidthPath),
+                 qPrintable(invalidTrackWidthReader.errorString()));
+        QVERIFY(!invalidTrackWidthReader.readFootprintObjects(QStringLiteral("BROKEN"), &objects));
+        QVERIFY(invalidTrackWidthReader.errorString().contains(QStringLiteral("走线宽度必须为正")));
+
+        QByteArray invalidArcWidthData;
+        AltiumBinaryWriter invalidArcWidthWriter(invalidArcWidthData);
+        invalidArcWidthWriter.writeStringBlock(QStringLiteral("BROKEN"));
+        invalidArcWidthWriter.writeUInt8(AltiumConstants::PCB_OBJECT_ARC);
+        invalidArcWidthWriter.beginBlock();
+        invalidArcWidthWriter.writeUInt8(1);
+        invalidArcWidthWriter.writeUInt16(0);
+        invalidArcWidthWriter.writeBytes(QByteArray(10, '\0'));
+        invalidArcWidthWriter.writeInt32(0);
+        invalidArcWidthWriter.writeInt32(0);
+        invalidArcWidthWriter.writeInt32(100);
+        invalidArcWidthWriter.writeDouble(0.0);
+        invalidArcWidthWriter.writeDouble(360.0);
+        invalidArcWidthWriter.writeInt32(0);
+        invalidArcWidthWriter.endBlock();
+        const QString invalidArcWidthPath = QDir(tempDir.path()).filePath(QStringLiteral("invalid-arc-width.PcbLib"));
+        QVERIFY(writeMalformedLibrary(invalidArcWidthPath, invalidArcWidthData));
+
+        AltiumPcbLibReader invalidArcWidthReader;
+        QVERIFY2(invalidArcWidthReader.open(invalidArcWidthPath), qPrintable(invalidArcWidthReader.errorString()));
+        QVERIFY(!invalidArcWidthReader.readFootprintObjects(QStringLiteral("BROKEN"), &objects));
+        QVERIFY(invalidArcWidthReader.errorString().contains(QStringLiteral("弧线宽度必须为正")));
     }
 
     /**
