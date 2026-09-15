@@ -487,35 +487,35 @@ void ComponentCacheService::saveComponentMetadata(const QString& componentId,
                                                   uint64_t expectedGeneration,
                                                   bool replaceModel3DMetadata) {
     QJsonObject metadata = buildMetadata(componentId, data);
-    const QJsonObject existingMetadata = loadMetadata(componentId);
-    metadata = mergeMetadata(existingMetadata, metadata);
-    if (replaceModel3DMetadata && (!data.model3DData() || data.model3DData()->uuid().isEmpty())) {
-        metadata.remove(QStringLiteral("model3duuid"));
-        metadata.remove(QStringLiteral("model3dName"));
-        metadata.remove(QStringLiteral("model3dTranslation"));
-        metadata.remove(QStringLiteral("model3dRotation"));
-    }
-
-    QJsonDocument doc(metadata);
     QString key = makeMemoryKey(componentId, "metadata");
-    QByteArray* newData = new QByteArray(doc.toJson(QJsonDocument::Compact));
     qint64 sizeAfterUpdate = 0;
 
-    // 代次检查 + L1 写入 + 磁盘写入在同一个互斥区内，彻底关闭竞态窗口
+    // 旧元数据读取、合并、代次检查、L1 写入和磁盘写入必须在同一把锁内，
+    // 否则并发的部分元数据更新可能基于同一个旧快照写回并互相覆盖。
     {
         QMutexLocker diskLocker(&m_diskWriteMutex);
         if (expectedGeneration != 0) {
             if (m_cacheGeneration.load() != expectedGeneration) {
                 LOG_DEBUG(LogModule::Core, "Discarded stale write for {} (generation mismatch)", componentId);
-                delete newData;
                 return;
             }
             if (isTombstoned(componentId)) {
                 LOG_DEBUG(LogModule::Core, "Discarded write for tombstoned component {}", componentId);
-                delete newData;
                 return;
             }
         }
+
+        const QJsonObject existingMetadata = loadMetadata(componentId);
+        metadata = mergeMetadata(existingMetadata, metadata);
+        if (replaceModel3DMetadata && (!data.model3DData() || data.model3DData()->uuid().isEmpty())) {
+            metadata.remove(QStringLiteral("model3duuid"));
+            metadata.remove(QStringLiteral("model3dName"));
+            metadata.remove(QStringLiteral("model3dTranslation"));
+            metadata.remove(QStringLiteral("model3dRotation"));
+        }
+
+        QJsonDocument doc(metadata);
+        QByteArray* newData = new QByteArray(doc.toJson(QJsonDocument::Compact));
         {
             QMutexLocker locker(&m_mutex);
             m_memoryCache.insert(key, newData, newData->size());
