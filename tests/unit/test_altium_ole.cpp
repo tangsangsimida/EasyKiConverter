@@ -464,6 +464,10 @@ private slots:
         QCOMPARE(AltiumCoord::mmToSchematicUnits(1.0e12), std::numeric_limits<int32_t>::max());
         QCOMPARE(AltiumCoord::mmToSchematicUnits(-1.0e12), std::numeric_limits<int32_t>::min());
         QCOMPARE(AltiumCoord::mmToSchematicUnits(std::numeric_limits<double>::infinity()), int32_t(0));
+        QCOMPARE(AltiumCoord::mmToMilString(std::numeric_limits<double>::quiet_NaN()), QStringLiteral("0.000000mil"));
+        QCOMPARE(AltiumCoord::mmToMilString(std::numeric_limits<double>::infinity()), QStringLiteral("0.000000mil"));
+        QCOMPARE(AltiumCoord::lineWidthMmToIndex(std::numeric_limits<double>::quiet_NaN()), 0);
+        QCOMPARE(AltiumCoord::lineWidthMmToIndex(std::numeric_limits<double>::infinity()), 0);
     }
 
     /**

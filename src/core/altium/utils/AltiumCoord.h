@@ -49,7 +49,8 @@ constexpr double toMils(int raw) {
 
 /** @brief 毫米 → Altium mil 字符串（如 "100mil"） */
 inline QString mmToMilString(double mm) {
-    return QString("%1mil").arg(mm / 0.0254, 0, 'f', 6);
+    const double mils = std::isfinite(mm) ? mm / 0.0254 : 0.0;
+    return QString("%1mil").arg(mils, 0, 'f', 6);
 }
 
 /** @brief 原始单位 → mil 字符串 */
@@ -80,6 +81,8 @@ constexpr int lineWidthToIndex(int rawWidth) {
  */
 constexpr int lineWidthMmToIndex(double mm) {
     double mils = mm / 0.0254;
+    if (!std::isfinite(mils))
+        return 0;
     if (mils >= 5.0)
         return 3;
     if (mils >= 3.0)
