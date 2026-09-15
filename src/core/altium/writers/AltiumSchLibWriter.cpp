@@ -1052,7 +1052,9 @@ bool AltiumSchLibWriter::validateGeometry(const AltiumSchComponent& component) {
             return reject(QStringLiteral("路径顶点包含非有限坐标"));
     }
     for (const AltiumSchBezier& bezier : component.beziers) {
-        if (bezier.controlPoints.size() == 4 && !hasFinitePoints(bezier.controlPoints))
+        if (bezier.controlPoints.size() != 4)
+            return reject(QStringLiteral("Bézier 控制点数量无效"));
+        if (!hasFinitePoints(bezier.controlPoints))
             return reject(QStringLiteral("Bézier 控制点包含非有限坐标"));
     }
     for (const AltiumSchImage& image : component.images) {

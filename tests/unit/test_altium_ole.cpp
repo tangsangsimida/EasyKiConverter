@@ -1166,11 +1166,6 @@ private slots:
         image.keepAspect = true;
         symbol.images.append(image);
 
-        // 无效 Bézier 不应写入 Data，也不能被 FileHeader 的 WEIGHT 计入。
-        AltiumSchBezier invalidBezier;
-        invalidBezier.controlPoints = {QPointF(0, 0), QPointF(100000, 0), QPointF(200000, 0)};
-        symbol.beziers.append(invalidBezier);
-
         AltiumSchComponent::Implementation impl;
         impl.modelName = QStringLiteral("模型-高精度");
         impl.modelType = QStringLiteral("PCBLIB");
@@ -1185,8 +1180,17 @@ private slots:
         const QString schPath = QDir(tempDir.path()).filePath(QStringLiteral("easyeda_convertlib.SchLib"));
         AltiumSchLibWriter schWriter;
         QVERIFY(schWriter.write({symbol}, schPath, QStringLiteral("easyeda_convertlib")));
-        QVERIFY(schWriter.diagnostics().contains(
-            QStringLiteral("Altium SchLib Bézier 图元控制点数量无效（数量为 3），已跳过")));
+
+        AltiumSchComponent invalidBezierComponent;
+        invalidBezierComponent.name = QStringLiteral("INVALID_DIRECT_BEZIER");
+        AltiumSchBezier invalidBezier;
+        invalidBezier.controlPoints = {QPointF(0, 0), QPointF(100000, 0), QPointF(200000, 0)};
+        invalidBezierComponent.beziers.append(invalidBezier);
+        AltiumSchLibWriter invalidBezierWriter;
+        const QString invalidBezierOutput =
+            QDir(tempDir.path()).filePath(QStringLiteral("invalid-direct-bezier.SchLib"));
+        QVERIFY(!invalidBezierWriter.write({invalidBezierComponent}, invalidBezierOutput));
+        QVERIFY(invalidBezierWriter.diagnostics().join('\n').contains(QStringLiteral("Bézier 控制点数量无效")));
 
         QByteArray schHeader;
         QVERIFY(readCfbStream(schPath, QStringLiteral("FileHeader"), schHeader));
