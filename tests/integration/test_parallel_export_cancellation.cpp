@@ -156,6 +156,36 @@ private slots:
         QVERIFY(finalStatus.diagnostics.contains(QStringLiteral("输入图元 UNKNOWN 未支持")));
     }
 
+    void testCancellationReportPreservesCollectedDiagnostics() {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        ParallelExportService service;
+        ExportOptions options = makeOptions(tempDir.path(), QStringLiteral("CancelledReport"));
+        options.debugMode = true;
+        service.setOptions(options);
+        service.setOutputPath(tempDir.path());
+
+        ExportItemStatus status;
+        status.status = ExportItemStatus::Status::Success;
+        status.diagnostics = {QStringLiteral("输入图元 UNKNOWN 未支持")};
+        QVERIFY(QMetaObject::invokeMethod(&service,
+                                          "onExportItemStatusChanged",
+                                          Qt::DirectConnection,
+                                          Q_ARG(QString, QStringLiteral("C90002")),
+                                          Q_ARG(QString, QStringLiteral("Symbol")),
+                                          Q_ARG(ExportItemStatus, status)));
+
+        service.cancelExport();
+        QTest::qWait(100);
+
+        const QString reportPath = tempDir.filePath(QStringLiteral("easykiconverter_export_detailed_report.md"));
+        QVERIFY2(QFileInfo::exists(reportPath), qPrintable(reportPath));
+        const QString report = TestPaths::readText(reportPath);
+        QVERIFY(report.contains(QStringLiteral("export-cancelled")));
+        QVERIFY(report.contains(QStringLiteral("输入图元 UNKNOWN 未支持")));
+    }
+
     void testCancellationStopsRunningExportPipeline() {
         QTemporaryDir tempDir;
         QVERIFY(tempDir.isValid());
