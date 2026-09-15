@@ -1006,6 +1006,14 @@ private slots:
         nonLatinPcbText.texts.append(nonLatinText);
         QVERIFY(!invalidInputWriter.write({nonLatinPcbText}, pcbOutputPath));
         QVERIFY(invalidInputWriter.diagnostics().join('\n').contains(QStringLiteral("文本内容包含无法编码的字符")));
+        AltiumPcbComponent nonLatinModelComponent;
+        nonLatinModelComponent.name = QStringLiteral("NON_LATIN_MODEL");
+        AltiumPcbComponent::Model3D nonLatinModel;
+        nonLatinModel.name = QStringLiteral("中文模型.step");
+        nonLatinModel.stepData = QByteArrayLiteral("ISO-10303-21;");
+        nonLatinModelComponent.models.append(nonLatinModel);
+        QVERIFY(!invalidInputWriter.write({nonLatinModelComponent}, pcbOutputPath));
+        QVERIFY(invalidInputWriter.diagnostics().join('\n').contains(QStringLiteral("3D 模型名称包含无法编码的字符")));
         AltiumPcbComponent invalidLayerPcb;
         invalidLayerPcb.name = QStringLiteral("INVALID_LAYER");
         AltiumPcbTrack invalidLayerTrack;
