@@ -69,6 +69,7 @@ QStringList SymbolData::validationErrors() const {
         bool hasMoveCommand = false;
         bool hasDrawableCommand = false;
         bool hasUnsupportedCommand = false;
+        bool hasInvalidSyntax = false;
         const QRegularExpression commandExpression(QStringLiteral("[A-Za-z]"));
         auto matchIterator = commandExpression.globalMatch(path);
         while (matchIterator.hasNext()) {
@@ -92,8 +93,80 @@ QStringList SymbolData::validationErrors() const {
                 hasDrawableCommand = true;
         }
 
+        // 逐 token 校验，避免解析器静默跳过非法字符或不完整的参数组。
+        const QRegularExpression tokenExpression(
+            QStringLiteral(R"(\s+|,|[MmZzLlHhVvCcSsQqTtAa]|[-+]?(?:(?:\d+(?:\.\d*)?)|(?:\.\d+))(?:[eE][-+]?\d+)?)"));
+        QStringList tokens;
+        int tokenPosition = 0;
+        while (tokenPosition < path.size()) {
+            const auto tokenMatch = tokenExpression.match(path, tokenPosition);
+            if (!tokenMatch.hasMatch() || tokenMatch.capturedStart() != tokenPosition) {
+                hasInvalidSyntax = true;
+                break;
+            }
+            const QString token = tokenMatch.captured(0);
+            tokenPosition = tokenMatch.capturedEnd();
+            if (!token.trimmed().isEmpty() && token != QStringLiteral(","))
+                tokens.append(token);
+        }
+
+        const auto isCommandToken = [](const QString& token) { return token.size() == 1 && token.at(0).isLetter(); };
+        const auto parameterCount = [](QChar command) {
+            switch (command.toUpper().unicode()) {
+                case 'M':
+                case 'L':
+                case 'T':
+                    return 2;
+                case 'H':
+                case 'V':
+                    return 1;
+                case 'S':
+                case 'Q':
+                    return 4;
+                case 'C':
+                    return 6;
+                case 'A':
+                    return 7;
+                default:
+                    return 0;
+            }
+        };
+        int tokenIndex = 0;
+        while (!hasInvalidSyntax && tokenIndex < tokens.size()) {
+            if (!isCommandToken(tokens.at(tokenIndex))) {
+                hasInvalidSyntax = true;
+                break;
+            }
+            const QChar command = tokens.at(tokenIndex++).at(0);
+            const int groupSize = parameterCount(command);
+            if (command.toUpper() == QLatin1Char('Z'))
+                continue;
+
+            int groupCount = 0;
+            while (tokenIndex < tokens.size() && !isCommandToken(tokens.at(tokenIndex))) {
+                if (tokenIndex + groupSize > tokens.size()) {
+                    hasInvalidSyntax = true;
+                    break;
+                }
+                for (int parameterIndex = 0; parameterIndex < groupSize; ++parameterIndex) {
+                    if (isCommandToken(tokens.at(tokenIndex + parameterIndex))) {
+                        hasInvalidSyntax = true;
+                        break;
+                    }
+                }
+                if (hasInvalidSyntax)
+                    break;
+                tokenIndex += groupSize;
+                ++groupCount;
+            }
+            if (groupCount == 0)
+                hasInvalidSyntax = true;
+        }
+
         if (hasUnsupportedCommand)
             addError(QString("%1Path %2 contains an unsupported command").arg(prefix).arg(index));
+        if (hasInvalidSyntax)
+            addError(QString("%1Path %2 has invalid command parameters").arg(prefix).arg(index));
         if (!hasMoveCommand)
             addError(QString("%1Path %2 has no initial move command").arg(prefix).arg(index));
         if (!hasDrawableCommand)

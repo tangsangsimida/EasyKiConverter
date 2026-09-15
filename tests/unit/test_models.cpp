@@ -250,10 +250,21 @@ private slots:
         noMovePath.paths = QStringLiteral("L 4 4");
         symbol.addPath(noMovePath);
 
+        SymbolPath incompletePath;
+        incompletePath.paths = QStringLiteral("M 0 0 L 1");
+        symbol.addPath(incompletePath);
+
+        SymbolPath invalidTokenPath;
+        invalidTokenPath.paths = QStringLiteral("M 0 0 L 1 1 @");
+        symbol.addPath(invalidTokenPath);
+
         const QStringList errors = symbol.validationErrors();
         QVERIFY(errors.contains(QStringLiteral("Path 0 contains an unsupported command")));
+        QVERIFY(!errors.contains(QStringLiteral("Path 0 has invalid command parameters")));
         QVERIFY(errors.contains(QStringLiteral("Path 1 has no drawable commands")));
         QVERIFY(errors.contains(QStringLiteral("Path 2 has no initial move command")));
+        QVERIFY(errors.contains(QStringLiteral("Path 3 has invalid command parameters")));
+        QVERIFY(errors.contains(QStringLiteral("Path 4 has invalid command parameters")));
     }
 
     void testSymbolValidationChecksGraphicOrderReferences() {
