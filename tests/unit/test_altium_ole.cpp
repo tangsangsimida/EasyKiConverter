@@ -2450,6 +2450,22 @@ private slots:
         QVERIFY(invalidParameterFontExporter.diagnostics().contains(
             QStringLiteral("符号 INVALID_TEXT_DATA 参数 FontInvalid 的字体大小无效，已跳过")));
 
+        IR::SymbolComponentIR invalidCommonPartIndexSymbol;
+        invalidCommonPartIndexSymbol.name = QStringLiteral("INVALID_COMMON_PART_INDEX");
+        IR::SymbolRectangleIR invalidCommonPartIndexRectangle;
+        invalidCommonPartIndexRectangle.partIndex = -2;
+        invalidCommonPartIndexRectangle.x0 = 0.0;
+        invalidCommonPartIndexRectangle.y0 = 0.0;
+        invalidCommonPartIndexRectangle.x1 = 1.0;
+        invalidCommonPartIndexRectangle.y1 = 1.0;
+        invalidCommonPartIndexSymbol.rectangles.append(invalidCommonPartIndexRectangle);
+        ExporterAltiumSymbol invalidCommonPartIndexExporter;
+        const QString invalidCommonPartIndexPath =
+            QDir(tempDir.path()).filePath(QStringLiteral("invalid-common-part-index.SchLib"));
+        QVERIFY(invalidCommonPartIndexExporter.exportSymbol(invalidCommonPartIndexSymbol, invalidCommonPartIndexPath));
+        QVERIFY(invalidCommonPartIndexExporter.diagnostics().contains(
+            QStringLiteral("Altium SchLib 图元 OWNERPARTID=0 无效，已规范化为 1")));
+
         IR::SymbolComponentIR invalidBoundsSymbol;
         invalidBoundsSymbol.name = QStringLiteral("INVALID_BOUNDS_DATA");
         IR::SymbolRectangleIR invalidRectangle;

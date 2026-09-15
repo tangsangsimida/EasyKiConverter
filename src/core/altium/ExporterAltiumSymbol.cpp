@@ -20,7 +20,13 @@ namespace {
  * @details 负索引表示公共 Part Zero，普通部件使用从 1 开始的编号。
  */
 int toAltiumOwnerPartId(int partIndex) {
-    return partIndex < 0 ? -1 : qMax(1, partIndex + 1);
+    if (partIndex == -1)
+        return -1;
+    if (partIndex < -1)
+        return 0;
+    if (partIndex >= 32767)
+        return 32768;
+    return qMax(1, partIndex + 1);
 }
 
 /**
