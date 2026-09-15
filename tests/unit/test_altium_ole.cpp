@@ -637,6 +637,17 @@ private slots:
         QVERIFY(!writer.write({invalidPinType}, outputPath));
         QVERIFY(writer.diagnostics().join('\n').contains(QStringLiteral("引脚 0 方向无效")));
 
+        AltiumSchComponent invalidImageBounds;
+        invalidImageBounds.name = QStringLiteral("INVALID_IMAGE_BOUNDS");
+        AltiumSchImage invalidImage;
+        invalidImage.fileName = QStringLiteral("image.png");
+        invalidImage.locationX = 100;
+        invalidImage.cornerX = 100;
+        invalidImage.cornerY = 100;
+        invalidImageBounds.images.append(invalidImage);
+        QVERIFY(!writer.write({invalidImageBounds}, outputPath));
+        QVERIFY(writer.diagnostics().join('\n').contains(QStringLiteral("图片边界尺寸无效")));
+
         AltiumSchComponent named;
         named.name = QStringLiteral("VALID");
         QVERIFY(!writer.write({named}, QString()));
@@ -2482,11 +2493,15 @@ private slots:
         AltiumSchImage emptyImage;
         emptyImage.embedImage = true;
         emptyImage.fileName = QStringLiteral("empty.png");
+        emptyImage.cornerX = 100000;
+        emptyImage.cornerY = 100000;
         diagnosticSymbol.images.append(emptyImage);
         AltiumSchImage invalidNameImage;
         invalidNameImage.embedImage = true;
         invalidNameImage.fileName = QStringLiteral("bad|name.png");
         invalidNameImage.data = QByteArrayLiteral("image");
+        invalidNameImage.cornerX = 100000;
+        invalidNameImage.cornerY = 100000;
         diagnosticSymbol.images.append(invalidNameImage);
         diagnosticSymbol.graphicOrder = {{QStringLiteral("T"), 0, 0}};
         AltiumSchPolygon fallbackPolygon;
@@ -2503,16 +2518,22 @@ private slots:
         QVERIFY(diagnosticWriter.diagnostics().contains(
             QStringLiteral("组件 IMAGE_DIAGNOSTICS 图片 1 的嵌入文件名无效: bad|name.png，已跳过 Storage")));
         AltiumSchImage missingExternalNameImage;
+        missingExternalNameImage.cornerX = 100000;
+        missingExternalNameImage.cornerY = 100000;
         diagnosticSymbol.images.append(missingExternalNameImage);
         AltiumSchImage invalidWindowsNameImage;
         invalidWindowsNameImage.embedImage = true;
         invalidWindowsNameImage.fileName = QStringLiteral("bad:name.png");
         invalidWindowsNameImage.data = QByteArrayLiteral("image");
+        invalidWindowsNameImage.cornerX = 100000;
+        invalidWindowsNameImage.cornerY = 100000;
         diagnosticSymbol.images.append(invalidWindowsNameImage);
         AltiumSchImage oversizedNameImage;
         oversizedNameImage.embedImage = true;
         oversizedNameImage.fileName = QString(256, QLatin1Char('a')) + QStringLiteral(".png");
         oversizedNameImage.data = QByteArrayLiteral("image");
+        oversizedNameImage.cornerX = 100000;
+        oversizedNameImage.cornerY = 100000;
         diagnosticSymbol.images.append(oversizedNameImage);
         const QString oversizedDiagnosticPath = QDir(tempDir.path()).filePath(QStringLiteral("oversized-image.SchLib"));
         QVERIFY(
@@ -2948,6 +2969,8 @@ private slots:
         symbol.rectangles.append(rectangle);
         AltiumSchImage image;
         image.fileName = QStringLiteral("unindexed.png");
+        image.cornerX = 100000;
+        image.cornerY = 100000;
         image.sourceGraphicIndex = -1;
         image.sourcePartIndex = 0;
         symbol.images.append(image);

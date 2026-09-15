@@ -1058,6 +1058,8 @@ bool AltiumSchLibWriter::validateGeometry(const AltiumSchComponent& component) {
     for (const AltiumSchImage& image : component.images) {
         if (!std::isfinite(image.rotation))
             return reject(QStringLiteral("图片旋转角度无效"));
+        if (image.locationX == image.cornerX || image.locationY == image.cornerY)
+            return reject(QStringLiteral("图片边界尺寸无效"));
     }
     return true;
 }
