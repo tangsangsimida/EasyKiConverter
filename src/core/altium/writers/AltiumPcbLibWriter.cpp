@@ -130,6 +130,22 @@ bool AltiumPcbLibWriter::validateComponents(const QList<AltiumPcbComponent>& com
             if (region.vertices.size() < 3)
                 return reject(QStringLiteral("Altium PcbLib 封装 %1 区域顶点不足，已拒绝写入").arg(component.name));
         }
+        const int primitiveCount = countPrimitives(component);
+        QSet<int> extendedPrimitiveIndices;
+        for (const AltiumPcbExtendedPrimitiveInfo& info : component.extendedPrimitives) {
+            if (info.primitiveIndex < 0 || info.primitiveIndex >= primitiveCount)
+                return reject(QStringLiteral("Altium PcbLib 封装 %1 的扩展图元索引无效: %2，已拒绝写入")
+                                  .arg(component.name)
+                                  .arg(info.primitiveIndex));
+            if (info.objectName.trimmed().isEmpty())
+                return reject(
+                    QStringLiteral("Altium PcbLib 封装 %1 的扩展图元对象名为空，已拒绝写入").arg(component.name));
+            if (extendedPrimitiveIndices.contains(info.primitiveIndex))
+                return reject(QStringLiteral("Altium PcbLib 封装 %1 的扩展图元索引重复: %2，已拒绝写入")
+                                  .arg(component.name)
+                                  .arg(info.primitiveIndex));
+            extendedPrimitiveIndices.insert(info.primitiveIndex);
+        }
     }
     return true;
 }

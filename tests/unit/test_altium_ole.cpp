@@ -889,6 +889,21 @@ private slots:
         duplicatePcbNameCase.name = QStringLiteral("DUPLICATE-PCB");
         QVERIFY(!invalidInputWriter.write({duplicatePcbName, duplicatePcbNameCase}, pcbOutputPath));
         QVERIFY(invalidInputWriter.diagnostics().join('\n').contains(QStringLiteral("封装名称重复（不区分大小写）")));
+
+        AltiumPcbComponent invalidExtendedInfo;
+        invalidExtendedInfo.name = QStringLiteral("INVALID_EXTENDED_INFO");
+        AltiumPcbPad extendedInfoPad;
+        extendedInfoPad.sizeTopX = extendedInfoPad.sizeTopY = 1000;
+        extendedInfoPad.sizeMidX = extendedInfoPad.sizeMidY = 1000;
+        extendedInfoPad.sizeBotX = extendedInfoPad.sizeBotY = 1000;
+        extendedInfoPad.holeSize = 1000;
+        invalidExtendedInfo.pads.append(extendedInfoPad);
+        AltiumPcbExtendedPrimitiveInfo invalidExtendedEntry;
+        invalidExtendedEntry.primitiveIndex = 1;
+        invalidExtendedEntry.objectName = QStringLiteral("Pad");
+        invalidExtendedInfo.extendedPrimitives.append(invalidExtendedEntry);
+        QVERIFY(!invalidInputWriter.write({invalidExtendedInfo}, pcbOutputPath));
+        QVERIFY(invalidInputWriter.diagnostics().join('\n').contains(QStringLiteral("扩展图元索引无效")));
     }
 
     /**
