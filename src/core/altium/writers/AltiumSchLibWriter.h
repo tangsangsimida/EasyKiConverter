@@ -40,7 +40,7 @@ public:
 
     /**
      * @brief 获取最近一次写入产生的非致命诊断
-     * @return 图片文件名、嵌入数据等被跳过或修正时的诊断列表
+     * @return 图片、字体、Owner、几何和文本等输入被跳过、规范化或回退时的诊断列表
      */
     QStringList diagnostics() const {
         return m_diagnostics;
