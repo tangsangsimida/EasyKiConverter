@@ -915,6 +915,45 @@ bool AltiumSchLibWriter::validateGeometry(const AltiumSchComponent& component) {
         qWarning() << "AltiumSchLibWriter:" << m_diagnostics.constLast();
         return false;
     };
+    const auto validateLineWidths = [&reject](const auto& objects, const QString& context) {
+        for (const auto& object : objects) {
+            if (object.lineWidth < 0 || object.lineWidth > 3)
+                return reject(QStringLiteral("%1线宽索引无效: %2").arg(context).arg(object.lineWidth));
+        }
+        return true;
+    };
+    const auto validateLineStyles = [&reject](const auto& objects, const QString& context) {
+        for (const auto& object : objects) {
+            if (object.lineStyle < 0 || object.lineStyle > 2)
+                return reject(QStringLiteral("%1线型无效: %2").arg(context).arg(object.lineStyle));
+        }
+        return true;
+    };
+
+    if (!validateLineWidths(component.rectangles, QStringLiteral("矩形图元")) ||
+        !validateLineWidths(component.roundRectangles, QStringLiteral("圆角矩形图元")) ||
+        !validateLineWidths(component.lines, QStringLiteral("线段图元")) ||
+        !validateLineWidths(component.arcs, QStringLiteral("圆弧图元")) ||
+        !validateLineWidths(component.polygons, QStringLiteral("多边形图元")) ||
+        !validateLineWidths(component.ellipses, QStringLiteral("椭圆图元")) ||
+        !validateLineWidths(component.pies, QStringLiteral("扇形图元")) ||
+        !validateLineWidths(component.ellipticalArcs, QStringLiteral("椭圆弧图元")) ||
+        !validateLineWidths(component.polylines, QStringLiteral("折线图元")) ||
+        !validateLineWidths(component.paths, QStringLiteral("路径图元")) ||
+        !validateLineWidths(component.beziers, QStringLiteral("Bézier 图元")) ||
+        !validateLineWidths(component.ieeeSymbols, QStringLiteral("IEEE 图元")) ||
+        !validateLineStyles(component.rectangles, QStringLiteral("矩形图元")) ||
+        !validateLineStyles(component.roundRectangles, QStringLiteral("圆角矩形图元")) ||
+        !validateLineStyles(component.lines, QStringLiteral("线段图元")) ||
+        !validateLineStyles(component.arcs, QStringLiteral("圆弧图元")) ||
+        !validateLineStyles(component.polygons, QStringLiteral("多边形图元")) ||
+        !validateLineStyles(component.ellipses, QStringLiteral("椭圆图元")) ||
+        !validateLineStyles(component.pies, QStringLiteral("扇形图元")) ||
+        !validateLineStyles(component.ellipticalArcs, QStringLiteral("椭圆弧图元")) ||
+        !validateLineStyles(component.polylines, QStringLiteral("折线图元")) ||
+        !validateLineStyles(component.paths, QStringLiteral("路径图元"))) {
+        return false;
+    }
 
     for (const AltiumSchRoundRectangle& rect : component.roundRectangles) {
         if (rect.cornerXRadius < 0 || rect.cornerYRadius < 0)

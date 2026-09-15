@@ -675,6 +675,21 @@ private slots:
         QVERIFY(writer.diagnostics().join('\n').contains(QStringLiteral("扇形起始角度无效")));
         QVERIFY(writer.diagnostics().join('\n').contains(QStringLiteral("椭圆弧结束角度无效")));
 
+        AltiumSchComponent invalidStroke;
+        invalidStroke.name = QStringLiteral("INVALID_STROKE_WIDTH");
+        AltiumSchRectangle invalidStrokeRectangle;
+        invalidStrokeRectangle.lineWidth = 4;
+        invalidStroke.rectangles.append(invalidStrokeRectangle);
+        QVERIFY(!writer.write({invalidStroke}, outputPath));
+        QVERIFY(writer.diagnostics().join('\n').contains(QStringLiteral("矩形图元线宽索引无效: 4")));
+
+        invalidStroke.name = QStringLiteral("INVALID_STROKE_STYLE");
+        invalidStrokeRectangle.lineWidth = 0;
+        invalidStrokeRectangle.lineStyle = 3;
+        invalidStroke.rectangles = {invalidStrokeRectangle};
+        QVERIFY(!writer.write({invalidStroke}, outputPath));
+        QVERIFY(writer.diagnostics().join('\n').contains(QStringLiteral("矩形图元线型无效: 3")));
+
         QByteArray header;
         QVERIFY(readCfbStream(outputPath, QStringLiteral("FileHeader"), header));
         QVERIFY(header.contains("PARTCOUNT0=2"));
