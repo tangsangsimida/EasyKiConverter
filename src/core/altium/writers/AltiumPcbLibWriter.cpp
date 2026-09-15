@@ -148,6 +148,9 @@ bool AltiumPcbLibWriter::validateComponents(const QList<AltiumPcbComponent>& com
                 return reject(
                     QStringLiteral("Altium PcbLib 封装 %1 的 3D 模型数据为空，已拒绝写入").arg(component.name));
             const QString modelId = normalizedModelId(model.id.isEmpty() ? model.name : model.id);
+            if (!model.id.isEmpty() && modelId.isEmpty())
+                return reject(
+                    QStringLiteral("Altium PcbLib 封装 %1 的 3D 模型 ID 规范化后为空，已拒绝写入").arg(component.name));
             if (!modelId.isEmpty() && modelIds.contains(modelId))
                 return reject(
                     QStringLiteral("Altium PcbLib 封装 %1 的 3D 模型 ID 重复，已拒绝写入").arg(component.name));

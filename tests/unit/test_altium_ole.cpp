@@ -963,6 +963,14 @@ private slots:
         QVERIFY(!invalidInputWriter.write({duplicateModelIdComponent}, pcbOutputPath));
         QVERIFY(invalidInputWriter.diagnostics().join('\n').contains(QStringLiteral("3D 模型 ID 重复")));
 
+        AltiumPcbComponent invalidModelIdComponent;
+        invalidModelIdComponent.name = QStringLiteral("INVALID_MODEL_ID");
+        AltiumPcbComponent::Model3D invalidModelIdModel = firstModel;
+        invalidModelIdModel.id = QStringLiteral("|\n");
+        invalidModelIdComponent.models = {invalidModelIdModel};
+        QVERIFY(!invalidInputWriter.write({invalidModelIdComponent}, pcbOutputPath));
+        QVERIFY(invalidInputWriter.diagnostics().join('\n').contains(QStringLiteral("3D 模型 ID 规范化后为空")));
+
         AltiumPcbComponent invalidBodyComponent;
         invalidBodyComponent.name = QStringLiteral("INVALID_BODY");
         AltiumPcbComponentBody invalidBodyData;
