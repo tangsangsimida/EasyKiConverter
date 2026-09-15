@@ -119,6 +119,8 @@ void ComponentCacheService::setCacheDir(const QString& cacheDir, bool migrateExi
             m_memoryCache.clear();
         }
     }
+    if (cacheDirChanged)
+        emit memoryCacheSizeChanged(0);
 
     selfHealCache();
     LOG_DEBUG(LogModule::Core, "Cache directory set to: {}", newCacheDir);
@@ -1240,6 +1242,7 @@ void ComponentCacheService::clearAllCache() {
     // 再清空L1内存缓存（不重置 tombstone）
     clearMemoryCacheInternal();
 
+    emit memoryCacheSizeChanged(0);
     emit cacheSizeChanged(0);
 }
 

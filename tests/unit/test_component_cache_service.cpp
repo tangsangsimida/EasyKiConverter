@@ -185,6 +185,7 @@ private slots:
         m_cache->setCacheDir(newCacheDir.path());
 
         QVERIFY(!m_cache->hasInMemoryCache(componentId));
+        QCOMPARE(m_cache->getMemoryCacheSize(), qint64(0));
         QVERIFY(m_cache->loadSymbolData(componentId).isEmpty());
         QVERIFY(m_cache->loadComponentData(componentId) == nullptr);
     }
