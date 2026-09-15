@@ -240,12 +240,22 @@ bool AltiumSchLibWriter::write(const QList<AltiumSchComponent>& components,
         qWarning() << "AltiumSchLibWriter: Refusing to write without an output path";
         return false;
     }
+    QSet<QString> componentNames;
     for (const AltiumSchComponent& component : components) {
         if (component.name.trimmed().isEmpty()) {
             m_diagnostics.append(QStringLiteral("Altium SchLib 组件名称为空，已拒绝写入"));
             qWarning() << "AltiumSchLibWriter: Refusing to write a component without a name";
             return false;
         }
+        const QString foldedName = component.name.trimmed().toCaseFolded();
+        if (componentNames.contains(foldedName)) {
+            const QString diagnostic =
+                QStringLiteral("Altium SchLib 组件名称重复（不区分大小写）: %1，已拒绝写入").arg(component.name);
+            m_diagnostics.append(diagnostic);
+            qWarning() << "AltiumSchLibWriter:" << diagnostic;
+            return false;
+        }
+        componentNames.insert(foldedName);
         if (!validateGeometry(component))
             return false;
         if (!validatePartOwnership(component))

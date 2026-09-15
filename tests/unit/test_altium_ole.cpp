@@ -603,6 +603,11 @@ private slots:
         QVERIFY(writer.diagnostics().join('\n').contains(QStringLiteral("输出路径为空")));
         QVERIFY(!writer.diagnostics().join('\n').contains(QStringLiteral("组件名称为空")));
 
+        AltiumSchComponent duplicateName;
+        duplicateName.name = QStringLiteral("valid");
+        QVERIFY(!writer.write({named, duplicateName}, outputPath));
+        QVERIFY(writer.diagnostics().join('\n').contains(QStringLiteral("组件名称重复（不区分大小写）")));
+
         AltiumSchComponent invalidPartCount;
         invalidPartCount.name = QStringLiteral("INVALID_PART_COUNT");
         invalidPartCount.partCount = 0;
