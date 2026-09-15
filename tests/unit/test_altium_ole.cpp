@@ -2968,6 +2968,56 @@ private slots:
     }
 
     /**
+     * @brief 验证 Altium 3D 元件体保留 STEP 原点补偿。
+     */
+    void altiumFootprintPreservesStepOffsetInComponentBody() {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        IR::FootprintComponentIR footprint;
+        footprint.name = QStringLiteral("STEP_OFFSET");
+        IR::FootprintPadIR pad;
+        pad.number = QStringLiteral("1");
+        pad.position = QPointF(0.0, 0.0);
+        pad.size = QSizeF(1.0, 1.0);
+        footprint.pads.append(pad);
+
+        IR::Model3DIR model;
+        model.setName(QStringLiteral("offset.step"));
+        model.setStepData(QByteArrayLiteral("ISO-10303-21;"));
+        model.setTranslation(IR::Model3DVec3(1.0, 2.0, 3.0));
+        model.setStepOffsetMm(IR::Model3DVec3(4.0, 5.0, 6.0));
+        footprint.models3d.append(model);
+
+        const QString pcbPath = QDir(tempDir.path()).filePath(QStringLiteral("step-offset.PcbLib"));
+        ExporterAltiumFootprint exporter;
+        QVERIFY(exporter.exportFootprintLibrary({footprint}, QStringLiteral("step-offset"), pcbPath));
+
+        AltiumPcbLibReader reader;
+        QVERIFY2(reader.open(pcbPath), qPrintable(reader.errorString()));
+        QVector<AltiumPcbLibReader::PrimitiveRecord> objects;
+        QVERIFY2(reader.readFootprintObjects(QStringLiteral("STEP_OFFSET"), &objects),
+                 qPrintable(reader.errorString()));
+
+        bool foundBody = false;
+        for (const auto& object : objects) {
+            if (object.objectId != AltiumConstants::PCB_OBJECT_COMPONENT_BODY)
+                continue;
+
+            foundBody = true;
+            QVERIFY(object.hasComponentBodyFields);
+            const auto& params = object.componentBody.parameters;
+            const auto expectedMil = [](double millimeters) {
+                return QString::number(AltiumCoord::mmToRaw(millimeters) / 10000.0, 'f', 4) + QStringLiteral("mil");
+            };
+            QCOMPARE(params.value(QStringLiteral("MODEL.2D.X")), expectedMil(5.0));
+            QCOMPARE(params.value(QStringLiteral("MODEL.2D.Y")), expectedMil(7.0));
+            QCOMPARE(params.value(QStringLiteral("MODEL.3D.DZ")), expectedMil(9.0));
+        }
+        QVERIFY(foundBody);
+    }
+
+    /**
      * @brief 不完整来源顺序回退到默认写出，避免丢失图元。
      */
     void incompleteGraphicOrderFallsBackWithoutDroppingGraphics() {

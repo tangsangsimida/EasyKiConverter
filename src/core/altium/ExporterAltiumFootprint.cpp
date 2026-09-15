@@ -153,8 +153,10 @@ AltiumPcbComponent ExporterAltiumFootprint::convertFootprint(const IR::Footprint
                 model.rotY = rot.y;
                 model.rotZ = rot.z;
                 const auto& translation = model3d.translation();
-                model.x = AltiumCoord::mmToRaw(translation.x);
-                model.y = AltiumCoord::mmToRaw(translation.y);
+                const auto& stepOffset = model3d.stepOffsetMm();
+                model.x = AltiumCoord::mmToRaw(translation.x + stepOffset.x);
+                model.y = AltiumCoord::mmToRaw(translation.y + stepOffset.y);
+                model.dz = translation.z + stepOffset.z;
                 component.models.append(model);
             }
         }
