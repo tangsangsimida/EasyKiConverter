@@ -3331,6 +3331,15 @@ private slots:
         QVERIFY(invalidBezierExporter.diagnostics().contains(
             QStringLiteral("符号 INVALID_BEZIER Bézier 图元 0 的控制点参数无效（数量为 2），已跳过")));
 
+        IR::SymbolComponentIR invalidWriterInputSymbol;
+        invalidWriterInputSymbol.name = QStringLiteral("INVALID|WRITER_INPUT");
+        ExporterAltiumSymbol invalidWriterInputExporter;
+        const QString invalidWriterInputPath =
+            QDir(tempDir.path()).filePath(QStringLiteral("invalid-writer-input.SchLib"));
+        QVERIFY(!invalidWriterInputExporter.exportSymbol(invalidWriterInputSymbol, invalidWriterInputPath));
+        QVERIFY(invalidWriterInputExporter.diagnostics().contains(
+            QStringLiteral("Altium SchLib 组件 INVALID|WRITER_INPUT 的组件名称包含参数分隔符或 NUL，已拒绝写入")));
+
         IR::SymbolComponentIR invalidPrimitivePointsSymbol;
         invalidPrimitivePointsSymbol.name = QStringLiteral("INVALID_PRIMITIVE_POINTS");
         IR::SymbolPolylineIR invalidPolyline;
