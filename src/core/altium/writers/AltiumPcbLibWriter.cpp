@@ -73,26 +73,46 @@ bool AltiumPcbLibWriter::validateComponents(const QList<AltiumPcbComponent>& com
         for (const AltiumPcbPad& pad : component.pads) {
             if (pad.isSMD && (pad.layer < 1 || pad.layer > 74))
                 return reject(QStringLiteral("Altium PcbLib 封装 %1 包含无效焊盘层号，已拒绝写入").arg(component.name));
+            const auto isValidPadShape = [](uint8_t shape) {
+                return shape == static_cast<uint8_t>(AltiumModels::PadShape::Round) ||
+                       shape == static_cast<uint8_t>(AltiumModels::PadShape::Rectangular) ||
+                       shape == static_cast<uint8_t>(AltiumModels::PadShape::Octagonal) ||
+                       shape == static_cast<uint8_t>(AltiumModels::PadShape::RoundedRectangle);
+            };
+            if (!isValidPadShape(pad.shapeTop) || !isValidPadShape(pad.shapeMid) || !isValidPadShape(pad.shapeBot))
+                return reject(QStringLiteral("Altium PcbLib 封装 %1 包含无效焊盘形状，已拒绝写入").arg(component.name));
             if (pad.sizeTopX <= 0 || pad.sizeTopY <= 0 || pad.sizeMidX <= 0 || pad.sizeMidY <= 0 || pad.sizeBotX <= 0 ||
                 pad.sizeBotY <= 0) {
                 return reject(QStringLiteral("Altium PcbLib 封装 %1 包含非正焊盘尺寸，已拒绝写入").arg(component.name));
             }
             if (!pad.isSMD && pad.holeSize <= 0)
                 return reject(QStringLiteral("Altium PcbLib 封装 %1 包含非正通孔尺寸，已拒绝写入").arg(component.name));
+            if (pad.cornerRadiusPercentage > 100 || pad.mode > 3 || pad.powerPlaneConnectStyle > 2 ||
+                (pad.reliefEntries != 2 && pad.reliefEntries != 4) || pad.drillType > 2 || pad.holeType > 2)
+                return reject(
+                    QStringLiteral("Altium PcbLib 封装 %1 包含无效焊盘扩展属性，已拒绝写入").arg(component.name));
+            if (pad.holeType == 2 && pad.holeSlotLengthRaw <= 0)
+                return reject(QStringLiteral("Altium PcbLib 封装 %1 的槽孔长度非正，已拒绝写入").arg(component.name));
         }
         for (const AltiumPcbTrack& track : component.tracks) {
             if (track.layer < 1 || track.layer > 74)
                 return reject(QStringLiteral("Altium PcbLib 封装 %1 包含无效走线层号，已拒绝写入").arg(component.name));
+            if (track.width <= 0)
+                return reject(QStringLiteral("Altium PcbLib 封装 %1 包含非正走线宽度，已拒绝写入").arg(component.name));
         }
         for (const AltiumPcbArc& arc : component.arcs) {
             if (arc.layer < 1 || arc.layer > 74)
                 return reject(QStringLiteral("Altium PcbLib 封装 %1 包含无效弧线层号，已拒绝写入").arg(component.name));
             if (arc.radius <= 0)
                 return reject(QStringLiteral("Altium PcbLib 封装 %1 包含非正弧线半径，已拒绝写入").arg(component.name));
+            if (arc.width <= 0)
+                return reject(QStringLiteral("Altium PcbLib 封装 %1 包含非正弧线宽度，已拒绝写入").arg(component.name));
         }
         for (const AltiumPcbText& text : component.texts) {
             if (text.layer < 1 || text.layer > 74)
                 return reject(QStringLiteral("Altium PcbLib 封装 %1 包含无效文本层号，已拒绝写入").arg(component.name));
+            if (text.height <= 0 || text.strokeWidth < 0)
+                return reject(QStringLiteral("Altium PcbLib 封装 %1 包含无效文本尺寸，已拒绝写入").arg(component.name));
         }
         for (const AltiumPcbFill& fill : component.fills) {
             if (fill.layer < 1 || fill.layer > 74)

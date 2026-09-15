@@ -789,6 +789,7 @@ private slots:
         invalidPcb.pads.append(invalidPad);
         AltiumPcbArc invalidPcbArc;
         invalidPcbArc.radius = 1000;
+        invalidPcbArc.width = 1000;
         invalidPcbArc.startAngle = std::numeric_limits<double>::infinity();
         invalidPcbArc.endAngle = std::numeric_limits<double>::quiet_NaN();
         invalidPcb.arcs.append(invalidPcbArc);
@@ -849,6 +850,38 @@ private slots:
         invalidLayerPcb.tracks.append(invalidLayerTrack);
         QVERIFY(!invalidInputWriter.write({invalidLayerPcb}, pcbOutputPath));
         QVERIFY(invalidInputWriter.diagnostics().join('\n').contains(QStringLiteral("无效走线层号")));
+
+        AltiumPcbComponent invalidPadShapePcb;
+        invalidPadShapePcb.name = QStringLiteral("INVALID_PAD_SHAPE");
+        AltiumPcbPad invalidPadShape;
+        invalidPadShape.sizeTopX = invalidPadShape.sizeTopY = 1000;
+        invalidPadShape.sizeMidX = invalidPadShape.sizeMidY = 1000;
+        invalidPadShape.sizeBotX = invalidPadShape.sizeBotY = 1000;
+        invalidPadShape.holeSize = 1000;
+        invalidPadShape.shapeTop = 4;
+        invalidPadShapePcb.pads.append(invalidPadShape);
+        QVERIFY(!invalidInputWriter.write({invalidPadShapePcb}, pcbOutputPath));
+        QVERIFY(invalidInputWriter.diagnostics().join('\n').contains(QStringLiteral("无效焊盘形状")));
+
+        AltiumPcbComponent invalidTrackWidthPcb;
+        invalidTrackWidthPcb.name = QStringLiteral("INVALID_TRACK_WIDTH");
+        AltiumPcbTrack invalidTrackWidth;
+        invalidTrackWidth.width = 0;
+        invalidTrackWidthPcb.tracks.append(invalidTrackWidth);
+        QVERIFY(!invalidInputWriter.write({invalidTrackWidthPcb}, pcbOutputPath));
+        QVERIFY(invalidInputWriter.diagnostics().join('\n').contains(QStringLiteral("非正走线宽度")));
+
+        AltiumPcbComponent invalidHolePcb;
+        invalidHolePcb.name = QStringLiteral("INVALID_SLOT");
+        AltiumPcbPad invalidSlot;
+        invalidSlot.sizeTopX = invalidSlot.sizeTopY = 1000;
+        invalidSlot.sizeMidX = invalidSlot.sizeMidY = 1000;
+        invalidSlot.sizeBotX = invalidSlot.sizeBotY = 1000;
+        invalidSlot.holeSize = 1000;
+        invalidSlot.holeType = 2;
+        invalidHolePcb.pads.append(invalidSlot);
+        QVERIFY(!invalidInputWriter.write({invalidHolePcb}, pcbOutputPath));
+        QVERIFY(invalidInputWriter.diagnostics().join('\n').contains(QStringLiteral("槽孔长度非正")));
     }
 
     /**
