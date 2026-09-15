@@ -279,6 +279,17 @@ bool AltiumSchLibWriter::write(const QList<AltiumSchComponent>& components,
             qWarning() << "AltiumSchLibWriter:" << diagnostic;
             return false;
         }
+        for (const AltiumSchComponent::Implementation& implementation : component.implementations) {
+            for (auto it = implementation.parameters.cbegin(); it != implementation.parameters.cend(); ++it) {
+                if (it.key().trimmed().isEmpty() || it.key().contains(QChar('|')) || it.key().contains(QChar::Null)) {
+                    const QString diagnostic = QStringLiteral("Altium SchLib 组件 %1 的实现参数键无效: %2，已拒绝写入")
+                                                   .arg(component.name, it.key());
+                    m_diagnostics.append(diagnostic);
+                    qWarning() << "AltiumSchLibWriter:" << diagnostic;
+                    return false;
+                }
+            }
+        }
         if (!validateGeometry(component))
             return false;
         if (!validatePartOwnership(component))

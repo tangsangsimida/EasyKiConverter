@@ -813,6 +813,15 @@ private slots:
         QVERIFY(!writer.write({invalidCommonOwner}, outputPath));
         QVERIFY(writer.diagnostics().join('\n').contains(QStringLiteral("矩形图元 OWNERPARTID=-2 超出部件范围")));
 
+        AltiumSchComponent invalidImplementationParameter;
+        invalidImplementationParameter.name = QStringLiteral("INVALID_IMPLEMENTATION_PARAMETER");
+        AltiumSchComponent::Implementation invalidImplementation;
+        invalidImplementation.modelName = QStringLiteral("MODEL");
+        invalidImplementation.parameters.insert(QStringLiteral("BAD|KEY"), QStringLiteral("value"));
+        invalidImplementationParameter.implementations.append(invalidImplementation);
+        QVERIFY(!writer.write({invalidImplementationParameter}, outputPath));
+        QVERIFY(writer.diagnostics().join('\n').contains(QStringLiteral("实现参数键无效")));
+
         AltiumPcbComponent invalidPcb;
         invalidPcb.name = QStringLiteral("INVALID_PCB_FLOATS");
         AltiumPcbPad invalidPad;
