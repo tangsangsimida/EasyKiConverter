@@ -621,6 +621,11 @@ private slots:
         QVERIFY(!writer.write({oversizedName}, outputPath));
         QVERIFY(writer.diagnostics().join('\n').contains(QStringLiteral("名称超过 255 字节")));
 
+        AltiumSchComponent nonLatinName;
+        nonLatinName.name = QStringLiteral("中文元件");
+        QVERIFY(!writer.write({nonLatinName}, outputPath));
+        QVERIFY(writer.diagnostics().join('\n').contains(QStringLiteral("名称包含无法编码的字符")));
+
         AltiumSchComponent oversizedPinText;
         oversizedPinText.name = QStringLiteral("OVERSIZED_PIN_TEXT");
         AltiumSchPin oversizedPin;
@@ -628,6 +633,14 @@ private slots:
         oversizedPinText.pins.append(oversizedPin);
         QVERIFY(!writer.write({oversizedPinText}, outputPath));
         QVERIFY(writer.diagnostics().join('\n').contains(QStringLiteral("引脚 0 名称超过 255 字节")));
+
+        AltiumSchComponent nonLatinPinText;
+        nonLatinPinText.name = QStringLiteral("NON_LATIN_PIN");
+        AltiumSchPin nonLatinPin;
+        nonLatinPin.name = QStringLiteral("中文引脚");
+        nonLatinPinText.pins.append(nonLatinPin);
+        QVERIFY(!writer.write({nonLatinPinText}, outputPath));
+        QVERIFY(writer.diagnostics().join('\n').contains(QStringLiteral("引脚 0 名称包含无法编码的字符")));
 
         AltiumSchComponent invalidPinType;
         invalidPinType.name = QStringLiteral("INVALID_PIN_TYPE");

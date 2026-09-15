@@ -262,6 +262,13 @@ bool AltiumSchLibWriter::write(const QList<AltiumSchComponent>& components,
             qWarning() << "AltiumSchLibWriter:" << diagnostic;
             return false;
         }
+        if (QString::fromLatin1(component.name.toLatin1()) != component.name) {
+            const QString diagnostic =
+                QStringLiteral("Altium SchLib 组件名称包含无法编码的字符: %1，已拒绝写入").arg(component.name);
+            m_diagnostics.append(diagnostic);
+            qWarning() << "AltiumSchLibWriter:" << diagnostic;
+            return false;
+        }
         const QString foldedName = component.name.trimmed().toCaseFolded();
         if (componentNames.contains(foldedName)) {
             const QString diagnostic =
@@ -978,8 +985,13 @@ bool AltiumSchLibWriter::validateGeometry(const AltiumSchComponent& component) {
         return true;
     };
     const auto validateShortString = [&reject](const QString& value, const QString& context) {
-        if (value.toLatin1().size() > 255)
+        const QByteArray encoded = value.toLatin1();
+        if (encoded.size() > 255)
             return reject(QStringLiteral("%1超过 255 字节").arg(context));
+        if (value.contains(QChar::Null))
+            return reject(QStringLiteral("%1包含 NUL 字符").arg(context));
+        if (QString::fromLatin1(encoded) != value)
+            return reject(QStringLiteral("%1包含无法编码的字符").arg(context));
         return true;
     };
 
