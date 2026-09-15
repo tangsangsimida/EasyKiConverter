@@ -315,6 +315,13 @@ bool validatePrimitiveFields(const AltiumPcbLibReader::PrimitiveRecord& object, 
             if (!std::isfinite(vertex.x()) || !std::isfinite(vertex.y()))
                 return reject(QStringLiteral("PcbLib 三维元件体轮廓顶点必须为有限值"));
         }
+        const auto& parameters = object.componentBody.parameters;
+        if (parameters.contains(QStringLiteral("BODYOPACITY3D"))) {
+            bool opacityOk = false;
+            const double opacity = parameters.value(QStringLiteral("BODYOPACITY3D")).toDouble(&opacityOk);
+            if (!opacityOk || !std::isfinite(opacity) || opacity < 0.0 || opacity > 1.0)
+                return reject(QStringLiteral("PcbLib 三维元件体透明度必须在 0..1 范围内"));
+        }
     }
     return true;
 }

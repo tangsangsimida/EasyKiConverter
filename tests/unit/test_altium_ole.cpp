@@ -2012,6 +2012,33 @@ private slots:
         QVERIFY(!invalidRegionReader.readFootprintObjects(QStringLiteral("BROKEN"), &objects));
         QVERIFY(invalidRegionReader.errorString().contains(QStringLiteral("区域至少需要三个顶点")));
 
+        QByteArray invalidBodyOpacityData;
+        AltiumBinaryWriter invalidBodyOpacityWriter(invalidBodyOpacityData);
+        invalidBodyOpacityWriter.writeStringBlock(QStringLiteral("BROKEN"));
+        invalidBodyOpacityWriter.writeUInt8(AltiumConstants::PCB_OBJECT_COMPONENT_BODY);
+        invalidBodyOpacityWriter.beginBlock();
+        invalidBodyOpacityWriter.writeUInt8(57);
+        invalidBodyOpacityWriter.writeUInt16(0);
+        invalidBodyOpacityWriter.writeBytes(QByteArray(10, '\0'));
+        invalidBodyOpacityWriter.writeUInt32(0);
+        invalidBodyOpacityWriter.writeUInt8(0);
+        invalidBodyOpacityWriter.writeCStringParameterBlock({{QStringLiteral("BODYOPACITY3D"), QStringLiteral("NaN")}});
+        invalidBodyOpacityWriter.writeUInt32(3);
+        for (const QPointF& vertex : {QPointF(0.0, 0.0), QPointF(1.0, 0.0), QPointF(0.0, 1.0)}) {
+            invalidBodyOpacityWriter.writeDouble(vertex.x());
+            invalidBodyOpacityWriter.writeDouble(vertex.y());
+        }
+        invalidBodyOpacityWriter.endBlock();
+        const QString invalidBodyOpacityPath =
+            QDir(tempDir.path()).filePath(QStringLiteral("invalid-body-opacity.PcbLib"));
+        QVERIFY(writeMalformedLibrary(invalidBodyOpacityPath, invalidBodyOpacityData));
+
+        AltiumPcbLibReader invalidBodyOpacityReader;
+        QVERIFY2(invalidBodyOpacityReader.open(invalidBodyOpacityPath),
+                 qPrintable(invalidBodyOpacityReader.errorString()));
+        QVERIFY(!invalidBodyOpacityReader.readFootprintObjects(QStringLiteral("BROKEN"), &objects));
+        QVERIFY(invalidBodyOpacityReader.errorString().contains(QStringLiteral("透明度必须在 0..1 范围内")));
+
         QByteArray invalidLayerData;
         AltiumBinaryWriter invalidLayerWriter(invalidLayerData);
         invalidLayerWriter.writeStringBlock(QStringLiteral("BROKEN"));
