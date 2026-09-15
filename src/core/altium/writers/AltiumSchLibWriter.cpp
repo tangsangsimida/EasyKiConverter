@@ -1547,8 +1547,19 @@ void AltiumSchLibWriter::writeTextRecord(AltiumBinaryWriter& writer, const Altiu
     params["Text"] = text.text;
     if (text.isHidden || !text.isDisplayed)
         params["IsHidden"] = "T";
-    if (!text.anchor.isEmpty())
-        params["TextAnchor"] = text.anchor;
+    const QString normalizedAnchor = text.anchor.trimmed().toLower();
+    if (!normalizedAnchor.isEmpty()) {
+        if (!QStringList{QStringLiteral("start"), QStringLiteral("middle"), QStringLiteral("end")}.contains(
+                normalizedAnchor)) {
+            const QString diagnostic =
+                QStringLiteral("Altium SchLib 文本对齐锚点无效: %1，已回退为 middle").arg(text.anchor);
+            m_diagnostics.append(diagnostic);
+            qWarning() << "AltiumSchLibWriter:" << diagnostic;
+            params["TextAnchor"] = QStringLiteral("middle");
+        } else {
+            params["TextAnchor"] = normalizedAnchor;
+        }
+    }
     if (hasValidFontSize)
         params["FontSize"] = QString::number(text.fontSizeMm, 'f', 4);
 

@@ -666,6 +666,7 @@ private slots:
         invalidFontSizeText.text = QStringLiteral("invalid font size");
         invalidFontSizeText.fontName = QStringLiteral("Arial");
         invalidFontSizeText.fontSizeMm = std::numeric_limits<double>::infinity();
+        invalidFontSizeText.anchor = QStringLiteral("unsupported");
         invalidPartCount.texts.append(invalidFontSizeText);
         AltiumSchText emptyText;
         invalidPartCount.texts.append(emptyText);
@@ -700,6 +701,7 @@ private slots:
         QVERIFY(writer.diagnostics().join('\n').contains(QStringLiteral("引脚 OWNERPARTID=0 无效")));
         QVERIFY(writer.diagnostics().join('\n').contains(QStringLiteral("图元 OWNERPARTID=0 无效")));
         QVERIFY(writer.diagnostics().join('\n').contains(QStringLiteral("文本字体大小无效")));
+        QVERIFY(writer.diagnostics().join('\n').contains(QStringLiteral("文本对齐锚点无效")));
         QVERIFY(writer.diagnostics().join('\n').contains(QStringLiteral("文本内容为空")));
         QVERIFY(writer.diagnostics().join('\n').contains(QStringLiteral("文本框内容为空")));
         QVERIFY(writer.diagnostics().join('\n').contains(QStringLiteral("圆弧起始角度无效")));
@@ -763,6 +765,8 @@ private slots:
         for (const auto& record : invalidOwnerRecords) {
             if (record.recordType == 2 || record.recordType == 9)
                 QCOMPARE(record.ownerPartId, 1);
+            if (record.recordType == 4 && record.parameters.value(QStringLiteral("Text")) == "invalid font size")
+                QCOMPARE(record.parameters.value(QStringLiteral("TextAnchor")), QStringLiteral("middle"));
         }
 
         AltiumSchComponent invalidGeometry;
