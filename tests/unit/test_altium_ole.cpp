@@ -882,6 +882,13 @@ private slots:
         invalidHolePcb.pads.append(invalidSlot);
         QVERIFY(!invalidInputWriter.write({invalidHolePcb}, pcbOutputPath));
         QVERIFY(invalidInputWriter.diagnostics().join('\n').contains(QStringLiteral("槽孔长度非正")));
+
+        AltiumPcbComponent duplicatePcbName;
+        duplicatePcbName.name = QStringLiteral("duplicate-pcb");
+        AltiumPcbComponent duplicatePcbNameCase;
+        duplicatePcbNameCase.name = QStringLiteral("DUPLICATE-PCB");
+        QVERIFY(!invalidInputWriter.write({duplicatePcbName, duplicatePcbNameCase}, pcbOutputPath));
+        QVERIFY(invalidInputWriter.diagnostics().join('\n').contains(QStringLiteral("封装名称重复（不区分大小写）")));
     }
 
     /**

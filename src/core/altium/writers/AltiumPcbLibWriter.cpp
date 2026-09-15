@@ -66,9 +66,15 @@ bool AltiumPcbLibWriter::validateComponents(const QList<AltiumPcbComponent>& com
     if (filePath.trimmed().isEmpty())
         return reject(QStringLiteral("Altium PcbLib 输出路径为空，已拒绝写入"));
 
+    QSet<QString> componentNames;
     for (const AltiumPcbComponent& component : components) {
         if (component.name.trimmed().isEmpty())
             return reject(QStringLiteral("Altium PcbLib 封装名称为空，已拒绝写入"));
+        const QString foldedName = component.name.trimmed().toCaseFolded();
+        if (componentNames.contains(foldedName))
+            return reject(
+                QStringLiteral("Altium PcbLib 封装名称重复（不区分大小写）: %1，已拒绝写入").arg(component.name));
+        componentNames.insert(foldedName);
 
         for (const AltiumPcbPad& pad : component.pads) {
             if (pad.isSMD && (pad.layer < 1 || pad.layer > 74))
