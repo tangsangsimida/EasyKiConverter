@@ -311,7 +311,9 @@ jobs:
             echo
             echo "| 平台 | 架构 | 格式 | 文件 |"
             echo "| --- | --- | --- | --- |"
-            sort -t $'\t' -k1,1n -k2,2n -k3,3n -k4,4 "$download_rows" | cut -f4-
+            LC_ALL=C sort -t $'\t' -k1,1n -k2,2n -k3,3n -k4,4 "$download_rows" | cut -f4-
+            echo
+            echo "> Windows 架构使用 amd64 和 arm64 标识；文件名中的 x64 对应 amd64，arm64 文件对应 Windows on Arm。"
             echo
             echo "## 重要变化"
             echo
