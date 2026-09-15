@@ -880,6 +880,13 @@ private slots:
         invalidPadPcb.pads.append(AltiumPcbPad());
         QVERIFY(!invalidInputWriter.write({invalidPadPcb}, pcbOutputPath));
         QVERIFY(invalidInputWriter.diagnostics().join('\n').contains(QStringLiteral("非正焊盘尺寸")));
+        AltiumPcbComponent oversizedPadDesignator;
+        oversizedPadDesignator.name = QStringLiteral("OVERSIZED_PAD_DESIGNATOR");
+        AltiumPcbPad oversizedPad;
+        oversizedPad.designator = QString(256, QChar('A'));
+        oversizedPadDesignator.pads.append(oversizedPad);
+        QVERIFY(!invalidInputWriter.write({oversizedPadDesignator}, pcbOutputPath));
+        QVERIFY(invalidInputWriter.diagnostics().join('\n').contains(QStringLiteral("焊盘编号超过 255 字节")));
         AltiumPcbComponent invalidLayerPcb;
         invalidLayerPcb.name = QStringLiteral("INVALID_LAYER");
         AltiumPcbTrack invalidLayerTrack;

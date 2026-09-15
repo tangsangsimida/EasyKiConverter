@@ -86,6 +86,9 @@ bool AltiumPcbLibWriter::validateComponents(const QList<AltiumPcbComponent>& com
         componentNames.insert(foldedName);
 
         for (const AltiumPcbPad& pad : component.pads) {
+            if (pad.designator.toLatin1().size() > 255)
+                return reject(
+                    QStringLiteral("Altium PcbLib 封装 %1 的焊盘编号超过 255 字节，已拒绝写入").arg(component.name));
             if (pad.isSMD && (pad.layer < 1 || pad.layer > 74))
                 return reject(QStringLiteral("Altium PcbLib 封装 %1 包含无效焊盘层号，已拒绝写入").arg(component.name));
             const auto isValidPadShape = [](uint8_t shape) {
