@@ -20,6 +20,14 @@ private slots:
         QVERIFY(!PathSecurity::isValidPathComponent(QStringLiteral("../etc/passwd")));
         QVERIFY(!PathSecurity::isValidPathComponent(QStringLiteral("foo/bar")));
         QVERIFY(!PathSecurity::isValidPathComponent(QStringLiteral("foo\\bar")));
+        QVERIFY(PathSecurity::isValidPathComponent(QStringLiteral("work#1")));
+        QVERIFY(PathSecurity::isValidPathComponent(QStringLiteral("器件_0603")));
+        QVERIFY(!PathSecurity::isValidPathComponent(QStringLiteral("foo?bar")));
+        QVERIFY(!PathSecurity::isValidPathComponent(QStringLiteral("foo%1bar").arg(QChar(0x01))));
+        QVERIFY(!PathSecurity::isValidPathComponent(QStringLiteral("CON.txt")));
+        QVERIFY(!PathSecurity::isValidPathComponent(QStringLiteral("component.")));
+        QVERIFY(!PathSecurity::isValidPathComponent(QStringLiteral("component ")));
+        QVERIFY(!PathSecurity::isValidPathComponent(QStringLiteral("zero%1width").arg(QChar(0x200B))));
     }
 
     void detectsPathsOutsideBaseDirectory() {
