@@ -5,6 +5,7 @@
 
 #include <QSet>
 
+#include <cmath>
 #include <zlib.h>
 
 namespace EasyKiConverter {
@@ -65,6 +66,13 @@ bool validateGraphicParameters(const QMap<QString, QString>& parameters, int rec
         *value = static_cast<qint64>(integer) * 100000 + fraction;
         return true;
     };
+    const auto readFiniteDouble = [&parameters](const QString& name) {
+        if (!parameters.contains(name))
+            return true;
+        bool ok = false;
+        const double value = parameters.value(name).toDouble(&ok);
+        return ok && std::isfinite(value);
+    };
     const auto validateBounds = [&]() {
         const QStringList coordinateNames = {QStringLiteral("Location.X"),
                                              QStringLiteral("Location.Y"),
@@ -118,6 +126,10 @@ bool validateGraphicParameters(const QMap<QString, QString>& parameters, int rec
             }
         }
     }
+
+    if ((recordType == 9 || recordType == 11 || recordType == 12) &&
+        (!readFiniteDouble(QStringLiteral("StartAngle")) || !readFiniteDouble(QStringLiteral("EndAngle"))))
+        return failValidation(QStringLiteral("圆弧角度无效"));
 
     if (recordType == 10) {
         if (!validateBounds())
