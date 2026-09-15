@@ -156,6 +156,38 @@ private slots:
         QVERIFY(finalStatus.diagnostics.contains(QStringLiteral("输入图元 UNKNOWN 未支持")));
     }
 
+    void testAltiumModel3DFailureIsNotOverwrittenByFootprintSuccess() {
+        ParallelExportService service;
+        ExportOptions options;
+        options.targetFormat = TargetEdaFormat::Altium;
+        options.exportModel3D = true;
+        service.setOptions(options);
+
+        ExportItemStatus modelFailure;
+        modelFailure.status = ExportItemStatus::Status::Failed;
+        modelFailure.errorMessage = QStringLiteral("STEP 3D model was not embedded in PcbLib");
+        QVERIFY(QMetaObject::invokeMethod(&service,
+                                          "onExportItemStatusChanged",
+                                          Qt::DirectConnection,
+                                          Q_ARG(QString, QStringLiteral("C90003")),
+                                          Q_ARG(QString, QStringLiteral("Model3D")),
+                                          Q_ARG(ExportItemStatus, modelFailure)));
+
+        ExportItemStatus footprintSuccess;
+        footprintSuccess.status = ExportItemStatus::Status::Success;
+        QVERIFY(QMetaObject::invokeMethod(&service,
+                                          "onExportItemStatusChanged",
+                                          Qt::DirectConnection,
+                                          Q_ARG(QString, QStringLiteral("C90003")),
+                                          Q_ARG(QString, QStringLiteral("Footprint")),
+                                          Q_ARG(ExportItemStatus, footprintSuccess)));
+
+        const ExportTypeProgress modelProgress = service.getTypeProgress(QStringLiteral("Model3D"));
+        const ExportItemStatus finalStatus = modelProgress.itemStatus.value(QStringLiteral("C90003"));
+        QCOMPARE(finalStatus.status, ExportItemStatus::Status::Failed);
+        QCOMPARE(finalStatus.errorMessage, modelFailure.errorMessage);
+    }
+
     void testCancellationReportPreservesCollectedDiagnostics() {
         QTemporaryDir tempDir;
         QVERIFY(tempDir.isValid());

@@ -381,6 +381,29 @@ private slots:
         QCOMPARE(footprint->model3D().translation().y, 2982.35);
     }
 
+    void testModel3DRejectsMalformedJsonAtomically() {
+        Model3DData model;
+        model.setName(QStringLiteral("cached-model"));
+        model.setUuid(QStringLiteral("cached-uuid"));
+        model.setTranslation(Model3DBase(1.0, 2.0, 3.0));
+
+        QJsonObject malformed;
+        malformed.insert(QStringLiteral("name"), QStringLiteral("new-model"));
+        malformed.insert(QStringLiteral("uuid"), QStringLiteral("new-uuid"));
+        QJsonObject translation;
+        translation.insert(QStringLiteral("x"), QStringLiteral("not-a-number"));
+        translation.insert(QStringLiteral("y"), 20.0);
+        translation.insert(QStringLiteral("z"), 30.0);
+        malformed.insert(QStringLiteral("translation"), translation);
+
+        QVERIFY(!model.fromJson(malformed));
+        QCOMPARE(model.name(), QStringLiteral("cached-model"));
+        QCOMPARE(model.uuid(), QStringLiteral("cached-uuid"));
+        QCOMPARE(model.translation().x, 1.0);
+        QCOMPARE(model.translation().y, 2.0);
+        QCOMPARE(model.translation().z, 3.0);
+    }
+
     void testStepExportPreservesStepAssemblyStructure() {
         Model3DData modelData;
         modelData.setStep(

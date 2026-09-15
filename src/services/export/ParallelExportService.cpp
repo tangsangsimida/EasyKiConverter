@@ -589,6 +589,7 @@ void ParallelExportService::onExportItemStatusChanged(const QString& componentId
         return;
     }
 
+    bool shouldMirrorAltiumModel3DStatus = false;
     QMutexLocker locker(&m_progressMutex);
 
     if (!m_progress.exportTypeProgress.contains(typeName)) {
@@ -609,13 +610,22 @@ void ParallelExportService::onExportItemStatusChanged(const QString& componentId
     typeProgress.itemStatus[componentId] = mergedStatus;
     ExportWorkerHelpers::recomputeTypeProgressCounts(typeProgress);
 
+    // FootprintExportStage 会先发出真实的嵌入结果，再发出封装结果。
+    // 只有在 3D 尚未收到独立结果时才使用封装状态兜底，避免封装成功覆盖
+    // STEP 缺失等真实的 Model3D 失败状态。
+    if (typeName == QStringLiteral("Footprint") && m_options.exportModel3D &&
+        m_options.targetFormat == TargetEdaFormat::Altium) {
+        const auto modelProgress = m_progress.exportTypeProgress.constFind(QStringLiteral("Model3D"));
+        shouldMirrorAltiumModel3DStatus =
+            modelProgress == m_progress.exportTypeProgress.cend() || !modelProgress->itemStatus.contains(componentId);
+    }
+
     locker.unlock();
     emit itemStatusChanged(componentId, typeName, status);
 
     // Altium 的 STEP 在 PcbLib 封装阶段写入并嵌入库中，没有独立的 Model3D stage。
     // 将封装结果镜像到 Model3D，确保 UI 状态、成功率和总体完成判定一致。
-    if (typeName == QStringLiteral("Footprint") && m_options.exportModel3D &&
-        m_options.targetFormat == TargetEdaFormat::Altium) {
+    if (shouldMirrorAltiumModel3DStatus) {
         onExportItemStatusChanged(componentId, QStringLiteral("Model3D"), status);
     }
 
