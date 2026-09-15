@@ -507,6 +507,10 @@ private slots:
         int partOneRecordCount = 0;
         int partTwoRecordCount = 0;
         int binaryPinCount = 0;
+        int commonParameterCount = 0;
+        int partOneRectangleCount = 0;
+        int partTwoRectangleCount = 0;
+        int partOneImageCount = 0;
         for (const auto& record : records) {
             if (record.ownerPartId == -1)
                 ++commonRecordCount;
@@ -519,11 +523,25 @@ private slots:
                 QCOMPARE(record.ownerPartDisplayMode, 1);
                 ++binaryPinCount;
             }
+            if ((record.recordType == 10 || record.recordType == 14) && record.ownerPartId == 1)
+                ++partOneRectangleCount;
+            if ((record.recordType == 10 || record.recordType == 14) && record.ownerPartId == 2)
+                ++partTwoRectangleCount;
+            if (record.recordType == 30 && record.ownerPartId == 1)
+                ++partOneImageCount;
+            if (record.recordType == 34 || record.recordType == 41) {
+                QCOMPARE(record.ownerPartId, -1);
+                ++commonParameterCount;
+            }
         }
         QVERIFY(commonRecordCount >= 2);
         QVERIFY(partOneRecordCount >= 3);
         QVERIFY(partTwoRecordCount >= 2);
         QCOMPARE(binaryPinCount, 3);
+        QCOMPARE(partOneRectangleCount, 1);
+        QCOMPARE(partTwoRectangleCount, 1);
+        QCOMPARE(partOneImageCount, 1);
+        QVERIFY(commonParameterCount >= 2);
     }
 
     void testFootprintFixtureImportsMetadataAndGeometry() {
