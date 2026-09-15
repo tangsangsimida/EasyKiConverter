@@ -266,6 +266,10 @@ private slots:
         repeatedMovePath.paths = QStringLiteral("M 0 0 1 1");
         symbol.addPath(repeatedMovePath);
 
+        SymbolPath nonFinitePath;
+        nonFinitePath.paths = QStringLiteral("M 0 0 L 1e309 2");
+        symbol.addPath(nonFinitePath);
+
         const QStringList errors = symbol.validationErrors();
         QVERIFY(!errors.contains(QStringLiteral("Path 0 has invalid command parameters")));
         QVERIFY(errors.contains(QStringLiteral("Path 1 contains an unsupported command")));
@@ -275,6 +279,7 @@ private slots:
         QVERIFY(errors.contains(QStringLiteral("Path 5 has invalid command parameters")));
         QVERIFY(!errors.contains(QStringLiteral("Path 6 has no drawable commands")));
         QVERIFY(!errors.contains(QStringLiteral("Path 6 has invalid command parameters")));
+        QVERIFY(errors.contains(QStringLiteral("Path 7 contains a non-finite numeric parameter")));
     }
 
     void testSymbolValidationChecksGraphicOrderReferences() {

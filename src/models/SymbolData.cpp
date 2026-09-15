@@ -70,6 +70,7 @@ QStringList SymbolData::validationErrors() const {
         bool hasDrawableCommand = false;
         bool hasUnsupportedCommand = false;
         bool hasInvalidSyntax = false;
+        bool hasNonFiniteNumber = false;
         const QRegularExpression commandExpression(QStringLiteral("[A-Za-z]"));
         auto matchIterator = commandExpression.globalMatch(path);
         while (matchIterator.hasNext()) {
@@ -106,8 +107,17 @@ QStringList SymbolData::validationErrors() const {
             }
             const QString token = tokenMatch.captured(0);
             tokenPosition = tokenMatch.capturedEnd();
-            if (!token.trimmed().isEmpty() && token != QStringLiteral(","))
+            if (!token.trimmed().isEmpty() && token != QStringLiteral(",")) {
                 tokens.append(token);
+                if (!token.at(0).isLetter()) {
+                    bool ok = false;
+                    const double number = token.toDouble(&ok);
+                    if (!ok)
+                        hasNonFiniteNumber = true;
+                    else if (!isFinite(number))
+                        hasNonFiniteNumber = true;
+                }
+            }
         }
 
         const auto isCommandToken = [](const QString& token) { return token.size() == 1 && token.at(0).isLetter(); };
@@ -169,6 +179,8 @@ QStringList SymbolData::validationErrors() const {
             addError(QString("%1Path %2 contains an unsupported command").arg(prefix).arg(index));
         if (hasInvalidSyntax)
             addError(QString("%1Path %2 has invalid command parameters").arg(prefix).arg(index));
+        if (hasNonFiniteNumber)
+            addError(QString("%1Path %2 contains a non-finite numeric parameter").arg(prefix).arg(index));
         if (!hasMoveCommand)
             addError(QString("%1Path %2 has no initial move command").arg(prefix).arg(index));
         if (!hasDrawableCommand)
