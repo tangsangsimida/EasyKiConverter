@@ -156,8 +156,10 @@ Card {
             font.pixelSize: AppStyle.fontSizes.sm
             color: AppStyle.colors.textSecondary
             horizontalAlignment: Text.AlignHCenter
-                        visible: exportProgressCard.exportProgressController && exportProgressCard.exportProgressController.status
-                                 ? exportProgressCard.exportProgressController.status.length > 0
+                        visible: exportProgressCard.exportProgressController
+                                 ? (exportProgressCard.exportProgressController.status
+                                        ? exportProgressCard.exportProgressController.status.length > 0
+                                        : false)
                                  : false
         }
     }
