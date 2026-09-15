@@ -458,13 +458,22 @@ private slots:
         QCOMPARE(restored.parts().at(1).images.first().fileName, QStringLiteral("image.png"));
         QVERIFY(!restored.parts().at(1).images.first().data.isEmpty());
 
-        const IR::SymbolComponentIR symbolIr = IR::toSymbolIR(restored);
+        IR::SymbolComponentIR symbolIr = IR::toSymbolIR(restored);
         QCOMPARE(symbolIr.partCount, 2);
         QCOMPARE(symbolIr.pins.size(), 3);
         QCOMPARE(symbolIr.rectangles.size(), 3);
         QCOMPARE(symbolIr.images.size(), 1);
         QCOMPARE(symbolIr.images.first().partIndex, 0);
         QCOMPARE(symbolIr.images.first().fileName, QStringLiteral("image.png"));
+
+        IR::SymbolParameterIR partParameter;
+        partParameter.name = QStringLiteral("PART_PARAMETER");
+        partParameter.value = QStringLiteral("PART_B_VALUE");
+        partParameter.visible = true;
+        partParameter.position = QPointF(205.0, 205.0);
+        partParameter.fontSizeMm = 2.0;
+        partParameter.partIndex = 1;
+        symbolIr.parameters.append(partParameter);
 
         int commonPinCount = 0;
         int partOnePinCount = 0;
@@ -511,6 +520,7 @@ private slots:
         int partOneRectangleCount = 0;
         int partTwoRectangleCount = 0;
         int partOneImageCount = 0;
+        int partTwoParameterCount = 0;
         for (const auto& record : records) {
             if (record.ownerPartId == -1)
                 ++commonRecordCount;
@@ -529,7 +539,16 @@ private slots:
                 ++partTwoRectangleCount;
             if (record.recordType == 30 && record.ownerPartId == 1)
                 ++partOneImageCount;
-            if (record.recordType == 34 || record.recordType == 41) {
+            if (record.recordType == 34) {
+                QCOMPARE(record.ownerPartId, -1);
+                ++commonParameterCount;
+            }
+            if (record.recordType == 41 &&
+                record.parameters.value(QStringLiteral("NAME")) == QStringLiteral("PART_PARAMETER")) {
+                QCOMPARE(record.ownerPartId, 2);
+                QCOMPARE(record.ownerPartDisplayMode, 1);
+                ++partTwoParameterCount;
+            } else if (record.recordType == 41) {
                 QCOMPARE(record.ownerPartId, -1);
                 ++commonParameterCount;
             }
@@ -542,6 +561,7 @@ private slots:
         QCOMPARE(partTwoRectangleCount, 1);
         QCOMPARE(partOneImageCount, 1);
         QVERIFY(commonParameterCount >= 2);
+        QCOMPARE(partTwoParameterCount, 1);
     }
 
     void testFootprintFixtureImportsMetadataAndGeometry() {
