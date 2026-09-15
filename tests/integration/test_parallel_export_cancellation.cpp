@@ -124,6 +124,38 @@ private slots:
         QVERIFY(!QDir(tempDir.filePath(libName + QStringLiteral(".pretty"))).exists());
     }
 
+    void testItemStatusPreservesDiagnosticsAcrossUpdates() {
+        ParallelExportService service;
+
+        ExportItemStatus initialStatus;
+        initialStatus.status = ExportItemStatus::Status::Success;
+        initialStatus.diagnostics = {QStringLiteral("输入图元 UNKNOWN 未支持")};
+        QVERIFY(QMetaObject::invokeMethod(&service,
+                                          "onExportItemStatusChanged",
+                                          Qt::DirectConnection,
+                                          Q_ARG(QString, QStringLiteral("C90001")),
+                                          Q_ARG(QString, QStringLiteral("Symbol")),
+                                          Q_ARG(ExportItemStatus, initialStatus)));
+
+        ExportItemStatus failedStatus;
+        failedStatus.status = ExportItemStatus::Status::Failed;
+        failedStatus.errorMessage = QStringLiteral("库写入失败");
+        QVERIFY(QMetaObject::invokeMethod(&service,
+                                          "onExportItemStatusChanged",
+                                          Qt::DirectConnection,
+                                          Q_ARG(QString, QStringLiteral("C90001")),
+                                          Q_ARG(QString, QStringLiteral("Symbol")),
+                                          Q_ARG(ExportItemStatus, failedStatus)));
+
+        const ExportOverallProgress progress = service.getProgress();
+        QVERIFY(progress.exportTypeProgress.contains(QStringLiteral("Symbol")));
+        const ExportItemStatus finalStatus =
+            progress.exportTypeProgress.value(QStringLiteral("Symbol")).itemStatus.value(QStringLiteral("C90001"));
+        QCOMPARE(finalStatus.status, ExportItemStatus::Status::Failed);
+        QCOMPARE(finalStatus.errorMessage, QStringLiteral("库写入失败"));
+        QVERIFY(finalStatus.diagnostics.contains(QStringLiteral("输入图元 UNKNOWN 未支持")));
+    }
+
     void testCancellationStopsRunningExportPipeline() {
         QTemporaryDir tempDir;
         QVERIFY(tempDir.isValid());

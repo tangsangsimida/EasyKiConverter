@@ -598,7 +598,15 @@ void ParallelExportService::onExportItemStatusChanged(const QString& componentId
     }
 
     ExportTypeProgress& typeProgress = m_progress.exportTypeProgress[typeName];
-    typeProgress.itemStatus[componentId] = status;
+    ExportItemStatus mergedStatus = status;
+    const auto previousStatus = typeProgress.itemStatus.constFind(componentId);
+    if (previousStatus != typeProgress.itemStatus.cend()) {
+        for (const QString& diagnostic : previousStatus->diagnostics) {
+            if (!mergedStatus.diagnostics.contains(diagnostic))
+                mergedStatus.diagnostics.append(diagnostic);
+        }
+    }
+    typeProgress.itemStatus[componentId] = mergedStatus;
     ExportWorkerHelpers::recomputeTypeProgressCounts(typeProgress);
 
     locker.unlock();
