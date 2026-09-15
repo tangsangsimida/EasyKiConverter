@@ -1088,11 +1088,11 @@ private slots:
         duplicateModelIdComponent.name = QStringLiteral("DUPLICATE_MODEL_ID");
         AltiumPcbComponent::Model3D firstModel;
         firstModel.name = QStringLiteral("first.step");
-        firstModel.id = QStringLiteral("model|id");
+        firstModel.id = QStringLiteral("model-id");
         firstModel.stepData = QByteArrayLiteral("ISO-10303-21;");
         AltiumPcbComponent::Model3D secondModel = firstModel;
         secondModel.name = QStringLiteral("second.step");
-        secondModel.id = QStringLiteral("model id");
+        secondModel.id = QStringLiteral("MODEL-ID");
         duplicateModelIdComponent.models = {firstModel, secondModel};
         QVERIFY(!invalidInputWriter.write({duplicateModelIdComponent}, pcbOutputPath));
         QVERIFY(invalidInputWriter.diagnostics().join('\n').contains(QStringLiteral("3D 模型 ID 重复")));
@@ -1100,10 +1100,16 @@ private slots:
         AltiumPcbComponent invalidModelIdComponent;
         invalidModelIdComponent.name = QStringLiteral("INVALID_MODEL_ID");
         AltiumPcbComponent::Model3D invalidModelIdModel = firstModel;
-        invalidModelIdModel.id = QStringLiteral("|\n");
+        invalidModelIdModel.id = QStringLiteral("   ");
         invalidModelIdComponent.models = {invalidModelIdModel};
         QVERIFY(!invalidInputWriter.write({invalidModelIdComponent}, pcbOutputPath));
         QVERIFY(invalidInputWriter.diagnostics().join('\n').contains(QStringLiteral("3D 模型 ID 规范化后为空")));
+
+        invalidModelIdModel.id = QStringLiteral("bad|model-id");
+        invalidModelIdComponent.models = {invalidModelIdModel};
+        QVERIFY(!invalidInputWriter.write({invalidModelIdComponent}, pcbOutputPath));
+        QVERIFY(invalidInputWriter.diagnostics().join('\n').contains(
+            QStringLiteral("模型元数据包含参数分隔符、换行或 NUL")));
 
         AltiumPcbComponent invalidBodyComponent;
         invalidBodyComponent.name = QStringLiteral("INVALID_BODY");

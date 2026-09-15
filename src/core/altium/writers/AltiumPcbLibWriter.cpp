@@ -77,6 +77,10 @@ bool AltiumPcbLibWriter::validateComponents(const QList<AltiumPcbComponent>& com
         const QByteArray encoded = value.toLatin1();
         return QString::fromLatin1(encoded) == value;
     };
+    const auto hasModelMetadataDelimiter = [](const QString& value) {
+        return value.contains(QChar('|')) || value.contains(QChar::Null) || value.contains(QChar('\r')) ||
+               value.contains(QChar('\n'));
+    };
     QSet<QString> componentNames;
     for (const AltiumPcbComponent& component : components) {
         const auto validateCStringField = [&reject, &component](const QString& value, const QString& context) {
@@ -179,6 +183,10 @@ bool AltiumPcbLibWriter::validateComponents(const QList<AltiumPcbComponent>& com
             if (model.name.trimmed().isEmpty())
                 return reject(
                     QStringLiteral("Altium PcbLib 封装 %1 的 3D 模型名称为空，已拒绝写入").arg(component.name));
+            if (hasModelMetadataDelimiter(model.name) || hasModelMetadataDelimiter(model.id))
+                return reject(
+                    QStringLiteral("Altium PcbLib 封装 %1 的 3D 模型元数据包含参数分隔符、换行或 NUL，已拒绝写入")
+                        .arg(component.name));
             if (!isLosslessLatin1(model.name))
                 return reject(QStringLiteral("Altium PcbLib 封装 %1 的 3D 模型名称包含无法编码的字符，已拒绝写入")
                                   .arg(component.name));
