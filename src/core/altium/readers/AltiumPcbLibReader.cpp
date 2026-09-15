@@ -64,6 +64,10 @@ bool readWideStringIndices(const QByteArray& data, QSet<quint32>* indices) {
             return false;
         indices->insert(index);
     }
+    for (quint32 expected = 0; expected < static_cast<quint32>(indices->size()); ++expected) {
+        if (!indices->contains(expected))
+            return false;
+    }
     return true;
 }
 
