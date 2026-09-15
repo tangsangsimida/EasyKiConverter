@@ -256,6 +256,14 @@ bool AltiumSchLibWriter::write(const QList<AltiumSchComponent>& components,
             return false;
         }
         componentNames.insert(foldedName);
+        if (component.partCount > 32767) {
+            const QString diagnostic = QStringLiteral("Altium SchLib 组件 %1 的 partCount 超出支持范围: %2，已拒绝写入")
+                                           .arg(component.name)
+                                           .arg(component.partCount);
+            m_diagnostics.append(diagnostic);
+            qWarning() << "AltiumSchLibWriter:" << diagnostic;
+            return false;
+        }
         if (!validateGeometry(component))
             return false;
         if (!validatePartOwnership(component))

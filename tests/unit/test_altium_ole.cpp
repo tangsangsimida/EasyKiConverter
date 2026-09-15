@@ -699,6 +699,12 @@ private slots:
         QVERIFY(!writer.write({invalidOrientation}, outputPath));
         QVERIFY(writer.diagnostics().join('\n').contains(QStringLiteral("文本图元方向无效: 4")));
 
+        AltiumSchComponent oversizedPartCount;
+        oversizedPartCount.name = QStringLiteral("OVERSIZED_PART_COUNT");
+        oversizedPartCount.partCount = std::numeric_limits<int>::max();
+        QVERIFY(!writer.write({oversizedPartCount}, outputPath));
+        QVERIFY(writer.diagnostics().join('\n').contains(QStringLiteral("partCount 超出支持范围")));
+
         QByteArray header;
         QVERIFY(readCfbStream(outputPath, QStringLiteral("FileHeader"), header));
         QVERIFY(header.contains("PARTCOUNT0=2"));
