@@ -695,6 +695,8 @@ private slots:
         invalidEllipticalArc.endAngle = std::numeric_limits<double>::quiet_NaN();
         invalidPartCount.ellipticalArcs.append(invalidEllipticalArc);
         AltiumSchTextFrame emptyTextFrame;
+        emptyTextFrame.cornerX = 100000;
+        emptyTextFrame.cornerY = 100000;
         invalidPartCount.textFrames.append(emptyTextFrame);
         QVERIFY(writer.write({invalidPartCount}, outputPath));
         QVERIFY(writer.diagnostics().join('\n').contains(QStringLiteral("partCount 无效")));
@@ -712,10 +714,20 @@ private slots:
         AltiumSchComponent invalidTextMargin;
         invalidTextMargin.name = QStringLiteral("INVALID_TEXT_MARGIN");
         AltiumSchTextFrame negativeTextMargin;
+        negativeTextMargin.cornerX = 100000;
+        negativeTextMargin.cornerY = 100000;
         negativeTextMargin.textMargin = -1;
         invalidTextMargin.textFrames.append(negativeTextMargin);
         QVERIFY(!writer.write({invalidTextMargin}, outputPath));
         QVERIFY(writer.diagnostics().join('\n').contains(QStringLiteral("文本框文本边距无效")));
+
+        AltiumSchComponent invalidTextFrameBounds;
+        invalidTextFrameBounds.name = QStringLiteral("INVALID_TEXT_FRAME_BOUNDS");
+        AltiumSchTextFrame zeroTextFrame;
+        zeroTextFrame.cornerX = 100000;
+        invalidTextFrameBounds.textFrames.append(zeroTextFrame);
+        QVERIFY(!writer.write({invalidTextFrameBounds}, outputPath));
+        QVERIFY(writer.diagnostics().join('\n').contains(QStringLiteral("文本框边界尺寸无效")));
 
         AltiumSchComponent invalidStroke;
         invalidStroke.name = QStringLiteral("INVALID_STROKE_WIDTH");

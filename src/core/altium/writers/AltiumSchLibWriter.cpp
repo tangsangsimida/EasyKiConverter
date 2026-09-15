@@ -1054,6 +1054,8 @@ bool AltiumSchLibWriter::validateGeometry(const AltiumSchComponent& component) {
             return reject(QStringLiteral("椭圆弧半径无效"));
     }
     for (const AltiumSchTextFrame& frame : component.textFrames) {
+        if (frame.locationX == frame.cornerX || frame.locationY == frame.cornerY)
+            return reject(QStringLiteral("文本框边界尺寸无效"));
         if (frame.textMargin < 0)
             return reject(QStringLiteral("文本框文本边距无效: %1").arg(frame.textMargin));
     }
