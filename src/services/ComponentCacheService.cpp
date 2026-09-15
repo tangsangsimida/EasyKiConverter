@@ -356,6 +356,7 @@ void ComponentCacheService::saveMetadataToMemory(const QString& lcscId, const QJ
 }
 
 QByteArray ComponentCacheService::loadSymbolDataFromMemory(const QString& lcscId) const {
+    QMutexLocker locker(&m_mutex);
     QString key = makeMemoryKey(lcscId, "symbol");
     QByteArray* data = m_memoryCache.object(key);
     if (data) {
@@ -384,6 +385,7 @@ void ComponentCacheService::saveSymbolDataToMemory(const QString& lcscId, const 
 }
 
 QByteArray ComponentCacheService::loadFootprintDataFromMemory(const QString& lcscId) const {
+    QMutexLocker locker(&m_mutex);
     QString key = makeMemoryKey(lcscId, "footprint");
     QByteArray* data = m_memoryCache.object(key);
     if (data) {
