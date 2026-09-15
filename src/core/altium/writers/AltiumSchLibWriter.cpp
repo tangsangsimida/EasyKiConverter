@@ -1456,6 +1456,11 @@ void AltiumSchLibWriter::writeTextFrameRecord(AltiumBinaryWriter& writer, const 
     params["AreaColor"] = QString::number(frame.areaColor);
     addColorParam(params, "TextColor", frame.textColor);
     params["FontID"] = QString::number(frame.fontId >= 1 && frame.fontId <= m_fonts.size() ? frame.fontId : 1);
+    if (frame.text.trimmed().isEmpty()) {
+        const QString diagnostic = QStringLiteral("Altium SchLib 文本框内容为空，仍保留记录以维持记录计数");
+        m_diagnostics.append(diagnostic);
+        qWarning() << "AltiumSchLibWriter:" << diagnostic;
+    }
     if (frame.isSolid)
         params["IsSolid"] = "T";
     if (frame.showBorder)
