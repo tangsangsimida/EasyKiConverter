@@ -269,6 +269,65 @@ bool AltiumSchLibWriter::write(const QList<AltiumSchComponent>& components,
             qWarning() << "AltiumSchLibWriter:" << diagnostic;
             return false;
         }
+        const auto validateParameterValue = [this, &component](const QString& value, const QString& context) {
+            if (!value.contains(QChar('|')) && !value.contains(QChar::Null))
+                return true;
+            const QString diagnostic = QStringLiteral("Altium SchLib 组件 %1 的%2包含参数分隔符或 NUL，已拒绝写入")
+                                           .arg(component.name, context);
+            m_diagnostics.append(diagnostic);
+            qWarning() << "AltiumSchLibWriter:" << diagnostic;
+            return false;
+        };
+        if (!validateParameterValue(component.name, QStringLiteral("组件名称")) ||
+            !validateParameterValue(component.description, QStringLiteral("组件描述")) ||
+            !validateParameterValue(component.designatorPrefix, QStringLiteral("位号前缀")))
+            return false;
+        for (const QString& alias : component.aliases) {
+            if (!validateParameterValue(alias, QStringLiteral("组件别名")))
+                return false;
+        }
+        for (const AltiumSchPin& pin : component.pins) {
+            if (!validateParameterValue(pin.name, QStringLiteral("引脚名称")) ||
+                !validateParameterValue(pin.designator, QStringLiteral("引脚编号")))
+                return false;
+        }
+        for (const AltiumSchText& text : component.texts) {
+            if (!validateParameterValue(text.text, QStringLiteral("文本内容")) ||
+                !validateParameterValue(text.fontName, QStringLiteral("文本字体名称")) ||
+                !validateParameterValue(text.anchor, QStringLiteral("文本对齐锚点")))
+                return false;
+        }
+        for (const AltiumSchTextFrame& frame : component.textFrames) {
+            if (!validateParameterValue(frame.text, QStringLiteral("文本框内容")) ||
+                !validateParameterValue(frame.fontName, QStringLiteral("文本框字体名称")))
+                return false;
+        }
+        for (const AltiumSchImage& image : component.images) {
+            // 有效的嵌入图片名称由 prepareImageStorageNames() 负责诊断并跳过；只有
+            // 外部引用或嵌入数据为空时，文件名才会直接进入参数块。
+            if ((!image.embedImage || image.data.isEmpty()) &&
+                !validateParameterValue(image.fileName, QStringLiteral("图片文件名")))
+                return false;
+        }
+        for (const AltiumSchParameter& parameter : component.parameters) {
+            if (!validateParameterValue(parameter.value, QStringLiteral("参数值")))
+                return false;
+        }
+        for (const auto& implementation : component.implementations) {
+            if (!validateParameterValue(implementation.modelName, QStringLiteral("实现模型名称")) ||
+                !validateParameterValue(implementation.modelType, QStringLiteral("实现模型类型")) ||
+                !validateParameterValue(implementation.dataFileKind, QStringLiteral("实现数据文件类型")) ||
+                !validateParameterValue(implementation.dataFileEntity, QStringLiteral("实现数据文件实体")))
+                return false;
+            for (auto it = implementation.parameters.cbegin(); it != implementation.parameters.cend(); ++it) {
+                if (!validateParameterValue(it.value(), QStringLiteral("实现参数值")))
+                    return false;
+            }
+            for (auto it = implementation.pinMappings.cbegin(); it != implementation.pinMappings.cend(); ++it) {
+                if (!validateParameterValue(it.value(), QStringLiteral("引脚映射值")))
+                    return false;
+            }
+        }
         const QString foldedName = component.name.trimmed().toCaseFolded();
         if (componentNames.contains(foldedName)) {
             const QString diagnostic =
@@ -308,6 +367,8 @@ bool AltiumSchLibWriter::write(const QList<AltiumSchComponent>& components,
         };
         for (auto it = component.sourceMetadata.cbegin(); it != component.sourceMetadata.cend(); ++it) {
             if (!validateParameterName(it.key(), QStringLiteral("源元数据")))
+                return false;
+            if (!validateParameterValue(it.value(), QStringLiteral("源元数据值")))
                 return false;
         }
         for (const AltiumSchParameter& parameter : component.parameters) {

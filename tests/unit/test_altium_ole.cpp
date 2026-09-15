@@ -902,6 +902,14 @@ private slots:
         QVERIFY(!writer.write({invalidParameterName}, outputPath));
         QVERIFY(writer.diagnostics().join('\n').contains(QStringLiteral("参数参数名无效")));
 
+        AltiumSchComponent invalidParameterValue;
+        invalidParameterValue.name = QStringLiteral("INVALID_PARAMETER_VALUE");
+        AltiumSchText invalidTextValue;
+        invalidTextValue.text = QStringLiteral("BAD|TEXT");
+        invalidParameterValue.texts.append(invalidTextValue);
+        QVERIFY(!writer.write({invalidParameterValue}, outputPath));
+        QVERIFY(writer.diagnostics().join('\n').contains(QStringLiteral("文本内容包含参数分隔符或 NUL")));
+
         AltiumPcbComponent invalidPcb;
         invalidPcb.name = QStringLiteral("INVALID_PCB_FLOATS");
         AltiumPcbPad invalidPad;
