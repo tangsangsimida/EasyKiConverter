@@ -2630,6 +2630,34 @@ private slots:
             symbolData.mid(partParameterRecordOffset, nextParameterRecordOffset - partParameterRecordOffset);
         QVERIFY(partParameterRecord.contains("OWNERPARTID=2"));
         QVERIFY(partParameterRecord.contains("OWNERPARTDISPLAYMODE=1"));
+
+        AltiumSchLibReader multipartReader;
+        QVERIFY2(multipartReader.open(schPath), qPrintable(multipartReader.errorString()));
+        QCOMPARE(multipartReader.components().size(), 1);
+        QCOMPARE(multipartReader.components().first().partCount, 2);
+        QVector<AltiumSchLibReader::Record> multipartRecords;
+        QVERIFY2(multipartReader.readComponentRecords(0, &multipartRecords), qPrintable(multipartReader.errorString()));
+        bool sawCommonPin = false;
+        bool sawCommonRectangle = false;
+        bool sawCommonText = false;
+        bool sawPartPin = false;
+        for (const auto& record : multipartRecords) {
+            if (record.recordType == 2) {
+                QCOMPARE(record.ownerPartDisplayMode, 1);
+                sawCommonPin |= record.ownerPartId == -1;
+                sawPartPin |= record.ownerPartId == 1 || record.ownerPartId == 2;
+            } else if (record.hasParameters && (record.recordType == 14 || record.recordType == 4) &&
+                       record.ownerPartId == -1) {
+                QCOMPARE(record.ownerPartDisplayMode, 1);
+                sawCommonRectangle |= record.recordType == 14;
+                sawCommonText |= record.recordType == 4;
+            }
+        }
+        QVERIFY(sawCommonPin);
+        QVERIFY(sawCommonRectangle);
+        QVERIFY(sawCommonText);
+        QVERIFY(sawPartPin);
+
         QByteArray multipartStorage;
         QVERIFY(readCfbStream(schPath, QStringLiteral("Storage"), multipartStorage));
         QVERIFY(multipartStorage.contains("multipart.png"));
