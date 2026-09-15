@@ -23,7 +23,7 @@ int toAltiumOwnerPartId(int partIndex) {
     if (partIndex == -1)
         return -1;
     if (partIndex < -1)
-        return 0;
+        return partIndex;
     if (partIndex >= 32767)
         return 32768;
     return qMax(1, partIndex + 1);

@@ -3127,9 +3127,9 @@ private slots:
         ExporterAltiumSymbol invalidCommonPartIndexExporter;
         const QString invalidCommonPartIndexPath =
             QDir(tempDir.path()).filePath(QStringLiteral("invalid-common-part-index.SchLib"));
-        QVERIFY(invalidCommonPartIndexExporter.exportSymbol(invalidCommonPartIndexSymbol, invalidCommonPartIndexPath));
-        QVERIFY(invalidCommonPartIndexExporter.diagnostics().contains(
-            QStringLiteral("Altium SchLib 图元 OWNERPARTID=0 无效，已规范化为 1")));
+        QVERIFY(!invalidCommonPartIndexExporter.exportSymbol(invalidCommonPartIndexSymbol, invalidCommonPartIndexPath));
+        QVERIFY(invalidCommonPartIndexExporter.diagnostics().contains(QStringLiteral(
+            "Altium SchLib 组件 INVALID_COMMON_PART_INDEX 的矩形图元 OWNERPARTID=-2 超出部件范围，已拒绝写入")));
 
         IR::SymbolComponentIR invalidBoundsSymbol;
         invalidBoundsSymbol.name = QStringLiteral("INVALID_BOUNDS_DATA");
