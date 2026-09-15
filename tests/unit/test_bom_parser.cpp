@@ -82,6 +82,21 @@ private slots:
         QCOMPARE(parser.parse(filePath), QStringList({QStringLiteral("C21190"), QStringLiteral("C14663")}));
     }
 
+    void parseCsvPreservesIdsAfterMultilineQuotedFields() {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        const QString filePath = createTempCsv(tempDir,
+                                               QStringLiteral("multiline.csv"),
+                                               {QStringLiteral("Designator,Comment,LCSC Part"),
+                                                QStringLiteral("C1,\"first line\nsecond line\",C21190"),
+                                                QStringLiteral("C2,normal,C14663")});
+        QVERIFY2(!filePath.isEmpty(), "Failed to create temp CSV");
+
+        BomParser parser;
+        QCOMPARE(parser.parse(filePath), QStringList({QStringLiteral("C21190"), QStringLiteral("C14663")}));
+    }
+
     void parseUnsupportedOrMissingFilesReturnsEmptyList() {
         QTemporaryDir tempDir;
         QVERIFY(tempDir.isValid());

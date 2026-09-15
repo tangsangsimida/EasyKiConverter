@@ -38,6 +38,20 @@ QStringList splitCsvLine(const QString& line) {
     return cells;
 }
 
+bool csvRecordHasOpenQuote(const QString& record) {
+    bool inQuotes = false;
+    for (int i = 0; i < record.size(); ++i) {
+        if (record.at(i) != QChar('"'))
+            continue;
+        if (inQuotes && i + 1 < record.size() && record.at(i + 1) == QChar('"')) {
+            ++i;
+        } else {
+            inQuotes = !inQuotes;
+        }
+    }
+    return inQuotes;
+}
+
 }  // namespace
 
 BomParser::BomParser(QObject* parent) : QObject(parent) {}
@@ -95,15 +109,27 @@ QStringList BomParser::parseCsv(const QString& filePath) {
     QTextStream in(&file);
     in.setEncoding(QStringConverter::Utf8);
 
+    QString record;
     while (!in.atEnd()) {
         QString line = in.readLine();
-        if (line.isEmpty())
+        if (!record.isEmpty())
+            record.append('\n');
+        record.append(line);
+
+        if (csvRecordHasOpenQuote(record))
             continue;
 
-        const QStringList cells = splitCsvLine(line);
+        const QStringList cells = splitCsvLine(record);
         for (const QString& cell : cells) {
             processCellText(cell, componentIds);
         }
+        record.clear();
+    }
+
+    if (!record.isEmpty()) {
+        const QStringList cells = splitCsvLine(record);
+        for (const QString& cell : cells)
+            processCellText(cell, componentIds);
     }
 
     file.close();
