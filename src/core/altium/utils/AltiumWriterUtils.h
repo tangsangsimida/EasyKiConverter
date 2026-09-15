@@ -18,7 +18,8 @@ namespace AltiumWriterUtils {
  * @return 文件名是否符合 Storage 和 Windows 文件名约束
  */
 inline bool isValidImageStorageName(const QString& name) {
-    if (name.trimmed().isEmpty() || name == QStringLiteral(".") || name == QStringLiteral("..") || name.size() > 255)
+    if (name.trimmed() != name || name.isEmpty() || name == QStringLiteral(".") || name == QStringLiteral("..") ||
+        name.size() > 255)
         return false;
     if (name.contains(QChar::Null) || name.contains(QChar('\n')) || name.contains(QChar('\r')) ||
         name.contains(QChar('\t')))
@@ -27,6 +28,26 @@ inline bool isValidImageStorageName(const QString& name) {
         if (ch.unicode() < 0x20 || QStringLiteral("<>:\"/\\|?*").contains(ch))
             return false;
     }
+    if (name.endsWith(QChar(' ')) || name.endsWith(QChar('.')))
+        return false;
+    if (name.contains(QChar(0x200B)) || name.contains(QChar(0x200C)) || name.contains(QChar(0x200D)) ||
+        name.contains(QChar(0xFEFF)))
+        return false;
+
+    QString deviceName = name;
+    const qsizetype extensionStart = deviceName.indexOf(QChar('.'));
+    if (extensionStart >= 0)
+        deviceName.truncate(extensionStart);
+    static const QStringList reservedNames = {
+        QStringLiteral("CON"),  QStringLiteral("PRN"),  QStringLiteral("AUX"),  QStringLiteral("NUL"),
+        QStringLiteral("COM1"), QStringLiteral("COM2"), QStringLiteral("COM3"), QStringLiteral("COM4"),
+        QStringLiteral("COM5"), QStringLiteral("COM6"), QStringLiteral("COM7"), QStringLiteral("COM8"),
+        QStringLiteral("COM9"), QStringLiteral("LPT1"), QStringLiteral("LPT2"), QStringLiteral("LPT3"),
+        QStringLiteral("LPT4"), QStringLiteral("LPT5"), QStringLiteral("LPT6"), QStringLiteral("LPT7"),
+        QStringLiteral("LPT8"), QStringLiteral("LPT9")};
+    if (reservedNames.contains(deviceName.trimmed(), Qt::CaseInsensitive))
+        return false;
+
     return name.toLocal8Bit().size() <= 255;
 }
 
