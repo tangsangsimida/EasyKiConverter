@@ -278,7 +278,7 @@ void ComponentService::fetchComponentDataInternal(const QString& componentId, bo
         emit cadDataReady(result.componentId, result.parsed.componentData);
         // 使用异步保存，不阻塞UI
         ComponentCacheService::instance()->saveComponentMetadataAsync(
-            result.componentId, result.parsed.componentData, gen);
+            result.componentId, result.parsed.componentData, gen, /*replaceModel3DMetadata=*/true);
         ComponentCacheService::instance()->saveCadDataJson(
             result.componentId, QJsonDocument(result.parsed.resultData).toJson(QJsonDocument::Compact), gen);
 
@@ -415,50 +415,51 @@ void ComponentService::loadComponentDataFromCacheAsync(const QString& normalized
                 auto retryFuture =
                     QtConcurrent::run([normalizedId]() { return CadDataLoader::fetchAndParseCadData(normalizedId); });
                 auto* retryWatcher = new QFutureWatcher<CadFetchTaskResult>(this);
-                connect(retryWatcher,
-                        &QFutureWatcher<CadFetchTaskResult>::finished,
-                        this,
-                        [this, retryWatcher, retryGen]() {
-                            const CadFetchTaskResult result = retryWatcher->result();
-                            retryWatcher->deleteLater();
+                connect(
+                    retryWatcher,
+                    &QFutureWatcher<CadFetchTaskResult>::finished,
+                    this,
+                    [this, retryWatcher, retryGen]() {
+                        const CadFetchTaskResult result = retryWatcher->result();
+                        retryWatcher->deleteLater();
 
-                            {
-                                QMutexLocker locker(&m_fetchingComponentsMutex);
-                                if (!m_fetchingComponents.contains(result.componentId)) {
-                                    return;
-                                }
-                            }
-
-                            if (!result.success) {
-                                emitFetchErrorAndClearState(result.componentId, result.errorMessage);
+                        {
+                            QMutexLocker locker(&m_fetchingComponentsMutex);
+                            if (!m_fetchingComponents.contains(result.componentId)) {
                                 return;
                             }
+                        }
 
-                            {
-                                QMutexLocker locker(&m_fetchingComponentsMutex);
-                                auto it = m_fetchingComponents.find(result.componentId);
-                                if (it == m_fetchingComponents.end()) {
-                                    return;
-                                }
-                                it->data = result.parsed.componentData;
-                                it->hasCadData = true;
-                                it->requestActive = false;
+                        if (!result.success) {
+                            emitFetchErrorAndClearState(result.componentId, result.errorMessage);
+                            return;
+                        }
+
+                        {
+                            QMutexLocker locker(&m_fetchingComponentsMutex);
+                            auto it = m_fetchingComponents.find(result.componentId);
+                            if (it == m_fetchingComponents.end()) {
+                                return;
                             }
+                            it->data = result.parsed.componentData;
+                            it->hasCadData = true;
+                            it->requestActive = false;
+                        }
 
-                            updateComponentCache(result.componentId, result.parsed.componentData);
-                            emit cadDataReady(result.componentId, result.parsed.componentData);
-                            // 使用异步保存，不阻塞UI
-                            ComponentCacheService::instance()->saveComponentMetadataAsync(
-                                result.componentId, result.parsed.componentData, retryGen);
-                            ComponentCacheService::instance()->saveCadDataJson(
-                                result.componentId,
-                                QJsonDocument(result.parsed.resultData).toJson(QJsonDocument::Compact),
-                                retryGen);
+                        updateComponentCache(result.componentId, result.parsed.componentData);
+                        emit cadDataReady(result.componentId, result.parsed.componentData);
+                        // 使用异步保存，不阻塞UI
+                        ComponentCacheService::instance()->saveComponentMetadataAsync(
+                            result.componentId, result.parsed.componentData, retryGen, /*replaceModel3DMetadata=*/true);
+                        ComponentCacheService::instance()->saveCadDataJson(
+                            result.componentId,
+                            QJsonDocument(result.parsed.resultData).toJson(QJsonDocument::Compact),
+                            retryGen);
 
-                            if (m_parallelContext != nullptr) {
-                                handleParallelDataCollected(result.componentId, result.parsed.componentData);
-                            }
-                        });
+                        if (m_parallelContext != nullptr) {
+                            handleParallelDataCollected(result.componentId, result.parsed.componentData);
+                        }
+                    });
                 retryWatcher->setFuture(retryFuture);
                 return;
             }
@@ -880,7 +881,8 @@ void ComponentService::handleCadDataFetched(const QString& componentId, const QJ
         updateComponentCache(parsed.componentId, parsed.componentData);
         emit cadDataReady(parsed.componentId, parsed.componentData);
         // 使用异步保存，不阻塞UI
-        ComponentCacheService::instance()->saveComponentMetadataAsync(parsed.componentId, parsed.componentData, gen);
+        ComponentCacheService::instance()->saveComponentMetadataAsync(
+            parsed.componentId, parsed.componentData, gen, /*replaceModel3DMetadata=*/true);
         ComponentCacheService::instance()->saveCadDataJson(
             parsed.componentId, QJsonDocument(parsed.resultData).toJson(QJsonDocument::Compact), gen);
 

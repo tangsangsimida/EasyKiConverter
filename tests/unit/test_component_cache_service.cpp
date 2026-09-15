@@ -267,6 +267,27 @@ private slots:
         QVERIFY(!QFileInfo::exists(destinationPath));
     }
 
+    void testAuthoritativeCadMetadataClearsRemovedModel3D() {
+        const QString componentId = QStringLiteral("C24681");
+        ComponentData withModel;
+        withModel.setLcscId(componentId);
+        withModel.setName(QStringLiteral("With model"));
+        auto model = QSharedPointer<Model3DData>::create();
+        model->setUuid(QStringLiteral("model-to-remove"));
+        withModel.setModel3DData(model);
+        m_cache->saveComponentMetadata(componentId, withModel);
+
+        ComponentData withoutModel;
+        withoutModel.setLcscId(componentId);
+        withoutModel.setName(QStringLiteral("Without model"));
+        m_cache->saveComponentMetadata(componentId, withoutModel, 0, /*replaceModel3DMetadata=*/true);
+
+        const QSharedPointer<ComponentData> loaded = m_cache->loadComponentData(componentId);
+        QVERIFY(loaded != nullptr);
+        QVERIFY(!loaded->model3DData());
+        QCOMPARE(loaded->name(), QStringLiteral("Without model"));
+    }
+
 private:
     QTemporaryDir m_tempDir;
     ComponentCacheService* m_cache = nullptr;

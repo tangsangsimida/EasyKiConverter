@@ -484,10 +484,17 @@ QSharedPointer<ComponentData> ComponentCacheService::loadComponentData(const QSt
 
 void ComponentCacheService::saveComponentMetadata(const QString& componentId,
                                                   const ComponentData& data,
-                                                  uint64_t expectedGeneration) {
+                                                  uint64_t expectedGeneration,
+                                                  bool replaceModel3DMetadata) {
     QJsonObject metadata = buildMetadata(componentId, data);
     const QJsonObject existingMetadata = loadMetadata(componentId);
     metadata = mergeMetadata(existingMetadata, metadata);
+    if (replaceModel3DMetadata && (!data.model3DData() || data.model3DData()->uuid().isEmpty())) {
+        metadata.remove(QStringLiteral("model3duuid"));
+        metadata.remove(QStringLiteral("model3dName"));
+        metadata.remove(QStringLiteral("model3dTranslation"));
+        metadata.remove(QStringLiteral("model3dRotation"));
+    }
 
     QJsonDocument doc(metadata);
     QString key = makeMemoryKey(componentId, "metadata");
@@ -524,19 +531,20 @@ void ComponentCacheService::saveComponentMetadata(const QString& componentId,
 
 void ComponentCacheService::saveComponentMetadataAsync(const QString& componentId,
                                                        const ComponentData& data,
-                                                       uint64_t expectedGeneration) {
+                                                       uint64_t expectedGeneration,
+                                                       bool replaceModel3DMetadata) {
     // 异步版本：在后台线程执行文件I/O，不阻塞UI
     // 复制需要的数据以供后台线程使用
     const ComponentData dataCopy = data;
     // 如果调用方没有传入 generation，则在入队时捕获当前值
     const uint64_t generation = (expectedGeneration != 0) ? expectedGeneration : m_cacheGeneration.load();
 
-    (void)QtConcurrent::run([this, componentId, dataCopy, generation]() {
+    (void)QtConcurrent::run([this, componentId, dataCopy, generation, replaceModel3DMetadata]() {
         // 写入前检查代次：如果 clearAllCache 已调用，丢弃本次写入
         if (m_cacheGeneration.load() != generation) {
             return;
         }
-        saveComponentMetadata(componentId, dataCopy, generation);
+        saveComponentMetadata(componentId, dataCopy, generation, replaceModel3DMetadata);
     });
 }
 

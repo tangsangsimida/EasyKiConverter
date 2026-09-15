@@ -195,7 +195,10 @@ public:
      * @param data 元器件数据
      * @note 适用于测试或需要保存后立即可见的场景
      */
-    void saveComponentMetadata(const QString& componentId, const ComponentData& data, uint64_t expectedGeneration = 0);
+    void saveComponentMetadata(const QString& componentId,
+                               const ComponentData& data,
+                               uint64_t expectedGeneration = 0,
+                               bool replaceModel3DMetadata = false);
 
     /**
      * @brief 异步保存元器件元数据到L2磁盘缓存（不阻塞UI）
@@ -205,7 +208,8 @@ public:
      */
     void saveComponentMetadataAsync(const QString& componentId,
                                     const ComponentData& data,
-                                    uint64_t expectedGeneration = 0);
+                                    uint64_t expectedGeneration = 0,
+                                    bool replaceModel3DMetadata = false);
 
     /**
      * @brief 保存符号CAD数据到L2磁盘缓存
