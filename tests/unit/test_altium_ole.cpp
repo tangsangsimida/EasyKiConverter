@@ -2510,7 +2510,7 @@ private slots:
         QVERIFY(
             diagnosticWriter.write({diagnosticSymbol}, oversizedDiagnosticPath, QStringLiteral("IMAGE_DIAGNOSTICS")));
         QVERIFY(diagnosticWriter.diagnostics().join('\n').contains(QStringLiteral("图片 3 的嵌入文件名无效")));
-        QVERIFY(diagnosticWriter.diagnostics().join('\n').contains(QStringLiteral("图片 4 的嵌入文件名无效")));
+        QVERIFY(diagnosticWriter.diagnostics().join('\n').contains(QStringLiteral("图片 4 的嵌入文件名超过 255 字节")));
         QVERIFY(diagnosticWriter.diagnostics().join('\n').contains(
             QStringLiteral("组件 IMAGE_DIAGNOSTICS 图片 2 的外部文件名为空，已跳过文件引用")));
         QByteArray diagnosticData;

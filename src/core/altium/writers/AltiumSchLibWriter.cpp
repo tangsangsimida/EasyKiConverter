@@ -1656,6 +1656,14 @@ void AltiumSchLibWriter::prepareImageStorageNames(const QList<AltiumSchComponent
                 qWarning() << "AltiumSchLibWriter:" << diagnostic;
                 continue;
             }
+            if (embeddedName.toLocal8Bit().size() > 255) {
+                const QString diagnostic = QStringLiteral("组件 %1 图片 %2 的嵌入文件名超过 255 字节，已跳过 Storage")
+                                               .arg(component.name)
+                                               .arg(imageIndex);
+                m_diagnostics.append(diagnostic);
+                qWarning() << "AltiumSchLibWriter:" << diagnostic;
+                continue;
+            }
             if (!AltiumWriterUtils::isValidImageStorageName(embeddedName)) {
                 const QString diagnostic = QStringLiteral("组件 %1 图片 %2 的嵌入文件名无效: %3，已跳过 Storage")
                                                .arg(component.name)
