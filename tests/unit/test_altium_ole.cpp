@@ -988,6 +988,13 @@ private slots:
         AltiumPcbComponent invalidBodyComponent;
         invalidBodyComponent.name = QStringLiteral("INVALID_BODY");
         AltiumPcbComponentBody invalidBodyData;
+        invalidBodyData.layerName = QStringLiteral("MECHANICAL17");
+        invalidBodyComponent.bodies.append(invalidBodyData);
+        QVERIFY(!invalidInputWriter.write({invalidBodyComponent}, pcbOutputPath));
+        QVERIFY(invalidInputWriter.diagnostics().join('\n').contains(QStringLiteral("无效 3D 元件体层名")));
+
+        invalidBodyComponent.bodies.clear();
+        invalidBodyData.layerName = QStringLiteral("MECHANICAL1");
         invalidBodyData.kind = 3;
         invalidBodyComponent.bodies.append(invalidBodyData);
         QVERIFY(!invalidInputWriter.write({invalidBodyComponent}, pcbOutputPath));

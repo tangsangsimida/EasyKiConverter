@@ -166,6 +166,14 @@ bool AltiumPcbLibWriter::validateComponents(const QList<AltiumPcbComponent>& com
                 modelIds.insert(modelId);
         }
         for (const AltiumPcbComponentBody& body : component.bodies) {
+            const QString normalizedLayer = body.layerName.trimmed().toUpper();
+            bool layerNumberOk = false;
+            int layerNumber = 0;
+            if (normalizedLayer.startsWith(QStringLiteral("MECHANICAL")))
+                layerNumber = normalizedLayer.mid(10).toInt(&layerNumberOk);
+            if (!layerNumberOk || layerNumber < 1 || layerNumber > 16)
+                return reject(
+                    QStringLiteral("Altium PcbLib 封装 %1 包含无效 3D 元件体层名，已拒绝写入").arg(component.name));
             if (body.kind < 0 || body.kind > 2)
                 return reject(
                     QStringLiteral("Altium PcbLib 封装 %1 包含无效 3D 元件体类型，已拒绝写入").arg(component.name));
