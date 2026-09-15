@@ -298,7 +298,7 @@ bool AltiumSchLibReader::open(const QString& filePath) {
             const QString sectionKey = parameters.value(QStringLiteral("SectionKey%1").arg(i));
             if (libRef.isEmpty() || sectionKey.isEmpty())
                 return fail(QStringLiteral("SchLib SectionKeys 映射不完整"));
-            if (!componentNames.contains(libRef.toCaseFolded()))
+            if (!names.contains(libRef))
                 return fail(QStringLiteral("SchLib SectionKeys 包含未知组件: %1").arg(libRef));
             if (mappedComponents.contains(libRef.toCaseFolded()) ||
                 mappedSectionKeys.contains(sectionKey.toCaseFolded()))

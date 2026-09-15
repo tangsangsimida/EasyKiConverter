@@ -2271,39 +2271,42 @@ private slots:
         QTemporaryDir tempDir;
         QVERIFY(tempDir.isValid());
 
-        const auto createLibrary =
-            [&](const QString& fileName, const QStringList& names, const QStringList& sectionKeys) {
-                OLECompoundWriter writer;
-                if (!writer.create())
-                    return false;
+        const auto createLibrary = [&](const QString& fileName,
+                                       const QStringList& names,
+                                       const QStringList& sectionKeys,
+                                       const QStringList& sectionKeyRefs) {
+            OLECompoundWriter writer;
+            if (!writer.create())
+                return false;
 
-                QByteArray headerData;
-                AltiumBinaryWriter headerWriter(headerData);
-                headerWriter.writeCStringParameterBlock({{QStringLiteral("COMPCOUNT"), QString::number(names.size())}});
-                headerWriter.writeInt32(names.size());
-                for (const QString& name : names)
-                    headerWriter.writeStringBlock(name);
-                if (!writer.writeStream(QStringLiteral("FileHeader"), headerData))
-                    return false;
+            QByteArray headerData;
+            AltiumBinaryWriter headerWriter(headerData);
+            headerWriter.writeCStringParameterBlock({{QStringLiteral("COMPCOUNT"), QString::number(names.size())}});
+            headerWriter.writeInt32(names.size());
+            for (const QString& name : names)
+                headerWriter.writeStringBlock(name);
+            if (!writer.writeStream(QStringLiteral("FileHeader"), headerData))
+                return false;
 
-                if (!sectionKeys.isEmpty()) {
-                    QByteArray sectionKeyData;
-                    AltiumBinaryWriter sectionKeyWriter(sectionKeyData);
-                    QMap<QString, QString> parameters;
-                    parameters[QStringLiteral("KeyCount")] = QString::number(sectionKeys.size());
-                    for (int i = 0; i < sectionKeys.size(); ++i) {
-                        parameters[QStringLiteral("LibRef%1").arg(i)] = names.at(i);
-                        parameters[QStringLiteral("SectionKey%1").arg(i)] = sectionKeys.at(i);
-                    }
-                    sectionKeyWriter.writeCStringParameterBlock(parameters);
-                    if (!writer.writeStream(QStringLiteral("SectionKeys"), sectionKeyData))
-                        return false;
+            if (!sectionKeys.isEmpty()) {
+                QByteArray sectionKeyData;
+                AltiumBinaryWriter sectionKeyWriter(sectionKeyData);
+                QMap<QString, QString> parameters;
+                parameters[QStringLiteral("KeyCount")] = QString::number(sectionKeys.size());
+                for (int i = 0; i < sectionKeys.size(); ++i) {
+                    parameters[QStringLiteral("LibRef%1").arg(i)] =
+                        sectionKeyRefs.isEmpty() ? names.at(i) : sectionKeyRefs.at(i);
+                    parameters[QStringLiteral("SectionKey%1").arg(i)] = sectionKeys.at(i);
                 }
-                return writer.saveToFile(QDir(tempDir.path()).filePath(fileName));
-            };
+                sectionKeyWriter.writeCStringParameterBlock(parameters);
+                if (!writer.writeStream(QStringLiteral("SectionKeys"), sectionKeyData))
+                    return false;
+            }
+            return writer.saveToFile(QDir(tempDir.path()).filePath(fileName));
+        };
 
         QVERIFY(createLibrary(
-            QStringLiteral("duplicate-components.SchLib"), {QStringLiteral("DUP"), QStringLiteral("dup")}, {}));
+            QStringLiteral("duplicate-components.SchLib"), {QStringLiteral("DUP"), QStringLiteral("dup")}, {}, {}));
         AltiumSchLibReader duplicateComponentReader;
         QVERIFY(!duplicateComponentReader.open(
             QDir(tempDir.path()).filePath(QStringLiteral("duplicate-components.SchLib"))));
@@ -2311,11 +2314,21 @@ private slots:
 
         QVERIFY(createLibrary(QStringLiteral("duplicate-section-keys.SchLib"),
                               {QStringLiteral("A"), QStringLiteral("B")},
-                              {QStringLiteral("SHARED"), QStringLiteral("shared")}));
+                              {QStringLiteral("SHARED"), QStringLiteral("shared")},
+                              {}));
         AltiumSchLibReader duplicateSectionKeyReader;
         QVERIFY(!duplicateSectionKeyReader.open(
             QDir(tempDir.path()).filePath(QStringLiteral("duplicate-section-keys.SchLib"))));
         QVERIFY(duplicateSectionKeyReader.errorString().contains(QStringLiteral("SectionKeys 映射重复")));
+
+        QVERIFY(createLibrary(QStringLiteral("case-mismatched-section-key.SchLib"),
+                              {QStringLiteral("A"), QStringLiteral("B")},
+                              {QStringLiteral("KEY_A"), QStringLiteral("KEY_B")},
+                              {QStringLiteral("a"), QStringLiteral("B")}));
+        AltiumSchLibReader caseMismatchedReader;
+        QVERIFY(!caseMismatchedReader.open(
+            QDir(tempDir.path()).filePath(QStringLiteral("case-mismatched-section-key.SchLib"))));
+        QVERIFY(caseMismatchedReader.errorString().contains(QStringLiteral("SectionKeys 包含未知组件")));
     }
 
     /**
@@ -4166,48 +4179,50 @@ private slots:
         QTemporaryDir tempDir;
         QVERIFY(tempDir.isValid());
 
-        const auto createLibrary =
-            [&](const QString& fileName, const QStringList& names, const QStringList& sectionKeys) {
-                OLECompoundWriter writer;
-                if (!writer.create())
-                    return false;
+        const auto createLibrary = [&](const QString& fileName,
+                                       const QStringList& names,
+                                       const QStringList& sectionKeys,
+                                       const QStringList& sectionKeyRefs) {
+            OLECompoundWriter writer;
+            if (!writer.create())
+                return false;
 
-                QByteArray fileHeader;
-                AltiumBinaryWriter fileHeaderWriter(fileHeader);
-                const QByteArray version = QByteArrayLiteral("PCB 6.0 Binary Library File");
-                fileHeaderWriter.writeInt32(version.size());
-                fileHeaderWriter.writePascalShortString(QString::fromLatin1(version));
-                if (!writer.writeStream(QStringLiteral("FileHeader"), fileHeader))
-                    return false;
+            QByteArray fileHeader;
+            AltiumBinaryWriter fileHeaderWriter(fileHeader);
+            const QByteArray version = QByteArrayLiteral("PCB 6.0 Binary Library File");
+            fileHeaderWriter.writeInt32(version.size());
+            fileHeaderWriter.writePascalShortString(QString::fromLatin1(version));
+            if (!writer.writeStream(QStringLiteral("FileHeader"), fileHeader))
+                return false;
 
-                QByteArray libraryData;
-                AltiumBinaryWriter libraryWriter(libraryData);
-                libraryWriter.beginBlock();
-                libraryWriter.writeBytes(QByteArrayLiteral("metadata"));
-                libraryWriter.endBlock();
-                libraryWriter.writeUInt32(static_cast<quint32>(names.size()));
-                for (const QString& name : names)
-                    libraryWriter.writeStringBlock(name);
-                if (!writer.addStorage(QStringLiteral("Library")) ||
-                    !writer.writeStream(QStringLiteral("Library"), QStringLiteral("Data"), libraryData))
-                    return false;
+            QByteArray libraryData;
+            AltiumBinaryWriter libraryWriter(libraryData);
+            libraryWriter.beginBlock();
+            libraryWriter.writeBytes(QByteArrayLiteral("metadata"));
+            libraryWriter.endBlock();
+            libraryWriter.writeUInt32(static_cast<quint32>(names.size()));
+            for (const QString& name : names)
+                libraryWriter.writeStringBlock(name);
+            if (!writer.addStorage(QStringLiteral("Library")) ||
+                !writer.writeStream(QStringLiteral("Library"), QStringLiteral("Data"), libraryData))
+                return false;
 
-                if (!sectionKeys.isEmpty()) {
-                    QByteArray sectionKeyData;
-                    AltiumBinaryWriter sectionKeyWriter(sectionKeyData);
-                    sectionKeyWriter.writeUInt32(static_cast<quint32>(sectionKeys.size()));
-                    for (int i = 0; i < sectionKeys.size(); ++i) {
-                        sectionKeyWriter.writePascalString(names.at(i));
-                        sectionKeyWriter.writeStringBlock(sectionKeys.at(i));
-                    }
-                    if (!writer.writeStream(QStringLiteral("SectionKeys"), sectionKeyData))
-                        return false;
+            if (!sectionKeys.isEmpty()) {
+                QByteArray sectionKeyData;
+                AltiumBinaryWriter sectionKeyWriter(sectionKeyData);
+                sectionKeyWriter.writeUInt32(static_cast<quint32>(sectionKeys.size()));
+                for (int i = 0; i < sectionKeys.size(); ++i) {
+                    sectionKeyWriter.writePascalString(sectionKeyRefs.isEmpty() ? names.at(i) : sectionKeyRefs.at(i));
+                    sectionKeyWriter.writeStringBlock(sectionKeys.at(i));
                 }
-                return writer.saveToFile(QDir(tempDir.path()).filePath(fileName));
-            };
+                if (!writer.writeStream(QStringLiteral("SectionKeys"), sectionKeyData))
+                    return false;
+            }
+            return writer.saveToFile(QDir(tempDir.path()).filePath(fileName));
+        };
 
         QVERIFY(createLibrary(
-            QStringLiteral("duplicate-pcb-components.PcbLib"), {QStringLiteral("DUP"), QStringLiteral("dup")}, {}));
+            QStringLiteral("duplicate-pcb-components.PcbLib"), {QStringLiteral("DUP"), QStringLiteral("dup")}, {}, {}));
         AltiumPcbLibReader duplicateComponentReader;
         QVERIFY(!duplicateComponentReader.open(
             QDir(tempDir.path()).filePath(QStringLiteral("duplicate-pcb-components.PcbLib"))));
@@ -4215,11 +4230,21 @@ private slots:
 
         QVERIFY(createLibrary(QStringLiteral("duplicate-pcb-section-keys.PcbLib"),
                               {QStringLiteral("A"), QStringLiteral("B")},
-                              {QStringLiteral("SHARED"), QStringLiteral("shared")}));
+                              {QStringLiteral("SHARED"), QStringLiteral("shared")},
+                              {}));
         AltiumPcbLibReader duplicateSectionKeyReader;
         QVERIFY(!duplicateSectionKeyReader.open(
             QDir(tempDir.path()).filePath(QStringLiteral("duplicate-pcb-section-keys.PcbLib"))));
         QVERIFY(duplicateSectionKeyReader.errorString().contains(QStringLiteral("SectionKeys 映射重复")));
+
+        QVERIFY(createLibrary(QStringLiteral("case-mismatched-pcb-section-key.PcbLib"),
+                              {QStringLiteral("A"), QStringLiteral("B")},
+                              {QStringLiteral("KEY_A"), QStringLiteral("KEY_B")},
+                              {QStringLiteral("a"), QStringLiteral("B")}));
+        AltiumPcbLibReader caseMismatchedReader;
+        QVERIFY(!caseMismatchedReader.open(
+            QDir(tempDir.path()).filePath(QStringLiteral("case-mismatched-pcb-section-key.PcbLib"))));
+        QVERIFY(caseMismatchedReader.errorString().contains(QStringLiteral("SectionKeys 包含未知封装")));
     }
 };
 

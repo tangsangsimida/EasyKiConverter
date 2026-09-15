@@ -369,7 +369,7 @@ bool AltiumPcbLibReader::open(const QString& filePath) {
             if (!sectionKeyReader.readPascalString(&libRef) || !sectionKeyReader.readStringBlock(&sectionKey) ||
                 libRef.isEmpty() || sectionKey.isEmpty())
                 return fail(QStringLiteral("PcbLib SectionKeys 映射不完整"));
-            if (!componentNames.contains(libRef.toCaseFolded()))
+            if (!names.contains(libRef))
                 return fail(QStringLiteral("PcbLib SectionKeys 包含未知封装: %1").arg(libRef));
             if (mappedComponents.contains(libRef.toCaseFolded()) ||
                 mappedSectionKeys.contains(sectionKey.toCaseFolded()))
