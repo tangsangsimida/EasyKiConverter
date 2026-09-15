@@ -955,6 +955,11 @@ bool AltiumSchLibWriter::validateGeometry(const AltiumSchComponent& component) {
         if (!validateShortString(pin.name, QStringLiteral("引脚 %1 名称").arg(i)) ||
             !validateShortString(pin.designator, QStringLiteral("引脚 %1 编号").arg(i)))
             return false;
+        if (static_cast<uint8_t>(pin.orientation) > 3)
+            return reject(QStringLiteral("引脚 %1 方向无效: %2").arg(i).arg(static_cast<uint8_t>(pin.orientation)));
+        if (static_cast<uint8_t>(pin.electricalType) > 7)
+            return reject(
+                QStringLiteral("引脚 %1 电气类型无效: %2").arg(i).arg(static_cast<uint8_t>(pin.electricalType)));
     }
 
     if (!validateLineWidths(component.rectangles, QStringLiteral("矩形图元")) ||

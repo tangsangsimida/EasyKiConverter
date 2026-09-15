@@ -629,6 +629,14 @@ private slots:
         QVERIFY(!writer.write({oversizedPinText}, outputPath));
         QVERIFY(writer.diagnostics().join('\n').contains(QStringLiteral("引脚 0 名称超过 255 字节")));
 
+        AltiumSchComponent invalidPinType;
+        invalidPinType.name = QStringLiteral("INVALID_PIN_TYPE");
+        AltiumSchPin invalidPin;
+        invalidPin.orientation = static_cast<AltiumModels::PinOrientation>(4);
+        invalidPinType.pins.append(invalidPin);
+        QVERIFY(!writer.write({invalidPinType}, outputPath));
+        QVERIFY(writer.diagnostics().join('\n').contains(QStringLiteral("引脚 0 方向无效")));
+
         AltiumSchComponent named;
         named.name = QStringLiteral("VALID");
         QVERIFY(!writer.write({named}, QString()));
