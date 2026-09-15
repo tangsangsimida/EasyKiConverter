@@ -1980,6 +1980,15 @@ private slots:
         text.fontId = 1;
         text.color = 0;
         symbol.texts.append(text);
+        AltiumSchText arialText;
+        arialText.text = QStringLiteral("Arial 文本");
+        arialText.fontName = QStringLiteral("Arial");
+        arialText.fontSizeMm = 25.4 / 72.0 * 10.0;
+        symbol.texts.append(arialText);
+        AltiumSchText lowercaseArialText = arialText;
+        lowercaseArialText.text = QStringLiteral("arial 文本");
+        lowercaseArialText.fontName = QStringLiteral("arial");
+        symbol.texts.append(lowercaseArialText);
         AltiumSchParameter invalidFontParameter;
         invalidFontParameter.name = QStringLiteral("InvalidFont");
         invalidFontParameter.value = QStringLiteral("回退字体");
@@ -2009,7 +2018,10 @@ private slots:
         for (const auto& record : records) {
             if (record.parameters.value(QStringLiteral("RECORD")) == QStringLiteral("4")) {
                 sawFontReference = true;
-                QCOMPARE(record.fontId, 1);
+                if (record.parameters.value(QStringLiteral("Text")) == QStringLiteral("中文文本"))
+                    QCOMPARE(record.fontId, 1);
+                else
+                    QCOMPARE(record.fontId, 2);
             }
             if (record.parameters.value(QStringLiteral("NAME")) == QStringLiteral("InvalidFont")) {
                 sawParameterFontReference = true;
@@ -2018,6 +2030,7 @@ private slots:
         }
         QVERIFY(sawFontReference);
         QVERIFY(sawParameterFontReference);
+        QCOMPARE(reader.fonts().size(), 2);
 
         IR::SymbolComponentIR rotatedTextSymbol;
         rotatedTextSymbol.name = QStringLiteral("ROTATED_TEXT");

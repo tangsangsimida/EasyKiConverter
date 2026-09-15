@@ -153,8 +153,8 @@ QString AltiumSchLibWriter::getSectionKey(const QString& name) const {
  */
 int AltiumSchLibWriter::getOrAddFont(const QString& fontName, int fontSize, bool bold, bool italic, bool underline) {
     for (int i = 0; i < m_fonts.size(); ++i) {
-        if (m_fonts[i].name == fontName && m_fonts[i].size == fontSize && m_fonts[i].bold == bold &&
-            m_fonts[i].italic == italic && m_fonts[i].underline == underline) {
+        if (m_fonts[i].name.compare(fontName, Qt::CaseInsensitive) == 0 && m_fonts[i].size == fontSize &&
+            m_fonts[i].bold == bold && m_fonts[i].italic == italic && m_fonts[i].underline == underline) {
             return i + 1;  // 1-based
         }
     }
