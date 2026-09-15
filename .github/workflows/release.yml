@@ -286,11 +286,11 @@ jobs:
             case "$architecture" in
               amd64)
                 architecture_order=1
-                [[ "$platform" == Windows ]] && architecture_display="amd64（x64）" || architecture_display="amd64"
+                architecture_display="amd64"
                 ;;
               arm64)
                 architecture_order=2
-                [[ "$platform" == Windows ]] && architecture_display="arm64（Windows on Arm）" || architecture_display="arm64"
+                architecture_display="arm64"
                 ;;
               intel)
                 architecture_order=3
@@ -323,7 +323,7 @@ jobs:
             echo "| --- | --- | --- | --- |"
             LC_ALL=C sort -t $'\t' -k1,1n -k2,2n -k3,3n -k4,4 "$download_rows" | cut -f4-
             echo
-            echo "> 下载表按 Windows、Linux、macOS 的系统顺序排列。Windows 的 amd64（x64）适用于常规 Intel/AMD 64 位设备，arm64（Windows on Arm）适用于 ARM64 设备。"
+            echo "> 下载表按 Windows、Linux、macOS 的系统顺序排列。Windows 架构统一标记为 amd64 或 arm64；amd64 适用于 Intel/AMD 64 位设备，arm64 适用于 Windows on Arm 设备。"
             echo
             echo "## 重要变化"
             echo
