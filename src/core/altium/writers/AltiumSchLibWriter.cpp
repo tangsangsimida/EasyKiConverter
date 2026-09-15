@@ -1053,6 +1053,14 @@ bool AltiumSchLibWriter::validateGeometry(const AltiumSchComponent& component) {
         if (arc.radiusX <= 0 || arc.radiusY <= 0)
             return reject(QStringLiteral("椭圆弧半径无效"));
     }
+    for (const AltiumSchRectangle& rect : component.rectangles) {
+        if (rect.locationX == rect.cornerX || rect.locationY == rect.cornerY)
+            return reject(QStringLiteral("矩形图元边界尺寸无效"));
+    }
+    for (const AltiumSchRoundRectangle& rect : component.roundRectangles) {
+        if (rect.locationX == rect.cornerX || rect.locationY == rect.cornerY)
+            return reject(QStringLiteral("圆角矩形图元边界尺寸无效"));
+    }
     for (const AltiumSchTextFrame& frame : component.textFrames) {
         if (frame.locationX == frame.cornerX || frame.locationY == frame.cornerY)
             return reject(QStringLiteral("文本框边界尺寸无效"));

@@ -729,9 +729,27 @@ private slots:
         QVERIFY(!writer.write({invalidTextFrameBounds}, outputPath));
         QVERIFY(writer.diagnostics().join('\n').contains(QStringLiteral("文本框边界尺寸无效")));
 
+        AltiumSchComponent invalidRectangleBounds;
+        invalidRectangleBounds.name = QStringLiteral("INVALID_RECTANGLE_BOUNDS");
+        AltiumSchRectangle zeroRectangle;
+        zeroRectangle.cornerX = 100000;
+        invalidRectangleBounds.rectangles.append(zeroRectangle);
+        QVERIFY(!writer.write({invalidRectangleBounds}, outputPath));
+        QVERIFY(writer.diagnostics().join('\n').contains(QStringLiteral("矩形图元边界尺寸无效")));
+
+        AltiumSchComponent invalidRoundRectangleBounds;
+        invalidRoundRectangleBounds.name = QStringLiteral("INVALID_ROUND_RECTANGLE_BOUNDS");
+        AltiumSchRoundRectangle zeroRoundRectangle;
+        zeroRoundRectangle.cornerY = 100000;
+        invalidRoundRectangleBounds.roundRectangles.append(zeroRoundRectangle);
+        QVERIFY(!writer.write({invalidRoundRectangleBounds}, outputPath));
+        QVERIFY(writer.diagnostics().join('\n').contains(QStringLiteral("圆角矩形图元边界尺寸无效")));
+
         AltiumSchComponent invalidStroke;
         invalidStroke.name = QStringLiteral("INVALID_STROKE_WIDTH");
         AltiumSchRectangle invalidStrokeRectangle;
+        invalidStrokeRectangle.cornerX = 100000;
+        invalidStrokeRectangle.cornerY = 100000;
         invalidStrokeRectangle.lineWidth = 4;
         invalidStroke.rectangles.append(invalidStrokeRectangle);
         QVERIFY(!writer.write({invalidStroke}, outputPath));
@@ -3286,12 +3304,14 @@ private slots:
         first.sourcePartIndex = 0;
         first.locationX = 100000;
         first.cornerX = 200000;
+        first.cornerY = 100000;
         symbol.rectangles.append(first);
         AltiumSchRectangle second;
         second.sourceGraphicIndex = 1;
         second.sourcePartIndex = 0;
         second.locationX = 300000;
         second.cornerX = 400000;
+        second.cornerY = 100000;
         symbol.rectangles.append(second);
         symbol.graphicOrder = {{QStringLiteral("R"), 0, 0}};
 
@@ -3321,6 +3341,7 @@ private slots:
         rectangle.sourceGraphicIndex = 0;
         rectangle.sourcePartIndex = 0;
         rectangle.cornerX = 100000;
+        rectangle.cornerY = 100000;
         symbol.rectangles.append(rectangle);
         AltiumSchImage image;
         image.fileName = QStringLiteral("unindexed.png");
@@ -3354,6 +3375,7 @@ private slots:
         rectangle.sourceGraphicIndex = 0;
         rectangle.sourcePartIndex = 0;
         rectangle.cornerX = 100000;
+        rectangle.cornerY = 100000;
         symbol.rectangles.append(rectangle);
         AltiumSchRoundRectangle roundRectangle;
         roundRectangle.sourceGraphicIndex = 0;
@@ -3449,6 +3471,7 @@ private slots:
         rectangle.sourceGraphicIndex = 0;
         rectangle.sourcePartIndex = 0;
         rectangle.cornerX = 100000;
+        rectangle.cornerY = 100000;
         symbol.rectangles.append(rectangle);
 
         AltiumSchArc arc;
