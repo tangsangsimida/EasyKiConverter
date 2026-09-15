@@ -291,6 +291,7 @@ bool AltiumSchLibWriter::write(const QList<AltiumSchComponent>& components,
     m_fonts.clear();
     m_embeddedImageNames.clear();
     m_uniqueIdCounter = 0;
+    m_nextIndexInSheet = 0;
     m_libraryName = libraryName;
 
     prepareImageStorageNames(components);

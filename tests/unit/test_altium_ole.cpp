@@ -1025,6 +1025,38 @@ private slots:
      * @brief 验证嵌入图片的 Storage 文件名冲突和无效数据诊断
      * @details 确认重复文件名会被稳定改名，非法文件名和空数据不会进入 Storage，且有效压缩数据可回读。
      */
+    void reusingSchLibWriterResetsContentIndexes() {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        AltiumSchComponent component;
+        component.name = QStringLiteral("REUSED_WRITER");
+        AltiumSchRectangle rectangle;
+        rectangle.cornerX = 100000;
+        rectangle.cornerY = 100000;
+        component.rectangles.append(rectangle);
+
+        AltiumSchLibWriter writer;
+        const QString firstPath = QDir(tempDir.path()).filePath(QStringLiteral("first.SchLib"));
+        const QString secondPath = QDir(tempDir.path()).filePath(QStringLiteral("second.SchLib"));
+        QVERIFY(writer.write({component}, firstPath));
+        QVERIFY(writer.write({component}, secondPath));
+
+        AltiumSchLibReader reader;
+        QVERIFY2(reader.open(secondPath), qPrintable(reader.errorString()));
+        QVector<AltiumSchLibReader::Record> records;
+        QVERIFY2(reader.readComponentRecords(0, &records), qPrintable(reader.errorString()));
+        bool foundRectangle = false;
+        for (const auto& record : records) {
+            if (record.recordType == 14) {
+                QCOMPARE(record.indexInSheet, -1);
+                foundRectangle = true;
+                break;
+            }
+        }
+        QVERIFY(foundRectangle);
+    }
+
     void validatesEmbeddedImageStorageNamesAndPayloads() {
         QTemporaryDir tempDir;
         QVERIFY(tempDir.isValid());
