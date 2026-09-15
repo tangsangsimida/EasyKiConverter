@@ -91,6 +91,9 @@ bool AltiumPcbLibWriter::validateComponents(const QList<AltiumPcbComponent>& com
             if (value.contains(QChar('|')) || value.contains(QChar::Null))
                 return reject(QStringLiteral("Altium PcbLib 封装 %1 的%2包含参数分隔符或 NUL，已拒绝写入")
                                   .arg(component.name, context));
+            if (value.contains(QChar('\r')) || value.contains(QChar('\n')))
+                return reject(
+                    QStringLiteral("Altium PcbLib 封装 %1 的%2包含换行字符，已拒绝写入").arg(component.name, context));
             if (!isLosslessLatin1(value))
                 return reject(QStringLiteral("Altium PcbLib 封装 %1 的%2包含无法编码的字符，已拒绝写入")
                                   .arg(component.name, context));
