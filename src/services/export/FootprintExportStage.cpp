@@ -319,7 +319,7 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
         }
 
         FootprintData footprint = *data->footprintData();
-        if (m_options.needsModel3DStep()) {
+        if (m_options.needsEmbeddedModel3DStep()) {
             Model3DData model3D = footprint.model3D();
             // 优先使用 CadDataLoader 设置的 head.uuid_3d（规范 3D 模型 UUID），
             // 因为 SVGNODE 的 attrs.uuid 可能是 outline 形状 UUID 而非 3D 模型 UUID。
@@ -538,8 +538,8 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
     bool exportSuccess = false;
     QString libraryDescription = m_options.footprintLibraryDescription;
     {
-        const bool preferWrl = m_options.needsModel3DWrl();
-        const bool exportStep = m_options.needsModel3DStep();
+        const bool preferWrl = m_options.needsModel3DWrl() && m_options.targetFormat != TargetEdaFormat::Altium;
+        const bool exportStep = m_options.needsEmbeddedModel3DStep();
         QString libraryKeywords = m_options.footprintLibraryKeywords;
         // 转换旧类型列表到 IR 类型
         QList<IR::FootprintComponentIR> irFootprintList;

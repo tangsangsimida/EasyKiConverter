@@ -33,6 +33,18 @@ private slots:
         QCOMPARE(options.needsModel3DStep(), step);
     }
 
+    void altiumAlwaysRequiresEmbeddedStep() {
+        ExportOptions options;
+        options.targetFormat = TargetEdaFormat::Altium;
+        options.exportModel3D = true;
+        options.exportModel3DFormat = ExportOptions::MODEL_3D_FORMAT_WRL;
+
+        QVERIFY(options.needsEmbeddedModel3DStep());
+
+        options.exportModel3D = false;
+        QVERIFY(!options.needsEmbeddedModel3DStep());
+    }
+
     void exportOptionsNormalizePathMode_data() {
         QTest::addColumn<int>("input");
         QTest::addColumn<int>("expected");

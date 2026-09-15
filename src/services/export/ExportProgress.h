@@ -49,6 +49,17 @@ struct ExportOptions {
         return (exportModel3DFormat & MODEL_3D_FORMAT_STEP) != 0;
     }
 
+    /**
+     * @brief 判断当前目标是否必须嵌入 STEP 三维模型
+     *
+     * Altium PcbLib 不使用 KiCad 的外部 WRL/STEP 文件引用，三维模型必须
+     * 以 STEP 形式嵌入封装库。因此即使调用方传入了 WRL-only 配置，也必须
+     * 为 Altium 获取并嵌入 STEP。
+     */
+    constexpr bool needsEmbeddedModel3DStep() const {
+        return needsModel3DStep() || (targetFormat == TargetEdaFormat::Altium && exportModel3D);
+    }
+
     static constexpr int normalizePathMode(int mode) {
         return mode == MODEL_3D_PATH_ABSOLUTE ? MODEL_3D_PATH_ABSOLUTE : MODEL_3D_PATH_RELATIVE;
     }
