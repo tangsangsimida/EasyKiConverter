@@ -188,6 +188,38 @@ private slots:
         QCOMPARE(finalStatus.errorMessage, modelFailure.errorMessage);
     }
 
+    void testAltiumModel3DFinalFailureReplacesEarlierSuccess() {
+        ParallelExportService service;
+        ExportOptions options;
+        options.targetFormat = TargetEdaFormat::Altium;
+        options.exportModel3D = true;
+        service.setOptions(options);
+
+        ExportItemStatus modelSuccess;
+        modelSuccess.status = ExportItemStatus::Status::Success;
+        QVERIFY(QMetaObject::invokeMethod(&service,
+                                          "onExportItemStatusChanged",
+                                          Qt::DirectConnection,
+                                          Q_ARG(QString, QStringLiteral("C90004")),
+                                          Q_ARG(QString, QStringLiteral("Model3D")),
+                                          Q_ARG(ExportItemStatus, modelSuccess)));
+
+        ExportItemStatus finalFailure;
+        finalFailure.status = ExportItemStatus::Status::Failed;
+        finalFailure.errorMessage = QStringLiteral("Altium PcbLib 导出失败，3D 模型未写入最终库");
+        QVERIFY(QMetaObject::invokeMethod(&service,
+                                          "onExportItemStatusChanged",
+                                          Qt::DirectConnection,
+                                          Q_ARG(QString, QStringLiteral("C90004")),
+                                          Q_ARG(QString, QStringLiteral("Model3D")),
+                                          Q_ARG(ExportItemStatus, finalFailure)));
+
+        const ExportItemStatus finalStatus =
+            service.getTypeProgress(QStringLiteral("Model3D")).itemStatus.value(QStringLiteral("C90004"));
+        QCOMPARE(finalStatus.status, ExportItemStatus::Status::Failed);
+        QCOMPARE(finalStatus.errorMessage, finalFailure.errorMessage);
+    }
+
     void testCancellationReportPreservesCollectedDiagnostics() {
         QTemporaryDir tempDir;
         QVERIFY(tempDir.isValid());

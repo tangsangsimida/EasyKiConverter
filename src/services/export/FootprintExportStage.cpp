@@ -454,6 +454,16 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
             status.errorMessage = errorMessage;
             status.endTime = QDateTime::currentDateTime();
             emit itemStatusChanged(componentId, status);
+
+            // Altium 的 3D 状态可能已经在收集阶段报告成功，但最终 PcbLib
+            // 写入或提交失败时，模型实际上没有进入最终库，必须同步回写失败。
+            if (m_options.targetFormat == TargetEdaFormat::Altium && m_options.exportModel3D) {
+                ExportItemStatus modelStatus;
+                modelStatus.status = ExportItemStatus::Status::Failed;
+                modelStatus.errorMessage = QStringLiteral("Altium PcbLib 导出失败，3D 模型未写入最终库");
+                modelStatus.endTime = status.endTime;
+                emit embeddedModel3DStatusChanged(componentId, modelStatus);
+            }
         }
         successCount = 0;
     };
