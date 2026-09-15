@@ -11,6 +11,35 @@
 
 namespace EasyKiConverter {
 
+namespace {
+
+QStringList splitCsvLine(const QString& line) {
+    QStringList cells;
+    QString cell;
+    bool inQuotes = false;
+
+    for (int i = 0; i < line.size(); ++i) {
+        const QChar character = line.at(i);
+        if (character == QChar('"')) {
+            if (inQuotes && i + 1 < line.size() && line.at(i + 1) == QChar('"')) {
+                cell += QChar('"');
+                ++i;
+            } else {
+                inQuotes = !inQuotes;
+            }
+        } else if (character == QChar(',') && !inQuotes) {
+            cells.append(cell);
+            cell.clear();
+        } else {
+            cell += character;
+        }
+    }
+    cells.append(cell);
+    return cells;
+}
+
+}  // namespace
+
 BomParser::BomParser(QObject* parent) : QObject(parent) {}
 
 const QSet<QString>& BomParser::getExcludedIds() {
@@ -71,8 +100,7 @@ QStringList BomParser::parseCsv(const QString& filePath) {
         if (line.isEmpty())
             continue;
 
-        // 简单 CSV 分隔处理
-        QStringList cells = line.split(',', Qt::SkipEmptyParts);
+        const QStringList cells = splitCsvLine(line);
         for (const QString& cell : cells) {
             processCellText(cell, componentIds);
         }

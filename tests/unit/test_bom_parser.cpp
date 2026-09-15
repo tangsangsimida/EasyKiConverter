@@ -67,6 +67,21 @@ private slots:
         QCOMPARE(parser.parse(filePath), QStringList({QStringLiteral("C21190"), QStringLiteral("C14663")}));
     }
 
+    void parseCsvPreservesIdsAfterQuotedCommaFields() {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        const QString filePath = createTempCsv(tempDir,
+                                               QStringLiteral("quoted-comma.csv"),
+                                               {QStringLiteral("Designator,Comment,LCSC Part"),
+                                                QStringLiteral("C1,\"resistor, 1%\",C21190"),
+                                                QStringLiteral("C2,\"quoted \"\"note\"\"\",C14663")});
+        QVERIFY2(!filePath.isEmpty(), "Failed to create temp CSV");
+
+        BomParser parser;
+        QCOMPARE(parser.parse(filePath), QStringList({QStringLiteral("C21190"), QStringLiteral("C14663")}));
+    }
+
     void parseUnsupportedOrMissingFilesReturnsEmptyList() {
         QTemporaryDir tempDir;
         QVERIFY(tempDir.isValid());
