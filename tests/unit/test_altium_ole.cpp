@@ -1134,6 +1134,35 @@ private slots:
         invalidBodyAssociation.bodies = {unassociatedBody};
         QVERIFY(!invalidInputWriter.write({invalidBodyAssociation}, pcbOutputPath));
         QVERIFY(invalidInputWriter.diagnostics().join('\n').contains(QStringLiteral("未关联有效模型")));
+
+        AltiumPcbComponent invalidCStringComponent;
+        invalidCStringComponent.name = QStringLiteral("INVALID_CSTRING");
+        AltiumPcbRegion invalidCStringRegion;
+        invalidCStringRegion.name = QStringLiteral("BAD|REGION");
+        invalidCStringRegion.vertices = {QPointF(0.0, 0.0), QPointF(1000.0, 0.0), QPointF(0.0, 1000.0)};
+        invalidCStringComponent.regions.append(invalidCStringRegion);
+        QVERIFY(!invalidInputWriter.write({invalidCStringComponent}, pcbOutputPath));
+        QVERIFY(invalidInputWriter.diagnostics().join('\n').contains(QStringLiteral("区域名称包含参数分隔符或 NUL")));
+
+        invalidCStringComponent.regions.clear();
+        AltiumPcbComponentBody invalidCStringBody;
+        invalidCStringBody.name = QStringLiteral("BAD\0BODY");
+        invalidCStringComponent.bodies.append(invalidCStringBody);
+        QVERIFY(!invalidInputWriter.write({invalidCStringComponent}, pcbOutputPath));
+        QVERIFY(
+            invalidInputWriter.diagnostics().join('\n').contains(QStringLiteral("3D 元件体名称包含参数分隔符或 NUL")));
+
+        invalidCStringComponent.bodies.clear();
+        AltiumPcbRegion extensionRegion;
+        extensionRegion.vertices = {QPointF(0.0, 0.0), QPointF(1000.0, 0.0), QPointF(0.0, 1000.0)};
+        invalidCStringComponent.regions.append(extensionRegion);
+        AltiumPcbExtendedPrimitiveInfo invalidCStringExtension;
+        invalidCStringExtension.primitiveIndex = 0;
+        invalidCStringExtension.objectName = QStringLiteral("Pad");
+        invalidCStringExtension.params.insert(QStringLiteral("BAD|KEY"), QStringLiteral("value"));
+        invalidCStringComponent.extendedPrimitives.append(invalidCStringExtension);
+        QVERIFY(!invalidInputWriter.write({invalidCStringComponent}, pcbOutputPath));
+        QVERIFY(invalidInputWriter.diagnostics().join('\n').contains(QStringLiteral("扩展参数键包含参数分隔符或 NUL")));
     }
 
     /**
@@ -2718,7 +2747,7 @@ private slots:
         // 添加一个 3D 模型
         AltiumPcbComponent::Model3D model;
         model.name = QStringLiteral("test.step");
-        model.id = QStringLiteral("model|id");
+        model.id = QStringLiteral("model-id");
         model.stepData = QByteArrayLiteral("ISO-10303-21;");
         footprint.models.append(model);
 
@@ -2754,7 +2783,7 @@ private slots:
 
         QByteArray modelData;
         QVERIFY(readCfbStream(pcbPath, QStringLiteral("Library/Models/Data"), modelData));
-        QVERIFY(modelData.contains("ID=model id"));
+        QVERIFY(modelData.contains("ID=model-id"));
         QVERIFY(modelData.contains("NAME=test.step"));
         QVERIFY(!modelData.contains("ID=model|id"));
 

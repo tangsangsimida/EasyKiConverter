@@ -79,8 +79,19 @@ bool AltiumPcbLibWriter::validateComponents(const QList<AltiumPcbComponent>& com
     };
     QSet<QString> componentNames;
     for (const AltiumPcbComponent& component : components) {
+        const auto validateCStringField = [&reject, &component](const QString& value, const QString& context) {
+            if (!value.contains(QChar('|')) && !value.contains(QChar::Null))
+                return true;
+            return reject(QStringLiteral("Altium PcbLib 封装 %1 的%2包含参数分隔符或 NUL，已拒绝写入")
+                              .arg(component.name, context));
+        };
+
         if (component.name.trimmed().isEmpty())
             return reject(QStringLiteral("Altium PcbLib 封装名称为空，已拒绝写入"));
+        if (!validateCStringField(component.name, QStringLiteral("封装名称")))
+            return false;
+        if (!validateCStringField(component.description, QStringLiteral("封装描述")))
+            return false;
         if (component.name.toLatin1().size() > 255)
             return reject(QStringLiteral("Altium PcbLib 封装 %1 名称超过 255 字节，已拒绝写入").arg(component.name));
         if (!isLosslessLatin1(component.name))
@@ -157,6 +168,11 @@ bool AltiumPcbLibWriter::validateComponents(const QList<AltiumPcbComponent>& com
                 return reject(QStringLiteral("Altium PcbLib 封装 %1 包含无效区域层号，已拒绝写入").arg(component.name));
             if (region.vertices.size() < 3)
                 return reject(QStringLiteral("Altium PcbLib 封装 %1 区域顶点不足，已拒绝写入").arg(component.name));
+            if (!validateCStringField(region.v7LayerName, QStringLiteral("区域 V7 层名称")) ||
+                !validateCStringField(region.net, QStringLiteral("区域网络名称")) ||
+                !validateCStringField(region.uniqueId, QStringLiteral("区域唯一标识")) ||
+                !validateCStringField(region.name, QStringLiteral("区域名称")))
+                return false;
         }
         QSet<QString> modelIds;
         for (const AltiumPcbComponent::Model3D& model : component.models) {
@@ -183,6 +199,12 @@ bool AltiumPcbLibWriter::validateComponents(const QList<AltiumPcbComponent>& com
                 modelIds.insert(modelId);
         }
         for (const AltiumPcbComponentBody& body : component.bodies) {
+            if (!validateCStringField(body.layerName, QStringLiteral("3D 元件体层名称")) ||
+                !validateCStringField(body.name, QStringLiteral("3D 元件体名称")) ||
+                !validateCStringField(body.modelId, QStringLiteral("3D 元件体模型 ID")) ||
+                !validateCStringField(body.modelName, QStringLiteral("3D 元件体模型名称")) ||
+                !validateCStringField(body.modelSource, QStringLiteral("3D 元件体模型来源")))
+                return false;
             const QString normalizedLayer = body.layerName.trimmed().toUpper();
             bool layerNumberOk = false;
             int layerNumber = 0;
@@ -217,6 +239,16 @@ bool AltiumPcbLibWriter::validateComponents(const QList<AltiumPcbComponent>& com
             if (info.objectName.trimmed().isEmpty())
                 return reject(
                     QStringLiteral("Altium PcbLib 封装 %1 的扩展图元对象名为空，已拒绝写入").arg(component.name));
+            if (!validateCStringField(info.objectName, QStringLiteral("扩展图元对象名")))
+                return false;
+            for (auto it = info.params.cbegin(); it != info.params.cend(); ++it) {
+                if (it.key().trimmed().isEmpty())
+                    return reject(
+                        QStringLiteral("Altium PcbLib 封装 %1 的扩展参数键为空，已拒绝写入").arg(component.name));
+                if (!validateCStringField(it.key(), QStringLiteral("扩展参数键")) ||
+                    !validateCStringField(it.value(), QStringLiteral("扩展参数值")))
+                    return false;
+            }
             if (extendedPrimitiveIndices.contains(info.primitiveIndex))
                 return reject(QStringLiteral("Altium PcbLib 封装 %1 的扩展图元索引重复: %2，已拒绝写入")
                                   .arg(component.name)
