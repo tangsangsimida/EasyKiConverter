@@ -297,6 +297,23 @@ bool AltiumSchLibWriter::write(const QList<AltiumSchComponent>& components,
                 }
             }
         }
+        const auto validateParameterName = [this, &component](const QString& name, const QString& context) {
+            if (!name.trimmed().isEmpty() && !name.contains(QChar('|')) && !name.contains(QChar::Null))
+                return true;
+            const QString diagnostic = QStringLiteral("Altium SchLib 组件 %1 的%2参数名无效: %3，已拒绝写入")
+                                           .arg(component.name, context, name);
+            m_diagnostics.append(diagnostic);
+            qWarning() << "AltiumSchLibWriter:" << diagnostic;
+            return false;
+        };
+        for (auto it = component.sourceMetadata.cbegin(); it != component.sourceMetadata.cend(); ++it) {
+            if (!validateParameterName(it.key(), QStringLiteral("源元数据")))
+                return false;
+        }
+        for (const AltiumSchParameter& parameter : component.parameters) {
+            if (!validateParameterName(parameter.name, QStringLiteral("参数")))
+                return false;
+        }
         if (!validateGeometry(component))
             return false;
         if (!validatePartOwnership(component))

@@ -887,6 +887,21 @@ private slots:
         QVERIFY(!writer.write({invalidImplementationParameter}, outputPath));
         QVERIFY(writer.diagnostics().join('\n').contains(QStringLiteral("实现参数键无效")));
 
+        AltiumSchComponent invalidSourceMetadata;
+        invalidSourceMetadata.name = QStringLiteral("INVALID_SOURCE_METADATA");
+        invalidSourceMetadata.sourceMetadata.insert(QStringLiteral("BAD|KEY"), QStringLiteral("value"));
+        QVERIFY(!writer.write({invalidSourceMetadata}, outputPath));
+        QVERIFY(writer.diagnostics().join('\n').contains(QStringLiteral("源元数据参数名无效")));
+
+        AltiumSchComponent invalidParameterName;
+        invalidParameterName.name = QStringLiteral("INVALID_PARAMETER_NAME");
+        AltiumSchParameter invalidParameter;
+        invalidParameter.name = QStringLiteral("BAD|NAME");
+        invalidParameter.value = QStringLiteral("value");
+        invalidParameterName.parameters.append(invalidParameter);
+        QVERIFY(!writer.write({invalidParameterName}, outputPath));
+        QVERIFY(writer.diagnostics().join('\n').contains(QStringLiteral("参数参数名无效")));
+
         AltiumPcbComponent invalidPcb;
         invalidPcb.name = QStringLiteral("INVALID_PCB_FLOATS");
         AltiumPcbPad invalidPad;
