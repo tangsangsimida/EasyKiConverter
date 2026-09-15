@@ -1143,6 +1143,7 @@ private slots:
         component.images.append(makeImage(QStringLiteral("CON.png"), imageData));
         component.images.append(makeImage(QStringLiteral("trailing.png "), imageData));
         component.images.append(makeImage(QStringLiteral("zero%1width.png").arg(QChar(0x200B)), imageData));
+        component.images.append(makeImage(QString(QChar(0xD800)) + QStringLiteral(".png"), imageData));
 
         AltiumSchLibWriter writer;
         const QString outputPath = QDir(tempDir.path()).filePath(QStringLiteral("image-diagnostics.SchLib"));
@@ -1154,6 +1155,7 @@ private slots:
         QVERIFY(diagnostics.contains(QStringLiteral("嵌入文件名无效: CON.png")));
         QVERIFY(diagnostics.contains(QStringLiteral("嵌入文件名无效: trailing.png ")));
         QVERIFY(diagnostics.contains(QStringLiteral("嵌入文件名无效: zero")));
+        QVERIFY(diagnostics.contains(QStringLiteral("嵌入文件名无效:")));
         QVERIFY(diagnostics.contains(QStringLiteral("嵌入数据为空")));
 
         AltiumSchLibReader reader;

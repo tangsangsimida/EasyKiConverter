@@ -580,6 +580,11 @@ bool AltiumSchLibReader::readImageStorage(QVector<ImageStorageEntry>* entries) c
         }
 
         const QString name = QString::fromLocal8Bit(nameData);
+        if (name.toLocal8Bit() != nameData) {
+            m_errorMessage = QStringLiteral("SchLib 图片 Storage 文件名编码无效");
+            entries->clear();
+            return false;
+        }
         const QString foldedName = name.toCaseFolded();
         if (!AltiumWriterUtils::isValidImageStorageName(name) || names.contains(foldedName)) {
             m_errorMessage = QStringLiteral("SchLib 图片 Storage 包含重复或非法文件名: %1").arg(name);

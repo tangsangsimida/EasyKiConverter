@@ -48,7 +48,8 @@ inline bool isValidImageStorageName(const QString& name) {
     if (reservedNames.contains(deviceName.trimmed(), Qt::CaseInsensitive))
         return false;
 
-    return name.toLocal8Bit().size() <= 255;
+    const QByteArray encodedName = name.toLocal8Bit();
+    return encodedName.size() <= 255 && QString::fromLocal8Bit(encodedName) == name;
 }
 
 /**
