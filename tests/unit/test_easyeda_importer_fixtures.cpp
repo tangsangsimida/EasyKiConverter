@@ -10,6 +10,7 @@
 #include "tests/common/TestPaths.hpp"
 
 #include <QFileInfo>
+#include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QTemporaryDir>
@@ -538,6 +539,29 @@ private slots:
         QCOMPARE(footprint->rectangles().first().strokeWidth, 1.0);
         QCOMPARE(footprint->layers().size(), 2);
         QCOMPARE(footprint->objectVisibilities().size(), 2);
+    }
+
+    void testUnsupportedFootprintShapeIsReportedAndSerialized() {
+        QString error;
+        QJsonObject fixture = loadFixtureObject(QStringLiteral("easyeda/footprint_basic.json"), &error);
+        QVERIFY2(error.isEmpty(), qPrintable(error));
+
+        QJsonObject packageDetail = fixture.value(QStringLiteral("packageDetail")).toObject();
+        QJsonObject dataStr = packageDetail.value(QStringLiteral("dataStr")).toObject();
+        QJsonArray shapes = dataStr.value(QStringLiteral("shape")).toArray();
+        shapes.append(QStringLiteral("UNSUPPORTED_SHAPE~payload"));
+        dataStr.insert(QStringLiteral("shape"), shapes);
+        packageDetail.insert(QStringLiteral("dataStr"), dataStr);
+        fixture.insert(QStringLiteral("packageDetail"), packageDetail);
+
+        EasyedaFootprintImporter importer;
+        const QSharedPointer<FootprintData> footprint = importer.importFootprintData(fixture);
+        QVERIFY(footprint);
+        QVERIFY(footprint->validationErrors().join('\n').contains(QStringLiteral("UNSUPPORTED_SHAPE")));
+
+        FootprintData restored;
+        QVERIFY(restored.fromJson(footprint->toJson()));
+        QVERIFY(restored.validationErrors().join('\n').contains(QStringLiteral("UNSUPPORTED_SHAPE")));
     }
 
     void testFootprintFixtureExportsThroughCompleteAltiumChain() {

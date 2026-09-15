@@ -8,6 +8,7 @@
 #include <QList>
 #include <QPointF>
 #include <QString>
+#include <QStringList>
 
 namespace EasyKiConverter {
 
@@ -378,6 +379,17 @@ public:
     bool isValid() const;
     QString validate() const;
 
+    /** @brief 获取导入阶段保留的非致命诊断 */
+    QStringList validationErrors() const {
+        return m_validationErrors;
+    }
+
+    /** @brief 添加导入阶段诊断 */
+    void addValidationError(const QString& error) {
+        if (!error.isEmpty() && !m_validationErrors.contains(error))
+            m_validationErrors.append(error);
+    }
+
     // 清空数据
     void clear();
 
@@ -396,6 +408,7 @@ private:
     QList<LayerDefinition> m_layers;
     QList<ObjectVisibility> m_objectVisibilities;
     Model3DData m_model3D;
+    QStringList m_validationErrors;
 };
 
 }  // namespace EasyKiConverter

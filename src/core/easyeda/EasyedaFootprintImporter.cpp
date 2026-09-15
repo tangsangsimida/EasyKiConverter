@@ -148,6 +148,11 @@ QSharedPointer<FootprintData> EasyedaFootprintImporter::importFootprintData(cons
                     } else if (designator == "SOLIDREGION") {
                         FootprintSolidRegion solidRegion = importSolidRegionData(shapeString);
                         footprintData->addSolidRegion(solidRegion);
+                    } else {
+                        const QString diagnostic =
+                            QStringLiteral("EasyEDA 封装包含不支持的图元类型 %1").arg(designator);
+                        qWarning().noquote() << diagnostic;
+                        footprintData->addValidationError(diagnostic);
                     }
                 }
 

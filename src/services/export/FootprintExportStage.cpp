@@ -411,6 +411,9 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
 
         ExportItemStatus status;
         status.status = ExportItemStatus::Status::Success;
+        status.diagnostics = footprint.validationErrors();
+        if (!status.diagnostics.isEmpty())
+            qWarning() << "FootprintExportStage: Input diagnostics for" << componentId << status.diagnostics;
         emit itemStatusChanged(componentId, status);
 
         if (m_options.targetFormat == TargetEdaFormat::Altium && m_options.exportModel3D) {

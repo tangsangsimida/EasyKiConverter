@@ -481,6 +481,7 @@ QJsonObject FootprintDataSerializer::toJson(const FootprintData& data) {
         objectVisibilitiesArray.append(toJson(visibility));
     }
     json["object_visibilities"] = objectVisibilitiesArray;
+    json["validation_errors"] = QJsonArray::fromStringList(data.validationErrors());
 
     return json;
 }
@@ -669,6 +670,11 @@ bool FootprintDataSerializer::fromJson(FootprintData& data, const QJsonObject& j
             }
         }
         data.setObjectVisibilities(objectVisibilities);
+    }
+
+    if (json.contains("validation_errors") && json["validation_errors"].isArray()) {
+        for (const QJsonValue& value : json["validation_errors"].toArray())
+            data.addValidationError(value.toString());
     }
 
     return true;
