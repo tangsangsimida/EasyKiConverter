@@ -3713,6 +3713,19 @@ private slots:
         nativeQuadraticSegment.control1 = QPointF(1.0, 2.0);
         nativeQuadraticSegment.end = QPointF(2.0, 0.0);
         nativeQuadraticPath.segments.append(nativeQuadraticSegment);
+        IR::SymbolPathSegmentIR nativeCubicSegment;
+        nativeCubicSegment.type = IR::SymbolPathSegmentIR::Type::CubicBezier;
+        nativeCubicSegment.start = QPointF(2.0, 0.0);
+        nativeCubicSegment.control1 = QPointF(3.0, 1.0);
+        nativeCubicSegment.control2 = QPointF(4.0, 1.0);
+        nativeCubicSegment.end = QPointF(5.0, 0.0);
+        nativeQuadraticPath.segments.append(nativeCubicSegment);
+        IR::SymbolPathSegmentIR nativeCircularArcSegment;
+        nativeCircularArcSegment.type = IR::SymbolPathSegmentIR::Type::CircularArc;
+        nativeCircularArcSegment.start = QPointF(5.0, 0.0);
+        nativeCircularArcSegment.arcMid = QPointF(6.0, 1.0);
+        nativeCircularArcSegment.end = QPointF(7.0, 0.0);
+        nativeQuadraticPath.segments.append(nativeCircularArcSegment);
         nativeQuadraticSymbol.paths.append(nativeQuadraticPath);
         const QString nativeQuadraticPathFile =
             QDir(tempDir.path()).filePath(QStringLiteral("native-quadratic.SchLib"));
@@ -3721,7 +3734,8 @@ private slots:
             {nativeQuadraticSymbol}, QStringLiteral("native-quadratic"), nativeQuadraticPathFile, false, false));
         QByteArray nativeQuadraticData;
         QVERIFY(readCfbStream(nativeQuadraticPathFile, QStringLiteral("NATIVE_QUADRATIC/Data"), nativeQuadraticData));
-        QVERIFY(nativeQuadraticData.contains("RECORD=5"));
+        QCOMPARE(nativeQuadraticData.count("RECORD=5"), 2);
+        QVERIFY(nativeQuadraticData.contains("RECORD=12"));
         QVERIFY(nativeQuadraticData.contains("LocationCount=4"));
 
         IR::SymbolComponentIR nativeEllipticalArcSymbol;
