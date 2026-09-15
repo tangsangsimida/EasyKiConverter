@@ -291,7 +291,10 @@ void SymbolExportStage::doLibraryExport(const QStringList& componentIds,
         const QStringList exporterDiagnostics = exporter->diagnostics();
         if (!exporterDiagnostics.isEmpty()) {
             QMutexLocker locker(&m_progressMutex);
-            m_progress.diagnostics = exporterDiagnostics;
+            for (const QString& diagnostic : exporterDiagnostics) {
+                if (!m_progress.diagnostics.contains(diagnostic))
+                    m_progress.diagnostics.append(diagnostic);
+            }
             const ExportTypeProgress progressSnapshot = m_progress;
             locker.unlock();
             emit progressChanged(progressSnapshot);
