@@ -8,6 +8,7 @@
 #include <QFileInfo>
 
 #include <climits>
+#include <limits>
 
 namespace EasyKiConverter {
 
@@ -360,7 +361,10 @@ void ExporterAltiumFootprint::centerComponent(AltiumPcbComponent& component) {
     }
 
     // 计算包围盒（使用焊盘位置和走线端点）
-    int minX = INT_MAX, minY = INT_MAX, maxX = INT_MIN, maxY = INT_MIN;
+    qint64 minX = std::numeric_limits<qint64>::max();
+    qint64 minY = std::numeric_limits<qint64>::max();
+    qint64 maxX = std::numeric_limits<qint64>::lowest();
+    qint64 maxY = std::numeric_limits<qint64>::lowest();
 
     for (const auto& pad : component.pads) {
         minX = qMin(minX, pad.locationX);
@@ -375,10 +379,10 @@ void ExporterAltiumFootprint::centerComponent(AltiumPcbComponent& component) {
         maxY = qMax(maxY, qMax(track.startY, track.endY));
     }
     for (const auto& arc : component.arcs) {
-        minX = qMin(minX, arc.centerX - arc.radius);
-        minY = qMin(minY, arc.centerY - arc.radius);
-        maxX = qMax(maxX, arc.centerX + arc.radius);
-        maxY = qMax(maxY, arc.centerY + arc.radius);
+        minX = qMin(minX, static_cast<qint64>(arc.centerX) - arc.radius);
+        minY = qMin(minY, static_cast<qint64>(arc.centerY) - arc.radius);
+        maxX = qMax(maxX, static_cast<qint64>(arc.centerX) + arc.radius);
+        maxY = qMax(maxY, static_cast<qint64>(arc.centerY) + arc.radius);
     }
     for (const auto& fill : component.fills) {
         minX = qMin(minX, qMin(fill.corner1X, fill.corner2X));
@@ -478,14 +482,14 @@ void ExporterAltiumFootprint::generateComponentBody(AltiumPcbComponent& componen
     }
     for (const auto& region : component.regions) {
         for (const QPointF& v : region.vertices) {
-            minX = qMin(minX, static_cast<int>(v.x()));
-            minY = qMin(minY, static_cast<int>(v.y()));
-            maxX = qMax(maxX, static_cast<int>(v.x()));
-            maxY = qMax(maxY, static_cast<int>(v.y()));
+            minX = qMin(minX, static_cast<qint64>(v.x()));
+            minY = qMin(minY, static_cast<qint64>(v.y()));
+            maxX = qMax(maxX, static_cast<qint64>(v.x()));
+            maxY = qMax(maxY, static_cast<qint64>(v.y()));
         }
     }
 
-    if (minX == INT_MAX)
+    if (minX == std::numeric_limits<qint64>::max())
         return;  // 无图元，无法生成轮廓
 
     // 生成稳定的模型 ID（基于封装名称）
