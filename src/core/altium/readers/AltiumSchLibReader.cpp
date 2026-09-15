@@ -144,6 +144,8 @@ bool validateGraphicParameters(const QMap<QString, QString>& parameters, int rec
         return failValidation(QStringLiteral("线段边界尺寸无效"));
     if (recordType == 30 && !validateBounds())
         return failValidation(QStringLiteral("图片边界尺寸无效"));
+    if (recordType == 30 && !readFiniteDouble(QStringLiteral("Rotation")))
+        return failValidation(QStringLiteral("图片旋转角度无效"));
     if (recordType == 14 && !validateBounds())
         return failValidation(QStringLiteral("矩形边界尺寸无效"));
     if (recordType == 28) {

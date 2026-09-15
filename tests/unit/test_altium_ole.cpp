@@ -2723,6 +2723,14 @@ private slots:
                               {QStringLiteral("Corner.Y"), QStringLiteral("3")}},
                              QStringLiteral("图片边界尺寸无效"),
                              QStringLiteral("INVALID_IMAGE_RECORD"));
+        verifyRejectedRecord({{QStringLiteral("RECORD"), QStringLiteral("30")},
+                              {QStringLiteral("Location.X"), QStringLiteral("1")},
+                              {QStringLiteral("Location.Y"), QStringLiteral("2")},
+                              {QStringLiteral("Corner.X"), QStringLiteral("3")},
+                              {QStringLiteral("Corner.Y"), QStringLiteral("4")},
+                              {QStringLiteral("Rotation"), QStringLiteral("nan")}},
+                             QStringLiteral("图片旋转角度无效"),
+                             QStringLiteral("INVALID_IMAGE_ROTATION_RECORD"));
         verifyRejectedRecord({{QStringLiteral("RECORD"), QStringLiteral("12")},
                               {QStringLiteral("Radius"), QStringLiteral("1")},
                               {QStringLiteral("StartAngle"), QStringLiteral("nan")}},
