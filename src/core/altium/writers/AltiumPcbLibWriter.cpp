@@ -122,6 +122,10 @@ bool AltiumPcbLibWriter::validateComponents(const QList<AltiumPcbComponent>& com
             if (text.text.toLatin1().size() > 255)
                 return reject(
                     QStringLiteral("Altium PcbLib 封装 %1 的文本内容超过 255 字节，已拒绝写入").arg(component.name));
+            if (text.layer < 1 || text.layer > 74)
+                return reject(QStringLiteral("Altium PcbLib 封装 %1 包含无效文本层号，已拒绝写入").arg(component.name));
+            if (text.height <= 0 || text.strokeWidth < 0)
+                return reject(QStringLiteral("Altium PcbLib 封装 %1 包含无效文本尺寸，已拒绝写入").arg(component.name));
         }
         for (const AltiumPcbArc& arc : component.arcs) {
             if (arc.layer < 1 || arc.layer > 74)
@@ -130,12 +134,6 @@ bool AltiumPcbLibWriter::validateComponents(const QList<AltiumPcbComponent>& com
                 return reject(QStringLiteral("Altium PcbLib 封装 %1 包含非正弧线半径，已拒绝写入").arg(component.name));
             if (arc.width <= 0)
                 return reject(QStringLiteral("Altium PcbLib 封装 %1 包含非正弧线宽度，已拒绝写入").arg(component.name));
-        }
-        for (const AltiumPcbText& text : component.texts) {
-            if (text.layer < 1 || text.layer > 74)
-                return reject(QStringLiteral("Altium PcbLib 封装 %1 包含无效文本层号，已拒绝写入").arg(component.name));
-            if (text.height <= 0 || text.strokeWidth < 0)
-                return reject(QStringLiteral("Altium PcbLib 封装 %1 包含无效文本尺寸，已拒绝写入").arg(component.name));
         }
         for (const AltiumPcbFill& fill : component.fills) {
             if (fill.layer < 1 || fill.layer > 74)
