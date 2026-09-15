@@ -242,11 +242,24 @@ bool validatePrimitiveFields(const AltiumPcbLibReader::PrimitiveRecord& object, 
         return reject(QStringLiteral("PcbLib 走线宽度必须为正"));
     if (object.hasPadFields) {
         const auto& pad = object.pad;
+        const auto isValidPadShape = [](quint8 shape) {
+            return shape == AltiumConstants::PCB_PAD_SHAPE_ROUND ||
+                   shape == AltiumConstants::PCB_PAD_SHAPE_RECTANGULAR ||
+                   shape == AltiumConstants::PCB_PAD_SHAPE_OCTAGONAL ||
+                   shape == AltiumConstants::PCB_PAD_SHAPE_ROUNDED_RECT;
+        };
         if (pad.sizeTopX <= 0 || pad.sizeTopY <= 0 || pad.sizeMidX <= 0 || pad.sizeMidY <= 0 || pad.sizeBotX <= 0 ||
             pad.sizeBotY <= 0)
             return reject(QStringLiteral("PcbLib 焊盘尺寸必须为正"));
+        if (!isValidPadShape(pad.shapeTop) || !isValidPadShape(pad.shapeMid) || !isValidPadShape(pad.shapeBot))
+            return reject(QStringLiteral("PcbLib 焊盘形状无效"));
         if (pad.holeSize < 0 || pad.holeSlotLengthRaw < 0)
             return reject(QStringLiteral("PcbLib 焊盘孔尺寸不能为负"));
+        if (pad.cornerRadiusPercentage > 100 || pad.mode > 3 || pad.powerPlaneConnectStyle > 2 ||
+            (pad.reliefEntries != 2 && pad.reliefEntries != 4) || pad.drillType > 2 || pad.holeType > 2)
+            return reject(QStringLiteral("PcbLib 焊盘扩展属性无效"));
+        if (pad.holeType == 2 && pad.holeSlotLengthRaw <= 0)
+            return reject(QStringLiteral("PcbLib 焊盘槽孔长度必须为正"));
         if (!std::isfinite(pad.rotation) || !std::isfinite(pad.holeRotation))
             return reject(QStringLiteral("PcbLib 焊盘旋转角度必须为有限值"));
     }
