@@ -65,6 +65,9 @@ bool AltiumPcbLibWriter::validateComponents(const QList<AltiumPcbComponent>& com
         return reject(QStringLiteral("Altium PcbLib 输入封装为空，已拒绝写入"));
     if (filePath.trimmed().isEmpty())
         return reject(QStringLiteral("Altium PcbLib 输出路径为空，已拒绝写入"));
+    if (filePath.contains(QChar('|')) || filePath.contains(QChar::Null) || filePath.contains(QChar('\r')) ||
+        filePath.contains(QChar('\n')))
+        return reject(QStringLiteral("Altium PcbLib 输出路径包含参数分隔符、换行或 NUL，已拒绝写入"));
 
     const auto normalizedModelId = [](QString value) {
         value.replace('|', ' ');

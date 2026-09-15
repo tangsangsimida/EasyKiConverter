@@ -973,6 +973,9 @@ private slots:
         AltiumPcbComponent unnamedPcb;
         QVERIFY(!invalidInputWriter.write({unnamedPcb}, pcbOutputPath));
         QVERIFY(invalidInputWriter.diagnostics().join('\n').contains(QStringLiteral("封装名称为空")));
+        QVERIFY(!invalidInputWriter.write({unnamedPcb}, pcbOutputPath + QStringLiteral("|invalid")));
+        QVERIFY(
+            invalidInputWriter.diagnostics().join('\n').contains(QStringLiteral("输出路径包含参数分隔符、换行或 NUL")));
         AltiumPcbComponent oversizedPcbName;
         oversizedPcbName.name = QString(256, QChar('A'));
         QVERIFY(!invalidInputWriter.write({oversizedPcbName}, pcbOutputPath));
