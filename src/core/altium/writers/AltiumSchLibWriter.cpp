@@ -942,6 +942,8 @@ bool AltiumSchLibWriter::validateGeometry(const AltiumSchComponent& component) {
         !validateLineWidths(component.paths, QStringLiteral("路径图元")) ||
         !validateLineWidths(component.beziers, QStringLiteral("Bézier 图元")) ||
         !validateLineWidths(component.ieeeSymbols, QStringLiteral("IEEE 图元")) ||
+        !validateLineWidths(component.textFrames, QStringLiteral("文本框图元")) ||
+        !validateLineWidths(component.images, QStringLiteral("图片图元")) ||
         !validateLineStyles(component.rectangles, QStringLiteral("矩形图元")) ||
         !validateLineStyles(component.roundRectangles, QStringLiteral("圆角矩形图元")) ||
         !validateLineStyles(component.lines, QStringLiteral("线段图元")) ||
@@ -951,8 +953,32 @@ bool AltiumSchLibWriter::validateGeometry(const AltiumSchComponent& component) {
         !validateLineStyles(component.pies, QStringLiteral("扇形图元")) ||
         !validateLineStyles(component.ellipticalArcs, QStringLiteral("椭圆弧图元")) ||
         !validateLineStyles(component.polylines, QStringLiteral("折线图元")) ||
-        !validateLineStyles(component.paths, QStringLiteral("路径图元"))) {
+        !validateLineStyles(component.paths, QStringLiteral("路径图元")) ||
+        !validateLineStyles(component.textFrames, QStringLiteral("文本框图元")) ||
+        !validateLineStyles(component.images, QStringLiteral("图片图元"))) {
         return false;
+    }
+    const auto validateOrientation = [&reject](int orientation, const QString& context) {
+        if (orientation < 0 || orientation > 3)
+            return reject(QStringLiteral("%1方向无效: %2").arg(context).arg(orientation));
+        return true;
+    };
+
+    for (const AltiumSchIeee& ieee : component.ieeeSymbols) {
+        if (!validateOrientation(ieee.orientation, QStringLiteral("IEEE 图元")))
+            return false;
+    }
+    for (const AltiumSchText& text : component.texts) {
+        if (!validateOrientation(text.orientation, QStringLiteral("文本图元")))
+            return false;
+    }
+    for (const AltiumSchTextFrame& frame : component.textFrames) {
+        if (!validateOrientation(frame.orientation, QStringLiteral("文本框图元")))
+            return false;
+    }
+    for (const AltiumSchParameter& parameter : component.parameters) {
+        if (!validateOrientation(parameter.orientation, QStringLiteral("参数")))
+            return false;
     }
 
     for (const AltiumSchRoundRectangle& rect : component.roundRectangles) {

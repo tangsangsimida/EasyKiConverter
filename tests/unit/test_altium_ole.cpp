@@ -690,6 +690,15 @@ private slots:
         QVERIFY(!writer.write({invalidStroke}, outputPath));
         QVERIFY(writer.diagnostics().join('\n').contains(QStringLiteral("矩形图元线型无效: 3")));
 
+        AltiumSchComponent invalidOrientation;
+        invalidOrientation.name = QStringLiteral("INVALID_ORIENTATION");
+        AltiumSchText invalidOrientationText;
+        invalidOrientationText.text = QStringLiteral("invalid orientation");
+        invalidOrientationText.orientation = 4;
+        invalidOrientation.texts.append(invalidOrientationText);
+        QVERIFY(!writer.write({invalidOrientation}, outputPath));
+        QVERIFY(writer.diagnostics().join('\n').contains(QStringLiteral("文本图元方向无效: 4")));
+
         QByteArray header;
         QVERIFY(readCfbStream(outputPath, QStringLiteral("FileHeader"), header));
         QVERIFY(header.contains("PARTCOUNT0=2"));
