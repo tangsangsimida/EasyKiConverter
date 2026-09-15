@@ -171,6 +171,19 @@ private slots:
         QCOMPARE(m_cache->loadPreviewImage(componentId, 0), QByteArray("preview-data"));
     }
 
+    void testCacheDirMigrationPreservesObjModelCache() {
+        const QString uuid = QStringLiteral("migrated-model-13579");
+        const QByteArray objData = QByteArrayLiteral("v 0 0 0\nf 1 2 3");
+        m_cache->saveModel3D(uuid, objData, QStringLiteral("obj"));
+
+        QTemporaryDir newCacheDir;
+        QVERIFY(newCacheDir.isValid());
+        m_cache->setCacheDir(newCacheDir.path(), /*migrateExistingCache=*/true);
+
+        QVERIFY(m_cache->hasModel3DCached(uuid, QStringLiteral("obj")));
+        QCOMPARE(m_cache->loadModel3D(uuid, QStringLiteral("obj")), objData);
+    }
+
     void testCacheDirChangeInvalidatesL1Cache() {
         const QString componentId = QStringLiteral("C11223");
         ComponentData data;

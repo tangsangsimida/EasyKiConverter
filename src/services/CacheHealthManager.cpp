@@ -253,7 +253,7 @@ void CacheHealthManager::repairModel3DCache() {
         return;
     }
 
-    const QSet<QString> validSuffixes = {QStringLiteral("step"), QStringLiteral("wrl")};
+    const QSet<QString> validSuffixes = {QStringLiteral("obj"), QStringLiteral("step"), QStringLiteral("wrl")};
     const QFileInfoList files = dir.entryInfoList(QDir::Files | QDir::NoDotAndDotDot, QDir::Name);
     for (const QFileInfo& fileInfo : files) {
         const QString suffix = fileInfo.suffix().toLower();
