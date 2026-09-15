@@ -3,6 +3,8 @@
 #include "core/altium/utils/AltiumBinaryReader.h"
 #include "core/altium/utils/AltiumConstants.h"
 
+#include <QSet>
+
 #include <cmath>
 
 namespace EasyKiConverter {
@@ -335,10 +337,15 @@ bool AltiumPcbLibReader::open(const QString& filePath) {
 
     QVector<QString> names;
     names.reserve(static_cast<int>(componentCount));
+    QSet<QString> componentNames;
     for (uint32_t i = 0; i < componentCount; ++i) {
         QString name;
         if (!libraryReader.readStringBlock(&name) || name.isEmpty())
             return fail(QStringLiteral("PcbLib Library/Data 的封装名称无效"));
+        const QString foldedName = name.toCaseFolded();
+        if (componentNames.contains(foldedName))
+            return fail(QStringLiteral("PcbLib Library/Data 的封装名称重复: %1").arg(name));
+        componentNames.insert(foldedName);
         names.append(name);
     }
     if (libraryReader.hasError() || libraryReader.remaining() != 0)
@@ -354,20 +361,33 @@ bool AltiumPcbLibReader::open(const QString& filePath) {
         if (!sectionKeyReader.readUInt32(&keyCount) ||
             keyCount > static_cast<uint32_t>(sectionKeyReader.remaining() / 9))
             return fail(QStringLiteral("PcbLib SectionKeys 的数量无效"));
+        QSet<QString> mappedComponents;
+        QSet<QString> mappedSectionKeys;
         for (uint32_t i = 0; i < keyCount; ++i) {
             QString libRef;
             QString sectionKey;
             if (!sectionKeyReader.readPascalString(&libRef) || !sectionKeyReader.readStringBlock(&sectionKey) ||
                 libRef.isEmpty() || sectionKey.isEmpty())
                 return fail(QStringLiteral("PcbLib SectionKeys 映射不完整"));
+            if (!componentNames.contains(libRef.toCaseFolded()))
+                return fail(QStringLiteral("PcbLib SectionKeys 包含未知封装: %1").arg(libRef));
+            if (mappedComponents.contains(libRef.toCaseFolded()) ||
+                mappedSectionKeys.contains(sectionKey.toCaseFolded()))
+                return fail(QStringLiteral("PcbLib SectionKeys 映射重复: %1").arg(libRef));
+            mappedComponents.insert(libRef.toCaseFolded());
+            mappedSectionKeys.insert(sectionKey.toCaseFolded());
             sectionKeys.insert(libRef, sectionKey);
         }
         if (sectionKeyReader.hasError() || sectionKeyReader.remaining() != 0)
             return fail(QStringLiteral("PcbLib SectionKeys 末尾包含无效数据"));
     }
 
+    QSet<QString> resolvedSectionKeys;
     for (const QString& name : names) {
         const QString sectionKey = sectionKeys.value(name, name);
+        if (resolvedSectionKeys.contains(sectionKey.toCaseFolded()))
+            return fail(QStringLiteral("PcbLib 封装存储键重复: %1").arg(sectionKey));
+        resolvedSectionKeys.insert(sectionKey.toCaseFolded());
         const QString dataPath = sectionKey + QStringLiteral("/Data");
         if (!m_oleReader.containsStream(dataPath))
             return fail(QStringLiteral("PcbLib 缺少封装 Data 流: %1").arg(dataPath));

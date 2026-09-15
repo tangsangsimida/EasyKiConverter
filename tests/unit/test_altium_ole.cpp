@@ -4158,6 +4158,69 @@ private slots:
         QVERIFY(reader.readFootprintStream(QStringLiteral("A:B"), QStringLiteral("Data"), &data));
         QVERIFY(data.contains("A:B"));
     }
+
+    /**
+     * @brief 验证 PcbLib 重复封装名称和 SectionKeys 映射会被拒绝
+     */
+    void rejectsDuplicatePcbLibComponentsAndSectionKeys() {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        const auto createLibrary =
+            [&](const QString& fileName, const QStringList& names, const QStringList& sectionKeys) {
+                OLECompoundWriter writer;
+                if (!writer.create())
+                    return false;
+
+                QByteArray fileHeader;
+                AltiumBinaryWriter fileHeaderWriter(fileHeader);
+                const QByteArray version = QByteArrayLiteral("PCB 6.0 Binary Library File");
+                fileHeaderWriter.writeInt32(version.size());
+                fileHeaderWriter.writePascalShortString(QString::fromLatin1(version));
+                if (!writer.writeStream(QStringLiteral("FileHeader"), fileHeader))
+                    return false;
+
+                QByteArray libraryData;
+                AltiumBinaryWriter libraryWriter(libraryData);
+                libraryWriter.beginBlock();
+                libraryWriter.writeBytes(QByteArrayLiteral("metadata"));
+                libraryWriter.endBlock();
+                libraryWriter.writeUInt32(static_cast<quint32>(names.size()));
+                for (const QString& name : names)
+                    libraryWriter.writeStringBlock(name);
+                if (!writer.addStorage(QStringLiteral("Library")) ||
+                    !writer.writeStream(QStringLiteral("Library"), QStringLiteral("Data"), libraryData))
+                    return false;
+
+                if (!sectionKeys.isEmpty()) {
+                    QByteArray sectionKeyData;
+                    AltiumBinaryWriter sectionKeyWriter(sectionKeyData);
+                    sectionKeyWriter.writeUInt32(static_cast<quint32>(sectionKeys.size()));
+                    for (int i = 0; i < sectionKeys.size(); ++i) {
+                        sectionKeyWriter.writePascalString(names.at(i));
+                        sectionKeyWriter.writeStringBlock(sectionKeys.at(i));
+                    }
+                    if (!writer.writeStream(QStringLiteral("SectionKeys"), sectionKeyData))
+                        return false;
+                }
+                return writer.saveToFile(QDir(tempDir.path()).filePath(fileName));
+            };
+
+        QVERIFY(createLibrary(
+            QStringLiteral("duplicate-pcb-components.PcbLib"), {QStringLiteral("DUP"), QStringLiteral("dup")}, {}));
+        AltiumPcbLibReader duplicateComponentReader;
+        QVERIFY(!duplicateComponentReader.open(
+            QDir(tempDir.path()).filePath(QStringLiteral("duplicate-pcb-components.PcbLib"))));
+        QVERIFY(duplicateComponentReader.errorString().contains(QStringLiteral("封装名称重复")));
+
+        QVERIFY(createLibrary(QStringLiteral("duplicate-pcb-section-keys.PcbLib"),
+                              {QStringLiteral("A"), QStringLiteral("B")},
+                              {QStringLiteral("SHARED"), QStringLiteral("shared")}));
+        AltiumPcbLibReader duplicateSectionKeyReader;
+        QVERIFY(!duplicateSectionKeyReader.open(
+            QDir(tempDir.path()).filePath(QStringLiteral("duplicate-pcb-section-keys.PcbLib"))));
+        QVERIFY(duplicateSectionKeyReader.errorString().contains(QStringLiteral("SectionKeys 映射重复")));
+    }
 };
 
 QTEST_GUILESS_MAIN(TestAltiumOle)
