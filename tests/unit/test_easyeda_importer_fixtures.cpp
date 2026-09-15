@@ -179,6 +179,21 @@ private slots:
         QCOMPARE(restored.graphicOrder().last().type, QStringLiteral("UNKNOWN"));
         QCOMPARE(restored.graphicOrder().last().index, -1);
         QVERIFY(restored.validationErrors().join('\n').contains(QStringLiteral("unknown type UNKNOWN")));
+
+        const IR::SymbolComponentIR symbolIr = IR::toSymbolIR(restored);
+        QTemporaryDir outputDir;
+        QVERIFY(outputDir.isValid());
+        const QString outputPath = outputDir.filePath(QStringLiteral("unsupported-shape.SchLib"));
+        ExporterAltiumSymbol exporter;
+        QVERIFY(exporter.exportSymbolLibrary({symbolIr}, QStringLiteral("unsupported-shape"), outputPath, false));
+        QVERIFY(exporter.diagnostics().contains(
+            QStringLiteral("符号 FIXTURE_SYMBOL 的 graphicOrder 不完整或包含无效引用，已回退到默认图元顺序")));
+
+        AltiumSchLibReader reader;
+        QVERIFY2(reader.open(outputPath), qPrintable(reader.errorString()));
+        QVector<AltiumSchLibReader::Record> records;
+        QVERIFY2(reader.readComponentRecords(0, &records), qPrintable(reader.errorString()));
+        QVERIFY(!records.isEmpty());
     }
 
     /**
