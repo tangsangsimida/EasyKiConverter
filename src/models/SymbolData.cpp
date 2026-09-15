@@ -159,6 +159,8 @@ QStringList SymbolData::validationErrors() const {
                 tokenIndex += groupSize;
                 ++groupCount;
             }
+            if (command.toUpper() == QLatin1Char('M') && groupCount > 1)
+                hasDrawableCommand = true;
             if (groupCount == 0)
                 hasInvalidSyntax = true;
         }

@@ -238,8 +238,12 @@ private slots:
         symbol.setInfo(info);
         symbol.setBbox(SymbolBBox{0.0, 0.0, 10.0, 10.0});
 
+        SymbolPath exponentPath;
+        exponentPath.paths = QStringLiteral("M 0 0 L 1e-3 2e-3");
+        symbol.addPath(exponentPath);
+
         SymbolPath unsupportedPath;
-        unsupportedPath.paths = QStringLiteral("M 0 0 X 10 10 1e-3");
+        unsupportedPath.paths = QStringLiteral("M 0 0 X 10 10");
         symbol.addPath(unsupportedPath);
 
         SymbolPath moveOnlyPath;
@@ -258,13 +262,19 @@ private slots:
         invalidTokenPath.paths = QStringLiteral("M 0 0 L 1 1 @");
         symbol.addPath(invalidTokenPath);
 
+        SymbolPath repeatedMovePath;
+        repeatedMovePath.paths = QStringLiteral("M 0 0 1 1");
+        symbol.addPath(repeatedMovePath);
+
         const QStringList errors = symbol.validationErrors();
-        QVERIFY(errors.contains(QStringLiteral("Path 0 contains an unsupported command")));
         QVERIFY(!errors.contains(QStringLiteral("Path 0 has invalid command parameters")));
-        QVERIFY(errors.contains(QStringLiteral("Path 1 has no drawable commands")));
-        QVERIFY(errors.contains(QStringLiteral("Path 2 has no initial move command")));
-        QVERIFY(errors.contains(QStringLiteral("Path 3 has invalid command parameters")));
+        QVERIFY(errors.contains(QStringLiteral("Path 1 contains an unsupported command")));
+        QVERIFY(errors.contains(QStringLiteral("Path 2 has no drawable commands")));
+        QVERIFY(errors.contains(QStringLiteral("Path 3 has no initial move command")));
         QVERIFY(errors.contains(QStringLiteral("Path 4 has invalid command parameters")));
+        QVERIFY(errors.contains(QStringLiteral("Path 5 has invalid command parameters")));
+        QVERIFY(!errors.contains(QStringLiteral("Path 6 has no drawable commands")));
+        QVERIFY(!errors.contains(QStringLiteral("Path 6 has invalid command parameters")));
     }
 
     void testSymbolValidationChecksGraphicOrderReferences() {
