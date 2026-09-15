@@ -798,6 +798,26 @@ private slots:
         QVERIFY(!writer.write({invalidOrientation}, outputPath));
         QVERIFY(writer.diagnostics().join('\n').contains(QStringLiteral("文本图元方向无效: 4")));
 
+        AltiumSchComponent invalidIeee;
+        invalidIeee.name = QStringLiteral("INVALID_IEEE");
+        AltiumSchIeee invalidIeeeGraphic;
+        invalidIeeeGraphic.symbol = 35;
+        invalidIeee.ieeeSymbols.append(invalidIeeeGraphic);
+        QVERIFY(!writer.write({invalidIeee}, outputPath));
+        QVERIFY(writer.diagnostics().join('\n').contains(QStringLiteral("IEEE 图元符号编号无效: 35")));
+
+        invalidIeeeGraphic.symbol = 0;
+        invalidIeeeGraphic.scaleFactor = 0;
+        invalidIeee.ieeeSymbols = {invalidIeeeGraphic};
+        QVERIFY(!writer.write({invalidIeee}, outputPath));
+        QVERIFY(writer.diagnostics().join('\n').contains(QStringLiteral("IEEE 图元缩放因子无效: 0")));
+
+        invalidIeeeGraphic.scaleFactor = 1;
+        invalidIeeeGraphic.lineWidth = 4;
+        invalidIeee.ieeeSymbols = {invalidIeeeGraphic};
+        QVERIFY(!writer.write({invalidIeee}, outputPath));
+        QVERIFY(writer.diagnostics().join('\n').contains(QStringLiteral("IEEE 图元线宽索引无效: 4")));
+
         AltiumSchComponent oversizedPartCount;
         oversizedPartCount.name = QStringLiteral("OVERSIZED_PART_COUNT");
         oversizedPartCount.partCount = std::numeric_limits<int>::max();

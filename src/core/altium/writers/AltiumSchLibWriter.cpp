@@ -1122,6 +1122,12 @@ bool AltiumSchLibWriter::validateGeometry(const AltiumSchComponent& component) {
     for (const AltiumSchIeee& ieee : component.ieeeSymbols) {
         if (!validateOrientation(ieee.orientation, QStringLiteral("IEEE 图元")))
             return false;
+        if (ieee.symbol < 0 || ieee.symbol > 34)
+            return reject(QStringLiteral("IEEE 图元符号编号无效: %1").arg(ieee.symbol));
+        if (ieee.scaleFactor < 1)
+            return reject(QStringLiteral("IEEE 图元缩放因子无效: %1").arg(ieee.scaleFactor));
+        if (ieee.lineWidth < 0 || ieee.lineWidth > 3)
+            return reject(QStringLiteral("IEEE 图元线宽索引无效: %1").arg(ieee.lineWidth));
     }
     for (const AltiumSchText& text : component.texts) {
         if (!validateOrientation(text.orientation, QStringLiteral("文本图元")))
