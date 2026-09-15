@@ -18,7 +18,7 @@ namespace AltiumWriterUtils {
  * @return 文件名是否符合 Storage 和 Windows 文件名约束
  */
 inline bool isValidImageStorageName(const QString& name) {
-    if (name.isEmpty() || name == QStringLiteral(".") || name == QStringLiteral("..") || name.size() > 255)
+    if (name.trimmed().isEmpty() || name == QStringLiteral(".") || name == QStringLiteral("..") || name.size() > 255)
         return false;
     if (name.contains(QChar::Null) || name.contains(QChar('\n')) || name.contains(QChar('\r')) ||
         name.contains(QChar('\t')))

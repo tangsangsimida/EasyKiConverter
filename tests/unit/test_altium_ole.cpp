@@ -822,6 +822,7 @@ private slots:
         component.images.append(makeImage(QStringLiteral("SAME.PNG"), imageData));
         component.images.append(makeImage(QStringLiteral("invalid?.png"), imageData));
         component.images.append(makeImage(QStringLiteral("empty.png"), {}));
+        component.images.append(makeImage(QStringLiteral("   "), imageData));
 
         AltiumSchLibWriter writer;
         const QString outputPath = QDir(tempDir.path()).filePath(QStringLiteral("image-diagnostics.SchLib"));
@@ -829,6 +830,7 @@ private slots:
         const QString diagnostics = writer.diagnostics().join('\n');
         QVERIFY(diagnostics.contains(QStringLiteral("嵌入文件名 SAME.PNG 重复")));
         QVERIFY(diagnostics.contains(QStringLiteral("嵌入文件名无效: invalid?.png")));
+        QVERIFY(diagnostics.contains(QStringLiteral("嵌入文件名无效:    ，已跳过 Storage")));
         QVERIFY(diagnostics.contains(QStringLiteral("嵌入数据为空")));
 
         AltiumSchLibReader reader;
