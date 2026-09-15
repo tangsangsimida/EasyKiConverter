@@ -966,6 +966,9 @@ private slots:
         invalidModel.name = QStringLiteral("invalid.step");
         invalidModel.stepData = QByteArrayLiteral("ISO-10303-21;");
         invalidModel.rotX = std::numeric_limits<double>::infinity();
+        invalidModel.rotY = std::numeric_limits<double>::quiet_NaN();
+        invalidModel.rotZ = std::numeric_limits<double>::infinity();
+        invalidModel.dz = std::numeric_limits<double>::quiet_NaN();
         invalidPcb.models.append(invalidModel);
         invalidPcb.bodies[0].modelId = invalidModel.id.isEmpty() ? invalidModel.name : invalidModel.id;
         AltiumPcbLibWriter pcbWriter;
@@ -978,6 +981,9 @@ private slots:
         QVERIFY(pcbWriter.diagnostics().join('\n').contains(QStringLiteral("3D 元件体不透明度无效")));
         QVERIFY(pcbWriter.diagnostics().join('\n').contains(QStringLiteral("3D 元件体二维旋转无效")));
         QVERIFY(pcbWriter.diagnostics().join('\n').contains(QStringLiteral("3D 模型 X 旋转无效")));
+        QVERIFY(pcbWriter.diagnostics().join('\n').contains(QStringLiteral("3D 模型 Y 旋转无效")));
+        QVERIFY(pcbWriter.diagnostics().join('\n').contains(QStringLiteral("3D 模型 Z 旋转无效")));
+        QVERIFY(pcbWriter.diagnostics().join('\n').contains(QStringLiteral("3D 模型 Z 偏移无效")));
 
         IR::FootprintComponentIR invalidFootprint;
         invalidFootprint.name = QStringLiteral("INVALID_FOOTPRINT_FLOATS");
