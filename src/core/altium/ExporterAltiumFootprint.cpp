@@ -8,6 +8,7 @@
 #include <QFileInfo>
 
 #include <climits>
+#include <cmath>
 #include <limits>
 
 namespace EasyKiConverter {
@@ -365,6 +366,17 @@ void ExporterAltiumFootprint::centerComponent(AltiumPcbComponent& component) {
     qint64 minY = std::numeric_limits<qint64>::max();
     qint64 maxX = std::numeric_limits<qint64>::lowest();
     qint64 maxY = std::numeric_limits<qint64>::lowest();
+    const auto toBoundedCoordinate = [](double value) {
+        if (!std::isfinite(value))
+            return qint64(0);
+        constexpr double maxValue = static_cast<double>(std::numeric_limits<qint64>::max());
+        constexpr double minValue = static_cast<double>(std::numeric_limits<qint64>::min());
+        if (value >= maxValue)
+            return std::numeric_limits<qint64>::max();
+        if (value <= minValue)
+            return std::numeric_limits<qint64>::min();
+        return static_cast<qint64>(value);
+    };
 
     for (const auto& pad : component.pads) {
         minX = qMin(minX, pad.locationX);
@@ -454,7 +466,21 @@ void ExporterAltiumFootprint::generateComponentBody(AltiumPcbComponent& componen
         return;
 
     // 计算包围盒（复用 centerComponent 的逻辑）
-    int minX = INT_MAX, minY = INT_MAX, maxX = INT_MIN, maxY = INT_MIN;
+    qint64 minX = std::numeric_limits<qint64>::max();
+    qint64 minY = std::numeric_limits<qint64>::max();
+    qint64 maxX = std::numeric_limits<qint64>::lowest();
+    qint64 maxY = std::numeric_limits<qint64>::lowest();
+    const auto toBoundedCoordinate = [](double value) {
+        if (!std::isfinite(value))
+            return qint64(0);
+        constexpr double maxValue = static_cast<double>(std::numeric_limits<qint64>::max());
+        constexpr double minValue = static_cast<double>(std::numeric_limits<qint64>::min());
+        if (value >= maxValue)
+            return std::numeric_limits<qint64>::max();
+        if (value <= minValue)
+            return std::numeric_limits<qint64>::min();
+        return static_cast<qint64>(value);
+    };
 
     for (const auto& pad : component.pads) {
         minX = qMin(minX, pad.locationX);
@@ -469,10 +495,10 @@ void ExporterAltiumFootprint::generateComponentBody(AltiumPcbComponent& componen
         maxY = qMax(maxY, qMax(track.startY, track.endY));
     }
     for (const auto& arc : component.arcs) {
-        minX = qMin(minX, arc.centerX - arc.radius);
-        minY = qMin(minY, arc.centerY - arc.radius);
-        maxX = qMax(maxX, arc.centerX + arc.radius);
-        maxY = qMax(maxY, arc.centerY + arc.radius);
+        minX = qMin(minX, static_cast<qint64>(arc.centerX) - arc.radius);
+        minY = qMin(minY, static_cast<qint64>(arc.centerY) - arc.radius);
+        maxX = qMax(maxX, static_cast<qint64>(arc.centerX) + arc.radius);
+        maxY = qMax(maxY, static_cast<qint64>(arc.centerY) + arc.radius);
     }
     for (const auto& fill : component.fills) {
         minX = qMin(minX, qMin(fill.corner1X, fill.corner2X));
@@ -482,10 +508,12 @@ void ExporterAltiumFootprint::generateComponentBody(AltiumPcbComponent& componen
     }
     for (const auto& region : component.regions) {
         for (const QPointF& v : region.vertices) {
-            minX = qMin(minX, static_cast<qint64>(v.x()));
-            minY = qMin(minY, static_cast<qint64>(v.y()));
-            maxX = qMax(maxX, static_cast<qint64>(v.x()));
-            maxY = qMax(maxY, static_cast<qint64>(v.y()));
+            const qint64 x = toBoundedCoordinate(v.x());
+            const qint64 y = toBoundedCoordinate(v.y());
+            minX = qMin(minX, x);
+            minY = qMin(minY, y);
+            maxX = qMax(maxX, x);
+            maxY = qMax(maxY, y);
         }
     }
 
