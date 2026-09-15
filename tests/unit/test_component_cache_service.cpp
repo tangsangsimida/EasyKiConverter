@@ -230,6 +230,9 @@ private slots:
         QVERIFY(metadataFile.write(QJsonDocument(metadata).toJson()) > 0);
         metadataFile.close();
 
+        // 自愈流程应删除无法被正常加载的三维元数据缓存。
+        m_cache->setCacheDir(m_tempDir.path());
+        QVERIFY(!QFileInfo::exists(metadataPath));
         QVERIFY(!m_cache->hasCache(componentId));
         QVERIFY(m_cache->loadComponentData(componentId) == nullptr);
     }

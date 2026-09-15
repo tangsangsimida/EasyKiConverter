@@ -1,5 +1,7 @@
 #include "CacheHealthManager.h"
 
+#include "models/Model3DData.h"
+
 #include <QDateTime>
 #include <QDir>
 #include <QFile>
@@ -62,6 +64,27 @@ bool _saveMetadataToPath(const QString& metaPath, const QJsonObject& metadata) {
     qint64 written = metaFile.write(data);
     metaFile.close();
     return written > 0;
+}
+
+bool _hasValidModel3DMetadata(const QJsonObject& metadata) {
+    if (!metadata.contains(QStringLiteral("model3duuid")))
+        return true;
+
+    const QJsonValue uuid = metadata.value(QStringLiteral("model3duuid"));
+    if (!uuid.isString() || uuid.toString().isEmpty())
+        return false;
+
+    QJsonObject model;
+    model.insert(QStringLiteral("uuid"), uuid);
+    if (metadata.contains(QStringLiteral("model3dName")))
+        model.insert(QStringLiteral("name"), metadata.value(QStringLiteral("model3dName")));
+    if (metadata.contains(QStringLiteral("model3dTranslation")))
+        model.insert(QStringLiteral("translation"), metadata.value(QStringLiteral("model3dTranslation")));
+    if (metadata.contains(QStringLiteral("model3dRotation")))
+        model.insert(QStringLiteral("rotation"), metadata.value(QStringLiteral("model3dRotation")));
+
+    Model3DData modelData;
+    return modelData.fromJson(model);
 }
 }  // namespace
 
@@ -149,6 +172,21 @@ bool CacheHealthManager::repairComponentCache(const QString& lcscId) {
         return false;
     }
 
+    const QJsonValue metadataId = metadata.value(QStringLiteral("lcscId"));
+    if (metadata.contains(QStringLiteral("lcscId")) &&
+        (!metadataId.isString() ||
+         (!metadataId.toString().isEmpty() && metadataId.toString().compare(lcscId, Qt::CaseInsensitive) != 0))) {
+        componentDir.removeRecursively();
+        qWarning().noquote() << "Removed cache dir with mismatched component ID:" << dirPath;
+        return false;
+    }
+
+    if (!_hasValidModel3DMetadata(metadata)) {
+        componentDir.removeRecursively();
+        qWarning().noquote() << "Removed cache dir with invalid 3D metadata:" << dirPath;
+        return false;
+    }
+
     bool metadataChanged = false;
     if (metadata.value("lcscId").toString().isEmpty()) {
         metadata["lcscId"] = lcscId;
@@ -227,8 +265,7 @@ bool CacheHealthManager::repairComponentCache(const QString& lcscId) {
         }
     }
 
-    const bool hasBasicIdentity =
-        !metadata.value("lcscId").toString().isEmpty() || !metadata.value("name").toString().isEmpty();
+    const bool hasBasicIdentity = !metadata.value("name").toString().isEmpty();
     const bool hasPreviewUrls = !metadata.value("previewImages").toArray().isEmpty();
     const bool hasDatasheetUrl = !metadata.value("datasheet").toString().isEmpty();
     const bool hasModel3DUuid = !metadata.value("model3duuid").toString().isEmpty();
