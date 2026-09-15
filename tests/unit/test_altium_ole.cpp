@@ -2265,6 +2265,60 @@ private slots:
     }
 
     /**
+     * @brief 验证 SchLib 组件名称和 SectionKeys 映射不会重复
+     */
+    void rejectsDuplicateSchLibComponentsAndSectionKeys() {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        const auto createLibrary =
+            [&](const QString& fileName, const QStringList& names, const QStringList& sectionKeys) {
+                OLECompoundWriter writer;
+                if (!writer.create())
+                    return false;
+
+                QByteArray headerData;
+                AltiumBinaryWriter headerWriter(headerData);
+                headerWriter.writeCStringParameterBlock({{QStringLiteral("COMPCOUNT"), QString::number(names.size())}});
+                headerWriter.writeInt32(names.size());
+                for (const QString& name : names)
+                    headerWriter.writeStringBlock(name);
+                if (!writer.writeStream(QStringLiteral("FileHeader"), headerData))
+                    return false;
+
+                if (!sectionKeys.isEmpty()) {
+                    QByteArray sectionKeyData;
+                    AltiumBinaryWriter sectionKeyWriter(sectionKeyData);
+                    QMap<QString, QString> parameters;
+                    parameters[QStringLiteral("KeyCount")] = QString::number(sectionKeys.size());
+                    for (int i = 0; i < sectionKeys.size(); ++i) {
+                        parameters[QStringLiteral("LibRef%1").arg(i)] = names.at(i);
+                        parameters[QStringLiteral("SectionKey%1").arg(i)] = sectionKeys.at(i);
+                    }
+                    sectionKeyWriter.writeCStringParameterBlock(parameters);
+                    if (!writer.writeStream(QStringLiteral("SectionKeys"), sectionKeyData))
+                        return false;
+                }
+                return writer.saveToFile(QDir(tempDir.path()).filePath(fileName));
+            };
+
+        QVERIFY(createLibrary(
+            QStringLiteral("duplicate-components.SchLib"), {QStringLiteral("DUP"), QStringLiteral("dup")}, {}));
+        AltiumSchLibReader duplicateComponentReader;
+        QVERIFY(!duplicateComponentReader.open(
+            QDir(tempDir.path()).filePath(QStringLiteral("duplicate-components.SchLib"))));
+        QVERIFY(duplicateComponentReader.errorString().contains(QStringLiteral("组件名称重复")));
+
+        QVERIFY(createLibrary(QStringLiteral("duplicate-section-keys.SchLib"),
+                              {QStringLiteral("A"), QStringLiteral("B")},
+                              {QStringLiteral("SHARED"), QStringLiteral("shared")}));
+        AltiumSchLibReader duplicateSectionKeyReader;
+        QVERIFY(!duplicateSectionKeyReader.open(
+            QDir(tempDir.path()).filePath(QStringLiteral("duplicate-section-keys.SchLib"))));
+        QVERIFY(duplicateSectionKeyReader.errorString().contains(QStringLiteral("SectionKeys 映射重复")));
+    }
+
+    /**
      * @brief 验证 SchLib 同一字段的大小写别名不能携带冲突值
      */
     void rejectsConflictingSchLibParameterAliases() {

@@ -264,10 +264,15 @@ bool AltiumSchLibReader::open(const QString& filePath) {
 
     QVector<QString> names;
     names.reserve(componentCount);
+    QSet<QString> componentNames;
     for (int i = 0; i < componentCount; ++i) {
         QString name;
         if (!headerReader.readStringBlock(&name) || name.isEmpty())
             return fail(QStringLiteral("SchLib FileHeader 的组件名称无效"));
+        const QString foldedName = name.toCaseFolded();
+        if (componentNames.contains(foldedName))
+            return fail(QStringLiteral("SchLib FileHeader 的组件名称重复: %1").arg(name));
+        componentNames.insert(foldedName);
         names.append(name);
     }
     if (headerReader.hasError() || headerReader.remaining() != 0)
@@ -286,20 +291,34 @@ bool AltiumSchLibReader::open(const QString& filePath) {
         const int keyCount = parameters.value(QStringLiteral("KeyCount")).toInt(&keyCountOk);
         if (!keyCountOk || keyCount < 0)
             return fail(QStringLiteral("SchLib SectionKeys 的 KeyCount 无效"));
+        QSet<QString> mappedComponents;
+        QSet<QString> mappedSectionKeys;
         for (int i = 0; i < keyCount; ++i) {
             const QString libRef = parameters.value(QStringLiteral("LibRef%1").arg(i));
             const QString sectionKey = parameters.value(QStringLiteral("SectionKey%1").arg(i));
             if (libRef.isEmpty() || sectionKey.isEmpty())
                 return fail(QStringLiteral("SchLib SectionKeys 映射不完整"));
+            if (!componentNames.contains(libRef.toCaseFolded()))
+                return fail(QStringLiteral("SchLib SectionKeys 包含未知组件: %1").arg(libRef));
+            if (mappedComponents.contains(libRef.toCaseFolded()) ||
+                mappedSectionKeys.contains(sectionKey.toCaseFolded()))
+                return fail(QStringLiteral("SchLib SectionKeys 映射重复: %1").arg(libRef));
+            mappedComponents.insert(libRef.toCaseFolded());
+            mappedSectionKeys.insert(sectionKey.toCaseFolded());
             sectionKeys.insert(libRef, sectionKey);
         }
         if (sectionKeyReader.hasError() || sectionKeyReader.remaining() != 0)
             return fail(QStringLiteral("SchLib SectionKeys 末尾包含无效数据"));
     }
 
+    QSet<QString> resolvedSectionKeys;
     for (int i = 0; i < names.size(); ++i) {
         const QString& name = names.at(i);
         const QString sectionKey = sectionKeys.value(name, name);
+        const QString foldedSectionKey = sectionKey.toCaseFolded();
+        if (resolvedSectionKeys.contains(foldedSectionKey))
+            return fail(QStringLiteral("SchLib 组件存储键重复: %1").arg(sectionKey));
+        resolvedSectionKeys.insert(foldedSectionKey);
         const QString dataPath = sectionKey + QStringLiteral("/Data");
         if (!m_oleReader.containsStream(dataPath))
             return fail(QStringLiteral("SchLib 缺少组件 Data 流: %1").arg(dataPath));
