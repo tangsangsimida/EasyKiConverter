@@ -3729,6 +3729,19 @@ private slots:
         QVERIFY(data.contains("LibReference=A/B"));
         QVERIFY(reader.readComponentData(QStringLiteral("A:B"), &data));
         QVERIFY(data.contains("LibReference=A:B"));
+
+        int totalRecordCount = 0;
+        for (int componentIndex = 0; componentIndex < components.size(); ++componentIndex) {
+            QVector<AltiumSchLibReader::Record> records;
+            QVERIFY2(reader.readComponentRecords(componentIndex, &records), qPrintable(reader.errorString()));
+            QVERIFY(!records.isEmpty());
+            QCOMPARE(records.first().recordType, 1);
+            totalRecordCount += records.size();
+        }
+        bool weightOk = false;
+        const int declaredWeight = reader.headerParameters().value(QStringLiteral("WEIGHT")).toInt(&weightOk);
+        QVERIFY(weightOk);
+        QCOMPARE(declaredWeight, totalRecordCount);
     }
 
     /**
