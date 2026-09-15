@@ -274,6 +274,20 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
     const auto isValidBounds = [](double x0, double y0, double x1, double y1) {
         return std::isfinite(x0) && std::isfinite(y0) && std::isfinite(x1) && std::isfinite(y1) && x0 != x1 && y0 != y1;
     };
+    const auto normalizeTextAnchor = [this, &data](const QString& anchor, const QString& context) {
+        const QString normalized = anchor.trimmed().toLower();
+        if (normalized.isEmpty())
+            return QStringLiteral("middle");
+        if (!QStringList{QStringLiteral("start"), QStringLiteral("middle"), QStringLiteral("end")}.contains(
+                normalized)) {
+            m_diagnostics.append(QStringLiteral("符号 %1 %2 的对齐锚点无效: %3，已回退为 middle")
+                                     .arg(data.name)
+                                     .arg(context)
+                                     .arg(anchor));
+            return QStringLiteral("middle");
+        }
+        return normalized;
+    };
 
     for (const IR::SymbolParameterIR& parameter : data.parameters) {
         if (!isFinitePoint(parameter.position) || !std::isfinite(parameter.rotation) ||
@@ -321,7 +335,8 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
                 text.locationY = AltiumCoord::mmToRaw(pin.namePosition.y());
                 text.text = pin.name;
                 text.fontSizeMm = pin.nameFontSizeMm;
-                text.anchor = pin.nameAnchor;
+                text.anchor =
+                    normalizeTextAnchor(pin.nameAnchor, QStringLiteral("引脚 %1 名称文本").arg(pin.designator));
                 text.isDisplayed = true;
                 text.orientation = toAltiumOrientation(pin.nameRotation);
                 text.ownerPartId = pin.commonToAllParts ? -1 : toAltiumOwnerPartId(pin.partIndex);
@@ -341,7 +356,8 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
                 text.locationY = AltiumCoord::mmToRaw(pin.numberPosition.y());
                 text.text = pin.designator;
                 text.fontSizeMm = pin.numberFontSizeMm;
-                text.anchor = pin.numberAnchor;
+                text.anchor =
+                    normalizeTextAnchor(pin.numberAnchor, QStringLiteral("引脚 %1 编号文本").arg(pin.designator));
                 text.isDisplayed = true;
                 text.orientation = toAltiumOrientation(pin.numberRotation);
                 text.ownerPartId = pin.commonToAllParts ? -1 : toAltiumOwnerPartId(pin.partIndex);
@@ -630,18 +646,7 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
             continue;
         }
         AltiumSchText text = convertText(sourceText);
-        const QString normalizedAnchor = sourceText.anchor.trimmed().toLower();
-        if (!normalizedAnchor.isEmpty() &&
-            !QStringList{QStringLiteral("start"), QStringLiteral("middle"), QStringLiteral("end")}.contains(
-                normalizedAnchor)) {
-            m_diagnostics.append(QStringLiteral("符号 %1 文本图元 %2 的对齐锚点无效: %3，已回退为 middle")
-                                     .arg(data.name)
-                                     .arg(i)
-                                     .arg(sourceText.anchor));
-            text.anchor = QStringLiteral("middle");
-        } else if (!normalizedAnchor.isEmpty()) {
-            text.anchor = normalizedAnchor;
-        }
+        text.anchor = normalizeTextAnchor(sourceText.anchor, QStringLiteral("文本图元 %1").arg(i));
         text.sourceGraphicIndex = sourceIndexForPart(data.texts, i, sourceText.partIndex);
         text.sourcePartIndex = sourceText.partIndex;
         component.texts.append(text);

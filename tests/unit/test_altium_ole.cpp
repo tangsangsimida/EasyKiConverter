@@ -2804,6 +2804,15 @@ private slots:
         invalidTextAnchor.text = QStringLiteral("Anchor");
         invalidTextAnchor.anchor = QStringLiteral("unsupported");
         invalidTextAnchorSymbol.texts.append(invalidTextAnchor);
+        IR::SymbolPinIR invalidPinAnchor;
+        invalidPinAnchor.name = QStringLiteral("Pin");
+        invalidPinAnchor.designator = QStringLiteral("7");
+        invalidPinAnchor.position = QPointF(0.0, 0.0);
+        invalidPinAnchor.length = 2.54;
+        invalidPinAnchor.hasNamePosition = true;
+        invalidPinAnchor.namePosition = QPointF(0.0, 0.0);
+        invalidPinAnchor.nameAnchor = QStringLiteral("unsupported");
+        invalidTextAnchorSymbol.pins.append(invalidPinAnchor);
         ExporterAltiumSymbol invalidTextAnchorExporter;
         const QString invalidTextAnchorPath =
             QDir(tempDir.path()).filePath(QStringLiteral("invalid-text-anchor.SchLib"));
@@ -2811,6 +2820,8 @@ private slots:
         QVERIFY2(invalidTextAnchorExporter.diagnostics().join('\n').contains(
                      QStringLiteral("符号 INVALID_TEXT_ANCHOR 文本图元 0 的对齐锚点无效")),
                  qPrintable(invalidTextAnchorExporter.diagnostics().join('\n')));
+        QVERIFY(invalidTextAnchorExporter.diagnostics().join('\n').contains(
+            QStringLiteral("符号 INVALID_TEXT_ANCHOR 引脚 7 名称文本 的对齐锚点无效")));
 
         IR::SymbolParameterIR invalidParameterFont;
         invalidParameterFont.name = QStringLiteral("FontInvalid");
