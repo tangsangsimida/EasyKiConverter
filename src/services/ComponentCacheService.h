@@ -565,6 +565,7 @@ private:
 
     static std::unique_ptr<ComponentCacheService> s_instance;
     mutable QMutex m_mutex;  // 保护 L1 内存缓存
+    mutable QMutex m_cacheDirMutex;  // 保护缓存根目录及其路径快照
     mutable QMutex m_diskWriteMutex;  // 串行化 generation 检查与磁盘写入
     QString m_cacheDir;
     int m_memoryCacheLimitMB;

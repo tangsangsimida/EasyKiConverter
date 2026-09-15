@@ -80,7 +80,7 @@ void ComponentCacheService::setCacheDir(const QString& cacheDir, bool migrateExi
     const QString newCacheDir = QDir::cleanPath(cacheDir);
     QString oldCacheDir;
     {
-        QMutexLocker locker(&m_mutex);
+        QMutexLocker locker(&m_cacheDirMutex);
         oldCacheDir = m_cacheDir;
     }
 
@@ -111,13 +111,14 @@ void ComponentCacheService::setCacheDir(const QString& cacheDir, bool migrateExi
 
     // 原子切换缓存目录指针
     {
-        QMutexLocker locker(&m_mutex);
+        QMutexLocker locker(&m_cacheDirMutex);
         m_cacheDir = newCacheDir;
-        if (cacheDirChanged) {
-            // L1 数据没有目录归属信息，切换 L2 目录后必须全部失效，避免
-            // 同一元件 ID 从旧目录泄漏到新目录。
-            m_memoryCache.clear();
-        }
+    }
+    if (cacheDirChanged) {
+        // L1 数据没有目录归属信息，切换 L2 目录后必须全部失效，避免
+        // 同一元件 ID 从旧目录泄漏到新目录。
+        QMutexLocker locker(&m_mutex);
+        m_memoryCache.clear();
     }
     if (cacheDirChanged)
         emit memoryCacheSizeChanged(0);
@@ -234,17 +235,16 @@ bool ComponentCacheService::moveCacheEntry(const QString& sourcePath, const QStr
 }
 
 QString ComponentCacheService::cacheDir() const {
-    QMutexLocker locker(&m_mutex);
+    QMutexLocker locker(&m_cacheDirMutex);
     return m_cacheDir;
 }
 
 QString ComponentCacheService::componentCacheDir(const QString& lcscId) const {
-    // 注意：这里不再加锁，因为只是构建路径字符串
-    // m_cacheDir 在初始化时设置，之后只读，不需要互斥保护
     if (!BomParser::validateId(lcscId)) {
         qWarning() << "componentCacheDir: invalid lcscId, rejecting:" << lcscId;
         return QString();
     }
+    QMutexLocker locker(&m_cacheDirMutex);
     return QDir::cleanPath(m_cacheDir + "/" + lcscId);
 }
 
@@ -265,10 +265,7 @@ QString ComponentCacheService::ensureComponentDir(const QString& lcscId) const {
 }
 
 QString ComponentCacheService::ensureModel3DCacheDir() const {
-    // 注意：不再获取锁，因为：
-    // 1. dir.mkpath 是线程安全的
-    // 2. saveModel3D 已经在持有 m_mutex 的情况下调用此函数
-    QString dirPath = m_cacheDir + "/model3d";
+    const QString dirPath = cacheDir() + "/model3d";
     QDir dir(dirPath);
     if (!dir.exists()) {
         dir.mkpath(dirPath);
@@ -1227,7 +1224,7 @@ void ComponentCacheService::clearAllCache() {
     }
     // 先清空L2磁盘缓存（不需要锁）
     {
-        QDir dir(m_cacheDir);
+        QDir dir(cacheDir());
         if (dir.exists()) {
             // 删除所有元器件缓存目录
             for (const QString& subDir : dir.entryList(QDir::Dirs)) {
@@ -1268,7 +1265,7 @@ QStringList ComponentCacheService::getCachedComponentIds() const {
     QMutexLocker locker(&m_mutex);
 
     QStringList result;
-    QDir dir(m_cacheDir);
+    QDir dir(cacheDir());
     if (!dir.exists()) {
         return result;
     }
@@ -1287,7 +1284,7 @@ QStringList ComponentCacheService::getCachedComponentIds() const {
 
 qint64 ComponentCacheService::getCacheSize() const {
     QMutexLocker locker(&m_mutex);
-    return calculateDirSize(m_cacheDir);
+    return calculateDirSize(cacheDir());
 }
 
 qint64 ComponentCacheService::getMemoryCacheSize() const {
@@ -1316,7 +1313,7 @@ qint64 ComponentCacheService::calculateDirSize(const QString& dirPath) const {
 }
 
 void ComponentCacheService::pruneCache(qint64 targetSizeBytes) {
-    CachePruner pruner(m_cacheDir);
+    CachePruner pruner(cacheDir());
     qint64 newSize = pruner.pruneTo(targetSizeBytes);
     emit cacheSizeChanged(newSize);
 }
@@ -1359,7 +1356,7 @@ void ComponentCacheService::enforceDiskCacheLimit(bool bypassCooldown) {
         if (!bypassCooldown && m_lastEnforceTimer.elapsed() < kCooldownMs) {
             return;
         }
-        cacheDir = m_cacheDir;
+        cacheDir = this->cacheDir();
         targetSizeBytes = static_cast<qint64>(m_diskCacheLimitMB) * 1024 * 1024;
         m_lastEnforceTimer.restart();
     }
@@ -1510,7 +1507,7 @@ QString ComponentCacheService::resolveDatasheetPath(const QString& lcscId,
 }
 
 void ComponentCacheService::selfHealCache() {
-    CacheHealthManager healer(m_cacheDir);
+    CacheHealthManager healer(cacheDir());
     healer.healAll();
 }
 
@@ -1560,7 +1557,7 @@ QString ComponentCacheService::model3DPath(const QString& uuid, const QString& e
         qWarning() << "model3DPath: invalid extension, rejecting:" << extension;
         return QString();
     }
-    return m_cacheDir + "/model3d/" + uuid + "." + extension;
+    return cacheDir() + "/model3d/" + uuid + "." + extension;
 }
 
 }  // namespace EasyKiConverter
