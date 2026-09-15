@@ -2302,6 +2302,48 @@ private slots:
     }
 
     /**
+     * @brief 验证 SchLib 图片 Storage 的压缩长度字段必须与实际载荷一致。
+     */
+    void rejectsMismatchedSchLibImageCompressionLength() {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        OLECompoundWriter writer;
+        QVERIFY(writer.create());
+        QByteArray headerData;
+        AltiumBinaryWriter headerWriter(headerData);
+        headerWriter.writeCStringParameterBlock({{QStringLiteral("COMPCOUNT"), QStringLiteral("1")}});
+        headerWriter.writeInt32(1);
+        headerWriter.writeStringBlock(QStringLiteral("BROKEN_LENGTH"));
+        QVERIFY(writer.writeStream(QStringLiteral("FileHeader"), headerData));
+        QVERIFY(writer.addStorage(QStringLiteral("BROKEN_LENGTH")));
+        QVERIFY(writer.writeStream(QStringLiteral("BROKEN_LENGTH"), QStringLiteral("Data"), QByteArray()));
+
+        QByteArray storageData;
+        AltiumBinaryWriter storageWriter(storageData);
+        storageWriter.writeCStringParameterBlock({{QStringLiteral("HEADER"), QStringLiteral("Icon storage")},
+                                                  {QStringLiteral("Weight"), QStringLiteral("1")}});
+        storageWriter.beginBlock(1);
+        storageWriter.writeUInt8(0xD0);
+        storageWriter.writeUInt8(5);
+        storageWriter.writeBytes(QByteArrayLiteral("x.png"));
+        storageWriter.writeUInt32(2);
+        storageWriter.writeUInt8(0x78);
+        storageWriter.endBlock();
+        QVERIFY(writer.writeStream(QStringLiteral("Storage"), storageData));
+
+        const QString path = QDir(tempDir.path()).filePath(QStringLiteral("mismatched-image-length.SchLib"));
+        QVERIFY(writer.saveToFile(path));
+
+        AltiumSchLibReader reader;
+        QVERIFY2(reader.open(path), qPrintable(reader.errorString()));
+        QVector<AltiumSchLibReader::ImageStorageEntry> entries;
+        QVERIFY(!reader.readImageStorage(&entries));
+        QVERIFY(entries.isEmpty());
+        QVERIFY(reader.errorString().contains(QStringLiteral("条目内容无效")));
+    }
+
+    /**
      * @brief 验证 SchLib 图片 Storage 的空解压数据会被拒绝。
      */
     void rejectsEmptySchLibImageCompression() {
