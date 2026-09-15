@@ -24,6 +24,34 @@
 
 namespace EasyKiConverter {
 
+namespace {
+
+bool hasValidModel3DMetadata(const QJsonObject& metadata) {
+    if (!metadata.contains(QStringLiteral("model3duuid")))
+        return true;
+
+    const QJsonValue uuid = metadata.value(QStringLiteral("model3duuid"));
+    if (!uuid.isString() || uuid.toString().isEmpty())
+        return false;
+
+    if (metadata.contains(QStringLiteral("model3dName")) && !metadata.value(QStringLiteral("model3dName")).isString())
+        return false;
+
+    const auto validateVector = [&metadata](const QString& name) {
+        if (!metadata.contains(name))
+            return true;
+        const QJsonValue value = metadata.value(name);
+        if (!value.isObject())
+            return false;
+        Model3DBase vector;
+        return vector.fromJson(value.toObject());
+    };
+
+    return validateVector(QStringLiteral("model3dTranslation")) && validateVector(QStringLiteral("model3dRotation"));
+}
+
+}  // namespace
+
 std::unique_ptr<ComponentCacheService> ComponentCacheService::s_instance;
 
 ComponentCacheService::ComponentCacheService(QObject* parent)
@@ -251,6 +279,16 @@ bool ComponentCacheService::isCacheValid(const QString& lcscId) const {
         return false;
     }
 
+    if (metadata.contains(QStringLiteral("lcscId")) &&
+        (!metadata.value(QStringLiteral("lcscId")).isString() ||
+         metadata.value(QStringLiteral("lcscId")).toString().compare(lcscId, Qt::CaseInsensitive) != 0)) {
+        return false;
+    }
+
+    if (!hasValidModel3DMetadata(metadata)) {
+        return false;
+    }
+
     const bool hasCadJson = QFileInfo::exists(componentCacheDir(lcscId) + "/cad_data.json");
     const bool hasBasicIdentity =
         !metadata.value("lcscId").toString().isEmpty() || !metadata.value("name").toString().isEmpty();
@@ -373,6 +411,11 @@ QSharedPointer<ComponentData> ComponentCacheService::loadComponentData(const QSt
         return nullptr;
     }
 
+    if (!hasValidModel3DMetadata(metadata)) {
+        LOG_WARN(LogModule::Core, "Rejected component cache with invalid 3D metadata: {}", lcscId);
+        return nullptr;
+    }
+
     auto componentData = QSharedPointer<ComponentData>::create();
 
     // 基本信息
@@ -406,12 +449,14 @@ QSharedPointer<ComponentData> ComponentCacheService::loadComponentData(const QSt
         model3DData->setName(metadata.value("model3dName").toString());
         if (metadata.contains("model3dTranslation") && metadata.value("model3dTranslation").isObject()) {
             Model3DBase translation;
-            translation.fromJson(metadata.value("model3dTranslation").toObject());
+            if (!translation.fromJson(metadata.value("model3dTranslation").toObject()))
+                return nullptr;
             model3DData->setTranslation(translation);
         }
         if (metadata.contains("model3dRotation") && metadata.value("model3dRotation").isObject()) {
             Model3DBase rotation;
-            rotation.fromJson(metadata.value("model3dRotation").toObject());
+            if (!rotation.fromJson(metadata.value("model3dRotation").toObject()))
+                return nullptr;
             model3DData->setRotation(rotation);
         }
         componentData->setModel3DData(model3DData);

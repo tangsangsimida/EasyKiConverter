@@ -171,6 +171,52 @@ private slots:
         QCOMPARE(m_cache->loadPreviewImage(componentId, 0), QByteArray("preview-data"));
     }
 
+    void testMalformedModel3DMetadataInvalidatesCache() {
+        const QString componentId = QStringLiteral("C13579");
+        ComponentData data;
+        data.setLcscId(componentId);
+        data.setName(QStringLiteral("Malformed 3D Component"));
+        m_cache->saveComponentMetadata(componentId, data);
+
+        const QString metadataPath = QDir(m_cache->componentCacheDir(componentId)).filePath("component.json");
+        QFile metadataFile(metadataPath);
+        QVERIFY(metadataFile.open(QIODevice::ReadOnly));
+        QJsonParseError parseError;
+        QJsonDocument document = QJsonDocument::fromJson(metadataFile.readAll(), &parseError);
+        metadataFile.close();
+        QCOMPARE(parseError.error, QJsonParseError::NoError);
+
+        QJsonObject metadata = document.object();
+        metadata.insert(QStringLiteral("model3duuid"), QStringLiteral("uuid-13579"));
+        QJsonObject malformedTranslation;
+        malformedTranslation.insert(QStringLiteral("x"), QStringLiteral("invalid"));
+        malformedTranslation.insert(QStringLiteral("y"), 0.0);
+        malformedTranslation.insert(QStringLiteral("z"), 0.0);
+        metadata.insert(QStringLiteral("model3dTranslation"), malformedTranslation);
+
+        QVERIFY(metadataFile.open(QIODevice::WriteOnly | QIODevice::Truncate));
+        QVERIFY(metadataFile.write(QJsonDocument(metadata).toJson()) > 0);
+        metadataFile.close();
+
+        QVERIFY(!m_cache->hasCache(componentId));
+        QVERIFY(m_cache->loadComponentData(componentId) == nullptr);
+    }
+
+    void testModel3DArtifactsRoundTripThroughDiskCache() {
+        const QString uuid = QStringLiteral("model-cache-13579");
+        const QList<QPair<QString, QByteArray>> artifacts = {
+            {QStringLiteral("step"), QByteArray("ISO-10303-21; cached step")},
+            {QStringLiteral("obj"), QByteArray("v 0 0 0\nf 1 2 3")},
+            {QStringLiteral("wrl"), QByteArray("#VRML V2.0 cached wrl")},
+        };
+
+        for (const auto& artifact : artifacts) {
+            m_cache->saveModel3D(uuid, artifact.second, artifact.first);
+            QVERIFY(m_cache->hasModel3DCached(uuid, artifact.first));
+            QCOMPARE(m_cache->loadModel3D(uuid, artifact.first), artifact.second);
+        }
+    }
+
 private:
     QTemporaryDir m_tempDir;
     ComponentCacheService* m_cache = nullptr;
