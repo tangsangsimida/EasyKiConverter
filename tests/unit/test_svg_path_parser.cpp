@@ -3,6 +3,8 @@
 
 #include <QTest>
 
+#include <cmath>
+
 using namespace EasyKiConverter;
 
 class TestSvgPathParser : public QObject {
@@ -70,6 +72,16 @@ private slots:
         QVERIFY(points.size() > 3);
         QCOMPARE(points.first(), QPointF(0, 0));
         QCOMPARE(points.last(), QPointF(10, 10));
+    }
+
+    void coincidentArcEndpointsDoNotProduceNaN() {
+        const QList<QPointF> points = SvgPathParser::parsePath(QStringLiteral("M 0 0 A 10 10 0 0 1 0 0"));
+
+        QCOMPARE(points, QList<QPointF>({QPointF(0, 0)}));
+        for (const QPointF& point : points) {
+            QVERIFY(std::isfinite(point.x()));
+            QVERIFY(std::isfinite(point.y()));
+        }
     }
 
     void normalizedArcUsesOnlyGeometryCoordinates() {

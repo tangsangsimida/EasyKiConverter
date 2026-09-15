@@ -807,6 +807,12 @@ QList<QPointF> SvgPathParser::parseArc(const QPointF& startPoint,
                                        const QPointF& endPoint) {
     QList<QPointF> points;
 
+    // SVG 规范规定起点和终点相同时不绘制弧线，避免后续圆心计算出现 0/0。
+    if (startPoint == endPoint) {
+        points.append(startPoint);
+        return points;
+    }
+
     // 如果半径，直接返回起点和终点
     if (rx <= 0 || ry <= 0) {
         points.append(startPoint);
