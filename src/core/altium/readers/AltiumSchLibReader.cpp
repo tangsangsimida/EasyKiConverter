@@ -383,7 +383,19 @@ bool AltiumSchLibReader::readComponentRecords(int componentIndexValue, QVector<R
             record.hasParameters = true;
             const auto readOptionalParameterAlias =
                 [&record](const QString& primary, const QString& alias, int fallback, int* value) {
-                    const QString selectedName = record.parameters.contains(primary) ? primary : alias;
+                    const bool hasPrimary = record.parameters.contains(primary);
+                    const bool hasAlias = record.parameters.contains(alias);
+                    if (hasPrimary && hasAlias) {
+                        int primaryValue = fallback;
+                        int aliasValue = fallback;
+                        if (!readOptionalParameterInt(record.parameters, primary, fallback, &primaryValue) ||
+                            !readOptionalParameterInt(record.parameters, alias, fallback, &aliasValue) ||
+                            primaryValue != aliasValue)
+                            return false;
+                        *value = primaryValue;
+                        return true;
+                    }
+                    const QString selectedName = hasPrimary ? primary : alias;
                     return readOptionalParameterInt(record.parameters, selectedName, fallback, value);
                 };
             if (!readOptionalParameterInt(record.parameters, QStringLiteral("RECORD"), -1, &record.recordType) ||

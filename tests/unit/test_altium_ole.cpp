@@ -2265,6 +2265,41 @@ private slots:
     }
 
     /**
+     * @brief 验证 SchLib 同一字段的大小写别名不能携带冲突值
+     */
+    void rejectsConflictingSchLibParameterAliases() {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        OLECompoundWriter writer;
+        QVERIFY(writer.create());
+        QByteArray headerData;
+        AltiumBinaryWriter headerWriter(headerData);
+        headerWriter.writeCStringParameterBlock(
+            {{QStringLiteral("COMPCOUNT"), QStringLiteral("1")}, {QStringLiteral("PARTCOUNT0"), QStringLiteral("2")}});
+        headerWriter.writeInt32(1);
+        headerWriter.writeStringBlock(QStringLiteral("CONFLICTING_ALIASES"));
+        QVERIFY(writer.writeStream(QStringLiteral("FileHeader"), headerData));
+        QVERIFY(writer.addStorage(QStringLiteral("CONFLICTING_ALIASES")));
+
+        QByteArray componentData;
+        AltiumBinaryWriter componentWriter(componentData);
+        componentWriter.writeCStringParameterBlock({{QStringLiteral("RECORD"), QStringLiteral("14")},
+                                                    {QStringLiteral("OWNERPARTID"), QStringLiteral("1")},
+                                                    {QStringLiteral("OwnerPartId"), QStringLiteral("2")}});
+        QVERIFY(writer.writeStream(QStringLiteral("CONFLICTING_ALIASES"), QStringLiteral("Data"), componentData));
+        const QString path = QDir(tempDir.path()).filePath(QStringLiteral("conflicting-aliases.SchLib"));
+        QVERIFY(writer.saveToFile(path));
+
+        AltiumSchLibReader reader;
+        QVERIFY2(reader.open(path), qPrintable(reader.errorString()));
+        QVector<AltiumSchLibReader::Record> records;
+        QVERIFY(!reader.readComponentRecords(QStringLiteral("CONFLICTING_ALIASES"), &records));
+        QVERIFY(records.isEmpty());
+        QVERIFY(reader.errorString().contains(QStringLiteral("数值字段无效")));
+    }
+
+    /**
      * @brief 验证 SchLib 内容记录索引不能重复或倒序。
      */
     void rejectsNonMonotonicSchLibRecordIndexes() {
