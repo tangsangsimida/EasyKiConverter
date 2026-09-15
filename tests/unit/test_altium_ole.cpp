@@ -3695,6 +3695,36 @@ private slots:
     }
 
     /**
+     * @brief 验证重复来源路径段索引会回退并保留全部路径记录。
+     */
+    void duplicatePathSegmentIndexFallsBackWithoutDroppingGraphics() {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        AltiumSchComponent symbol;
+        symbol.name = QStringLiteral("DUPLICATE_PATH_SEGMENT");
+        for (int i = 0; i < 2; ++i) {
+            AltiumSchPath path;
+            path.vertices = {QPointF(i * 100000, 0), QPointF(i * 100000 + 50000, 50000)};
+            path.sourceGraphicType = QStringLiteral("PT");
+            path.sourceGraphicIndex = 0;
+            path.sourceSegmentIndex = 0;
+            symbol.paths.append(path);
+        }
+        symbol.graphicOrder = {{QStringLiteral("PT"), 0, 0}};
+
+        AltiumSchLibWriter writer;
+        const QString path = QDir(tempDir.path()).filePath(QStringLiteral("duplicate-path-segment.SchLib"));
+        QVERIFY(writer.write({symbol}, path, QStringLiteral("duplicate-path-segment")));
+        QVERIFY(writer.diagnostics().contains(
+            QStringLiteral("符号 DUPLICATE_PATH_SEGMENT 的 graphicOrder 不完整或包含无效引用，已回退到默认图元顺序")));
+
+        QByteArray data;
+        QVERIFY(readCfbStream(path, QStringLiteral("DUPLICATE_PATH_SEGMENT/Data"), data));
+        QCOMPARE(data.count(QByteArrayLiteral("RECORD=6")), 2);
+    }
+
+    /**
      * @brief 验证有序图元模式下未参与来源顺序的图片只写出一次。
      */
     void orderedGraphicsDoNotDuplicateUnindexedImages() {

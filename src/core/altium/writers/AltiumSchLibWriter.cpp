@@ -840,33 +840,46 @@ bool AltiumSchLibWriter::hasCompleteGraphicOrder(const AltiumSchComponent& compo
     const auto addPathSegment = [&pathSegments, &unsplitPaths, &key](
                                     const QString& type, int index, int segmentIndex, int partIndex) {
         if (type != QStringLiteral("PT") || index < 0)
-            return;
+            return true;
         const QString pathKey = key(type, index, partIndex);
         if (segmentIndex < 0)
             unsplitPaths.insert(pathKey);
-        else
-            pathSegments[pathKey].insert(segmentIndex);
+        else {
+            QSet<int>& segments = pathSegments[pathKey];
+            if (segments.contains(segmentIndex))
+                return false;
+            segments.insert(segmentIndex);
+        }
+        return true;
     };
     for (const AltiumSchPath& path : component.paths) {
         if (path.sourceGraphicIndex >= 0)
             expected.insert(key(path.sourceGraphicType, path.sourceGraphicIndex, path.sourcePartIndex));
-        addPathSegment(path.sourceGraphicType, path.sourceGraphicIndex, path.sourceSegmentIndex, path.sourcePartIndex);
+        if (!addPathSegment(
+                path.sourceGraphicType, path.sourceGraphicIndex, path.sourceSegmentIndex, path.sourcePartIndex))
+            return false;
     }
     for (const AltiumSchBezier& bezier : component.beziers) {
         if (bezier.controlPoints.size() == 4) {
             if (bezier.sourceGraphicIndex >= 0)
                 expected.insert(key(bezier.sourceGraphicType, bezier.sourceGraphicIndex, bezier.sourcePartIndex));
-            addPathSegment(
-                bezier.sourceGraphicType, bezier.sourceGraphicIndex, bezier.sourceSegmentIndex, bezier.sourcePartIndex);
+            if (!addPathSegment(bezier.sourceGraphicType,
+                                bezier.sourceGraphicIndex,
+                                bezier.sourceSegmentIndex,
+                                bezier.sourcePartIndex))
+                return false;
         }
     }
     for (const AltiumSchEllipticalArc& arc : component.ellipticalArcs) {
         if (!addUniqueNonPathIndexed(arc.sourceGraphicType, arc.sourceGraphicIndex, arc.sourcePartIndex))
             return false;
-        addPathSegment(arc.sourceGraphicType, arc.sourceGraphicIndex, arc.sourceSegmentIndex, arc.sourcePartIndex);
+        if (!addPathSegment(arc.sourceGraphicType, arc.sourceGraphicIndex, arc.sourceSegmentIndex, arc.sourcePartIndex))
+            return false;
     }
-    for (const AltiumSchArc& arc : component.arcs)
-        addPathSegment(arc.sourceGraphicType, arc.sourceGraphicIndex, arc.sourceSegmentIndex, arc.sourcePartIndex);
+    for (const AltiumSchArc& arc : component.arcs) {
+        if (!addPathSegment(arc.sourceGraphicType, arc.sourceGraphicIndex, arc.sourceSegmentIndex, arc.sourcePartIndex))
+            return false;
+    }
 
     // 这些图元只有在来源类型和索引同时有效时才能由 writeOrderedGraphic() 写出。
     // 否则应回退到默认顺序，避免来源类型非空但索引缺失的图元被静默丢弃。
