@@ -171,6 +171,24 @@ private slots:
         QCOMPARE(m_cache->loadPreviewImage(componentId, 0), QByteArray("preview-data"));
     }
 
+    void testCacheDirChangeInvalidatesL1Cache() {
+        const QString componentId = QStringLiteral("C11223");
+        ComponentData data;
+        data.setLcscId(componentId);
+        data.setName(QStringLiteral("Old Directory Component"));
+        m_cache->saveComponentMetadata(componentId, data);
+        m_cache->saveSymbolData(componentId, QByteArray("old-symbol"));
+        QVERIFY(m_cache->hasInMemoryCache(componentId));
+
+        QTemporaryDir newCacheDir;
+        QVERIFY(newCacheDir.isValid());
+        m_cache->setCacheDir(newCacheDir.path());
+
+        QVERIFY(!m_cache->hasInMemoryCache(componentId));
+        QVERIFY(m_cache->loadSymbolData(componentId).isEmpty());
+        QVERIFY(m_cache->loadComponentData(componentId) == nullptr);
+    }
+
     void testMalformedModel3DMetadataInvalidatesCache() {
         const QString componentId = QStringLiteral("C13579");
         ComponentData data;
