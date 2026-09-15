@@ -1929,6 +1929,47 @@ private slots:
         QVERIFY2(invalidArcWidthReader.open(invalidArcWidthPath), qPrintable(invalidArcWidthReader.errorString()));
         QVERIFY(!invalidArcWidthReader.readFootprintObjects(QStringLiteral("BROKEN"), &objects));
         QVERIFY(invalidArcWidthReader.errorString().contains(QStringLiteral("弧线宽度必须为正")));
+
+        QByteArray invalidTextSizeData;
+        AltiumBinaryWriter invalidTextSizeWriter(invalidTextSizeData);
+        invalidTextSizeWriter.writeStringBlock(QStringLiteral("BROKEN"));
+        invalidTextSizeWriter.writeUInt8(AltiumConstants::PCB_OBJECT_TEXT);
+        invalidTextSizeWriter.beginBlock();
+        invalidTextSizeWriter.writeUInt8(1);
+        invalidTextSizeWriter.writeUInt16(0);
+        invalidTextSizeWriter.writeBytes(QByteArray(10, '\0'));
+        invalidTextSizeWriter.writeInt32(0);
+        invalidTextSizeWriter.writeInt32(0);
+        invalidTextSizeWriter.writeInt32(0);
+        invalidTextSizeWriter.writeInt16(0);
+        invalidTextSizeWriter.writeDouble(0.0);
+        invalidTextSizeWriter.writeUInt8(0);
+        invalidTextSizeWriter.writeInt32(0);
+        invalidTextSizeWriter.writeUInt8(0);
+        invalidTextSizeWriter.writeUInt8(0);
+        invalidTextSizeWriter.writeUInt8(0);
+        invalidTextSizeWriter.writeUInt8(0);
+        invalidTextSizeWriter.writeBytes(QByteArray(71, '\0'));
+        invalidTextSizeWriter.writeUInt32(0);
+        invalidTextSizeWriter.writeBytes(QByteArray(41, '\0'));
+        invalidTextSizeWriter.writeUInt8(0);
+        invalidTextSizeWriter.writeBytes(QByteArray(65, '\0'));
+        invalidTextSizeWriter.writeUInt32(0);
+        invalidTextSizeWriter.endBlock();
+        QByteArray textPayload;
+        AltiumBinaryWriter textPayloadWriter(textPayload);
+        textPayloadWriter.writeUInt8(1);
+        textPayloadWriter.writeBytes(QByteArrayLiteral("T"));
+        invalidTextSizeWriter.beginBlock();
+        invalidTextSizeWriter.writeBytes(textPayload);
+        invalidTextSizeWriter.endBlock();
+        const QString invalidTextSizePath = QDir(tempDir.path()).filePath(QStringLiteral("invalid-text-size.PcbLib"));
+        QVERIFY(writeMalformedLibrary(invalidTextSizePath, invalidTextSizeData));
+
+        AltiumPcbLibReader invalidTextSizeReader;
+        QVERIFY2(invalidTextSizeReader.open(invalidTextSizePath), qPrintable(invalidTextSizeReader.errorString()));
+        QVERIFY(!invalidTextSizeReader.readFootprintObjects(QStringLiteral("BROKEN"), &objects));
+        QVERIFY(invalidTextSizeReader.errorString().contains(QStringLiteral("文本尺寸必须有效")));
     }
 
     /**
