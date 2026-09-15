@@ -2,6 +2,10 @@
 
 #include <QString>
 
+#include <cmath>
+#include <cstdint>
+#include <limits>
+
 namespace EasyKiConverter {
 
 /**
@@ -90,8 +94,21 @@ constexpr int lineWidthMmToIndex(double mm) {
  * @details 原始单位: 1 mil = 10,000 raw
  *          换算: mm / 0.0254 * 10000
  */
-constexpr int32_t mmToRaw(double mm) {
-    return static_cast<int32_t>(mm / 0.0254 * 10000.0);
+inline int32_t clampToInt32(double value) {
+    if (!std::isfinite(value))
+        return 0;
+
+    constexpr double maxValue = static_cast<double>(std::numeric_limits<int32_t>::max());
+    constexpr double minValue = static_cast<double>(std::numeric_limits<int32_t>::min());
+    if (value >= maxValue)
+        return std::numeric_limits<int32_t>::max();
+    if (value <= minValue)
+        return std::numeric_limits<int32_t>::min();
+    return static_cast<int32_t>(value);
+}
+
+inline int32_t mmToRaw(double mm) {
+    return clampToInt32(mm / 0.0254 * 10000.0);
 }
 
 /**
@@ -99,8 +116,8 @@ constexpr int32_t mmToRaw(double mm) {
  * @details Schematic Units: 1 mil = 10 units (raw / 1000)
  *          换算: mm / 0.0254 * 10
  */
-constexpr int32_t mmToSchematicUnits(double mm) {
-    return static_cast<int32_t>(mm / 0.0254 * 10.0);
+inline int32_t mmToSchematicUnits(double mm) {
+    return clampToInt32(mm / 0.0254 * 10.0);
 }
 
 }  // namespace AltiumCoord

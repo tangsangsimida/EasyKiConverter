@@ -458,6 +458,12 @@ private slots:
     void coordinateConversionHandlesIntegerExtremes() {
         QCOMPARE(AltiumCoord::toDxpInt(std::numeric_limits<int>::max()), int16_t(21475));
         QCOMPARE(AltiumCoord::toDxpInt(std::numeric_limits<int>::min()), int16_t(-21475));
+        QCOMPARE(AltiumCoord::mmToRaw(1.0e12), std::numeric_limits<int32_t>::max());
+        QCOMPARE(AltiumCoord::mmToRaw(-1.0e12), std::numeric_limits<int32_t>::min());
+        QCOMPARE(AltiumCoord::mmToRaw(std::numeric_limits<double>::quiet_NaN()), int32_t(0));
+        QCOMPARE(AltiumCoord::mmToSchematicUnits(1.0e12), std::numeric_limits<int32_t>::max());
+        QCOMPARE(AltiumCoord::mmToSchematicUnits(-1.0e12), std::numeric_limits<int32_t>::min());
+        QCOMPARE(AltiumCoord::mmToSchematicUnits(std::numeric_limits<double>::infinity()), int32_t(0));
     }
 
     /**
