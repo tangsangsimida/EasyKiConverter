@@ -2552,6 +2552,8 @@ private slots:
         QByteArray fallbackData;
         QVERIFY(readCfbStream(diagnosticPath, QStringLiteral("IMAGE_DIAGNOSTICS/Data"), fallbackData));
         QVERIFY(fallbackData.contains("RECORD=7"));
+        QVERIFY(fallbackData.contains("FileName=empty.png"));
+        QVERIFY(!fallbackData.contains("FileName=empty.png|EmbedImage=T"));
         QVERIFY(diagnosticWriter.diagnostics().contains(
             QStringLiteral("组件 IMAGE_DIAGNOSTICS 图片 0 的嵌入数据为空，已跳过 Storage")));
         QVERIFY(diagnosticWriter.diagnostics().contains(

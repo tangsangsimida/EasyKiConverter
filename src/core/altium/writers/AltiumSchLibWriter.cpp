@@ -1624,12 +1624,15 @@ void AltiumSchLibWriter::writeImageRecord(AltiumBinaryWriter& writer, const Alti
     const QString storageFileName = isEmbeddedImage ? m_embeddedImageNames.value(&image) : image.fileName;
     const bool hasEmbeddedImage = isEmbeddedImage && !image.data.isEmpty() && !storageFileName.isEmpty() &&
                                   storageFileName.toLocal8Bit().size() <= 255;
+    const bool canUseExternalFallback = isEmbeddedImage && image.data.isEmpty() && !image.fileName.trimmed().isEmpty();
     if (hasEmbeddedImage)
         params["EmbedImage"] = "T";
     if (!isEmbeddedImage && !storageFileName.isEmpty())
         params["FileName"] = storageFileName;
     else if (hasEmbeddedImage)
         params["FileName"] = storageFileName;
+    else if (canUseExternalFallback)
+        params["FileName"] = image.fileName;
     addUniqueID(params);
     writer.writeCStringParameterBlockUtf8(params);
 }
