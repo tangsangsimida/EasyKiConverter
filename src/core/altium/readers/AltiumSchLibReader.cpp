@@ -152,7 +152,7 @@ bool isValidZlibPayload(const QByteArray& compressedData) {
         }
     }
 
-    const bool valid = result == Z_STREAM_END && stream.avail_in == 0;
+    const bool valid = result == Z_STREAM_END && stream.avail_in == 0 && decompressedSize > 0;
     inflateEnd(&stream);
     return valid;
 }

@@ -1866,6 +1866,50 @@ private slots:
     }
 
     /**
+     * @brief 验证 SchLib 图片 Storage 的空解压数据会被拒绝。
+     */
+    void rejectsEmptySchLibImageCompression() {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        OLECompoundWriter writer;
+        QVERIFY(writer.create());
+        QByteArray headerData;
+        AltiumBinaryWriter headerWriter(headerData);
+        headerWriter.writeCStringParameterBlock({{QStringLiteral("COMPCOUNT"), QStringLiteral("1")}});
+        headerWriter.writeInt32(1);
+        headerWriter.writeStringBlock(QStringLiteral("EMPTY_IMAGE"));
+        QVERIFY(writer.writeStream(QStringLiteral("FileHeader"), headerData));
+        QVERIFY(writer.addStorage(QStringLiteral("EMPTY_IMAGE")));
+        QVERIFY(writer.writeStream(QStringLiteral("EMPTY_IMAGE"), QStringLiteral("Data"), QByteArray()));
+
+        // 合法的 zlib 空流：可以通过 inflate 完整性检查，但解压后没有任何图像数据。
+        const QByteArray compressed = QByteArray::fromHex("789c030000000001");
+        QByteArray storageData;
+        AltiumBinaryWriter storageWriter(storageData);
+        storageWriter.writeCStringParameterBlock({{QStringLiteral("HEADER"), QStringLiteral("Icon storage")},
+                                                  {QStringLiteral("Weight"), QStringLiteral("1")}});
+        storageWriter.beginBlock(1);
+        storageWriter.writeUInt8(0xD0);
+        storageWriter.writeUInt8(9);
+        storageWriter.writeBytes(QByteArrayLiteral("empty.png"));
+        storageWriter.writeUInt32(static_cast<quint32>(compressed.size()));
+        storageWriter.writeBytes(compressed);
+        storageWriter.endBlock();
+        QVERIFY(writer.writeStream(QStringLiteral("Storage"), storageData));
+
+        const QString path = QDir(tempDir.path()).filePath(QStringLiteral("empty-image.SchLib"));
+        QVERIFY(writer.saveToFile(path));
+
+        AltiumSchLibReader reader;
+        QVERIFY2(reader.open(path), qPrintable(reader.errorString()));
+        QVector<AltiumSchLibReader::ImageStorageEntry> entries;
+        QVERIFY(!reader.readImageStorage(&entries));
+        QVERIFY(entries.isEmpty());
+        QVERIFY(reader.errorString().contains(QStringLiteral("压缩数据无效")));
+    }
+
+    /**
      * @brief 验证 SchLib 参数数值字段损坏时不会静默回退
      */
     void rejectsMalformedSchLibRecordMetadata() {
