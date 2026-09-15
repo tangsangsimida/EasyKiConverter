@@ -621,6 +621,14 @@ private slots:
         QVERIFY(!writer.write({oversizedName}, outputPath));
         QVERIFY(writer.diagnostics().join('\n').contains(QStringLiteral("名称超过 255 字节")));
 
+        AltiumSchComponent oversizedPinText;
+        oversizedPinText.name = QStringLiteral("OVERSIZED_PIN_TEXT");
+        AltiumSchPin oversizedPin;
+        oversizedPin.name = QString(256, QChar('N'));
+        oversizedPinText.pins.append(oversizedPin);
+        QVERIFY(!writer.write({oversizedPinText}, outputPath));
+        QVERIFY(writer.diagnostics().join('\n').contains(QStringLiteral("引脚 0 名称超过 255 字节")));
+
         AltiumSchComponent named;
         named.name = QStringLiteral("VALID");
         QVERIFY(!writer.write({named}, QString()));

@@ -944,6 +944,18 @@ bool AltiumSchLibWriter::validateGeometry(const AltiumSchComponent& component) {
         }
         return true;
     };
+    const auto validateShortString = [&reject](const QString& value, const QString& context) {
+        if (value.toLatin1().size() > 255)
+            return reject(QStringLiteral("%1超过 255 字节").arg(context));
+        return true;
+    };
+
+    for (int i = 0; i < component.pins.size(); ++i) {
+        const AltiumSchPin& pin = component.pins.at(i);
+        if (!validateShortString(pin.name, QStringLiteral("引脚 %1 名称").arg(i)) ||
+            !validateShortString(pin.designator, QStringLiteral("引脚 %1 编号").arg(i)))
+            return false;
+    }
 
     if (!validateLineWidths(component.rectangles, QStringLiteral("矩形图元")) ||
         !validateLineWidths(component.roundRectangles, QStringLiteral("圆角矩形图元")) ||
