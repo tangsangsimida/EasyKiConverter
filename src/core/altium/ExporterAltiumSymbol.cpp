@@ -630,6 +630,18 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
             continue;
         }
         AltiumSchText text = convertText(sourceText);
+        const QString normalizedAnchor = sourceText.anchor.trimmed().toLower();
+        if (!normalizedAnchor.isEmpty() &&
+            !QStringList{QStringLiteral("start"), QStringLiteral("middle"), QStringLiteral("end")}.contains(
+                normalizedAnchor)) {
+            m_diagnostics.append(QStringLiteral("符号 %1 文本图元 %2 的对齐锚点无效: %3，已回退为 middle")
+                                     .arg(data.name)
+                                     .arg(i)
+                                     .arg(sourceText.anchor));
+            text.anchor = QStringLiteral("middle");
+        } else if (!normalizedAnchor.isEmpty()) {
+            text.anchor = normalizedAnchor;
+        }
         text.sourceGraphicIndex = sourceIndexForPart(data.texts, i, sourceText.partIndex);
         text.sourcePartIndex = sourceText.partIndex;
         component.texts.append(text);

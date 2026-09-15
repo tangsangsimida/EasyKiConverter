@@ -2797,6 +2797,21 @@ private slots:
             QStringLiteral("符号 INVALID_TEXT_DATA 文本框图元 0 的几何参数无效，已跳过")));
         QVERIFY(invalidTextExporter.diagnostics().contains(
             QStringLiteral("符号 INVALID_TEXT_DATA 参数 Custom 的位置、旋转角度或名称无效，已跳过")));
+
+        IR::SymbolComponentIR invalidTextAnchorSymbol;
+        invalidTextAnchorSymbol.name = QStringLiteral("INVALID_TEXT_ANCHOR");
+        IR::SymbolTextIR invalidTextAnchor;
+        invalidTextAnchor.text = QStringLiteral("Anchor");
+        invalidTextAnchor.anchor = QStringLiteral("unsupported");
+        invalidTextAnchorSymbol.texts.append(invalidTextAnchor);
+        ExporterAltiumSymbol invalidTextAnchorExporter;
+        const QString invalidTextAnchorPath =
+            QDir(tempDir.path()).filePath(QStringLiteral("invalid-text-anchor.SchLib"));
+        QVERIFY(invalidTextAnchorExporter.exportSymbol(invalidTextAnchorSymbol, invalidTextAnchorPath));
+        QVERIFY2(invalidTextAnchorExporter.diagnostics().join('\n').contains(
+                     QStringLiteral("符号 INVALID_TEXT_ANCHOR 文本图元 0 的对齐锚点无效")),
+                 qPrintable(invalidTextAnchorExporter.diagnostics().join('\n')));
+
         IR::SymbolParameterIR invalidParameterFont;
         invalidParameterFont.name = QStringLiteral("FontInvalid");
         invalidParameterFont.fontSizeMm = std::numeric_limits<double>::quiet_NaN();
