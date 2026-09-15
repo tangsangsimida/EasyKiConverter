@@ -14,12 +14,12 @@ EasyKiConverter `<version>` 改善了 EasyEDA 到 KiCad/Altium 的库转换质�
 
 | 平台 | 架构/格式 | 文件 |
 | --- | --- | --- |
-| Windows | x64 安装程序 | `EasyKiConverter-<version>-g<commit>-x64-setup.exe` |
-| Windows | x64 便携版 | `EasyKiConverter-<version>-g<commit>-win64.zip` |
-| Windows | ARM64 安装程序 | `EasyKiConverter-<version>-g<commit>-arm64-setup.exe` |
-| Windows | ARM64 便携版 | `EasyKiConverter-<version>-g<commit>-win64-arm64.zip` |
-| Windows | x64 MSIX | `EasyKiConverter-<version>-g<commit>-x64.msix` |
-| Windows | ARM64 MSIX | `EasyKiConverter-<version>-g<commit>-arm64.msix` |
+| Windows | amd64 MSIX | `EasyKiConverter-<version>-g<commit>-x64.msix` |
+| Windows | amd64 安装程序 | `EasyKiConverter-<version>-g<commit>-x64-setup.exe` |
+| Windows | amd64 便携版 | `EasyKiConverter-<version>-g<commit>-win64.zip` |
+| Windows | arm64 MSIX | `EasyKiConverter-<version>-g<commit>-arm64.msix` |
+| Windows | arm64 安装程序 | `EasyKiConverter-<version>-g<commit>-arm64-setup.exe` |
+| Windows | arm64 便携版 | `EasyKiConverter-<version>-g<commit>-win64-arm64.zip` |
 | Linux | x86_64 AppImage | `EasyKiConverter-<version>-g<commit>.x86_64.AppImage` |
 | Linux | ARM64 AppImage | `EasyKiConverter-<version>-g<commit>.aarch64.AppImage` |
 | Linux | x86_64 DEB/RPM/Arch | 对应架构安装包 |
@@ -104,4 +104,3 @@ Get-FileHash .\EasyKiConverter-<version>-g<commit>-x64-setup.exe -Algorithm SHA2
 - `<contributor>`
 
 构建提交：`<full commit SHA>`
-
