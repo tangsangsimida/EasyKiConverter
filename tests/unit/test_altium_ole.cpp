@@ -969,6 +969,10 @@ private slots:
         oversizedPcbName.name = QString(256, QChar('A'));
         QVERIFY(!invalidInputWriter.write({oversizedPcbName}, pcbOutputPath));
         QVERIFY(invalidInputWriter.diagnostics().join('\n').contains(QStringLiteral("名称超过 255 字节")));
+        AltiumPcbComponent nonLatinPcbName;
+        nonLatinPcbName.name = QStringLiteral("中文封装");
+        QVERIFY(!invalidInputWriter.write({nonLatinPcbName}, pcbOutputPath));
+        QVERIFY(invalidInputWriter.diagnostics().join('\n').contains(QStringLiteral("名称包含无法编码的字符")));
         AltiumPcbComponent invalidPadPcb;
         invalidPadPcb.name = QStringLiteral("INVALID_PAD_SIZE");
         invalidPadPcb.pads.append(AltiumPcbPad());
@@ -981,6 +985,13 @@ private slots:
         oversizedPadDesignator.pads.append(oversizedPad);
         QVERIFY(!invalidInputWriter.write({oversizedPadDesignator}, pcbOutputPath));
         QVERIFY(invalidInputWriter.diagnostics().join('\n').contains(QStringLiteral("焊盘编号超过 255 字节")));
+        AltiumPcbComponent nonLatinPadDesignator;
+        nonLatinPadDesignator.name = QStringLiteral("NON_LATIN_PAD");
+        AltiumPcbPad nonLatinPad;
+        nonLatinPad.designator = QStringLiteral("中文焊盘");
+        nonLatinPadDesignator.pads.append(nonLatinPad);
+        QVERIFY(!invalidInputWriter.write({nonLatinPadDesignator}, pcbOutputPath));
+        QVERIFY(invalidInputWriter.diagnostics().join('\n').contains(QStringLiteral("焊盘编号包含无法编码的字符")));
         AltiumPcbComponent oversizedPcbText;
         oversizedPcbText.name = QStringLiteral("OVERSIZED_PCB_TEXT");
         AltiumPcbText oversizedText;
@@ -988,6 +999,13 @@ private slots:
         oversizedPcbText.texts.append(oversizedText);
         QVERIFY(!invalidInputWriter.write({oversizedPcbText}, pcbOutputPath));
         QVERIFY(invalidInputWriter.diagnostics().join('\n').contains(QStringLiteral("文本内容超过 255 字节")));
+        AltiumPcbComponent nonLatinPcbText;
+        nonLatinPcbText.name = QStringLiteral("NON_LATIN_TEXT");
+        AltiumPcbText nonLatinText;
+        nonLatinText.text = QStringLiteral("中文文本");
+        nonLatinPcbText.texts.append(nonLatinText);
+        QVERIFY(!invalidInputWriter.write({nonLatinPcbText}, pcbOutputPath));
+        QVERIFY(invalidInputWriter.diagnostics().join('\n').contains(QStringLiteral("文本内容包含无法编码的字符")));
         AltiumPcbComponent invalidLayerPcb;
         invalidLayerPcb.name = QStringLiteral("INVALID_LAYER");
         AltiumPcbTrack invalidLayerTrack;

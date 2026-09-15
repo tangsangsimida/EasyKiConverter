@@ -73,12 +73,19 @@ bool AltiumPcbLibWriter::validateComponents(const QList<AltiumPcbComponent>& com
         value.replace('\n', ' ');
         return value.trimmed().toCaseFolded();
     };
+    const auto isLosslessLatin1 = [](const QString& value) {
+        const QByteArray encoded = value.toLatin1();
+        return QString::fromLatin1(encoded) == value;
+    };
     QSet<QString> componentNames;
     for (const AltiumPcbComponent& component : components) {
         if (component.name.trimmed().isEmpty())
             return reject(QStringLiteral("Altium PcbLib 封装名称为空，已拒绝写入"));
         if (component.name.toLatin1().size() > 255)
             return reject(QStringLiteral("Altium PcbLib 封装 %1 名称超过 255 字节，已拒绝写入").arg(component.name));
+        if (!isLosslessLatin1(component.name))
+            return reject(
+                QStringLiteral("Altium PcbLib 封装名称包含无法编码的字符: %1，已拒绝写入").arg(component.name));
         const QString foldedName = component.name.trimmed().toCaseFolded();
         if (componentNames.contains(foldedName))
             return reject(
@@ -89,6 +96,9 @@ bool AltiumPcbLibWriter::validateComponents(const QList<AltiumPcbComponent>& com
             if (pad.designator.toLatin1().size() > 255)
                 return reject(
                     QStringLiteral("Altium PcbLib 封装 %1 的焊盘编号超过 255 字节，已拒绝写入").arg(component.name));
+            if (!isLosslessLatin1(pad.designator))
+                return reject(QStringLiteral("Altium PcbLib 封装 %1 的焊盘编号包含无法编码的字符，已拒绝写入")
+                                  .arg(component.name));
             if (pad.isSMD && (pad.layer < 1 || pad.layer > 74))
                 return reject(QStringLiteral("Altium PcbLib 封装 %1 包含无效焊盘层号，已拒绝写入").arg(component.name));
             const auto isValidPadShape = [](uint8_t shape) {
@@ -122,6 +132,9 @@ bool AltiumPcbLibWriter::validateComponents(const QList<AltiumPcbComponent>& com
             if (text.text.toLatin1().size() > 255)
                 return reject(
                     QStringLiteral("Altium PcbLib 封装 %1 的文本内容超过 255 字节，已拒绝写入").arg(component.name));
+            if (!isLosslessLatin1(text.text))
+                return reject(QStringLiteral("Altium PcbLib 封装 %1 的文本内容包含无法编码的字符，已拒绝写入")
+                                  .arg(component.name));
             if (text.layer < 1 || text.layer > 74)
                 return reject(QStringLiteral("Altium PcbLib 封装 %1 包含无效文本层号，已拒绝写入").arg(component.name));
             if (text.height <= 0 || text.strokeWidth < 0)
