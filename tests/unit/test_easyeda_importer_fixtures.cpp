@@ -521,7 +521,10 @@ private slots:
         int partTwoRectangleCount = 0;
         int partOneImageCount = 0;
         int partTwoParameterCount = 0;
+        QList<int> contentIndexes;
         for (const auto& record : records) {
+            if (record.indexInSheet >= 0)
+                contentIndexes.append(record.indexInSheet);
             if (record.ownerPartId == -1)
                 ++commonRecordCount;
             else if (record.ownerPartId == 1)
@@ -562,6 +565,8 @@ private slots:
         QCOMPARE(partOneImageCount, 1);
         QVERIFY(commonParameterCount >= 2);
         QCOMPARE(partTwoParameterCount, 1);
+        for (int i = 1; i < contentIndexes.size(); ++i)
+            QVERIFY(contentIndexes.at(i) > contentIndexes.at(i - 1));
     }
 
     void testFootprintFixtureImportsMetadataAndGeometry() {
