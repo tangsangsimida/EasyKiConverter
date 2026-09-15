@@ -1,7 +1,11 @@
+#include "core/altium/ExporterAltiumFootprint.h"
 #include "core/altium/ExporterAltiumSymbol.h"
+#include "core/altium/readers/AltiumPcbLibReader.h"
 #include "core/altium/readers/AltiumSchLibReader.h"
+#include "core/altium/utils/AltiumConstants.h"
 #include "core/easyeda/EasyedaFootprintImporter.h"
 #include "core/easyeda/EasyedaSymbolImporter.h"
+#include "core/ir/FootprintDataConverter.h"
 #include "core/ir/SymbolDataConverter.h"
 #include "tests/common/TestPaths.hpp"
 
@@ -534,6 +538,54 @@ private slots:
         QCOMPARE(footprint->rectangles().first().strokeWidth, 1.0);
         QCOMPARE(footprint->layers().size(), 2);
         QCOMPARE(footprint->objectVisibilities().size(), 2);
+    }
+
+    void testFootprintFixtureExportsThroughCompleteAltiumChain() {
+        QString error;
+        const QJsonObject fixture = loadFixtureObject(QStringLiteral("easyeda/footprint_basic.json"), &error);
+        QVERIFY2(error.isEmpty(), qPrintable(error));
+
+        EasyedaFootprintImporter importer;
+        const QSharedPointer<FootprintData> footprint = importer.importFootprintData(fixture);
+        QVERIFY(footprint);
+
+        const IR::FootprintComponentIR footprintIr = IR::toFootprintIR(*footprint);
+        QCOMPARE(footprintIr.name, QStringLiteral("FIXTURE_FOOTPRINT"));
+        QCOMPARE(footprintIr.pads.size(), 1);
+        QCOMPARE(footprintIr.tracks.size(), 1);
+        QCOMPARE(footprintIr.rectangles.size(), 1);
+
+        QTemporaryDir outputDir;
+        QVERIFY(outputDir.isValid());
+        const QString outputPath = outputDir.filePath(QStringLiteral("fixture.PcbLib"));
+        ExporterAltiumFootprint exporter;
+        QVERIFY(exporter.exportFootprintLibrary({footprintIr}, QStringLiteral("fixture"), outputPath));
+        QVERIFY2(exporter.diagnostics().isEmpty(), qPrintable(exporter.diagnostics().join('\n')));
+
+        AltiumPcbLibReader reader;
+        QVERIFY2(reader.open(outputPath), qPrintable(reader.errorString()));
+        QVector<AltiumPcbLibReader::PrimitiveRecord> objects;
+        QVERIFY2(reader.readFootprintObjects(QStringLiteral("FIXTURE_FOOTPRINT"), &objects),
+                 qPrintable(reader.errorString()));
+
+        bool foundPad = false;
+        bool foundTrack = false;
+        bool foundFill = false;
+        for (const auto& object : objects) {
+            if (object.objectId == AltiumConstants::PCB_OBJECT_PAD) {
+                QVERIFY(object.hasPadFields);
+                foundPad = true;
+            } else if (object.objectId == AltiumConstants::PCB_OBJECT_TRACK) {
+                QVERIFY(object.hasTrackFields);
+                foundTrack = true;
+            } else if (object.objectId == AltiumConstants::PCB_OBJECT_FILL) {
+                QVERIFY(object.hasFillFields);
+                foundFill = true;
+            }
+        }
+        QVERIFY(foundPad);
+        QVERIFY(foundTrack);
+        QVERIFY(foundFill);
     }
 
     void testRealCadFixtureWith3DImportsSymbolAndFootprint() {
