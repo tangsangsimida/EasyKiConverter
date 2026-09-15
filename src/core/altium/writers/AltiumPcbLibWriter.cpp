@@ -111,6 +111,9 @@ bool AltiumPcbLibWriter::validateComponents(const QList<AltiumPcbComponent>& com
         if (!isLosslessLatin1(component.name))
             return reject(
                 QStringLiteral("Altium PcbLib 封装名称包含无法编码的字符: %1，已拒绝写入").arg(component.name));
+        if (!std::isfinite(component.height) || component.height < 0.0)
+            return reject(
+                QStringLiteral("Altium PcbLib 封装 %1 的高度必须为非负有限值，已拒绝写入").arg(component.name));
         const QString foldedName = component.name.trimmed().toCaseFolded();
         if (componentNames.contains(foldedName))
             return reject(
