@@ -2759,6 +2759,58 @@ private slots:
     }
 
     /**
+     * @brief 验证 SchLib IEEE 记录的编号、缩放、线宽和方向字段不会越界。
+     */
+    void rejectsInvalidSchLibIeeeRecords() {
+        const auto verifyRejectedRecord =
+            [](const QMap<QString, QString>& parameters, const QString& expectedMessage, const QString& componentName) {
+                QTemporaryDir tempDir;
+                QVERIFY(tempDir.isValid());
+
+                OLECompoundWriter writer;
+                QVERIFY(writer.create());
+                QByteArray headerData;
+                AltiumBinaryWriter headerWriter(headerData);
+                headerWriter.writeCStringParameterBlock({{QStringLiteral("COMPCOUNT"), QStringLiteral("1")}});
+                headerWriter.writeInt32(1);
+                headerWriter.writeStringBlock(componentName);
+                QVERIFY(writer.writeStream(QStringLiteral("FileHeader"), headerData));
+                QVERIFY(writer.addStorage(componentName));
+
+                QByteArray componentData;
+                AltiumBinaryWriter componentWriter(componentData);
+                componentWriter.writeCStringParameterBlock(parameters);
+                QVERIFY(writer.writeStream(componentName, QStringLiteral("Data"), componentData));
+                const QString path = QDir(tempDir.path()).filePath(componentName + QStringLiteral(".SchLib"));
+                QVERIFY(writer.saveToFile(path));
+
+                AltiumSchLibReader reader;
+                QVERIFY2(reader.open(path), qPrintable(reader.errorString()));
+                QVector<AltiumSchLibReader::Record> records;
+                QVERIFY(!reader.readComponentRecords(componentName, &records));
+                QVERIFY(records.isEmpty());
+                QVERIFY(reader.errorString().contains(expectedMessage));
+            };
+
+        verifyRejectedRecord(
+            {{QStringLiteral("RECORD"), QStringLiteral("3")}, {QStringLiteral("Symbol"), QStringLiteral("35")}},
+            QStringLiteral("IEEE 符号编号无效"),
+            QStringLiteral("INVALID_IEEE_SYMBOL_RECORD"));
+        verifyRejectedRecord(
+            {{QStringLiteral("RECORD"), QStringLiteral("3")}, {QStringLiteral("ScaleFactor"), QStringLiteral("0")}},
+            QStringLiteral("IEEE 缩放因子无效"),
+            QStringLiteral("INVALID_IEEE_SCALE_RECORD"));
+        verifyRejectedRecord(
+            {{QStringLiteral("RECORD"), QStringLiteral("3")}, {QStringLiteral("LineWidth"), QStringLiteral("4")}},
+            QStringLiteral("IEEE 线宽索引无效"),
+            QStringLiteral("INVALID_IEEE_WIDTH_RECORD"));
+        verifyRejectedRecord(
+            {{QStringLiteral("RECORD"), QStringLiteral("3")}, {QStringLiteral("Orientation"), QStringLiteral("4")}},
+            QStringLiteral("IEEE 方向无效"),
+            QStringLiteral("INVALID_IEEE_ORIENTATION_RECORD"));
+    }
+
+    /**
      * @brief 验证 SchLib 矩形类记录的退化边界和负文本边距会被读取器拒绝。
      */
     void rejectsDegenerateSchLibBounds() {

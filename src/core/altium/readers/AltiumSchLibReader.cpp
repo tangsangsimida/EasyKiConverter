@@ -131,6 +131,21 @@ bool validateGraphicParameters(const QMap<QString, QString>& parameters, int rec
         (!readFiniteDouble(QStringLiteral("StartAngle")) || !readFiniteDouble(QStringLiteral("EndAngle"))))
         return failValidation(QStringLiteral("圆弧角度无效"));
 
+    if (recordType == 3) {
+        int symbol = 0;
+        if (!readInt(QStringLiteral("Symbol"), false, 0, &symbol) || symbol < 0 || symbol > 34)
+            return failValidation(QStringLiteral("IEEE 符号编号无效"));
+        int scaleFactor = 0;
+        if (!readInt(QStringLiteral("ScaleFactor"), false, 1, &scaleFactor) || scaleFactor < 1)
+            return failValidation(QStringLiteral("IEEE 缩放因子无效"));
+        int lineWidth = 0;
+        if (!readInt(QStringLiteral("LineWidth"), false, 0, &lineWidth) || lineWidth < 0 || lineWidth > 3)
+            return failValidation(QStringLiteral("IEEE 线宽索引无效"));
+        int orientation = 0;
+        if (!readInt(QStringLiteral("Orientation"), false, 0, &orientation) || orientation < 0 || orientation > 3)
+            return failValidation(QStringLiteral("IEEE 方向无效"));
+    }
+
     if (recordType == 10) {
         if (!validateBounds())
             return failValidation(QStringLiteral("圆角矩形边界尺寸无效"));
