@@ -247,6 +247,13 @@ bool AltiumSchLibWriter::write(const QList<AltiumSchComponent>& components,
             qWarning() << "AltiumSchLibWriter: Refusing to write a component without a name";
             return false;
         }
+        if (component.name.toLatin1().size() > 255) {
+            const QString diagnostic =
+                QStringLiteral("Altium SchLib 组件 %1 名称超过 255 字节，已拒绝写入").arg(component.name);
+            m_diagnostics.append(diagnostic);
+            qWarning() << "AltiumSchLibWriter:" << diagnostic;
+            return false;
+        }
         const QString foldedName = component.name.trimmed().toCaseFolded();
         if (componentNames.contains(foldedName)) {
             const QString diagnostic =

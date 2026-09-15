@@ -70,6 +70,8 @@ bool AltiumPcbLibWriter::validateComponents(const QList<AltiumPcbComponent>& com
     for (const AltiumPcbComponent& component : components) {
         if (component.name.trimmed().isEmpty())
             return reject(QStringLiteral("Altium PcbLib 封装名称为空，已拒绝写入"));
+        if (component.name.toLatin1().size() > 255)
+            return reject(QStringLiteral("Altium PcbLib 封装 %1 名称超过 255 字节，已拒绝写入").arg(component.name));
         const QString foldedName = component.name.trimmed().toCaseFolded();
         if (componentNames.contains(foldedName))
             return reject(

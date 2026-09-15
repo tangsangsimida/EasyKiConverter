@@ -616,6 +616,11 @@ private slots:
         QVERIFY(writer.diagnostics().join('\n').contains(QStringLiteral("组件名称为空")));
         QVERIFY(!writer.diagnostics().join('\n').contains(QStringLiteral("输入组件为空")));
 
+        AltiumSchComponent oversizedName;
+        oversizedName.name = QString(256, QChar('A'));
+        QVERIFY(!writer.write({oversizedName}, outputPath));
+        QVERIFY(writer.diagnostics().join('\n').contains(QStringLiteral("名称超过 255 字节")));
+
         AltiumSchComponent named;
         named.name = QStringLiteral("VALID");
         QVERIFY(!writer.write({named}, QString()));
@@ -839,6 +844,10 @@ private slots:
         AltiumPcbComponent unnamedPcb;
         QVERIFY(!invalidInputWriter.write({unnamedPcb}, pcbOutputPath));
         QVERIFY(invalidInputWriter.diagnostics().join('\n').contains(QStringLiteral("封装名称为空")));
+        AltiumPcbComponent oversizedPcbName;
+        oversizedPcbName.name = QString(256, QChar('A'));
+        QVERIFY(!invalidInputWriter.write({oversizedPcbName}, pcbOutputPath));
+        QVERIFY(invalidInputWriter.diagnostics().join('\n').contains(QStringLiteral("名称超过 255 字节")));
         AltiumPcbComponent invalidPadPcb;
         invalidPadPcb.name = QStringLiteral("INVALID_PAD_SIZE");
         invalidPadPcb.pads.append(AltiumPcbPad());
