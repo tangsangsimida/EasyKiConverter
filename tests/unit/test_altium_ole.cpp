@@ -3556,6 +3556,24 @@ private slots:
         QVERIFY(invalidImageExporter.diagnostics().contains(
             QStringLiteral("符号 INVALID_IMAGE_DATA 图片图元 0 的边界、线宽或资源无效，已跳过")));
 
+        IR::SymbolComponentIR malformedDataUrlImageSymbol;
+        malformedDataUrlImageSymbol.name = QStringLiteral("MALFORMED_DATA_URL_IMAGE");
+        IR::SymbolImageIR malformedDataUrlImage;
+        malformedDataUrlImage.x1 = 1.0;
+        malformedDataUrlImage.y1 = 1.0;
+        malformedDataUrlImage.fileName = QStringLiteral("data:image/png;base64,not-decoded");
+        malformedDataUrlImageSymbol.images.append(malformedDataUrlImage);
+        ExporterAltiumSymbol malformedDataUrlImageExporter;
+        const QString malformedDataUrlImagePath =
+            QDir(tempDir.path()).filePath(QStringLiteral("malformed-data-url-image.SchLib"));
+        QVERIFY(malformedDataUrlImageExporter.exportSymbol(malformedDataUrlImageSymbol, malformedDataUrlImagePath));
+        QVERIFY(malformedDataUrlImageExporter.diagnostics().contains(
+            QStringLiteral("符号 MALFORMED_DATA_URL_IMAGE 图片图元 0 包含未解析的 data URL，已跳过")));
+        QByteArray malformedDataUrlImageData;
+        QVERIFY(readCfbStream(
+            malformedDataUrlImagePath, QStringLiteral("MALFORMED_DATA_URL_IMAGE/Data"), malformedDataUrlImageData));
+        QVERIFY(!malformedDataUrlImageData.contains("RECORD=30"));
+
         IR::SymbolComponentIR invalidArcSymbol;
         invalidArcSymbol.name = QStringLiteral("INVALID_ARC_DATA");
         IR::SymbolArcIR invalidArc;

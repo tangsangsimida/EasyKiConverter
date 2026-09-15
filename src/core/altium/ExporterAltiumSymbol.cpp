@@ -664,11 +664,18 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
         const IR::SymbolImageIR& image = data.images.at(i);
         const bool validBounds = std::isfinite(image.x0) && std::isfinite(image.y0) && std::isfinite(image.x1) &&
                                  std::isfinite(image.y1) && image.x0 != image.x1 && image.y0 != image.y1;
-        const bool hasSource = !image.fileName.trimmed().isEmpty() || !image.data.isEmpty();
-        if (!validBounds || !hasSource || !std::isfinite(image.rotation) || !std::isfinite(image.strokeWidth) ||
-            image.strokeWidth < 0.0) {
-            m_diagnostics.append(
-                QStringLiteral("符号 %1 图片图元 %2 的边界、线宽或资源无效，已跳过").arg(data.name).arg(i));
+        const QString imageSource = image.fileName.trimmed();
+        const bool hasSource = !imageSource.isEmpty() || !image.data.isEmpty();
+        const bool hasUnparsedDataUrl = imageSource.startsWith(QStringLiteral("data:"), Qt::CaseInsensitive);
+        if (!validBounds || !hasSource || hasUnparsedDataUrl || !std::isfinite(image.rotation) ||
+            !std::isfinite(image.strokeWidth) || image.strokeWidth < 0.0) {
+            if (hasUnparsedDataUrl) {
+                m_diagnostics.append(
+                    QStringLiteral("符号 %1 图片图元 %2 包含未解析的 data URL，已跳过").arg(data.name).arg(i));
+            } else {
+                m_diagnostics.append(
+                    QStringLiteral("符号 %1 图片图元 %2 的边界、线宽或资源无效，已跳过").arg(data.name).arg(i));
+            }
             continue;
         }
         AltiumSchImage altiumImage = convertImage(image);
