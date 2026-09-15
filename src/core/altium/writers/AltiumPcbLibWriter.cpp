@@ -130,6 +130,14 @@ bool AltiumPcbLibWriter::validateComponents(const QList<AltiumPcbComponent>& com
             if (region.vertices.size() < 3)
                 return reject(QStringLiteral("Altium PcbLib 封装 %1 区域顶点不足，已拒绝写入").arg(component.name));
         }
+        for (const AltiumPcbComponent::Model3D& model : component.models) {
+            if (model.name.trimmed().isEmpty())
+                return reject(
+                    QStringLiteral("Altium PcbLib 封装 %1 的 3D 模型名称为空，已拒绝写入").arg(component.name));
+            if (model.stepData.isEmpty())
+                return reject(
+                    QStringLiteral("Altium PcbLib 封装 %1 的 3D 模型数据为空，已拒绝写入").arg(component.name));
+        }
         const int primitiveCount = countPrimitives(component);
         QSet<int> extendedPrimitiveIndices;
         for (const AltiumPcbExtendedPrimitiveInfo& info : component.extendedPrimitives) {

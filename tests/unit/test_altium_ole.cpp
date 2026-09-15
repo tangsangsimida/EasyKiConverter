@@ -811,6 +811,7 @@ private slots:
         invalidPcb.bodies.append(invalidBody);
         AltiumPcbComponent::Model3D invalidModel;
         invalidModel.name = QStringLiteral("invalid.step");
+        invalidModel.stepData = QByteArrayLiteral("ISO-10303-21;");
         invalidModel.rotX = std::numeric_limits<double>::infinity();
         invalidPcb.models.append(invalidModel);
         AltiumPcbLibWriter pcbWriter;
@@ -904,6 +905,14 @@ private slots:
         invalidExtendedInfo.extendedPrimitives.append(invalidExtendedEntry);
         QVERIFY(!invalidInputWriter.write({invalidExtendedInfo}, pcbOutputPath));
         QVERIFY(invalidInputWriter.diagnostics().join('\n').contains(QStringLiteral("扩展图元索引无效")));
+
+        AltiumPcbComponent invalidModelData;
+        invalidModelData.name = QStringLiteral("INVALID_MODEL_DATA");
+        AltiumPcbComponent::Model3D emptyModel;
+        emptyModel.name = QStringLiteral("empty.step");
+        invalidModelData.models.append(emptyModel);
+        QVERIFY(!invalidInputWriter.write({invalidModelData}, pcbOutputPath));
+        QVERIFY(invalidInputWriter.diagnostics().join('\n').contains(QStringLiteral("3D 模型数据为空")));
     }
 
     /**
