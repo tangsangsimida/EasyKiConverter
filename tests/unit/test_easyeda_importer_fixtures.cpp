@@ -588,6 +588,16 @@ private slots:
         QVERIFY(foundFill);
     }
 
+    void testGeometryNormalizerAcceptsAllWhitespaceSeparators() {
+        const QList<QPointF> flatPoints =
+            IR::GeometryNormalizer::parseFlatPointString(QStringLiteral(" 0\t0\n10 20\r\n30\t40 "), 1.0);
+        QCOMPARE(flatPoints, QList<QPointF>({QPointF(0.0, 0.0), QPointF(10.0, 20.0), QPointF(30.0, 40.0)}));
+
+        const QList<QPointF> commaPoints =
+            IR::GeometryNormalizer::parseCommaSeparatedPoints(QStringLiteral("0,0\t10,20\n30,40"), 1.0);
+        QCOMPARE(commaPoints, QList<QPointF>({QPointF(0.0, 0.0), QPointF(10.0, 20.0), QPointF(30.0, 40.0)}));
+    }
+
     void testRealCadFixtureWith3DImportsSymbolAndFootprint() {
         QString error;
         const QJsonObject fixture = loadFixtureObject(QStringLiteral("easyeda/cad_basic.json"), &error);

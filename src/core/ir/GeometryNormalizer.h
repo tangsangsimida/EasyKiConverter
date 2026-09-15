@@ -18,6 +18,7 @@
 #include "core/utils/SvgPathParser.h"
 
 #include <QPointF>
+#include <QRegularExpression>
 #include <QString>
 #include <QStringList>
 
@@ -53,7 +54,7 @@ inline StrokeStyle parseStrokeStyle(const QString& style) {
  */
 inline QList<QPointF> parseFlatPointString(const QString& pointsStr, double scaleFactor = EASYEDA_PX_TO_MM) {
     QList<QPointF> points;
-    const QStringList parts = pointsStr.trimmed().split(' ', Qt::SkipEmptyParts);
+    const QStringList parts = pointsStr.trimmed().split(QRegularExpression(QStringLiteral("\\s+")), Qt::SkipEmptyParts);
     for (int i = 0; i + 1 < parts.size(); i += 2) {
         bool ok1 = false, ok2 = false;
         const double x = parts[i].toDouble(&ok1);
@@ -73,7 +74,7 @@ inline QList<QPointF> parseFlatPointString(const QString& pointsStr, double scal
  */
 inline QList<QPointF> parseCommaSeparatedPoints(const QString& pointsStr, double scaleFactor = EASYEDA_PX_TO_MM) {
     QList<QPointF> points;
-    const QStringList pairs = pointsStr.trimmed().split(' ', Qt::SkipEmptyParts);
+    const QStringList pairs = pointsStr.trimmed().split(QRegularExpression(QStringLiteral("\\s+")), Qt::SkipEmptyParts);
     for (const auto& pair : pairs) {
         const QStringList xy = pair.split(',');
         if (xy.size() >= 2) {
