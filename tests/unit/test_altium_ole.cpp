@@ -1145,7 +1145,10 @@ private slots:
         textFrame.cornerX = 1600000;
         textFrame.cornerY = 500000;
         textFrame.text = QStringLiteral("说明\n第二行");
-        textFrame.fontId = 1;
+        textFrame.fontName = QStringLiteral("Courier New");
+        textFrame.fontSizeMm = 25.4 / 72.0 * 11.0;
+        textFrame.bold = true;
+        textFrame.italic = true;
         textFrame.showBorder = true;
         symbol.textFrames.append(textFrame);
         AltiumSchText styledText;
@@ -1222,6 +1225,10 @@ private slots:
         QVERIFY(schHeader.contains("Italic2=T"));
         QVERIFY(schHeader.contains("FontName3=Times New Roman"));
         QVERIFY(schHeader.contains("Size3=12"));
+        QVERIFY(schHeader.contains("FontName4=Courier New"));
+        QVERIFY(schHeader.contains("Size4=11"));
+        QVERIFY(schHeader.contains("Bold4=T"));
+        QVERIFY(schHeader.contains("Italic4=T"));
 
         QByteArray schData;
         QVERIFY(readCfbStream(schPath, QStringLiteral("C2040/Data"), schData));
@@ -1259,7 +1266,8 @@ private slots:
         QVERIFY(schData.contains("SecondaryRadius=1"));
         QVERIFY(schData.contains("RECORD=28"));
         QVERIFY(schData.contains(QStringLiteral("第二行").toUtf8()));
-        QVERIFY(schData.contains("FontID=2"));
+        QVERIFY(schData.contains("FontID=4"));
+        QVERIFY(schData.contains("FontSize=3.8806"));
         const int fallbackTextOffset = schData.indexOf("Text=Fallback font");
         const int fallbackRecordOffset = schData.lastIndexOf("|RECORD=4|", fallbackTextOffset);
         const int nextFallbackRecordOffset = schData.indexOf("|RECORD=", fallbackTextOffset + 1);

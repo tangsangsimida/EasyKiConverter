@@ -265,6 +265,10 @@ struct AltiumSchTextFrame {
     uint32_t color = 0x000000;
     uint32_t areaColor = 0x000000;
     uint32_t textColor = 0x000000;
+    QString fontName;  ///< 字体族；为空时使用字体表默认字体
+    double fontSizeMm = 0.0;  ///< 字体大小（mm，0 表示使用字体编号默认值）
+    bool bold = false;  ///< 是否粗体
+    bool italic = false;  ///< 是否斜体
     int fontId = 0;
     int orientation = 0;
     int alignment = 0;

@@ -1154,6 +1154,10 @@ AltiumSchTextFrame ExporterAltiumSymbol::convertTextFrame(const IR::SymbolTextFr
     altiumFrame.color = toAltiumColor(frame.strokeColor);
     altiumFrame.areaColor = frame.isFilled ? toAltiumColor(frame.fillColor) : 0;
     altiumFrame.textColor = toAltiumColor(frame.textColor);
+    altiumFrame.fontName = frame.fontFamily;
+    altiumFrame.fontSizeMm = frame.fontSizeMm;
+    altiumFrame.bold = frame.bold;
+    altiumFrame.italic = frame.italic;
     altiumFrame.fontId = qMax(0, frame.fontId);
     altiumFrame.orientation = ((frame.orientation % 4) + 4) % 4;
     altiumFrame.alignment = qMax(0, frame.alignment);

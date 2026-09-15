@@ -183,6 +183,14 @@ void AltiumSchLibWriter::registerTextFonts(const QList<AltiumSchComponent>& comp
             const int fontSize = hasValidFontSize ? qMax(1, qRound(text.fontSizeMm / MILLIMETERS_PER_POINT)) : 10;
             getOrAddFont(fontName, fontSize, text.bold, text.italic);
         }
+        for (const AltiumSchTextFrame& frame : component.textFrames) {
+            const bool hasValidFontSize = std::isfinite(frame.fontSizeMm) && frame.fontSizeMm > 0.0;
+            if (frame.fontName.isEmpty() && frame.fontId > 0 && !hasValidFontSize)
+                continue;
+            const QString fontName = frame.fontName.isEmpty() ? QStringLiteral("Times New Roman") : frame.fontName;
+            const int fontSize = hasValidFontSize ? qMax(1, qRound(frame.fontSizeMm / MILLIMETERS_PER_POINT)) : 10;
+            getOrAddFont(fontName, fontSize, frame.bold, frame.italic);
+        }
         for (const AltiumSchParameter& parameter : component.parameters) {
             if (!std::isfinite(parameter.fontSizeMm) || parameter.fontSizeMm <= 0.0)
                 continue;
@@ -1566,7 +1574,17 @@ void AltiumSchLibWriter::writeTextFrameRecord(AltiumBinaryWriter& writer, const 
     addColorParam(params, "Color", frame.color);
     params["AreaColor"] = QString::number(frame.areaColor);
     addColorParam(params, "TextColor", frame.textColor);
-    params["FontID"] = QString::number(frame.fontId >= 1 && frame.fontId <= m_fonts.size() ? frame.fontId : 1);
+    const bool hasValidFontSize = std::isfinite(frame.fontSizeMm) && frame.fontSizeMm > 0.0;
+    int fontId = frame.fontId;
+    if (!frame.fontName.isEmpty() || hasValidFontSize || fontId <= 0) {
+        constexpr double MILLIMETERS_PER_POINT = 25.4 / 72.0;
+        const QString fontName = frame.fontName.isEmpty() ? QStringLiteral("Times New Roman") : frame.fontName;
+        const int fontSize = hasValidFontSize ? qMax(1, qRound(frame.fontSizeMm / MILLIMETERS_PER_POINT)) : 10;
+        fontId = getOrAddFont(fontName, fontSize, frame.bold, frame.italic);
+    }
+    params["FontID"] = QString::number(fontId >= 1 && fontId <= m_fonts.size() ? fontId : 1);
+    if (hasValidFontSize)
+        params["FontSize"] = QString::number(frame.fontSizeMm, 'f', 4);
     if (frame.text.trimmed().isEmpty()) {
         const QString diagnostic = QStringLiteral("Altium SchLib 文本框内容为空，仍保留记录以维持记录计数");
         m_diagnostics.append(diagnostic);
