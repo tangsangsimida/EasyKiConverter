@@ -1124,7 +1124,8 @@ bool ComponentCacheService::copyModel3DToFile(const QString& uuid,
     }
 
     QString sourcePath = model3DPath(uuid, extension);
-    if (!QFileInfo::exists(sourcePath)) {
+    const QFileInfo sourceInfo(sourcePath);
+    if (!sourceInfo.exists() || !sourceInfo.isFile() || sourceInfo.size() <= 0) {
         LOG_WARN(LogModule::Core, "copyModel3DToFile: Source file does not exist: {}", sourcePath);
         return false;
     }
@@ -1144,10 +1145,11 @@ bool ComponentCacheService::copyModel3DToFile(const QString& uuid,
         QFile::remove(destinationPath);
     }
 
-    if (QFile::copy(sourcePath, destinationPath)) {
+    if (QFile::copy(sourcePath, destinationPath) && QFileInfo(destinationPath).size() > 0) {
         LOG_DEBUG(LogModule::Core, "Copied 3D model from cache to: {}", destinationPath);
         return true;
     } else {
+        QFile::remove(destinationPath);
         LOG_WARN(LogModule::Core, "copyModel3DToFile: Failed to copy {} -> {}", sourcePath, destinationPath);
         return false;
     }

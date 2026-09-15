@@ -252,6 +252,21 @@ private slots:
         }
     }
 
+    void testCopyModel3DRejectsEmptyCacheFile() {
+        const QString uuid = QStringLiteral("empty-model-13579");
+        const QString modelPath = QDir(m_cache->cacheDir()).filePath(QStringLiteral("model3d/%1.step").arg(uuid));
+        QVERIFY(QDir().mkpath(QFileInfo(modelPath).absolutePath()));
+        QFile modelFile(modelPath);
+        QVERIFY(modelFile.open(QIODevice::WriteOnly));
+        modelFile.close();
+
+        QTemporaryDir outputDir;
+        QVERIFY(outputDir.isValid());
+        const QString destinationPath = QDir(outputDir.path()).filePath(QStringLiteral("model.step"));
+        QVERIFY(!m_cache->copyModel3DToFile(uuid, QStringLiteral("step"), destinationPath));
+        QVERIFY(!QFileInfo::exists(destinationPath));
+    }
+
 private:
     QTemporaryDir m_tempDir;
     ComponentCacheService* m_cache = nullptr;
