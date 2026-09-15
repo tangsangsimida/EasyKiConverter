@@ -1,5 +1,7 @@
 #include "AltiumBinaryReader.h"
 
+#include <QSet>
+
 #include <cstring>
 
 namespace EasyKiConverter {
@@ -191,6 +193,8 @@ bool AltiumBinaryReader::parseCStringParameterData(const QByteArray& data, QMap<
     if (!block.isEmpty() && block.endsWith('\0'))
         block.chop(1);
     const QList<QByteArray> fields = block.split('|');
+    QSet<QString> rawKeys;
+    QSet<QString> utf8Keys;
     for (const QByteArray& field : fields) {
         if (field.isEmpty())
             continue;
@@ -201,9 +205,16 @@ bool AltiumBinaryReader::parseCStringParameterData(const QByteArray& data, QMap<
         const QByteArray rawValue = field.mid(separator + 1);
         if (key.startsWith("%UTF8%")) {
             const QString baseKey = QString::fromUtf8(key.mid(6));
+            if (baseKey.isEmpty() || utf8Keys.contains(baseKey))
+                return fail(QStringLiteral("参数块包含重复或空的 UTF-8 键"));
+            utf8Keys.insert(baseKey);
             (*params)[baseKey] = QString::fromUtf8(rawValue);
         } else {
-            (*params)[QString::fromLatin1(key)] = QString::fromLatin1(rawValue);
+            const QString baseKey = QString::fromLatin1(key);
+            if (rawKeys.contains(baseKey) || utf8Keys.contains(baseKey))
+                return fail(QStringLiteral("参数块包含重复键: %1").arg(baseKey));
+            rawKeys.insert(baseKey);
+            (*params)[baseKey] = QString::fromLatin1(rawValue);
         }
     }
     return true;

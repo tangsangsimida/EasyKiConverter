@@ -4155,6 +4155,14 @@ private slots:
         QCOMPARE(params.value(QStringLiteral("DESCRIPTION")), QStringLiteral("参数值"));
         QCOMPARE(reader.remaining(), 0);
         QVERIFY(!reader.hasError());
+
+        QByteArray duplicateData;
+        AltiumBinaryWriter duplicateWriter(duplicateData);
+        duplicateWriter.writeCStringParameterBlockRaw(QByteArrayLiteral("|DUPLICATE=first|DUPLICATE=second|"));
+        AltiumBinaryReader duplicateReader(duplicateData);
+        QMap<QString, QString> duplicateParameters;
+        QVERIFY(!duplicateReader.readCStringParameterBlock(&duplicateParameters));
+        QVERIFY(duplicateReader.errorString().contains(QStringLiteral("重复键")));
     }
 
     /**
