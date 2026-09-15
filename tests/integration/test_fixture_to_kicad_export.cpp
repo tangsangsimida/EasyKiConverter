@@ -91,6 +91,7 @@ private slots:
         QVERIFY(altiumRecordTypes.contains(2));  // Pin
         QVERIFY(altiumRecordTypes.contains(4));  // Text
         QVERIFY(altiumRecordTypes.contains(10) || altiumRecordTypes.contains(14));  // Rectangle/rounded rectangle
+        QVERIFY(altiumRecordTypes.contains(5));  // Native cubic Bézier from SVG curve
         QVERIFY(altiumRecordTypes.contains(30));  // Image
     }
 };
