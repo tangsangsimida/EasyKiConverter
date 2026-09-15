@@ -2021,6 +2021,49 @@ private slots:
     }
 
     /**
+     * @brief 验证二进制引脚也参与 SchLib 内容序号连续性校验。
+     */
+    void rejectsSchLibRecordIndexGapAcrossBinaryPin() {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        OLECompoundWriter writer;
+        QVERIFY(writer.create());
+        QByteArray headerData;
+        AltiumBinaryWriter headerWriter(headerData);
+        headerWriter.writeCStringParameterBlock(
+            {{QStringLiteral("COMPCOUNT"), QStringLiteral("1")}, {QStringLiteral("PARTCOUNT0"), QStringLiteral("2")}});
+        headerWriter.writeInt32(1);
+        headerWriter.writeStringBlock(QStringLiteral("INDEX_GAP"));
+        QVERIFY(writer.writeStream(QStringLiteral("FileHeader"), headerData));
+        QVERIFY(writer.addStorage(QStringLiteral("INDEX_GAP")));
+
+        QByteArray componentData;
+        AltiumBinaryWriter componentWriter(componentData);
+        componentWriter.writeCStringParameterBlock({{QStringLiteral("RECORD"), QStringLiteral("1")},
+                                                    {QStringLiteral("LibReference"), QStringLiteral("INDEX_GAP")}});
+        componentWriter.beginBlock(AltiumConstants::SCH_BLOCK_FLAG_BINARY_PIN);
+        componentWriter.writeInt32(2);
+        componentWriter.writeUInt8(0);
+        componentWriter.writeInt16(1);
+        componentWriter.writeUInt8(1);
+        componentWriter.endBlock();
+        componentWriter.writeCStringParameterBlock({{QStringLiteral("RECORD"), QStringLiteral("13")},
+                                                    {QStringLiteral("OWNERPARTID"), QStringLiteral("1")},
+                                                    {QStringLiteral("IndexInSheet"), QStringLiteral("2")}});
+        QVERIFY(writer.writeStream(QStringLiteral("INDEX_GAP"), QStringLiteral("Data"), componentData));
+        const QString path = QDir(tempDir.path()).filePath(QStringLiteral("index-gap.SchLib"));
+        QVERIFY(writer.saveToFile(path));
+
+        AltiumSchLibReader reader;
+        QVERIFY2(reader.open(path), qPrintable(reader.errorString()));
+        QVector<AltiumSchLibReader::Record> records;
+        QVERIFY(!reader.readComponentRecords(QStringLiteral("INDEX_GAP"), &records));
+        QVERIFY(records.isEmpty());
+        QVERIFY(reader.errorString().contains(QStringLiteral("IndexInSheet 不连续")));
+    }
+
+    /**
      * @brief 验证 SchLib 已知几何记录的半径和点列字段不会静默接受无效值。
      */
     void rejectsInvalidSchLibGeometryRecords() {

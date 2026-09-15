@@ -310,6 +310,7 @@ bool AltiumSchLibReader::readComponentRecords(int componentIndexValue, QVector<R
         return failRead(QStringLiteral("无法读取 SchLib 组件 Data 流"));
     AltiumBinaryReader reader(data);
     int lastIndexInSheet = -1;
+    int nextContentIndex = -1;
     while (reader.remaining() > 0) {
         const int startPosition = reader.position();
         QByteArray payload;
@@ -394,6 +395,27 @@ bool AltiumSchLibReader::readComponentRecords(int componentIndexValue, QVector<R
             if (record.ownerPartId >= 0 && record.ownerPartId > m_components.at(componentIndexValue).partCount) {
                 return failRead(
                     QStringLiteral("SchLib 二进制记录的 OWNERPARTID 超出部件范围，偏移量 %1").arg(startPosition));
+            }
+        }
+
+        // 图元参数记录和二进制引脚共享同一个内容序号。首条内容记录的
+        // IndexInSheet=0 可以省略，但后续记录必须紧接前一条内容记录；
+        // 否则写入端可能漏掉图元，Altium 的绘制顺序也会发生偏移。
+        const bool hasOwnerPartField = record.parameters.contains(QStringLiteral("OWNERPARTID")) ||
+                                       record.parameters.contains(QStringLiteral("OwnerPartId"));
+        const bool isIndexedParameter = record.hasParameters && hasOwnerPartField && record.recordType != 1 &&
+                                        record.recordType != 34 && (record.recordType != 41 || record.ownerPartId >= 1);
+        const bool isContentRecord = (!record.hasParameters && record.recordType == 2) || isIndexedParameter;
+        if (isContentRecord) {
+            if (nextContentIndex < 0) {
+                nextContentIndex = record.indexInSheet >= 0 ? record.indexInSheet + 1 : 1;
+            } else if (!record.hasParameters) {
+                ++nextContentIndex;
+            } else if (record.indexInSheet < 0 || record.indexInSheet != nextContentIndex) {
+                return failRead(
+                    QStringLiteral("SchLib 组件的内容记录 IndexInSheet 不连续，偏移量 %1").arg(startPosition));
+            } else {
+                ++nextContentIndex;
             }
         }
         records->append(record);
