@@ -1061,6 +1061,10 @@ bool AltiumSchLibWriter::validateGeometry(const AltiumSchComponent& component) {
         if (rect.locationX == rect.cornerX || rect.locationY == rect.cornerY)
             return reject(QStringLiteral("圆角矩形图元边界尺寸无效"));
     }
+    for (const AltiumSchLine& line : component.lines) {
+        if (line.locationX == line.cornerX && line.locationY == line.cornerY)
+            return reject(QStringLiteral("线段图元长度无效"));
+    }
     for (const AltiumSchTextFrame& frame : component.textFrames) {
         if (frame.locationX == frame.cornerX || frame.locationY == frame.cornerY)
             return reject(QStringLiteral("文本框边界尺寸无效"));

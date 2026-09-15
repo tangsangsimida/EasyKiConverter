@@ -745,6 +745,12 @@ private slots:
         QVERIFY(!writer.write({invalidRoundRectangleBounds}, outputPath));
         QVERIFY(writer.diagnostics().join('\n').contains(QStringLiteral("圆角矩形图元边界尺寸无效")));
 
+        AltiumSchComponent invalidLineGeometry;
+        invalidLineGeometry.name = QStringLiteral("INVALID_LINE_GEOMETRY");
+        invalidLineGeometry.lines.append(AltiumSchLine{});
+        QVERIFY(!writer.write({invalidLineGeometry}, outputPath));
+        QVERIFY(writer.diagnostics().join('\n').contains(QStringLiteral("线段图元长度无效")));
+
         AltiumSchComponent invalidStroke;
         invalidStroke.name = QStringLiteral("INVALID_STROKE_WIDTH");
         AltiumSchRectangle invalidStrokeRectangle;
