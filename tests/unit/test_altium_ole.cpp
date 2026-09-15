@@ -1185,6 +1185,10 @@ private slots:
         invalidCStringComponent.description = QStringLiteral("中文描述");
         QVERIFY(!invalidInputWriter.write({invalidCStringComponent}, pcbOutputPath));
         QVERIFY(invalidInputWriter.diagnostics().join('\n').contains(QStringLiteral("封装描述包含无法编码的字符")));
+
+        invalidCStringComponent.description = QStringLiteral("line\nbreak");
+        QVERIFY(!invalidInputWriter.write({invalidCStringComponent}, pcbOutputPath));
+        QVERIFY(invalidInputWriter.diagnostics().join('\n').contains(QStringLiteral("封装描述包含换行字符")));
     }
 
     /**
