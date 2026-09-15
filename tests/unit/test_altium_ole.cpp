@@ -20,6 +20,7 @@
 #include "core/altium/utils/AltiumBinaryReader.h"
 #include "core/altium/utils/AltiumBinaryWriter.h"
 #include "core/altium/utils/AltiumConstants.h"
+#include "core/altium/utils/AltiumCoord.h"
 #include "core/altium/utils/AltiumWriterUtils.h"
 #include "core/altium/writers/AltiumPcbLibWriter.h"
 #include "core/altium/writers/AltiumSchLibWriter.h"
@@ -450,6 +451,14 @@ class TestAltiumOle : public QObject {
     Q_OBJECT
 
 private slots:
+
+    /**
+     * @brief 验证极限原始坐标量化时不会发生整数溢出。
+     */
+    void coordinateConversionHandlesIntegerExtremes() {
+        QCOMPARE(AltiumCoord::toDxpInt(std::numeric_limits<int>::max()), int16_t(21475));
+        QCOMPARE(AltiumCoord::toDxpInt(std::numeric_limits<int>::min()), int16_t(-21475));
+    }
 
     /**
      * @brief 验证包含迷你流和常规流的 CFB 文件可被正确解析

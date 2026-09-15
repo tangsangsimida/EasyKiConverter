@@ -23,7 +23,8 @@ namespace AltiumCoord {
  */
 constexpr int16_t toDxpInt(int raw) {
     // 对称四舍五入，保持 0.4 mm 等非整数 mil 间距的相对比例。
-    const int rounded = raw >= 0 ? (raw + 50000) / 100000 : (raw - 50000) / 100000;
+    const int64_t widened = raw;
+    const int64_t rounded = widened >= 0 ? (widened + 50000) / 100000 : (widened - 50000) / 100000;
     return static_cast<int16_t>(rounded);
 }
 
