@@ -2679,6 +2679,53 @@ private slots:
     }
 
     /**
+     * @brief 验证 SchLib 圆弧和图片记录的半径、边界字段不会静默接受无效值。
+     */
+    void rejectsInvalidSchLibArcAndImageRecords() {
+        const auto verifyRejectedRecord =
+            [](const QMap<QString, QString>& parameters, const QString& expectedMessage, const QString& componentName) {
+                QTemporaryDir tempDir;
+                QVERIFY(tempDir.isValid());
+
+                OLECompoundWriter writer;
+                QVERIFY(writer.create());
+                QByteArray headerData;
+                AltiumBinaryWriter headerWriter(headerData);
+                headerWriter.writeCStringParameterBlock({{QStringLiteral("COMPCOUNT"), QStringLiteral("1")}});
+                headerWriter.writeInt32(1);
+                headerWriter.writeStringBlock(componentName);
+                QVERIFY(writer.writeStream(QStringLiteral("FileHeader"), headerData));
+                QVERIFY(writer.addStorage(componentName));
+
+                QByteArray componentData;
+                AltiumBinaryWriter componentWriter(componentData);
+                componentWriter.writeCStringParameterBlock(parameters);
+                QVERIFY(writer.writeStream(componentName, QStringLiteral("Data"), componentData));
+                const QString path = QDir(tempDir.path()).filePath(componentName + QStringLiteral(".SchLib"));
+                QVERIFY(writer.saveToFile(path));
+
+                AltiumSchLibReader reader;
+                QVERIFY2(reader.open(path), qPrintable(reader.errorString()));
+                QVector<AltiumSchLibReader::Record> records;
+                QVERIFY(!reader.readComponentRecords(componentName, &records));
+                QVERIFY(records.isEmpty());
+                QVERIFY(reader.errorString().contains(expectedMessage));
+            };
+
+        verifyRejectedRecord(
+            {{QStringLiteral("RECORD"), QStringLiteral("12")}, {QStringLiteral("Radius"), QStringLiteral("0")}},
+            QStringLiteral("Radius 无效"),
+            QStringLiteral("INVALID_ARC_RECORD"));
+        verifyRejectedRecord({{QStringLiteral("RECORD"), QStringLiteral("30")},
+                              {QStringLiteral("Location.X"), QStringLiteral("1")},
+                              {QStringLiteral("Location.Y"), QStringLiteral("2")},
+                              {QStringLiteral("Corner.X"), QStringLiteral("1")},
+                              {QStringLiteral("Corner.Y"), QStringLiteral("3")}},
+                             QStringLiteral("图片边界尺寸无效"),
+                             QStringLiteral("INVALID_IMAGE_RECORD"));
+    }
+
+    /**
      * @brief 验证 SchLib 矩形类记录的退化边界和负文本边距会被读取器拒绝。
      */
     void rejectsDegenerateSchLibBounds() {

@@ -105,7 +105,7 @@ bool validateGraphicParameters(const QMap<QString, QString>& parameters, int rec
         }
     }
 
-    if (recordType == 8 || recordType == 9 || recordType == 11) {
+    if (recordType == 8 || recordType == 9 || recordType == 11 || recordType == 12) {
         int radius = 0;
         if (!readInt(QStringLiteral("Radius"), true, 0, &radius) || radius <= 0)
             return failValidation(QStringLiteral("Radius 无效"));
@@ -130,6 +130,8 @@ bool validateGraphicParameters(const QMap<QString, QString>& parameters, int rec
     }
     if (recordType == 13 && !validateBounds())
         return failValidation(QStringLiteral("线段边界尺寸无效"));
+    if (recordType == 30 && !validateBounds())
+        return failValidation(QStringLiteral("图片边界尺寸无效"));
     if (recordType == 14 && !validateBounds())
         return failValidation(QStringLiteral("矩形边界尺寸无效"));
     if (recordType == 28) {
