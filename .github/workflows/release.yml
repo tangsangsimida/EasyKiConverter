@@ -251,6 +251,7 @@ jobs:
             local filename="$2"
             local platform_order
             local architecture
+            local architecture_display
             local architecture_order
             local format
             local format_order
@@ -283,14 +284,23 @@ jobs:
             esac
 
             case "$architecture" in
-              amd64) architecture_order=1 ;;
-              arm64) architecture_order=2 ;;
-              intel) architecture_order=3 ;;
+              amd64)
+                architecture_order=1
+                [[ "$platform" == Windows ]] && architecture_display="amd64（x64）" || architecture_display="amd64"
+                ;;
+              arm64)
+                architecture_order=2
+                [[ "$platform" == Windows ]] && architecture_display="arm64（Windows on Arm）" || architecture_display="arm64"
+                ;;
+              intel)
+                architecture_order=3
+                architecture_display="intel"
+                ;;
               *) return 0 ;;
             esac
 
             printf '%s\t%s\t%s\t| %s | %s | %s | [%s](https://github.com/%s/releases/download/%s/%s) |\n' \
-              "$platform_order" "$architecture_order" "$format_order" "$platform" "$architecture" "$format" \
+              "$platform_order" "$architecture_order" "$format_order" "$platform" "$architecture_display" "$format" \
               "$filename" "${GITHUB_REPOSITORY}" "$TAG_NAME" "$filename" >> "$download_rows"
           }
 
@@ -309,11 +319,11 @@ jobs:
             echo
             echo "## 下载"
             echo
-            echo "| 平台 | 架构 | 格式 | 文件 |"
+            echo "| 系统 | 架构 | 格式 | 文件 |"
             echo "| --- | --- | --- | --- |"
             LC_ALL=C sort -t $'\t' -k1,1n -k2,2n -k3,3n -k4,4 "$download_rows" | cut -f4-
             echo
-            echo "> Windows 架构使用 amd64 和 arm64 标识；文件名中的 x64 对应 amd64，arm64 文件对应 Windows on Arm。"
+            echo "> 下载表按 Windows、Linux、macOS 的系统顺序排列。Windows 的 amd64（x64）适用于常规 Intel/AMD 64 位设备，arm64（Windows on Arm）适用于 ARM64 设备。"
             echo
             echo "## 重要变化"
             echo
