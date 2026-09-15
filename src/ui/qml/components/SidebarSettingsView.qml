@@ -475,10 +475,7 @@ Item {
         // ==================== Altium 导出说明（仅 Altium 格式显示，带动画） ====================
         Item {
             Layout.fillWidth: true
-            Layout.preferredHeight: root.exportTargetModel !== null && root.exportTargetModel !== undefined
-                                    && root.exportTargetModel.currentIndex === 1
-                                    ? altiumInfoBox.implicitHeight + AppStyle.spacing.md * 2
-                                    : 0
+            Layout.preferredHeight: root.exportTargetModel !== null && root.exportTargetModel !== undefined && root.exportTargetModel.currentIndex === 1 ? altiumInfoBox.implicitHeight + AppStyle.spacing.md * 2 : 0
             clip: true
             Behavior on Layout.preferredHeight {
                 NumberAnimation {
@@ -624,9 +621,7 @@ Item {
         // ==================== 库信息（短窗口时自动隐藏，仅 KiCad 格式显示） ====================
         SidebarSection {
             title: qsTranslate("MainWindow", "库信息 (可选)")
-            visible: !ResponsiveHelper.isShortWindow
-                     && (root.exportTargetModel === null || root.exportTargetModel === undefined
-                         || root.exportTargetModel.currentIndex === 0)
+            visible: !ResponsiveHelper.isShortWindow && (root.exportTargetModel === null || root.exportTargetModel === undefined || root.exportTargetModel.currentIndex === 0)
             SidebarTextField {
                 label: qsTranslate("MainWindow", "符号库描述")
                 text: root.exportSettingsController ? root.exportSettingsController.symbolLibraryDescription : ""

@@ -670,9 +670,7 @@ Item {
                         ExportProgressCard {
                             Layout.fillWidth: true
                             exportProgressController: window.exportProgressController
-                            visible: window.exportProgressController
-                                      ? (window.exportProgressController.isExporting || window.exportProgressController.progress > 0)
-                                      : false
+                            visible: window.exportProgressController ? (window.exportProgressController.isExporting || window.exportProgressController.progress > 0) : false
                         }
 
                         // 转换结果
@@ -852,9 +850,7 @@ Item {
         height: 2
         z: -1
         color: "transparent"
-        visible: window.exportProgressController
-                  ? (window.exportProgressController.isExporting || window.exportProgressController.progress > 0)
-                  : false
+        visible: window.exportProgressController ? (window.exportProgressController.isExporting || window.exportProgressController.progress > 0) : false
         Rectangle {
             width: parent.width * ((window.exportProgressController ? window.exportProgressController.progress : 0) / 100)
             height: parent.height

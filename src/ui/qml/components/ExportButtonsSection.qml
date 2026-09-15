@@ -52,9 +52,7 @@ ColumnLayout {
         backgroundColor: AppStyle.colors.primary
         hoverColor: AppStyle.colors.primaryHover
         pressedColor: AppStyle.colors.primaryPressed
-        visible: exportButtonsSection.exportProgressController
-                 ? exportButtonsSection.exportProgressController.hasCompletedExport
-                 : false
+        visible: exportButtonsSection.exportProgressController ? exportButtonsSection.exportProgressController.hasCompletedExport : false
         onClicked: {
             if (exportButtonsSection.exportProgressController) {
                 var success = exportButtonsSection.exportProgressController.openLastExportedFolder();
@@ -145,9 +143,7 @@ ColumnLayout {
             Layout.preferredHeight: 56
             Layout.preferredWidth: 180
             // 仅在导出进行时可见
-        visible: exportButtonsSection.exportProgressController
-                 ? exportButtonsSection.exportProgressController.isExporting
-                 : false
+            visible: exportButtonsSection.exportProgressController ? exportButtonsSection.exportProgressController.isExporting : false
             text: (exportButtonsSection.exportProgressController && exportButtonsSection.exportProgressController.isStopping) ? qsTranslate("MainWindow", "正在停止...") : qsTranslate("MainWindow", "停止转换")
             iconName: "close"
             font.pixelSize: AppStyle.fontSizes.xl

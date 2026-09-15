@@ -330,10 +330,7 @@ Rectangle {
                     fillMode: Image.PreserveAspectFit
                     cache: true
                     asynchronous: true
-                    visible: itemData
-                             ? (itemData.validationPhase === "completed" || itemData.validationPhase === "fetching_preview")
-                                   && itemData.previewImageCount > 0
-                             : false
+                    visible: itemData ? (itemData.validationPhase === "completed" || itemData.validationPhase === "fetching_preview") && itemData.previewImageCount > 0 : false
                 }
 
                 BusyIndicator {
@@ -341,9 +338,7 @@ Rectangle {
                     width: 24
                     height: 24
                     running: (itemData && (itemData.validationPhase === "validating" || itemData.validationPhase === "fetching_preview")) ? true : false
-                    visible: itemData
-                             ? (itemData.validationPhase === "validating" || itemData.validationPhase === "fetching_preview")
-                             : false
+                    visible: itemData ? (itemData.validationPhase === "validating" || itemData.validationPhase === "fetching_preview") : false
                 }
 
                 Rectangle {
@@ -354,10 +349,7 @@ Rectangle {
                     color: "transparent"
                     border.color: AppStyle.colors.success
                     border.width: AppStyle.borderWidths.thick
-                    visible: itemData
-                             ? ((itemData.validationPhase === "completed" || itemData.validationPhase === "fetching_preview")
-                                && (!itemData.previewImageCount || itemData.previewImageCount === 0))
-                             : false
+                    visible: itemData ? ((itemData.validationPhase === "completed" || itemData.validationPhase === "fetching_preview") && (!itemData.previewImageCount || itemData.previewImageCount === 0)) : false
                     Shape {
                         id: checkShape
                         anchors.fill: parent
