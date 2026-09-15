@@ -255,6 +255,8 @@ bool validatePrimitiveFields(const AltiumPcbLibReader::PrimitiveRecord& object, 
             return reject(QStringLiteral("PcbLib 焊盘形状无效"));
         if (pad.holeSize < 0 || pad.holeSlotLengthRaw < 0)
             return reject(QStringLiteral("PcbLib 焊盘孔尺寸不能为负"));
+        if (object.layer == AltiumConstants::PCB_LAYER_MULTI && pad.holeSize <= 0)
+            return reject(QStringLiteral("PcbLib 通孔焊盘孔径必须为正"));
         if (pad.cornerRadiusPercentage > 100 || pad.mode > 3 || pad.powerPlaneConnectStyle > 2 ||
             (pad.reliefEntries != 2 && pad.reliefEntries != 4) || pad.drillType > 2 || pad.holeType > 2)
             return reject(QStringLiteral("PcbLib 焊盘扩展属性无效"));

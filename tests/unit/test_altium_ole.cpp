@@ -2017,6 +2017,43 @@ private slots:
         QVERIFY2(invalidPadReader.open(invalidPadPath), qPrintable(invalidPadReader.errorString()));
         QVERIFY(!invalidPadReader.readFootprintObjects(QStringLiteral("BROKEN"), &objects));
         QVERIFY(invalidPadReader.errorString().contains(QStringLiteral("焊盘形状无效")));
+
+        AltiumBinaryReader invalidThroughHoleBinaryReader(validPadData);
+        QString invalidThroughHolePadName;
+        QVERIFY(invalidThroughHoleBinaryReader.readStringBlock(&invalidThroughHolePadName));
+        uint8_t throughHolePadObjectId = 0;
+        QVERIFY(invalidThroughHoleBinaryReader.readUInt8(&throughHolePadObjectId));
+        QByteArray invalidThroughHolePadData;
+        AltiumBinaryWriter invalidThroughHolePadWriter(invalidThroughHolePadData);
+        invalidThroughHolePadWriter.writeStringBlock(invalidThroughHolePadName);
+        invalidThroughHolePadWriter.writeUInt8(throughHolePadObjectId);
+        for (int blockIndex = 0; blockIndex < 6; ++blockIndex) {
+            QByteArray payload;
+            uint8_t flags = 0;
+            QVERIFY(invalidThroughHoleBinaryReader.readBlock(&payload, &flags));
+            if (blockIndex == 4) {
+                // 公共头部首字节是层号；孔径位于公共头部和位置、三层尺寸之后。
+                QVERIFY(payload.size() > 48);
+                payload[0] = static_cast<char>(AltiumConstants::PCB_LAYER_MULTI);
+                payload[45] = '\0';
+                payload[46] = '\0';
+                payload[47] = '\0';
+                payload[48] = '\0';
+            }
+            invalidThroughHolePadWriter.beginBlock(flags);
+            invalidThroughHolePadWriter.writeBytes(payload);
+            invalidThroughHolePadWriter.endBlock();
+        }
+        QVERIFY(invalidThroughHoleBinaryReader.remaining() == 0);
+        const QString invalidThroughHolePath =
+            QDir(tempDir.path()).filePath(QStringLiteral("invalid-through-hole.PcbLib"));
+        QVERIFY(writeMalformedLibrary(invalidThroughHolePath, invalidThroughHolePadData));
+
+        AltiumPcbLibReader invalidThroughHoleReader;
+        QVERIFY2(invalidThroughHoleReader.open(invalidThroughHolePath),
+                 qPrintable(invalidThroughHoleReader.errorString()));
+        QVERIFY(!invalidThroughHoleReader.readFootprintObjects(QStringLiteral("BROKEN"), &objects));
+        QVERIFY(invalidThroughHoleReader.errorString().contains(QStringLiteral("通孔焊盘孔径必须为正")));
     }
 
     /**
