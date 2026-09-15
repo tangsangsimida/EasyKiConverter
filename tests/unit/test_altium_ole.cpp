@@ -1996,6 +1996,7 @@ private slots:
         // 添加一个 3D 模型
         AltiumPcbComponent::Model3D model;
         model.name = QStringLiteral("test.step");
+        model.id = QStringLiteral("model|id");
         model.stepData = QByteArrayLiteral("ISO-10303-21;");
         footprint.models.append(model);
 
@@ -2003,7 +2004,7 @@ private slots:
         body.layerName = QStringLiteral("MECHANICAL1");
         body.name = QStringLiteral("__BODY__");
         body.modelId = QStringLiteral("{12345678-1234-1234-1234-123456789012}");
-        body.modelName = QStringLiteral("test.step");
+        body.modelName = model.name;
         body.overallHeightRaw = 10000;  // 1mil
         body.outline = {QPointF(-50000, -50000), QPointF(50000, -50000), QPointF(50000, 50000), QPointF(-50000, 50000)};
         footprint.bodies.append(body);
@@ -2028,6 +2029,12 @@ private slots:
         const QString pcbPath = QDir(tempDir.path()).filePath(QStringLiteral("test_body.PcbLib"));
         AltiumPcbLibWriter pcbWriter;
         QVERIFY(pcbWriter.write({footprint}, pcbPath));
+
+        QByteArray modelData;
+        QVERIFY(readCfbStream(pcbPath, QStringLiteral("Library/Models/Data"), modelData));
+        QVERIFY(modelData.contains("ID=model id"));
+        QVERIFY(modelData.contains("NAME=test.step"));
+        QVERIFY(!modelData.contains("ID=model|id"));
 
         // 验证封装 Data 流包含 ComponentBody (Object ID = 12)
         QByteArray footprintData;

@@ -456,8 +456,15 @@ void AltiumPcbLibWriter::writeModelsStorage(OLECompoundWriter& ole, const QList<
     // Data 流（模型元数据）
     QByteArray modelData;
     AltiumBinaryWriter modelWriter(modelData);
+    const auto safeMetadataValue = [](QString value) {
+        value.replace('|', ' ');
+        value.replace('\0', ' ');
+        value.replace('\r', ' ');
+        value.replace('\n', ' ');
+        return value;
+    };
     for (const AltiumPcbComponent::Model3D& model : allModels) {
-        const QString id = model.id.isEmpty() ? model.name : model.id;
+        const QString id = safeMetadataValue(model.id.isEmpty() ? model.name : model.id);
         const QString metadata =
             QString("EMBED=TRUE|MODELSOURCE=Undefined|ID=%1|ROTX=%2|ROTY=%3|ROTZ=%4|DZ=%5|CHECKSUM=0|NAME=%6")
                 .arg(id,
@@ -466,7 +473,7 @@ void AltiumPcbLibWriter::writeModelsStorage(OLECompoundWriter& ole, const QList<
                      QString::number(normalizeFiniteValue(model.rotZ, 0.0, QStringLiteral("3D 模型 Z 旋转")), 'f', 6),
                      QString::number(
                          AltiumCoord::mmToRaw(normalizeFiniteValue(model.dz, 0.0, QStringLiteral("3D 模型 Z 偏移")))),
-                     model.name);
+                     safeMetadataValue(model.name));
         QByteArray encoded = metadata.toLatin1();
         encoded.append('\0');
         modelWriter.writeInt32(encoded.size());
