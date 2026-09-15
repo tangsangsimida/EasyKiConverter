@@ -59,6 +59,46 @@ QStringList SymbolData::validationErrors() const {
             }
         }
     };
+    const auto validatePath = [&](const QString& value, const QString& prefix, int index) {
+        const QString path = value.trimmed();
+        if (path.isEmpty()) {
+            addError(QString("%1Path %2 has no commands").arg(prefix).arg(index));
+            return;
+        }
+
+        bool hasMoveCommand = false;
+        bool hasDrawableCommand = false;
+        bool hasUnsupportedCommand = false;
+        const QRegularExpression commandExpression(QStringLiteral("[A-Za-z]"));
+        auto matchIterator = commandExpression.globalMatch(path);
+        while (matchIterator.hasNext()) {
+            const auto match = matchIterator.next();
+            const int position = match.capturedStart();
+            const QChar command = match.captured(0).at(0);
+            const bool isExponentMarker =
+                (command == QLatin1Char('e') || command == QLatin1Char('E')) && position > 0 &&
+                position + 1 < path.size() && path.at(position - 1).isDigit() &&
+                (path.at(position + 1).isDigit() || path.at(position + 1) == QLatin1Char('.') ||
+                 path.at(position + 1) == QLatin1Char('+') || path.at(position + 1) == QLatin1Char('-'));
+            if (isExponentMarker)
+                continue;
+            if (!QStringLiteral("MmZzLlHhVvCcSsQqTtAa").contains(command)) {
+                hasUnsupportedCommand = true;
+                continue;
+            }
+            if (command == QLatin1Char('M') || command == QLatin1Char('m'))
+                hasMoveCommand = true;
+            else
+                hasDrawableCommand = true;
+        }
+
+        if (hasUnsupportedCommand)
+            addError(QString("%1Path %2 contains an unsupported command").arg(prefix).arg(index));
+        if (!hasMoveCommand)
+            addError(QString("%1Path %2 has no initial move command").arg(prefix).arg(index));
+        if (!hasDrawableCommand)
+            addError(QString("%1Path %2 has no drawable commands").arg(prefix).arg(index));
+    };
     const auto validateText = [&](const SymbolText& text, const QString& prefix, int index) {
         if (!isFinite(text.posX) || !isFinite(text.posY) || !isFinite(text.rotation))
             addError(QString("%1Text %2 has a non-finite position or rotation").arg(prefix).arg(index));
@@ -148,8 +188,7 @@ QStringList SymbolData::validationErrors() const {
         for (int i = 0; i < part.polygons.size(); ++i)
             validateFlatPointString(part.polygons[i].points, prefix + QStringLiteral("Polygon"), i, 3);
         for (int i = 0; i < part.paths.size(); ++i)
-            if (part.paths[i].paths.trimmed().isEmpty())
-                addError(QString("%1Path %2 has no commands").arg(prefix).arg(i));
+            validatePath(part.paths[i].paths, prefix, i);
         for (int i = 0; i < part.texts.size(); ++i)
             validateText(part.texts[i], prefix, i);
         for (int i = 0; i < part.images.size(); ++i)
@@ -225,8 +264,7 @@ QStringList SymbolData::validationErrors() const {
     for (int i = 0; i < m_polygons.size(); ++i)
         validateFlatPointString(m_polygons[i].points, QStringLiteral("Polygon"), i, 3);
     for (int i = 0; i < m_paths.size(); ++i)
-        if (m_paths[i].paths.trimmed().isEmpty())
-            addError(QString("Path %1 has no commands").arg(i));
+        validatePath(m_paths[i].paths, QString(), i);
     for (int i = 0; i < m_texts.size(); ++i)
         validateText(m_texts[i], QString(), i);
     for (int i = 0; i < m_images.size(); ++i)

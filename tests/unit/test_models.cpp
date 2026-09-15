@@ -231,6 +231,31 @@ private slots:
         QVERIFY(!symbol.isValid());
     }
 
+    void testSymbolValidationChecksPathCommands() {
+        SymbolData symbol;
+        SymbolInfo info;
+        info.name = QStringLiteral("INVALID_PATH_SYMBOL");
+        symbol.setInfo(info);
+        symbol.setBbox(SymbolBBox{0.0, 0.0, 10.0, 10.0});
+
+        SymbolPath unsupportedPath;
+        unsupportedPath.paths = QStringLiteral("M 0 0 X 10 10 1e-3");
+        symbol.addPath(unsupportedPath);
+
+        SymbolPath moveOnlyPath;
+        moveOnlyPath.paths = QStringLiteral("M 2 2");
+        symbol.addPath(moveOnlyPath);
+
+        SymbolPath noMovePath;
+        noMovePath.paths = QStringLiteral("L 4 4");
+        symbol.addPath(noMovePath);
+
+        const QStringList errors = symbol.validationErrors();
+        QVERIFY(errors.contains(QStringLiteral("Path 0 contains an unsupported command")));
+        QVERIFY(errors.contains(QStringLiteral("Path 1 has no drawable commands")));
+        QVERIFY(errors.contains(QStringLiteral("Path 2 has no initial move command")));
+    }
+
     void testSymbolValidationChecksGraphicOrderReferences() {
         SymbolData symbol;
         SymbolInfo info;
