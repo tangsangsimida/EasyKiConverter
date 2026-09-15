@@ -1053,6 +1053,10 @@ bool AltiumSchLibWriter::validateGeometry(const AltiumSchComponent& component) {
         if (arc.radiusX <= 0 || arc.radiusY <= 0)
             return reject(QStringLiteral("椭圆弧半径无效"));
     }
+    for (const AltiumSchTextFrame& frame : component.textFrames) {
+        if (frame.textMargin < 0)
+            return reject(QStringLiteral("文本框文本边距无效: %1").arg(frame.textMargin));
+    }
     for (const AltiumSchPolygon& polygon : component.polygons) {
         if (polygon.vertices.size() < 3)
             return reject(QStringLiteral("多边形顶点数量不足"));

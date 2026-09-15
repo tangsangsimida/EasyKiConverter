@@ -709,6 +709,14 @@ private slots:
         QVERIFY(writer.diagnostics().join('\n').contains(QStringLiteral("扇形起始角度无效")));
         QVERIFY(writer.diagnostics().join('\n').contains(QStringLiteral("椭圆弧结束角度无效")));
 
+        AltiumSchComponent invalidTextMargin;
+        invalidTextMargin.name = QStringLiteral("INVALID_TEXT_MARGIN");
+        AltiumSchTextFrame negativeTextMargin;
+        negativeTextMargin.textMargin = -1;
+        invalidTextMargin.textFrames.append(negativeTextMargin);
+        QVERIFY(!writer.write({invalidTextMargin}, outputPath));
+        QVERIFY(writer.diagnostics().join('\n').contains(QStringLiteral("文本框文本边距无效")));
+
         AltiumSchComponent invalidStroke;
         invalidStroke.name = QStringLiteral("INVALID_STROKE_WIDTH");
         AltiumSchRectangle invalidStrokeRectangle;
