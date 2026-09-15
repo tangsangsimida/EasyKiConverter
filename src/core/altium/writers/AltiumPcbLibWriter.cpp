@@ -138,6 +138,17 @@ bool AltiumPcbLibWriter::validateComponents(const QList<AltiumPcbComponent>& com
                 return reject(
                     QStringLiteral("Altium PcbLib 封装 %1 的 3D 模型数据为空，已拒绝写入").arg(component.name));
         }
+        for (const AltiumPcbComponentBody& body : component.bodies) {
+            if (body.kind < 0 || body.kind > 2)
+                return reject(
+                    QStringLiteral("Altium PcbLib 封装 %1 包含无效 3D 元件体类型，已拒绝写入").arg(component.name));
+            if (std::isfinite(body.bodyOpacity3d) && (body.bodyOpacity3d < 0.0 || body.bodyOpacity3d > 1.0))
+                return reject(
+                    QStringLiteral("Altium PcbLib 封装 %1 包含无效 3D 元件体透明度，已拒绝写入").arg(component.name));
+            if (body.modelType < 1 || body.modelType > 2)
+                return reject(
+                    QStringLiteral("Altium PcbLib 封装 %1 包含无效 3D 模型类型，已拒绝写入").arg(component.name));
+        }
         const int primitiveCount = countPrimitives(component);
         QSet<int> extendedPrimitiveIndices;
         for (const AltiumPcbExtendedPrimitiveInfo& info : component.extendedPrimitives) {

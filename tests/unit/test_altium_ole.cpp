@@ -913,6 +913,20 @@ private slots:
         invalidModelData.models.append(emptyModel);
         QVERIFY(!invalidInputWriter.write({invalidModelData}, pcbOutputPath));
         QVERIFY(invalidInputWriter.diagnostics().join('\n').contains(QStringLiteral("3D 模型数据为空")));
+
+        AltiumPcbComponent invalidBodyComponent;
+        invalidBodyComponent.name = QStringLiteral("INVALID_BODY");
+        AltiumPcbComponentBody invalidBodyData;
+        invalidBodyData.kind = 3;
+        invalidBodyComponent.bodies.append(invalidBodyData);
+        QVERIFY(!invalidInputWriter.write({invalidBodyComponent}, pcbOutputPath));
+        QVERIFY(invalidInputWriter.diagnostics().join('\n').contains(QStringLiteral("无效 3D 元件体类型")));
+
+        invalidBodyData.kind = 0;
+        invalidBodyData.bodyOpacity3d = 2.0;
+        invalidBodyComponent.bodies = {invalidBodyData};
+        QVERIFY(!invalidInputWriter.write({invalidBodyComponent}, pcbOutputPath));
+        QVERIFY(invalidInputWriter.diagnostics().join('\n').contains(QStringLiteral("无效 3D 元件体透明度")));
     }
 
     /**
