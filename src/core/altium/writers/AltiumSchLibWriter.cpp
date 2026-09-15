@@ -1574,6 +1574,11 @@ void AltiumSchLibWriter::writeTextRecord(AltiumBinaryWriter& writer, const Altiu
         m_diagnostics.append(diagnostic);
         qWarning() << "AltiumSchLibWriter:" << diagnostic;
     }
+    if (text.fontName.isEmpty() && !hasValidFontSize && (text.fontId < 1 || text.fontId > m_fonts.size())) {
+        const QString diagnostic = QStringLiteral("Altium SchLib 文本字体 ID 无效，已回退为默认字体");
+        m_diagnostics.append(diagnostic);
+        qWarning() << "AltiumSchLibWriter:" << diagnostic;
+    }
 
     if (text.orientation != 0)
         params["Orientation"] = QString::number(text.orientation);
@@ -1629,12 +1634,22 @@ void AltiumSchLibWriter::writeTextFrameRecord(AltiumBinaryWriter& writer, const 
     params["AreaColor"] = QString::number(frame.areaColor);
     addColorParam(params, "TextColor", frame.textColor);
     const bool hasValidFontSize = std::isfinite(frame.fontSizeMm) && frame.fontSizeMm > 0.0;
+    if (frame.fontSizeMm != 0.0 && !hasValidFontSize) {
+        const QString diagnostic = QStringLiteral("Altium SchLib 文本框字体大小无效，已回退为默认字体大小");
+        m_diagnostics.append(diagnostic);
+        qWarning() << "AltiumSchLibWriter:" << diagnostic;
+    }
     int fontId = frame.fontId;
     if (!frame.fontName.isEmpty() || hasValidFontSize || fontId <= 0) {
         constexpr double MILLIMETERS_PER_POINT = 25.4 / 72.0;
         const QString fontName = frame.fontName.isEmpty() ? QStringLiteral("Times New Roman") : frame.fontName;
         const int fontSize = hasValidFontSize ? qMax(1, qRound(frame.fontSizeMm / MILLIMETERS_PER_POINT)) : 10;
         fontId = getOrAddFont(fontName, fontSize, frame.bold, frame.italic);
+    }
+    if (frame.fontName.isEmpty() && !hasValidFontSize && (fontId < 1 || fontId > m_fonts.size())) {
+        const QString diagnostic = QStringLiteral("Altium SchLib 文本框字体 ID 无效，已回退为默认字体");
+        m_diagnostics.append(diagnostic);
+        qWarning() << "AltiumSchLibWriter:" << diagnostic;
     }
     params["FontID"] = QString::number(fontId >= 1 && fontId <= m_fonts.size() ? fontId : 1);
     if (hasValidFontSize)
