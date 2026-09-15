@@ -5,6 +5,7 @@
 
 #include <QDir>
 #include <QFile>
+#include <QSet>
 #include <QSignalSpy>
 #include <QTemporaryDir>
 #include <QtTest/QtTest>
@@ -310,6 +311,47 @@ private slots:
         QVERIFY(existingFile.open(QIODevice::ReadOnly));
         QCOMPARE(existingFile.readAll(), originalData);
         existingFile.close();
+    }
+
+    /**
+     * @brief 验证 Altium 封装库整体写入失败时所有已收集组件都会标记失败。
+     */
+    void altiumFootprintLibraryFailureMarksCollectedComponents() {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        FootprintExportStage stage;
+        ExportOptions options;
+        options.outputPath = tempDir.path();
+        options.libName = QStringLiteral("InvalidPcbLib");
+        options.targetFormat = TargetEdaFormat::Altium;
+        options.overwriteExistingFiles = true;
+        stage.setOptions(options);
+
+        QMap<QString, QSharedPointer<ComponentData>> cachedData;
+        cachedData[QStringLiteral("C9101")] = makeFootprintComponent(QStringLiteral("C9101"), QStringLiteral("VALID"));
+        cachedData[QStringLiteral("C9102")] =
+            makeFootprintComponent(QStringLiteral("C9102"), QStringLiteral("INVALID"));
+        FootprintInfo invalidInfo = cachedData[QStringLiteral("C9102")]->footprintData()->info();
+        invalidInfo.name.clear();
+        cachedData[QStringLiteral("C9102")]->footprintData()->setInfo(invalidInfo);
+
+        QSignalSpy completedSpy(&stage, &FootprintExportStage::completed);
+        QSignalSpy itemSpy(&stage, &FootprintExportStage::itemStatusChanged);
+        stage.start({QStringLiteral("C9101"), QStringLiteral("C9102")}, cachedData);
+
+        QVERIFY2(completedSpy.wait(3000), "Altium footprint export should complete with failure");
+        QCOMPARE(completedSpy.count(), 1);
+        QCOMPARE(completedSpy.at(0).at(0).toInt(), 0);
+        QCOMPARE(completedSpy.at(0).at(1).toInt(), 2);
+
+        QSet<QString> failedComponents;
+        for (const QList<QVariant>& arguments : itemSpy) {
+            const ExportItemStatus status = qvariant_cast<ExportItemStatus>(arguments.at(1));
+            if (status.status == ExportItemStatus::Status::Failed)
+                failedComponents.insert(arguments.at(0).toString());
+        }
+        QCOMPARE(failedComponents, QSet<QString>({QStringLiteral("C9101"), QStringLiteral("C9102")}));
     }
 
     void symbolLibraryExportMergesMultipleComponentsIntoOneLibrary() {

@@ -284,6 +284,7 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
     const uint64_t gen = ComponentCacheService::instance()->currentGeneration();
 
     QList<FootprintData> footprintList;
+    QStringList collectedIds;
     QStringList failedIds;
     int successCount = 0;
     int skippedCount = 0;
@@ -405,6 +406,7 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
         }
 
         footprintList.append(footprint);
+        collectedIds.append(componentId);
         successCount++;
 
         ExportItemStatus status;
@@ -441,13 +443,14 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
     }
 
     // 标记所有已收集的封装为失败（参照 SymbolExportStage 的 failCollectedSymbols 模式）
-    const auto failCollectedFootprints = [this, &failedIds, &successCount](const QString& errorMessage) {
-        for (const auto& fp : failedIds) {
+    const auto failCollectedFootprints = [this, &collectedIds, &failedIds, &successCount](const QString& errorMessage) {
+        for (const QString& componentId : collectedIds) {
+            failedIds.append(componentId);
             ExportItemStatus status;
             status.status = ExportItemStatus::Status::Failed;
             status.errorMessage = errorMessage;
             status.endTime = QDateTime::currentDateTime();
-            emit itemStatusChanged(fp, status);
+            emit itemStatusChanged(componentId, status);
         }
         successCount = 0;
     };
