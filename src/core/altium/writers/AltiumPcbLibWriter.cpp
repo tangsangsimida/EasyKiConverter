@@ -183,6 +183,12 @@ bool AltiumPcbLibWriter::validateComponents(const QList<AltiumPcbComponent>& com
             if (body.modelType < 1 || body.modelType > 2)
                 return reject(
                     QStringLiteral("Altium PcbLib 封装 %1 包含无效 3D 模型类型，已拒绝写入").arg(component.name));
+            if (!component.models.isEmpty()) {
+                const QString bodyModelId = normalizedModelId(body.modelId);
+                if (bodyModelId.isEmpty() || !modelIds.contains(bodyModelId))
+                    return reject(QStringLiteral("Altium PcbLib 封装 %1 的 3D 元件体未关联有效模型，已拒绝写入")
+                                      .arg(component.name));
+            }
         }
         const int primitiveCount = countPrimitives(component);
         QSet<int> extendedPrimitiveIndices;

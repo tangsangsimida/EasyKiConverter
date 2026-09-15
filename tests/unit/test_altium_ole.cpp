@@ -846,6 +846,7 @@ private slots:
         invalidModel.stepData = QByteArrayLiteral("ISO-10303-21;");
         invalidModel.rotX = std::numeric_limits<double>::infinity();
         invalidPcb.models.append(invalidModel);
+        invalidPcb.bodies[0].modelId = invalidModel.id.isEmpty() ? invalidModel.name : invalidModel.id;
         AltiumPcbLibWriter pcbWriter;
         const QString pcbOutputPath = QDir(tempDir.path()).filePath(QStringLiteral("invalid-floats.PcbLib"));
         QVERIFY(pcbWriter.write({invalidPcb}, pcbOutputPath));
@@ -1005,6 +1006,15 @@ private slots:
         invalidBodyComponent.bodies = {invalidBodyData};
         QVERIFY(!invalidInputWriter.write({invalidBodyComponent}, pcbOutputPath));
         QVERIFY(invalidInputWriter.diagnostics().join('\n').contains(QStringLiteral("无效 3D 元件体透明度")));
+
+        AltiumPcbComponent invalidBodyAssociation;
+        invalidBodyAssociation.name = QStringLiteral("INVALID_BODY_ASSOCIATION");
+        invalidBodyAssociation.models = {firstModel};
+        AltiumPcbComponentBody unassociatedBody;
+        unassociatedBody.modelId = QStringLiteral("unknown-model");
+        invalidBodyAssociation.bodies = {unassociatedBody};
+        QVERIFY(!invalidInputWriter.write({invalidBodyAssociation}, pcbOutputPath));
+        QVERIFY(invalidInputWriter.diagnostics().join('\n').contains(QStringLiteral("未关联有效模型")));
     }
 
     /**
@@ -2085,7 +2095,7 @@ private slots:
         AltiumPcbComponentBody body;
         body.layerName = QStringLiteral(" mechanical1 ");
         body.name = QStringLiteral("__BODY__");
-        body.modelId = QStringLiteral("{12345678-1234-1234-1234-123456789012}");
+        body.modelId = model.id;
         body.modelName = model.name;
         body.overallHeightRaw = 10000;  // 1mil
         body.outline = {QPointF(-50000, -50000), QPointF(50000, -50000), QPointF(50000, 50000), QPointF(-50000, 50000)};
