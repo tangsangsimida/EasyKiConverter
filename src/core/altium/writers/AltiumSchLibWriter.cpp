@@ -1730,18 +1730,17 @@ void AltiumSchLibWriter::writeImageStorage(OLECompoundWriter& ole, const QList<A
         }
     }
 
-    QByteArray storageData;
-    AltiumBinaryWriter storageWriter(storageData);
-    QMap<QString, QString> storageParams;
-    storageParams["HEADER"] = "Icon storage";
-    storageParams["Weight"] = QString::number(embeddedImages.size());
-    storageWriter.writeCStringParameterBlock(storageParams);
-
+    constexpr qsizetype kMaxStorageEntrySize = 0x00FFFFFF;
+    QList<QByteArray> encodedEntries;
+    encodedEntries.reserve(embeddedImages.size());
     for (const AltiumSchImage* image : embeddedImages) {
         const QByteArray compressed = qCompress(image->data, 9).mid(4);
         const QByteArray name = m_embeddedImageNames.value(image).toLocal8Bit();
-        if (name.isEmpty() || name.size() > 255)
+        if (compressed.isEmpty() || name.isEmpty() || name.size() > 255) {
+            m_diagnostics.append(
+                QStringLiteral("Altium SchLib 图片 Storage 条目无效，已跳过: %1").arg(QString::fromLocal8Bit(name)));
             continue;
+        }
 
         QByteArray entry;
         QDataStream entryStream(&entry, QIODevice::WriteOnly);
@@ -1751,7 +1750,22 @@ void AltiumSchLibWriter::writeImageStorage(OLECompoundWriter& ole, const QList<A
         entryStream.device()->seek(entry.size());
         entryStream << static_cast<quint32>(compressed.size());
         entry.append(compressed);
+        if (entry.size() > kMaxStorageEntrySize) {
+            m_diagnostics.append(
+                QStringLiteral("Altium SchLib 图片 Storage 条目过大，已跳过: %1").arg(QString::fromLocal8Bit(name)));
+            continue;
+        }
+        encodedEntries.append(entry);
+    }
 
+    QByteArray storageData;
+    AltiumBinaryWriter storageWriter(storageData);
+    QMap<QString, QString> storageParams;
+    storageParams["HEADER"] = "Icon storage";
+    storageParams["Weight"] = QString::number(encodedEntries.size());
+    storageWriter.writeCStringParameterBlock(storageParams);
+
+    for (const QByteArray& entry : encodedEntries) {
         QDataStream blockStream(&storageData, QIODevice::WriteOnly | QIODevice::Append);
         blockStream.setByteOrder(QDataStream::LittleEndian);
         blockStream << static_cast<quint32>(0x01000000U | static_cast<quint32>(entry.size()));
