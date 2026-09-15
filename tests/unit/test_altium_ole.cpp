@@ -1765,7 +1765,13 @@ private slots:
             if (!writer.writeStream(QStringLiteral("Library"), QStringLiteral("Data"), libraryData))
                 return false;
             if (!writer.addStorage(QStringLiteral("BROKEN")) ||
-                !writer.writeStream(QStringLiteral("BROKEN"), QStringLiteral("Data"), footprintData))
+                !writer.writeStream(QStringLiteral("BROKEN"), QStringLiteral("Data"), footprintData) ||
+                !writer.writeStream(QStringLiteral("BROKEN"), QStringLiteral("WideStrings"), [&] {
+                    QByteArray data;
+                    AltiumBinaryWriter binaryWriter(data);
+                    binaryWriter.writeCStringParameterBlock({});
+                    return data;
+                }()))
                 return false;
             return writer.saveToFile(filePath);
         };
@@ -1970,6 +1976,26 @@ private slots:
         QVERIFY2(invalidTextSizeReader.open(invalidTextSizePath), qPrintable(invalidTextSizeReader.errorString()));
         QVERIFY(!invalidTextSizeReader.readFootprintObjects(QStringLiteral("BROKEN"), &objects));
         QVERIFY(invalidTextSizeReader.errorString().contains(QStringLiteral("文本尺寸必须有效")));
+
+        QByteArray invalidTextIndexData = invalidTextSizeData;
+        const int wideStringIndexOffset = 4 + 7 + 1 + 4 + 13 + 12 + 2 + 8 + 1 + 4 + 4 + 71;
+        QVERIFY(wideStringIndexOffset + 4 <= invalidTextIndexData.size());
+        const int textHeightOffset = 4 + 7 + 1 + 4 + 13 + 8;
+        invalidTextIndexData[textHeightOffset] = static_cast<char>(1);
+        invalidTextIndexData[textHeightOffset + 1] = '\0';
+        invalidTextIndexData[textHeightOffset + 2] = '\0';
+        invalidTextIndexData[textHeightOffset + 3] = '\0';
+        invalidTextIndexData[wideStringIndexOffset] = static_cast<char>(7);
+        invalidTextIndexData[wideStringIndexOffset + 1] = '\0';
+        invalidTextIndexData[wideStringIndexOffset + 2] = '\0';
+        invalidTextIndexData[wideStringIndexOffset + 3] = '\0';
+        const QString invalidTextIndexPath = QDir(tempDir.path()).filePath(QStringLiteral("invalid-text-index.PcbLib"));
+        QVERIFY(writeMalformedLibrary(invalidTextIndexPath, invalidTextIndexData));
+
+        AltiumPcbLibReader invalidTextIndexReader;
+        QVERIFY2(invalidTextIndexReader.open(invalidTextIndexPath), qPrintable(invalidTextIndexReader.errorString()));
+        QVERIFY(!invalidTextIndexReader.readFootprintObjects(QStringLiteral("BROKEN"), &objects));
+        QVERIFY(invalidTextIndexReader.errorString().contains(QStringLiteral("不存在的 WideStrings 索引")));
 
         IR::FootprintComponentIR validPadFootprint;
         validPadFootprint.name = QStringLiteral("VALID_PAD");

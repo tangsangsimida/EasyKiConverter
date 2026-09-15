@@ -44,6 +44,29 @@ bool isStringBlockPayload(const QByteArray& payload) {
     return readStringBlockPayload(payload, nullptr);
 }
 
+bool readWideStringIndices(const QByteArray& data, QSet<quint32>* indices) {
+    if (indices == nullptr)
+        return false;
+    indices->clear();
+
+    AltiumBinaryReader reader(data);
+    QMap<QString, QString> parameters;
+    if (!reader.readCStringParameterBlock(&parameters) || reader.hasError() || reader.remaining() != 0)
+        return false;
+
+    for (auto it = parameters.cbegin(); it != parameters.cend(); ++it) {
+        if (!it.key().startsWith(QStringLiteral("ENCODEDTEXT")))
+            continue;
+        const QString suffix = it.key().mid(QStringLiteral("ENCODEDTEXT").size());
+        bool ok = false;
+        const quint32 index = suffix.toUInt(&ok);
+        if (!ok || suffix.isEmpty() || indices->contains(index))
+            return false;
+        indices->insert(index);
+    }
+    return true;
+}
+
 bool readCommonPrimitiveHeader(AltiumBinaryReader& reader, quint8* layer, quint16* flags) {
     if (layer == nullptr || flags == nullptr)
         return false;
@@ -454,6 +477,9 @@ bool AltiumPcbLibReader::readFootprintObjects(int componentIndexValue, QVector<P
     if (!reader.readStringBlock(&footprintName) || footprintName.isEmpty())
         return failRead(QStringLiteral("PcbLib 封装 Data 首部无效: %1").arg(reader.errorString()));
 
+    QSet<quint32> wideStringIndices;
+    bool wideStringsLoaded = false;
+
     while (reader.remaining() > 0) {
         const int objectStart = reader.position();
         uint8_t objectId = 0;
@@ -533,6 +559,19 @@ bool AltiumPcbLibReader::readFootprintObjects(int componentIndexValue, QVector<P
         QString semanticError;
         if (!validatePrimitiveFields(object, &semanticError))
             return failRead(semanticError);
+        if (object.hasTextFields) {
+            if (!wideStringsLoaded) {
+                QByteArray wideStrings;
+                if (!readFootprintStream(componentIndexValue, QStringLiteral("WideStrings"), &wideStrings))
+                    return failRead(QStringLiteral("无法读取 PcbLib 封装 WideStrings 流"));
+                if (!readWideStringIndices(wideStrings, &wideStringIndices))
+                    return failRead(QStringLiteral("PcbLib 封装 WideStrings 流无效"));
+                wideStringsLoaded = true;
+            }
+            if (!wideStringIndices.contains(object.textFields.wideStringIndex))
+                return failRead(QStringLiteral("PcbLib 文本图元引用了不存在的 WideStrings 索引: %1")
+                                    .arg(object.textFields.wideStringIndex));
+        }
         object.encoded = data.mid(objectStart, reader.position() - objectStart);
         objects->append(object);
     }
