@@ -976,6 +976,8 @@ private slots:
         QVERIFY(pcbWriter.diagnostics().join('\n').contains(QStringLiteral("PCB 弧线起始角度无效")));
         QVERIFY(pcbWriter.diagnostics().join('\n').contains(QStringLiteral("PCB 弧线结束角度无效")));
         QVERIFY(pcbWriter.diagnostics().join('\n').contains(QStringLiteral("3D 元件体不透明度无效")));
+        QVERIFY(pcbWriter.diagnostics().join('\n').contains(QStringLiteral("3D 元件体二维旋转无效")));
+        QVERIFY(pcbWriter.diagnostics().join('\n').contains(QStringLiteral("3D 模型 X 旋转无效")));
 
         IR::FootprintComponentIR invalidFootprint;
         invalidFootprint.name = QStringLiteral("INVALID_FOOTPRINT_FLOATS");
