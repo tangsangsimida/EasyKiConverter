@@ -387,6 +387,10 @@ private slots:
         QVERIFY2(reader.open(outputPath), qPrintable(reader.errorString()));
         QVector<AltiumSchLibReader::Record> records;
         QVERIFY(reader.readComponentRecords(QStringLiteral("FIXTURE_SYMBOL"), &records));
+        bool weightOk = false;
+        const int declaredWeight = reader.headerParameters().value(QStringLiteral("WEIGHT")).toInt(&weightOk);
+        QVERIFY(weightOk);
+        QCOMPARE(declaredWeight, records.size());
 
         QString actual;
         for (const auto& record : records) {
