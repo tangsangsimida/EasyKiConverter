@@ -954,10 +954,11 @@ private slots:
         duplicateModelIdComponent.name = QStringLiteral("DUPLICATE_MODEL_ID");
         AltiumPcbComponent::Model3D firstModel;
         firstModel.name = QStringLiteral("first.step");
-        firstModel.id = QStringLiteral("{MODEL-ID}");
+        firstModel.id = QStringLiteral("model|id");
         firstModel.stepData = QByteArrayLiteral("ISO-10303-21;");
         AltiumPcbComponent::Model3D secondModel = firstModel;
         secondModel.name = QStringLiteral("second.step");
+        secondModel.id = QStringLiteral("model id");
         duplicateModelIdComponent.models = {firstModel, secondModel};
         QVERIFY(!invalidInputWriter.write({duplicateModelIdComponent}, pcbOutputPath));
         QVERIFY(invalidInputWriter.diagnostics().join('\n').contains(QStringLiteral("3D 模型 ID 重复")));

@@ -66,6 +66,13 @@ bool AltiumPcbLibWriter::validateComponents(const QList<AltiumPcbComponent>& com
     if (filePath.trimmed().isEmpty())
         return reject(QStringLiteral("Altium PcbLib 输出路径为空，已拒绝写入"));
 
+    const auto normalizedModelId = [](QString value) {
+        value.replace('|', ' ');
+        value.replace('\0', ' ');
+        value.replace('\r', ' ');
+        value.replace('\n', ' ');
+        return value.trimmed().toCaseFolded();
+    };
     QSet<QString> componentNames;
     for (const AltiumPcbComponent& component : components) {
         if (component.name.trimmed().isEmpty())
@@ -140,7 +147,7 @@ bool AltiumPcbLibWriter::validateComponents(const QList<AltiumPcbComponent>& com
             if (model.stepData.isEmpty())
                 return reject(
                     QStringLiteral("Altium PcbLib 封装 %1 的 3D 模型数据为空，已拒绝写入").arg(component.name));
-            const QString modelId = model.id.trimmed().toCaseFolded();
+            const QString modelId = normalizedModelId(model.id.isEmpty() ? model.name : model.id);
             if (!modelId.isEmpty() && modelIds.contains(modelId))
                 return reject(
                     QStringLiteral("Altium PcbLib 封装 %1 的 3D 模型 ID 重复，已拒绝写入").arg(component.name));
