@@ -49,6 +49,14 @@ private slots:
         QCOMPARE(arcPoints.last(), QPointF(20, 0));
     }
 
+    void preservesScientificNotationInCoordinates() {
+        const QList<QPointF> points = SvgPathParser::parsePath(QStringLiteral("M 0 0 L 1e-3 2e-3"));
+
+        QCOMPARE(points.size(), 2);
+        QVERIFY(qAbs(points.last().x() - 0.001) < 1e-12);
+        QVERIFY(qAbs(points.last().y() - 0.002) < 1e-12);
+    }
+
     void smoothCurvesPreserveReflectedControlPoints() {
         const QList<QPointF> cubicPoints =
             SvgPathParser::parsePath(QStringLiteral("M 0 0 C 0 10 10 10 10 0 S 20 -10 20 0"));
@@ -184,7 +192,9 @@ private slots:
     void invalidOrEmptyPathsReturnNoPoints() {
         QVERIFY(SvgPathParser::parsePath(QString()).isEmpty());
         QVERIFY(SvgPathParser::parsePath(QStringLiteral("Q 1 2")).isEmpty());
+        QVERIFY(SvgPathParser::parsePath(QStringLiteral("M 0 0 L 1e309 2")).isEmpty());
         QVERIFY(SvgPathParser::parseSegments(QString()).isEmpty());
+        QVERIFY(SvgPathParser::parseSegments(QStringLiteral("M 0 0 L 1e309 2")).isEmpty());
     }
 };
 

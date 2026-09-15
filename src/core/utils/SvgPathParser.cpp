@@ -131,6 +131,14 @@ QList<QPointF> SvgPathParser::parsePath(const QString& path) {
     }
 
     QStringList tokens = splitPath(path);
+    for (const QString& token : tokens) {
+        if (token.isEmpty() || token.at(0).isLetter())
+            continue;
+        bool ok = false;
+        const double value = token.toDouble(&ok);
+        if (!ok || !std::isfinite(value))
+            return {};
+    }
     double currentX = 0.0;
     double currentY = 0.0;
     QPointF lastCubicControl;
@@ -499,8 +507,8 @@ QList<SvgPathSegment> SvgPathParser::parseSegments(const QString& path) {
         if (index >= tokens.size())
             return false;
         bool ok = false;
-        tokens.at(index).toDouble(&ok);
-        return ok;
+        const double value = tokens.at(index).toDouble(&ok);
+        return ok && std::isfinite(value);
     };
     auto readNumbers = [&](int& index, int count, QList<double>& values) {
         if (index + count > tokens.size())
@@ -510,7 +518,7 @@ QList<SvgPathSegment> SvgPathParser::parseSegments(const QString& path) {
         for (int n = 0; n < count; ++n) {
             bool ok = false;
             const double value = tokens.at(index++).toDouble(&ok);
-            if (!ok)
+            if (!ok || !std::isfinite(value))
                 return false;
             values.append(value);
         }
@@ -747,7 +755,7 @@ QList<SvgPathSegment> SvgPathParser::parseSegments(const QString& path) {
 QStringList SvgPathParser::splitPath(const QString& path) {
     // 将命令字母前后添加空格，然后按空格分
     QString processed = path;
-    processed.replace(QRegularExpression("([a-zA-Z])"), " \\1 ");
+    processed.replace(QRegularExpression("([MmZzLlHhVvCcSsQqTtAa])"), " \\1 ");
     processed.replace(QRegularExpression("(?<=[0-9.])(?=[+-])"), " ");
     const QStringList rawTokens = processed.split(QRegularExpression("[\\s,]+"), Qt::SkipEmptyParts);
 
