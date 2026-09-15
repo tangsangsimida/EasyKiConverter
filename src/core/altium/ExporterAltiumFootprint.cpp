@@ -460,7 +460,7 @@ void ExporterAltiumFootprint::centerComponent(AltiumPcbComponent& component) {
 
 /**
  * @brief 从封装包围盒和 3D 模型生成 ComponentBody
- * @details 在 MECHANICAL1 层创建矩形轮廓，关联嵌入的 STEP 模型。
+ * @details 在 MECHANICAL1 层为每个嵌入的 STEP 模型创建一个矩形轮廓。
  *          轮廓基于所有图元的包围盒生成。
  */
 void ExporterAltiumFootprint::generateComponentBody(AltiumPcbComponent& component) {
@@ -522,38 +522,47 @@ void ExporterAltiumFootprint::generateComponentBody(AltiumPcbComponent& componen
     if (minX == std::numeric_limits<qint64>::max())
         return;  // 无图元，无法生成轮廓
 
-    // 生成稳定的模型 ID（基于封装名称）
-    QString seed = component.name + "|body";
-    QByteArray seedBytes = seed.toUtf8();
-    uint64_t hash = 0xCBF29CE484222325ULL;
-    for (char byte : seedBytes) {
-        hash ^= static_cast<uint8_t>(byte);
-        hash *= 0x100000001B3ULL;
+    const auto makeModelId = [&component](int modelIndex) {
+        const QString seed = modelIndex == 0 ? component.name + QStringLiteral("|body")
+                                             : component.name + QStringLiteral("|body|") + QString::number(modelIndex);
+        const QByteArray seedBytes = seed.toUtf8();
+        uint64_t hash = 0xCBF29CE484222325ULL;
+        for (char byte : seedBytes) {
+            hash ^= static_cast<uint8_t>(byte);
+            hash *= 0x100000001B3ULL;
+        }
+        return QString("{%1-%2-%3-%4-%5}")
+            .arg((hash >> 32) & 0xFFFFFFFF, 8, 16, QChar('0'))
+            .arg((hash >> 16) & 0xFFFF, 4, 16, QChar('0'))
+            .arg(hash & 0xFFFF, 4, 16, QChar('0'))
+            .arg(((~hash) >> 48) & 0xFFFF, 4, 16, QChar('0'))
+            .arg((~hash) & 0xFFFFFFFFFFFFLL, 12, 16, QChar('0'))
+            .toUpper();
+    };
+
+    // 每个模型都需要独立的 ComponentBody，否则虽然模型数据写入了 Library/Models，
+    // Altium 仍然只会通过第一个元件体显示第一个模型。
+    for (int modelIndex = 0; modelIndex < component.models.size(); ++modelIndex) {
+        auto& model = component.models[modelIndex];
+        const QString modelId = makeModelId(modelIndex);
+        model.id = modelId;
+
+        AltiumPcbComponentBody body;
+        body.modelId = modelId;
+        body.modelName = model.name;
+        body.model2dRotX = model.x;
+        body.model2dRotY = model.y;
+        body.model3dRotX = model.rotX;
+        body.model3dRotY = model.rotY;
+        body.model3dRotZ = model.rotZ;
+        body.model3dDzRaw = AltiumCoord::mmToRaw(model.dz);
+        body.overallHeightRaw = AltiumCoord::mmToRaw(qMax(component.height, 0.2));
+
+        // 矩形轮廓
+        body.outline = {QPointF(minX, minY), QPointF(maxX, minY), QPointF(maxX, maxY), QPointF(minX, maxY)};
+
+        component.bodies.append(body);
     }
-    QString modelId = QString("{%1-%2-%3-%4-%5}")
-                          .arg((hash >> 32) & 0xFFFFFFFF, 8, 16, QChar('0'))
-                          .arg((hash >> 16) & 0xFFFF, 4, 16, QChar('0'))
-                          .arg(hash & 0xFFFF, 4, 16, QChar('0'))
-                          .arg(((~hash) >> 48) & 0xFFFF, 4, 16, QChar('0'))
-                          .arg((~hash) & 0xFFFFFFFFFFFFLL, 12, 16, QChar('0'))
-                          .toUpper();
-    component.models.first().id = modelId;
-
-    AltiumPcbComponentBody body;
-    body.modelId = modelId;
-    body.modelName = component.models.first().name;
-    body.model2dRotX = component.models.first().x;
-    body.model2dRotY = component.models.first().y;
-    body.model3dRotX = component.models.first().rotX;
-    body.model3dRotY = component.models.first().rotY;
-    body.model3dRotZ = component.models.first().rotZ;
-    body.model3dDzRaw = AltiumCoord::mmToRaw(component.models.first().dz);
-    body.overallHeightRaw = AltiumCoord::mmToRaw(qMax(component.height, 0.2));
-
-    // 矩形轮廓
-    body.outline = {QPointF(minX, minY), QPointF(maxX, minY), QPointF(maxX, maxY), QPointF(minX, maxY)};
-
-    component.bodies.append(body);
 }
 
 }  // namespace EasyKiConverter

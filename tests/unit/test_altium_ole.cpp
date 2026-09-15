@@ -2988,6 +2988,12 @@ private slots:
         model.setTranslation(IR::Model3DVec3(1.0, 2.0, 3.0));
         model.setStepOffsetMm(IR::Model3DVec3(4.0, 5.0, 6.0));
         footprint.models3d.append(model);
+        IR::Model3DIR secondModel;
+        secondModel.setName(QStringLiteral("second.step"));
+        secondModel.setStepData(QByteArrayLiteral("ISO-10303-21;SECOND"));
+        secondModel.setTranslation(IR::Model3DVec3(10.0, 11.0, 12.0));
+        secondModel.setStepOffsetMm(IR::Model3DVec3(1.0, 2.0, 3.0));
+        footprint.models3d.append(secondModel);
 
         const QString pcbPath = QDir(tempDir.path()).filePath(QStringLiteral("step-offset.PcbLib"));
         ExporterAltiumFootprint exporter;
@@ -2999,22 +3005,31 @@ private slots:
         QVERIFY2(reader.readFootprintObjects(QStringLiteral("STEP_OFFSET"), &objects),
                  qPrintable(reader.errorString()));
 
-        bool foundBody = false;
+        QSet<QString> bodyIds;
         for (const auto& object : objects) {
             if (object.objectId != AltiumConstants::PCB_OBJECT_COMPONENT_BODY)
                 continue;
 
-            foundBody = true;
             QVERIFY(object.hasComponentBodyFields);
             const auto& params = object.componentBody.parameters;
             const auto expectedMil = [](double millimeters) {
                 return QString::number(AltiumCoord::mmToRaw(millimeters) / 10000.0, 'f', 4) + QStringLiteral("mil");
             };
-            QCOMPARE(params.value(QStringLiteral("MODEL.2D.X")), expectedMil(5.0));
-            QCOMPARE(params.value(QStringLiteral("MODEL.2D.Y")), expectedMil(7.0));
-            QCOMPARE(params.value(QStringLiteral("MODEL.3D.DZ")), expectedMil(9.0));
+            const QString modelName = params.value(QStringLiteral("MODEL.NAME"));
+            if (modelName == QStringLiteral("offset.step")) {
+                QCOMPARE(params.value(QStringLiteral("MODEL.2D.X")), expectedMil(5.0));
+                QCOMPARE(params.value(QStringLiteral("MODEL.2D.Y")), expectedMil(7.0));
+                QCOMPARE(params.value(QStringLiteral("MODEL.3D.DZ")), expectedMil(9.0));
+            } else if (modelName == QStringLiteral("second.step")) {
+                QCOMPARE(params.value(QStringLiteral("MODEL.2D.X")), expectedMil(11.0));
+                QCOMPARE(params.value(QStringLiteral("MODEL.2D.Y")), expectedMil(13.0));
+                QCOMPARE(params.value(QStringLiteral("MODEL.3D.DZ")), expectedMil(15.0));
+            } else {
+                QFAIL("unexpected 3D model name");
+            }
+            bodyIds.insert(params.value(QStringLiteral("MODELID")));
         }
-        QVERIFY(foundBody);
+        QCOMPARE(bodyIds.size(), 2);
     }
 
     /**
