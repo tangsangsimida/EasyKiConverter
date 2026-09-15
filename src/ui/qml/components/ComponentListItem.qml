@@ -330,7 +330,10 @@ Rectangle {
                     fillMode: Image.PreserveAspectFit
                     cache: true
                     asynchronous: true
-                    visible: itemData && (itemData.validationPhase === "completed" || itemData.validationPhase === "fetching_preview") && itemData.previewImageCount > 0
+                    visible: itemData
+                             ? (itemData.validationPhase === "completed" || itemData.validationPhase === "fetching_preview")
+                                   && itemData.previewImageCount > 0
+                             : false
                 }
 
                 BusyIndicator {
@@ -338,7 +341,9 @@ Rectangle {
                     width: 24
                     height: 24
                     running: (itemData && (itemData.validationPhase === "validating" || itemData.validationPhase === "fetching_preview")) ? true : false
-                    visible: (itemData && (itemData.validationPhase === "validating" || itemData.validationPhase === "fetching_preview")) ? true : false
+                    visible: itemData
+                             ? (itemData.validationPhase === "validating" || itemData.validationPhase === "fetching_preview")
+                             : false
                 }
 
                 Rectangle {
@@ -349,7 +354,10 @@ Rectangle {
                     color: "transparent"
                     border.color: AppStyle.colors.success
                     border.width: AppStyle.borderWidths.thick
-                    visible: (itemData && (itemData.validationPhase === "completed" || itemData.validationPhase === "fetching_preview") && (!itemData.previewImageCount || itemData.previewImageCount === 0))
+                    visible: itemData
+                             ? ((itemData.validationPhase === "completed" || itemData.validationPhase === "fetching_preview")
+                                && (!itemData.previewImageCount || itemData.previewImageCount === 0))
+                             : false
                     Shape {
                         id: checkShape
                         anchors.fill: parent
@@ -383,7 +391,7 @@ Rectangle {
                     color: "transparent"
                     border.color: AppStyle.colors.danger
                     border.width: AppStyle.borderWidths.thick
-                    visible: (itemData && itemData.validationPhase === "failed")
+                    visible: itemData ? itemData.validationPhase === "failed" : false
                     Shape {
                         id: crossShape
                         anchors.fill: parent
@@ -561,7 +569,7 @@ Rectangle {
             Layout.preferredWidth: 28
             Layout.preferredHeight: 28
             Layout.alignment: Qt.AlignVCenter
-            visible: itemData && itemData.validationPhase === "failed" && itemData.retryable
+            visible: itemData ? (itemData.validationPhase === "failed" && itemData.retryable) : false
             background: Rectangle {
                 color: parent.pressed ? AppStyle.colors.primaryHover : parent.hovered ? "#dbeafe" : "transparent"
                 radius: AppStyle.radius.sm

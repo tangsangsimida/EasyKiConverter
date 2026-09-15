@@ -670,7 +670,9 @@ Item {
                         ExportProgressCard {
                             Layout.fillWidth: true
                             exportProgressController: window.exportProgressController
-                            visible: (window.exportProgressController && window.exportProgressController.isExporting) || (window.exportProgressController && window.exportProgressController.progress > 0)
+                            visible: window.exportProgressController
+                                      ? (window.exportProgressController.isExporting || window.exportProgressController.progress > 0)
+                                      : false
                         }
 
                         // 转换结果
@@ -789,7 +791,7 @@ Item {
                     Layout.alignment: Qt.AlignVCenter
                     radius: 3
                     color: AppStyle.colors.border
-                    visible: window.exportProgressController && window.exportProgressController.isExporting
+                    visible: window.exportProgressController ? window.exportProgressController.isExporting : false
                     Rectangle {
                         width: parent.width * (window.exportProgressController ? window.exportProgressController.progress / 100 : 0)
                         height: parent.height
@@ -812,7 +814,7 @@ Item {
                     backgroundColor: AppStyle.colors.primary
                     hoverColor: AppStyle.colors.primaryHover
                     pressedColor: AppStyle.colors.primaryPressed
-                    visible: window.exportProgressController && window.exportProgressController.hasCompletedExport
+                    visible: window.exportProgressController ? window.exportProgressController.hasCompletedExport : false
                     onClicked: {
                         if (window.exportProgressController) {
                             window.exportProgressController.openLastExportedFolder();
@@ -830,7 +832,7 @@ Item {
                     backgroundColor: AppStyle.colors.danger
                     hoverColor: AppStyle.colors.dangerDark
                     pressedColor: AppStyle.colors.dangerDark
-                    visible: window.exportProgressController && window.exportProgressController.isExporting
+                    visible: window.exportProgressController ? window.exportProgressController.isExporting : false
                     enabled: window.exportProgressController ? !window.exportProgressController.isStopping : false
                     onClicked: {
                         if (window.exportProgressController) {
@@ -850,7 +852,9 @@ Item {
         height: 2
         z: -1
         color: "transparent"
-        visible: window.exportProgressController && (window.exportProgressController.isExporting || window.exportProgressController.progress > 0)
+        visible: window.exportProgressController
+                  ? (window.exportProgressController.isExporting || window.exportProgressController.progress > 0)
+                  : false
         Rectangle {
             width: parent.width * ((window.exportProgressController ? window.exportProgressController.progress : 0) / 100)
             height: parent.height

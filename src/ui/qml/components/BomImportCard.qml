@@ -108,6 +108,8 @@ Card {
         font.pixelSize: AppStyle.fontSizes.sm
         color: AppStyle.colors.success
         horizontalAlignment: Text.AlignHCenter
-        visible: bomImportCard.componentListController && bomImportCard.componentListController.bomResult && bomImportCard.componentListController.bomResult.length > 0
+        visible: bomImportCard.componentListController && bomImportCard.componentListController.bomResult
+                 ? bomImportCard.componentListController.bomResult.length > 0
+                 : false
     }
 }

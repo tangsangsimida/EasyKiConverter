@@ -10,7 +10,7 @@ Rectangle {
     color: AppStyle.colors.infoSurface
     border.width: AppStyle.borderWidths.thin
     border.color: AppStyle.colors.infoBorder
-    visible: updateChecker && updateChecker.hasUpdate && !updateChecker.dismissed
+    visible: updateChecker ? (updateChecker.hasUpdate && !updateChecker.dismissed) : false
     implicitHeight: visible ? bannerLayout.implicitHeight + AppStyle.spacing.lg * 2 : 0
     Behavior on implicitHeight {
         NumberAnimation {

@@ -386,7 +386,7 @@ Card {
             contentItem: Item {
                 implicitWidth: _previewPopup.width
                 implicitHeight: _previewPopup.height
-                visible: _previewPopup.currentItemData && _previewPopup.currentItemData.isValid
+                visible: _previewPopup.currentItemData ? _previewPopup.currentItemData.isValid : false
                 transform: Scale {
                     origin.x: _previewPopup.scaleOriginX
                     origin.y: _previewPopup.scaleOriginY
@@ -871,7 +871,9 @@ Card {
                     Layout.preferredWidth: retryAllButtonContent.width + AppStyle.spacing.xl * 2
                     Layout.preferredHeight: 44
                     Layout.alignment: Qt.AlignVCenter
-                    visible: componentListCard.componentListController ? componentListCard.componentListController.hasInvalidComponents : false
+                        visible: componentListCard.componentListController
+                                 ? componentListCard.componentListController.hasInvalidComponents
+                                 : false
                     // 按钮背景
                     Rectangle {
                         anchors.fill: parent
