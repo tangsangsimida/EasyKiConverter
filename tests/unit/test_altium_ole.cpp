@@ -1970,6 +1970,53 @@ private slots:
         QVERIFY2(invalidTextSizeReader.open(invalidTextSizePath), qPrintable(invalidTextSizeReader.errorString()));
         QVERIFY(!invalidTextSizeReader.readFootprintObjects(QStringLiteral("BROKEN"), &objects));
         QVERIFY(invalidTextSizeReader.errorString().contains(QStringLiteral("文本尺寸必须有效")));
+
+        IR::FootprintComponentIR validPadFootprint;
+        validPadFootprint.name = QStringLiteral("VALID_PAD");
+        IR::FootprintPadIR validPad;
+        validPad.number = QStringLiteral("1");
+        validPad.position = QPointF(0.0, 0.0);
+        validPad.size = QSizeF(1.0, 1.0);
+        validPadFootprint.pads.append(validPad);
+        const QString validPadPath = QDir(tempDir.path()).filePath(QStringLiteral("valid-pad.PcbLib"));
+        ExporterAltiumFootprint validPadExporter;
+        QVERIFY(
+            validPadExporter.exportFootprintLibrary({validPadFootprint}, QStringLiteral("valid-pad"), validPadPath));
+
+        AltiumPcbLibReader validPadReader;
+        QVERIFY2(validPadReader.open(validPadPath), qPrintable(validPadReader.errorString()));
+        QByteArray validPadData;
+        QVERIFY(validPadReader.readFootprintStream(QStringLiteral("VALID_PAD"), QStringLiteral("Data"), &validPadData));
+        AltiumBinaryReader validPadBinaryReader(validPadData);
+        QString validPadName;
+        QVERIFY(validPadBinaryReader.readStringBlock(&validPadName));
+        uint8_t padObjectId = 0;
+        QVERIFY(validPadBinaryReader.readUInt8(&padObjectId));
+        QByteArray invalidPadData;
+        AltiumBinaryWriter invalidPadWriter(invalidPadData);
+        invalidPadWriter.writeStringBlock(validPadName);
+        invalidPadWriter.writeUInt8(padObjectId);
+        for (int blockIndex = 0; blockIndex < 6; ++blockIndex) {
+            QByteArray payload;
+            uint8_t flags = 0;
+            QVERIFY(validPadBinaryReader.readBlock(&payload, &flags));
+            if (blockIndex == 4) {
+                // 公共头部 13 字节、坐标 8 字节、三层尺寸 24 字节、孔径 4 字节后是形状字段。
+                QVERIFY(payload.size() > 49);
+                payload[49] = '\0';
+            }
+            invalidPadWriter.beginBlock(flags);
+            invalidPadWriter.writeBytes(payload);
+            invalidPadWriter.endBlock();
+        }
+        QVERIFY(validPadBinaryReader.remaining() == 0);
+        const QString invalidPadPath = QDir(tempDir.path()).filePath(QStringLiteral("invalid-pad-shape.PcbLib"));
+        QVERIFY(writeMalformedLibrary(invalidPadPath, invalidPadData));
+
+        AltiumPcbLibReader invalidPadReader;
+        QVERIFY2(invalidPadReader.open(invalidPadPath), qPrintable(invalidPadReader.errorString()));
+        QVERIFY(!invalidPadReader.readFootprintObjects(QStringLiteral("BROKEN"), &objects));
+        QVERIFY(invalidPadReader.errorString().contains(QStringLiteral("焊盘形状无效")));
     }
 
     /**
