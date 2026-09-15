@@ -24,6 +24,17 @@ struct SvgArcGeometry {
     double deltaAngle = 0.0;
 };
 
+bool isFinitePoint(const QPointF& point) {
+    return std::isfinite(point.x()) && std::isfinite(point.y());
+}
+
+bool isFiniteSegment(const SvgPathSegment& segment) {
+    return isFinitePoint(segment.start) && isFinitePoint(segment.control1) && isFinitePoint(segment.control2) &&
+           isFinitePoint(segment.arcMid) && isFinitePoint(segment.arcCenter) && isFinitePoint(segment.end) &&
+           std::isfinite(segment.radiusX) && std::isfinite(segment.radiusY) && std::isfinite(segment.arcStartAngle) &&
+           std::isfinite(segment.arcEndAngle);
+}
+
 SvgArcGeometry calculateArcGeometry(const QPointF& start,
                                     double radiusX,
                                     double radiusY,
@@ -486,6 +497,10 @@ QList<QPointF> SvgPathParser::parsePath(const QString& path) {
         }
     }
 
+    for (const QPointF& point : points) {
+        if (!isFinitePoint(point))
+            return {};
+    }
     return points;
 }
 
@@ -748,6 +763,10 @@ QList<SvgPathSegment> SvgPathParser::parseSegments(const QString& path) {
             }
             previousCommand = command;
         }
+    }
+    for (const SvgPathSegment& segment : segments) {
+        if (!isFiniteSegment(segment))
+            return {};
     }
     return segments;
 }

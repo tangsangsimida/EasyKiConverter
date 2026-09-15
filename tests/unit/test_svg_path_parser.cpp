@@ -193,8 +193,10 @@ private slots:
         QVERIFY(SvgPathParser::parsePath(QString()).isEmpty());
         QVERIFY(SvgPathParser::parsePath(QStringLiteral("Q 1 2")).isEmpty());
         QVERIFY(SvgPathParser::parsePath(QStringLiteral("M 0 0 L 1e309 2")).isEmpty());
+        QVERIFY(SvgPathParser::parsePath(QStringLiteral("M 1e308 0 l 1e308 0")).isEmpty());
         QVERIFY(SvgPathParser::parseSegments(QString()).isEmpty());
         QVERIFY(SvgPathParser::parseSegments(QStringLiteral("M 0 0 L 1e309 2")).isEmpty());
+        QVERIFY(SvgPathParser::parseSegments(QStringLiteral("M 1e308 0 l 1e308 0")).isEmpty());
     }
 };
 
