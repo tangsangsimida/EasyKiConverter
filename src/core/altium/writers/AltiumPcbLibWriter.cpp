@@ -83,11 +83,15 @@ bool AltiumPcbLibWriter::validateComponents(const QList<AltiumPcbComponent>& com
     };
     QSet<QString> componentNames;
     for (const AltiumPcbComponent& component : components) {
-        const auto validateCStringField = [&reject, &component](const QString& value, const QString& context) {
-            if (!value.contains(QChar('|')) && !value.contains(QChar::Null))
-                return true;
-            return reject(QStringLiteral("Altium PcbLib 封装 %1 的%2包含参数分隔符或 NUL，已拒绝写入")
-                              .arg(component.name, context));
+        const auto validateCStringField = [&reject, &component, &isLosslessLatin1](const QString& value,
+                                                                                   const QString& context) {
+            if (value.contains(QChar('|')) || value.contains(QChar::Null))
+                return reject(QStringLiteral("Altium PcbLib 封装 %1 的%2包含参数分隔符或 NUL，已拒绝写入")
+                                  .arg(component.name, context));
+            if (!isLosslessLatin1(value))
+                return reject(QStringLiteral("Altium PcbLib 封装 %1 的%2包含无法编码的字符，已拒绝写入")
+                                  .arg(component.name, context));
+            return true;
         };
 
         if (component.name.trimmed().isEmpty())

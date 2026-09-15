@@ -1177,6 +1177,11 @@ private slots:
         invalidCStringComponent.extendedPrimitives.append(invalidCStringExtension);
         QVERIFY(!invalidInputWriter.write({invalidCStringComponent}, pcbOutputPath));
         QVERIFY(invalidInputWriter.diagnostics().join('\n').contains(QStringLiteral("扩展参数键包含参数分隔符或 NUL")));
+
+        invalidCStringComponent.extendedPrimitives.clear();
+        invalidCStringComponent.description = QStringLiteral("中文描述");
+        QVERIFY(!invalidInputWriter.write({invalidCStringComponent}, pcbOutputPath));
+        QVERIFY(invalidInputWriter.diagnostics().join('\n').contains(QStringLiteral("封装描述包含无法编码的字符")));
     }
 
     /**
