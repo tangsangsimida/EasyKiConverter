@@ -3340,6 +3340,14 @@ private slots:
         QVERIFY(invalidWriterInputExporter.diagnostics().contains(
             QStringLiteral("Altium SchLib 组件 INVALID|WRITER_INPUT 的组件名称包含参数分隔符或 NUL，已拒绝写入")));
 
+        ExporterAltiumSymbol invalidWriterLibraryExporter;
+        const QString invalidWriterLibraryPath =
+            QDir(tempDir.path()).filePath(QStringLiteral("invalid-writer-library.SchLib"));
+        QVERIFY(!invalidWriterLibraryExporter.exportSymbolLibrary(
+            {invalidWriterInputSymbol}, QStringLiteral("invalid-writer-library"), invalidWriterLibraryPath, false));
+        QVERIFY(invalidWriterLibraryExporter.diagnostics().contains(
+            QStringLiteral("Altium SchLib 组件 INVALID|WRITER_INPUT 的组件名称包含参数分隔符或 NUL，已拒绝写入")));
+
         IR::SymbolComponentIR invalidPrimitivePointsSymbol;
         invalidPrimitivePointsSymbol.name = QStringLiteral("INVALID_PRIMITIVE_POINTS");
         IR::SymbolPolylineIR invalidPolyline;
