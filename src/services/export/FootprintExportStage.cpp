@@ -19,6 +19,7 @@
 #include <QJsonParseError>
 #include <QMutexLocker>
 #include <QRegularExpression>
+#include <QSet>
 #include <QThread>
 
 #include <cmath>
@@ -428,6 +429,35 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
         }
 
         qDebug() << "FootprintExportStage: Collected footprint for" << componentId;
+    }
+
+    if (m_options.targetFormat == TargetEdaFormat::Altium) {
+        // Altium PcbLib 要求封装名称（不区分大小写）唯一。实际 BOM 中多个
+        // 元件经常共用同一个封装，例如多个 C0603，但它们仍可能关联不同
+        // 的元件数据或三维模型，因此不能简单丢弃重复项。
+        QSet<QString> usedNames;
+        for (int index = 0; index < footprintList.size(); ++index) {
+            FootprintData& footprint = footprintList[index];
+            FootprintInfo info = footprint.info();
+            const QString baseName = info.name.trimmed();
+            QString uniqueName = baseName;
+            int suffix = 1;
+            while (usedNames.contains(uniqueName.toCaseFolded())) {
+                const QString componentId = collectedIds.value(index);
+                uniqueName = QStringLiteral("%1_%2").arg(baseName, componentId);
+                if (suffix > 1)
+                    uniqueName += QStringLiteral("_%1").arg(suffix);
+                ++suffix;
+            }
+
+            if (uniqueName != info.name) {
+                info.name = uniqueName;
+                footprint.setInfo(info);
+                qWarning() << "FootprintExportStage: Renamed duplicate Altium footprint" << baseName << "to"
+                           << uniqueName;
+            }
+            usedNames.insert(uniqueName.toCaseFolded());
+        }
     }
 
     if (m_cancelled.load()) {

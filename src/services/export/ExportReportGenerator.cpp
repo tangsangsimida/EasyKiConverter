@@ -94,6 +94,32 @@ void ExportReportGenerator::writeDetailedReport(const QString& reason,
             for (const QString& diagnostic : typeProgress.diagnostics)
                 out << "- " << diagnostic << "\n";
         }
+        bool hasNonSuccessItems = false;
+        for (auto statusIt = typeProgress.itemStatus.cbegin(); statusIt != typeProgress.itemStatus.cend(); ++statusIt) {
+            const auto status = statusIt.value().status;
+            if (status == ExportItemStatus::Status::Failed || status == ExportItemStatus::Status::Skipped) {
+                hasNonSuccessItems = true;
+                break;
+            }
+        }
+        if (hasNonSuccessItems) {
+            out << "\n#### Failed or Skipped Items\n\n";
+            for (auto statusIt = typeProgress.itemStatus.cbegin(); statusIt != typeProgress.itemStatus.cend();
+                 ++statusIt) {
+                const ExportItemStatus& status = statusIt.value();
+                QString statusName;
+                if (status.status == ExportItemStatus::Status::Failed)
+                    statusName = QStringLiteral("failed");
+                else if (status.status == ExportItemStatus::Status::Skipped)
+                    statusName = QStringLiteral("skipped");
+                else
+                    continue;
+
+                const QString reasonText =
+                    status.errorMessage.isEmpty() ? QStringLiteral("未提供原因") : status.errorMessage;
+                out << "- `" << statusIt.key() << "`: " << statusName << " — " << reasonText << "\n";
+            }
+        }
         bool hasDiagnostics = false;
         for (auto statusIt = typeProgress.itemStatus.cbegin(); statusIt != typeProgress.itemStatus.cend(); ++statusIt) {
             if (!statusIt.value().diagnostics.isEmpty()) {

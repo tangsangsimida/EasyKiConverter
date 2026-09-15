@@ -169,6 +169,8 @@ inline int fromLayerTypeToAltium(IR::LayerType layer) {
             return 57;  // Mechanical 1
         case IR::LayerType::BottomAssembly:
             return 58;  // Mechanical 2
+        case IR::LayerType::UserDefined:
+            return 57;  // Mechanical 1，承载 EasyEDA Dwgs.User/Cmts.User 等用户层图元
         default:
             return 0;
     }

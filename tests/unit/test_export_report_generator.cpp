@@ -87,6 +87,8 @@ private slots:
         QVERIFY(content.contains(QStringLiteral("组件 IMAGE_DIAGNOSTICS 图片 0 的嵌入数据为空，已跳过 Storage")));
         QVERIFY(content.contains(QStringLiteral("### Footprint")));
         QVERIFY(content.contains(QStringLiteral("- Completed: 2/3")));
+        QVERIFY(content.contains(QStringLiteral("#### Failed or Skipped Items")));
+        QVERIFY(content.contains(QStringLiteral("- `C404`: failed — Footprint export failed")));
 
         QVERIFY(content.contains(QStringLiteral("## Weak Network Diagnostics")));
         QVERIFY(content.contains(QStringLiteral("NetworkRuntimeStats total{")));
@@ -147,6 +149,10 @@ private:
         footprintProgress.failedCount = 1;
         footprintProgress.skippedCount = 0;
         footprintProgress.inProgressCount = 1;
+        ExportItemStatus footprintFailure;
+        footprintFailure.status = ExportItemStatus::Status::Failed;
+        footprintFailure.errorMessage = QStringLiteral("Footprint export failed");
+        footprintProgress.itemStatus.insert(QStringLiteral("C404"), footprintFailure);
         progress.exportTypeProgress.insert(QStringLiteral("Footprint"), footprintProgress);
 
         return progress;

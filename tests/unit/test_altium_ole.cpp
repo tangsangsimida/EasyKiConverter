@@ -21,6 +21,7 @@
 #include "core/altium/utils/AltiumBinaryWriter.h"
 #include "core/altium/utils/AltiumConstants.h"
 #include "core/altium/utils/AltiumCoord.h"
+#include "core/altium/utils/AltiumLayerMap.h"
 #include "core/altium/utils/AltiumWriterUtils.h"
 #include "core/altium/writers/AltiumPcbLibWriter.h"
 #include "core/altium/writers/AltiumSchLibWriter.h"
@@ -468,6 +469,13 @@ private slots:
         QCOMPARE(AltiumCoord::mmToMilString(std::numeric_limits<double>::infinity()), QStringLiteral("0.000000mil"));
         QCOMPARE(AltiumCoord::lineWidthMmToIndex(std::numeric_limits<double>::quiet_NaN()), 0);
         QCOMPARE(AltiumCoord::lineWidthMmToIndex(std::numeric_limits<double>::infinity()), 0);
+    }
+
+    /**
+     * @brief 验证 EasyEDA 用户自定义层可映射到有效的 Altium 机械层。
+     */
+    void userDefinedLayerMapsToMechanicalLayer() {
+        QCOMPARE(AltiumLayerMap::fromLayerTypeToAltium(IR::LayerType::UserDefined), 57);
     }
 
     /**
