@@ -424,6 +424,38 @@ private slots:
         cache->setCacheDir(previousCacheDir);
     }
 
+    // 验证 Altium 封装提前失败时仍会结束对应的 3D 统计状态。
+    void altiumMissingFootprintReportsEmbeddedModelFailure() {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        FootprintExportStage stage;
+        ExportOptions options;
+        options.outputPath = tempDir.path();
+        options.targetFormat = TargetEdaFormat::Altium;
+        options.exportModel3D = true;
+        stage.setOptions(options);
+
+        const QString componentId = QStringLiteral("C_MISSING_FOOTPRINT");
+        QMap<QString, QSharedPointer<ComponentData>> cachedData;
+        cachedData.insert(componentId, QSharedPointer<ComponentData>::create());
+
+        QSignalSpy completedSpy(&stage, &FootprintExportStage::completed);
+        QSignalSpy modelSpy(&stage, &FootprintExportStage::embeddedModel3DStatusChanged);
+        stage.start({componentId}, cachedData);
+
+        if (completedSpy.count() == 0) {
+            QVERIFY2(completedSpy.wait(3000), "Altium missing footprint export should complete");
+        }
+        QCOMPARE(completedSpy.count(), 1);
+        QCOMPARE(completedSpy.at(0).at(0).toInt(), 0);
+        QCOMPARE(completedSpy.at(0).at(1).toInt(), 1);
+        QCOMPARE(modelSpy.count(), 1);
+        const ExportItemStatus modelStatus = qvariant_cast<ExportItemStatus>(modelSpy.at(0).at(1));
+        QCOMPARE(modelStatus.status, ExportItemStatus::Status::Failed);
+        QCOMPARE(modelStatus.errorMessage, QStringLiteral("No footprint data"));
+    }
+
     // 验证多个符号可以合并写入同一个符号库。
     void symbolLibraryExportMergesMultipleComponentsIntoOneLibrary() {
         QTemporaryDir tempDir;

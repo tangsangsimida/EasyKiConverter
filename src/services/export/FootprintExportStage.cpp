@@ -332,6 +332,18 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
         emit progressChanged(progressSnapshot);
     };
 
+    // Altium 将 3D 模型嵌入封装库，封装阶段提前失败时也必须结束对应的 3D 状态。
+    const auto publishAltiumModelFailure = [this](const QString& componentId, const QString& errorMessage) {
+        if (m_options.targetFormat != TargetEdaFormat::Altium || !m_options.exportModel3D) {
+            return;
+        }
+        ExportItemStatus modelStatus;
+        modelStatus.status = ExportItemStatus::Status::Failed;
+        modelStatus.errorMessage = errorMessage;
+        modelStatus.endTime = QDateTime::currentDateTime();
+        emit embeddedModel3DStatusChanged(componentId, modelStatus);
+    };
+
     for (const QString& componentId : componentIds) {
         if (m_cancelled.load()) {
             qDebug() << "FootprintExportStage: Export cancelled during data collection";
@@ -346,6 +358,7 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
             status.status = ExportItemStatus::Status::Failed;
             status.errorMessage = "No component data";
             publishItemStatus(componentId, status);
+            publishAltiumModelFailure(componentId, QStringLiteral("No component data"));
             continue;
         }
 
@@ -358,6 +371,7 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
             status.status = ExportItemStatus::Status::Failed;
             status.errorMessage = "No footprint data";
             publishItemStatus(componentId, status);
+            publishAltiumModelFailure(componentId, QStringLiteral("No footprint data"));
             continue;
         }
 
