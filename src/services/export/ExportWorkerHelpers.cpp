@@ -187,7 +187,7 @@ void ExportWorkerHelpers::recomputeTypeProgressCounts(ExportTypeProgress& progre
 
     // 按每个元器件的最终状态累加阶段统计。
     for (auto it = progress.itemStatus.cbegin(); it != progress.itemStatus.cend(); ++it) {
-        // 将当前状态映射到对应的完成、成功、失败或跳过计数。
+        // 根据当前状态累加完成、成功、失败和跳过数量。
         switch (it.value().status) {
             case ExportItemStatus::Status::Pending:
                 break;
