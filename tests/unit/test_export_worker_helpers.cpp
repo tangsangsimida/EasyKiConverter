@@ -1,7 +1,9 @@
 #include "models/ComponentData.h"
 #include "models/Model3DData.h"
 #include "models/SymbolData.h"
+#include "services/ComponentCacheService.h"
 #include "services/export/ExportWorkerHelpers.h"
+#include "tests/common/TestPaths.hpp"
 
 #include <QDir>
 #include <QTemporaryDir>
@@ -14,17 +16,34 @@ class TestExportWorkerHelpers : public QObject {
 
 private slots:
 
+    /** @brief 初始化测试使用的临时缓存目录。 */
+    void init() {
+        QVERIFY(m_tempDir.isValid());
+        m_cache = ComponentCacheService::instance();
+        m_cache->setCacheDir(m_tempDir.path());
+        m_cache->clearAllCache();
+    }
+
+    /** @brief 清理测试缓存目录中的数据。 */
+    void cleanup() {
+        if (m_cache != nullptr)
+            m_cache->clearAllCache();
+    }
+
+    /** @brief 验证默认输出目录会追加子目录。 */
     void defaultOutputDirAppendsSubdir() {
         const QString path = ExportWorkerHelpers::defaultOutputDir(QStringLiteral("symbols"));
         QVERIFY(path.contains(QStringLiteral("/export/symbols")));
     }
 
+    /** @brief 验证文件路径由元器件编号、目录和扩展名组成。 */
     void buildFilePathConcatenates() {
         const QString path = ExportWorkerHelpers::buildFilePath(
             QStringLiteral("C12345"), QStringLiteral("/tmp/out"), QStringLiteral(".kicad_sym"));
         QCOMPARE(path, QStringLiteral("/tmp/out/C12345.kicad_sym"));
     }
 
+    /** @brief 验证输出目录会被创建并返回。 */
     void ensureOutputDirCreatesAndReturnsPath() {
         QTemporaryDir tempDir;
         QVERIFY(tempDir.isValid());
@@ -38,6 +57,7 @@ private slots:
         QVERIFY(QDir(result).exists());
     }
 
+    /** @brief 验证未设置输出目录时会回退到默认目录。 */
     void ensureOutputDirFallsBackToDefaultWhenOutputPathEmpty() {
         ExportOptions options;  // outputPath empty
         const QString result = ExportWorkerHelpers::ensureOutputDir(options, QStringLiteral("sub"));
@@ -45,6 +65,7 @@ private slots:
         QVERIFY(result.contains(QStringLiteral("/export/sub")));
     }
 
+    /** @brief 验证存在且禁止覆盖的文件会被跳过。 */
     void shouldSkipExistingReturnsTrueWhenFileExistsAndNotOverwriting() {
         QTemporaryDir tempDir;
         QVERIFY(tempDir.isValid());
@@ -59,12 +80,14 @@ private slots:
         QVERIFY(ExportWorkerHelpers::shouldSkipExisting(filePath, options));
     }
 
+    /** @brief 验证缺失文件不会被跳过。 */
     void shouldNotSkipExistingWhenFileMissing() {
         ExportOptions options;
         options.overwriteExistingFiles = false;
         QVERIFY(!ExportWorkerHelpers::shouldSkipExisting(QStringLiteral("/nonexistent/file.kicad_sym"), options));
     }
 
+    /** @brief 验证允许覆盖时不会跳过已有文件。 */
     void shouldNotSkipExistingWhenOverwriteEnabled() {
         QTemporaryDir tempDir;
         QVERIFY(tempDir.isValid());
@@ -79,6 +102,7 @@ private slots:
         QVERIFY(!ExportWorkerHelpers::shouldSkipExisting(filePath, options));
     }
 
+    /** @brief 验证回退数据会填充目标中的空字段。 */
     void mergeComponentDataFillsEmptyTargetFromFallback() {
         auto fallback = QSharedPointer<ComponentData>::create();
         fallback->setLcscId(QStringLiteral("C12345"));
@@ -113,6 +137,7 @@ private slots:
         QCOMPARE(target.symbolData()->info().name, QStringLiteral("RES_0603"));
     }
 
+    /** @brief 验证合并不会覆盖目标已有字段。 */
     void mergeComponentDataPreservesExistingTargetValues() {
         auto fallback = QSharedPointer<ComponentData>::create();
         fallback->setLcscId(QStringLiteral("C12345"));
@@ -129,6 +154,7 @@ private slots:
         QCOMPARE(target.package(), QStringLiteral("fallback pkg"));  // Was empty
     }
 
+    /** @brief 验证目标编号为空时会完整复制回退数据。 */
     void mergeComponentDataCopiesFullFallbackWhenTargetLcscIdEmpty() {
         auto fallback = QSharedPointer<ComponentData>::create();
         fallback->setLcscId(QStringLiteral("C99999"));
@@ -142,6 +168,7 @@ private slots:
         QCOMPARE(target.name(), QStringLiteral("full name"));
     }
 
+    /** @brief 验证空回退数据不会改变目标。 */
     void mergeComponentDataIsNoopWhenFallbackIsNull() {
         ComponentData target;
         target.setLcscId(QStringLiteral("C12345"));
@@ -153,6 +180,7 @@ private slots:
         QCOMPARE(target.name(), QStringLiteral("original"));
     }
 
+    /** @brief 验证状态计数会根据项目状态重新计算。 */
     void recomputeTypeProgressCountsZeroesAndRecalculates() {
         ExportTypeProgress progress;
         progress.totalCount = 3;
@@ -180,6 +208,35 @@ private slots:
         QCOMPARE(progress.completedCount, 2);  // Success + Failed
         QCOMPARE(progress.skippedCount, 0);
     }
+
+    /** @brief 验证磁盘缓存会从封装模型恢复 UUID 并预加载 OBJ。 */
+    void loadDiskCacheRestoresFootprintModelBeforeObjLoad() {
+        const QString componentId = QStringLiteral("C23186");
+        const QString modelUuid = QStringLiteral("6bd5cd867e9542ebae21caaf5d2d4c4d");
+        QString error;
+        const QByteArray cadData =
+            Test::TestPaths::readBytes(Test::TestPaths::fixturePath(QStringLiteral("easyeda/cad_basic.json")), &error);
+        QVERIFY2(error.isEmpty(), qPrintable(error));
+        const QByteArray objData = Test::TestPaths::readBytes(
+            Test::TestPaths::fixturePath(QStringLiteral("easyeda/model3d_r0603.obj")), &error);
+        QVERIFY2(error.isEmpty(), qPrintable(error));
+
+        ComponentData metadata;
+        metadata.setLcscId(componentId);
+        m_cache->saveComponentMetadata(componentId, metadata);
+        m_cache->saveCadDataJson(componentId, cadData);
+        m_cache->saveModel3D(modelUuid, objData, QStringLiteral("obj"));
+
+        const QSharedPointer<ComponentData> loaded = ExportWorkerHelpers::loadDiskCachedComponentData(componentId);
+        QVERIFY(loaded != nullptr);
+        QVERIFY(loaded->model3DData() != nullptr);
+        QCOMPARE(loaded->model3DData()->uuid(), modelUuid);
+        QCOMPARE(loaded->model3DObjRaw(), objData);
+    }
+
+private:
+    QTemporaryDir m_tempDir;
+    ComponentCacheService* m_cache = nullptr;
 };
 
 QTEST_GUILESS_MAIN(TestExportWorkerHelpers)

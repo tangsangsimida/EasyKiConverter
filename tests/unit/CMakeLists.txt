@@ -372,6 +372,7 @@ add_executable(test_export_worker_helpers
 )
 target_link_libraries(test_export_worker_helpers PRIVATE
     Qt6::Test
+    Qt6::Network
     EasyKiConverterLib
 )
 target_include_directories(test_export_worker_helpers PRIVATE
