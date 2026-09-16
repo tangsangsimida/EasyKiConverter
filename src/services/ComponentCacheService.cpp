@@ -1124,11 +1124,7 @@ QByteArray ComponentCacheService::downloadDatasheet(const QString& lcscId,
     // 缓存目录路径、文件检查和读取必须与目录迁移串行化。
     {
         QMutexLocker diskLocker(&m_diskWriteMutex);
-        QString datasheetFilePath = datasheetPath(lcscId);
-        QString fullPath = datasheetFilePath;
-        if (!fullPath.endsWith(".pdf") && !fullPath.endsWith(".html")) {
-            fullPath += "." + ext;
-        }
+        const QString fullPath = resolveDatasheetPath(lcscId, ext, false);
         if (QFileInfo::exists(fullPath)) {
             QFile file(fullPath);
             if (file.open(QIODevice::ReadOnly)) {
@@ -1145,6 +1141,9 @@ QByteArray ComponentCacheService::downloadDatasheet(const QString& lcscId,
                         diag->retryCount = 0;
                         diag->latencyMs = timer.elapsed();
                         diag->wasRateLimited = false;
+                    }
+                    if (format) {
+                        *format = cachedFormat;
                     }
                     return cachedData;
                 }
@@ -1657,9 +1656,15 @@ QString ComponentCacheService::resolveDatasheetPath(const QString& lcscId,
     const QString normalizedFormat = preferredFormat.toLower();
 
     if (normalizedFormat.contains("pdf")) {
+        if (!forWrite && !QFileInfo::exists(basePath + ".pdf") && QFileInfo::exists(basePath + ".html")) {
+            return basePath + ".html";
+        }
         return basePath + ".pdf";
     }
     if (normalizedFormat.contains("html")) {
+        if (!forWrite && !QFileInfo::exists(basePath + ".html") && QFileInfo::exists(basePath + ".pdf")) {
+            return basePath + ".pdf";
+        }
         return basePath + ".html";
     }
 

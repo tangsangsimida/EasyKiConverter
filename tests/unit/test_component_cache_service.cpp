@@ -109,6 +109,21 @@ private slots:
         QVERIFY(!QFileInfo::exists(cachedPath));
     }
 
+    // 验证 PDF URL 对应的 HTML 回退缓存可以被后续下载请求复用。
+    void testDownloadDatasheetUsesHtmlFallbackCache() {
+        const QString componentId = QStringLiteral("C54327");
+        const QByteArray htmlData = QByteArrayLiteral("<html><body>cached</body></html>");
+        m_cache->saveDatasheet(componentId, htmlData, QStringLiteral("pdf"));
+
+        QAtomicInt cancelled(1);
+        QString format;
+        const QByteArray data = m_cache->downloadDatasheet(
+            componentId, QStringLiteral("https://example.com/manual.pdf"), &format, nullptr, &cancelled);
+
+        QCOMPARE(data, htmlData);
+        QCOMPARE(format, QStringLiteral("html"));
+    }
+
     // 验证超出预览图范围的索引会在网络请求前被拒绝。
     void testDownloadPreviewRejectsOutOfRangeIndex() {
         QAtomicInt cancelled(0);
