@@ -23,7 +23,7 @@ easykiconverter convert batch -i <component_list_file> -o <output_dir> [options]
 | `--output` | `-o` | Output directory path | - |
 | `--lib-name` | | Export library name | EasyKiConverter |
 | `--component` | `-c` | LCSC component ID | - |
-| `--target-format` | | Target format (kicad/altium) | kicad |
+| `--target-format` | | Target format (kicad/altium/xpedition) | kicad |
 | `--symbol` | | Export symbol library | true |
 | `--footprint` | | Export footprint library | true |
 | `--3d-model` | | Export 3D models (default WRL format) | false |
@@ -52,6 +52,7 @@ CLI mode exports the following by default:
 **Note**:
 - 3D models, preview images, and datasheets are not exported by default
 - Use `--3d-model` when needed; KiCad defaults to WRL, while Altium automatically converges to STEP and embeds it in PcbLib
+- Xpedition currently exports symbol and footprint ZIP packages only and does not support 3D model association; `--3d-model` records a warning and skips the 3D stage
 - Use `--datasheet` when datasheets are needed
 - Normal mode does not generate detailed reports; only in debug mode (`--debug`)
 
