@@ -1,6 +1,7 @@
 #include "models/ComponentData.h"
 #include "services/export/ExportTypeStage.h"
 #include "services/export/FootprintExportStage.h"
+#include "services/export/Model3DExportStage.h"
 #include "services/export/SymbolExportStage.h"
 
 #include <QDir>
@@ -64,8 +65,10 @@ protected:
 
 class ConcurrentStage final : public ExportTypeStage {
 public:
+    /** @brief 创建用于验证并发限制的测试阶段。 */
     explicit ConcurrentStage(int maxConcurrent) : ExportTypeStage("Concurrent", maxConcurrent, nullptr) {}
 
+    /** @brief 返回测试阶段观察到的最大并发 Worker 数。 */
     int maxStartedWorkers() const {
         return m_maxStartedWorkers;
     }
@@ -98,6 +101,7 @@ class TestExportTypeStage : public QObject {
 
 private slots:
 
+    // 验证每个组件都能收到开始和完成状态。
     void emitsItemStatusForEveryComponentIncludingLast() {
         ImmediateSuccessStage stage;
         QSignalSpy itemSpy(&stage, &ExportTypeStage::itemStatusChanged);
@@ -122,6 +126,7 @@ private slots:
         QCOMPARE(progress.failedCount, 0);
     }
 
+    // 验证 completed 信号发出时阶段已经退出运行状态。
     void completedSignalSeesStageNotRunning() {
         ImmediateSuccessStage stage;
         bool wasRunningWhenCompleted = true;
@@ -138,6 +143,7 @@ private slots:
         QVERIFY(!stage.isRunning());
     }
 
+    // 验证取消阶段会等待活跃 Worker 完成后再结束。
     void cancelledStageStaysRunningUntilActiveWorkersDrain() {
         DeferredStage stage;
         QSignalSpy completedSpy(&stage, &ExportTypeStage::completed);
@@ -157,6 +163,7 @@ private slots:
         QCOMPARE(completedSpy.count(), 1);
     }
 
+    // 验证非覆盖模式会保留已有封装文件。
     void footprintLibraryExportPreservesExistingFilesWhenNotOverwriting() {
         QTemporaryDir tempDir;
         QVERIFY(tempDir.isValid());
@@ -194,6 +201,7 @@ private slots:
         QVERIFY(QFile::exists(prettyDir + QDir::separator() + QStringLiteral("NewPackage.kicad_mod")));
     }
 
+    // 验证封装导出可以生成绝对路径的三维模型引用。
     void footprintLibraryExportCanUseAbsolute3DModelPaths() {
         QTemporaryDir tempDir;
         QVERIFY(tempDir.isValid());
@@ -236,6 +244,7 @@ private slots:
                  "Footprint should not contain a relative 3D model path in absolute mode");
     }
 
+    // 验证封装导出默认使用相对路径的三维模型引用。
     void footprintLibraryExportUsesRelative3DModelPathsByDefault() {
         QTemporaryDir tempDir;
         QVERIFY(tempDir.isValid());
@@ -354,6 +363,7 @@ private slots:
         QCOMPARE(failedComponents, QSet<QString>({QStringLiteral("C9101"), QStringLiteral("C9102")}));
     }
 
+    // 验证多个符号可以合并写入同一个符号库。
     void symbolLibraryExportMergesMultipleComponentsIntoOneLibrary() {
         QTemporaryDir tempDir;
         QVERIFY(tempDir.isValid());
@@ -386,6 +396,7 @@ private slots:
         QVERIFY(!QDir(tempDir.path() + QDir::separator() + QStringLiteral(".tmp")).exists());
     }
 
+    // 验证符号输入诊断会随导出进度暴露给调用方。
     void symbolLibraryExportEmitsInputDiagnostics() {
         QTemporaryDir tempDir;
         QVERIFY(tempDir.isValid());
@@ -416,6 +427,7 @@ private slots:
         QVERIFY(foundDiagnostics);
     }
 
+    // 验证缺少符号数据时会报告失败而不是生成空库。
     void symbolLibraryExportReportsMissingSymbolData() {
         QTemporaryDir tempDir;
         QVERIFY(tempDir.isValid());
@@ -447,6 +459,7 @@ private slots:
         QCOMPARE(status.errorMessage, QStringLiteral("No symbol data"));
     }
 
+    // 验证符号库提交失败时会回滚临时文件。
     void symbolLibraryExportRollsBackTempFileOnCommitFailure() {
         QTemporaryDir tempDir;
         QVERIFY(tempDir.isValid());
@@ -480,6 +493,7 @@ private slots:
 
     // === 新增：ExportTypeStage 基类行为测试 ===
 
+    // 验证空组件列表会立即完成且不创建 Worker。
     void emptyListComponentpletesImmediately() {
         ImmediateSuccessStage stage;
         QSignalSpy completedSpy(&stage, &ExportTypeStage::completed);
@@ -494,6 +508,42 @@ private slots:
         QVERIFY(!stage.isRunning());
     }
 
+    // 验证没有 3D 模型 UUID 的元器件计入跳过，而不是被统计为成功。
+    void model3DWithoutUuidIsSkipped() {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        Model3DExportStage stage;
+        ExportOptions options;
+        options.outputPath = tempDir.path();
+        options.libName = QStringLiteral("SkippedModels");
+        options.exportModel3DFormat = ExportOptions::MODEL_3D_FORMAT_WRL;
+        stage.setOptions(options);
+
+        QMap<QString, QSharedPointer<ComponentData>> cachedData;
+        cachedData[QStringLiteral("C_NO_MODEL")] = QSharedPointer<ComponentData>::create();
+
+        QSignalSpy itemSpy(&stage, &ExportTypeStage::itemStatusChanged);
+        QSignalSpy completedSpy(&stage, &ExportTypeStage::completed);
+        stage.start({QStringLiteral("C_NO_MODEL")}, cachedData);
+
+        if (completedSpy.count() == 0)
+            QVERIFY2(completedSpy.wait(3000), "Model3D skip should complete");
+        QCOMPARE(completedSpy.count(), 1);
+        QCOMPARE(completedSpy.at(0).at(0).toInt(), 0);
+        QCOMPARE(completedSpy.at(0).at(1).toInt(), 0);
+        QCOMPARE(completedSpy.at(0).at(2).toInt(), 1);
+
+        const ExportTypeProgress progress = stage.getProgress();
+        QCOMPARE(progress.totalCount, 1);
+        QCOMPARE(progress.completedCount, 1);
+        QCOMPARE(progress.successCount, 0);
+        QCOMPARE(progress.skippedCount, 1);
+        QCOMPARE(progress.itemStatus.value(QStringLiteral("C_NO_MODEL")).status, ExportItemStatus::Status::Skipped);
+        QVERIFY(itemSpy.count() >= 2);
+    }
+
+    // 验证运行中的阶段会拒绝重复启动请求。
     void duplicateStartWhileRunningIsIgnored() {
         DeferredStage stage;
         QSignalSpy completedSpy(&stage, &ExportTypeStage::completed);
@@ -515,6 +565,7 @@ private slots:
         QCOMPARE(progress.totalCount, 1);  // 只有 C8001，C8002 被忽略
     }
 
+    // 验证 Worker 失败时会递增失败计数并保留错误信息。
     void failedComponentIncrementsFailedCount() {
         FailStage stage;
         QSignalSpy completedSpy(&stage, &ExportTypeStage::completed);
@@ -550,6 +601,7 @@ private slots:
         QCOMPARE(failedSignals, 3);
     }
 
+    // 验证线程池并发数限制会约束同时运行的 Worker 数量。
     void concurrencyLimitIsRespected() {
         ConcurrentStage stage(2);
         QSignalSpy completedSpy(&stage, &ExportTypeStage::completed);
@@ -570,6 +622,7 @@ private slots:
                  qPrintable(QString("Max concurrent workers was %1, expected <= 2").arg(stage.maxStartedWorkers())));
     }
 
+    // 验证取消请求会等待已经启动的 Worker 收敛完成。
     void cancelStopsAfterActiveWorkersDrain() {
         DeferredStage stage;
         QSignalSpy completedSpy(&stage, &ExportTypeStage::completed);

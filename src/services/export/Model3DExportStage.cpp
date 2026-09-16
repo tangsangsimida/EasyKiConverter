@@ -69,9 +69,15 @@ void Model3DExportStage::start(const QStringList& componentIds,
     };
 
     m_componentPaths.clear();
+    m_skippedComponents.clear();
     for (const QString& componentId : componentIds) {
+        if (!needWrl && !needStep) {
+            m_skippedComponents.insert(componentId);
+            continue;
+        }
         if ((needWrl || needStep) && !hasModel3DUuid(componentId)) {
             qDebug() << "Model3DExportStage: No 3D model UUID, skipping temp paths for" << componentId;
+            m_skippedComponents.insert(componentId);
             continue;
         }
 
@@ -99,6 +105,7 @@ void Model3DExportStage::start(const QStringList& componentIds,
     ExportTypeStage::start(componentIds, cachedData);
 }
 
+// 取消三维模型导出并回滚尚未提交的临时文件。
 void Model3DExportStage::cancel() {
     if (!m_isRunning.load() && !m_isExporting.load()) {
         return;
@@ -123,16 +130,24 @@ void Model3DExportStage::cancel() {
     qDebug() << "Model3DExportStage: cancelled";
 }
 
+// 创建三维模型导出 Worker。
 QObject* Model3DExportStage::createWorker() {
     return new Model3DExportWorker();
 }
 
+// 为有有效三维数据的元器件准备输出路径并提交 Worker。
 void Model3DExportStage::startWorker(QObject* worker,
                                      const QString& componentId,
                                      const QSharedPointer<ComponentData>& data) {
     auto* exportWorker = qobject_cast<Model3DExportWorker*>(worker);
     if (!exportWorker) {
         qWarning() << "Model3DExportStage: Failed to cast worker to Model3DExportWorker";
+        return;
+    }
+
+    if (m_skippedComponents.contains(componentId)) {
+        completeSkippedItemProgress(exportWorker, componentId, QStringLiteral("No 3D model or format selected"));
+        delete exportWorker;
         return;
     }
 
