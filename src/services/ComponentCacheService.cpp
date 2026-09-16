@@ -1356,23 +1356,25 @@ void ComponentCacheService::removeCache(const QString& lcscId) {
         return;
     }
 
-    // 锁顺序：先 disk，后 tombstone（与其他方法一致）
-    QMutexLocker diskLocker(&m_diskWriteMutex);
-    // 标记为 tombstone，阻止旧回调写回
     {
-        QMutexLocker tombLocker(&m_tombstoneMutex);
-        m_tombstones.insert(normalizedId);
-    }
-    // 先删除L2磁盘缓存
-    QString dirPath = componentCacheDir(normalizedId);
-    if (dirPath.isEmpty()) {
-        return;
-    }
-    {
-        QDir dir(dirPath);
-        if (dir.exists()) {
-            dir.removeRecursively();
-            LOG_DEBUG(LogModule::Core, "Removed disk cache for: {}", normalizedId);
+        // 锁顺序：先 disk，后 tombstone（与其他方法一致）
+        QMutexLocker diskLocker(&m_diskWriteMutex);
+        // 标记为 tombstone，阻止旧回调写回
+        {
+            QMutexLocker tombLocker(&m_tombstoneMutex);
+            m_tombstones.insert(normalizedId);
+        }
+        // 先删除L2磁盘缓存
+        const QString dirPath = componentCacheDir(normalizedId);
+        if (dirPath.isEmpty()) {
+            return;
+        }
+        {
+            QDir dir(dirPath);
+            if (dir.exists()) {
+                dir.removeRecursively();
+                LOG_DEBUG(LogModule::Core, "Removed disk cache for: {}", normalizedId);
+            }
         }
     }
 
@@ -1394,6 +1396,7 @@ void ComponentCacheService::removeCache(const QString& lcscId) {
     }
     // 锁外发送信号
     emit memoryCacheSizeChanged(sizeAfterUpdate);
+    emit cacheSizeChanged(getCacheSize());
 }
 
 // 清除指定元器件的旧请求屏蔽标记。

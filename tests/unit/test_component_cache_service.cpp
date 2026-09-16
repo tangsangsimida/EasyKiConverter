@@ -135,11 +135,14 @@ private slots:
 
         QVERIFY(m_cache->hasCache(componentId));
         QVERIFY(QFileInfo::exists(m_tempDir.filePath(QStringLiteral("C54328/component.json"))));
+        QSignalSpy cacheSizeSpy(m_cache, &ComponentCacheService::cacheSizeChanged);
         m_cache->removeCache(componentId);
 
         QVERIFY(!m_cache->hasCache(componentId));
         QVERIFY(m_cache->loadComponentData(componentId) == nullptr);
         QVERIFY(!QFileInfo::exists(m_tempDir.filePath(QStringLiteral("C54328"))));
+        QVERIFY(!cacheSizeSpy.isEmpty());
+        QCOMPARE(cacheSizeSpy.last().at(0).toLongLong(), m_cache->getCacheSize());
     }
 
     // 验证数据手册下载不会直接返回格式无效的磁盘缓存。
