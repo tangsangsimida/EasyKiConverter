@@ -47,7 +47,29 @@ private slots:
         QVERIFY(data.contains("P 1"));
         QVERIFY(data.contains("l 2"));
         QVERIFY(data.contains("PINTYPE=IN"));
+        QVERIFY(data.contains("L 100.0000 0.0000 8 0 2 0 1 0 IN"));
+        QVERIFY(data.contains("A 100.0000 0.0000 8 0 3 3 #=1"));
         QVERIFY(data.contains("b -100.0000 -50.0000 100.0000 50.0000"));
+    }
+
+    // 验证暂未支持的引脚装饰会生成诊断，并且不会静默改变符号正文。
+    void unsupportedPinDecorationsAreReported() {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        IR::SymbolComponentIR symbol;
+        symbol.name = QStringLiteral("DECORATED_SYMBOL");
+        IR::SymbolPinIR pin;
+        pin.name = QStringLiteral("CLK");
+        pin.designator = QStringLiteral("1");
+        pin.position = QPointF(1.0, 0.0);
+        pin.style.clock = true;
+        symbol.pins.append(pin);
+
+        const QString outputPath = tempDir.filePath(QStringLiteral("decorated-symbol.zip"));
+        ExporterXpeditionSymbol exporter;
+        QVERIFY(exporter.exportSymbolLibrary({symbol}, QStringLiteral("Library"), outputPath, false, false));
+        QVERIFY(exporter.diagnostics().join(QStringLiteral("\n")).contains(QStringLiteral("引脚装饰")));
     }
 
     // 验证封装库同时写出 Padstack 与 Cell 两类目标文件。

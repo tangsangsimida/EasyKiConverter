@@ -6,6 +6,8 @@
 #include <QRegularExpression>
 #include <QtMath>
 
+#include <algorithm>
+
 namespace EasyKiConverter {
 
 namespace {
@@ -71,6 +73,17 @@ QPointF directionVector(IR::PinDirection direction) {
         default:
             return {1.0, 0.0};
     }
+}
+
+/**
+ * @brief 获取引脚名称或编号的可靠显示位置。
+ * @param position IR 中记录的文本位置。
+ * @param hasPosition 是否确认该文本位置来自有效的源数据。
+ * @param pinPosition 引脚连接点位置。
+ * @return 有效文本位置；源位置缺失时回退到引脚连接点。
+ */
+QPointF pinDisplayPosition(const QPointF& position, bool hasPosition, const QPointF& pinPosition) {
+    return hasPosition ? position : pinPosition;
 }
 
 /** @brief 写入一个符号直线图元及其默认图形样式。 */
@@ -164,15 +177,17 @@ void appendPin(QString& output, const IR::SymbolPinIR& pin, int index) {
                   .arg(fmt(toTh(inner.x())))
                   .arg(fmt(toTh(inner.y())))
                   .arg(side);
+    const QPointF namePosition = pinDisplayPosition(pin.namePosition, pin.hasNamePosition, outer);
+    const QPointF numberPosition = pinDisplayPosition(pin.numberPosition, pin.hasNumberPosition, outer);
     if (pin.display.showName && !pin.name.isEmpty())
         output += QStringLiteral("L %1 %2 8 0 2 0 1 0 %3\n")
-                      .arg(fmt(toTh(pin.namePosition.x())))
-                      .arg(fmt(toTh(pin.namePosition.y())))
+                      .arg(fmt(toTh(namePosition.x())))
+                      .arg(fmt(toTh(namePosition.y())))
                       .arg(pin.name);
     if (pin.display.showDesignator && !pin.designator.isEmpty())
         output += QStringLiteral("A %1 %2 8 0 3 3 #=%4\n")
-                      .arg(fmt(toTh(pin.numberPosition.x())))
-                      .arg(fmt(toTh(pin.numberPosition.y())))
+                      .arg(fmt(toTh(numberPosition.x())))
+                      .arg(fmt(toTh(numberPosition.y())))
                       .arg(pin.designator);
     const QString electricalType = pinElectricalTypeName(pin.electricalType);
     if (!electricalType.isEmpty())
@@ -287,6 +302,11 @@ bool ExporterXpeditionSymbol::exportSymbolLibrary(const QList<IR::SymbolComponen
             !symbol.paths.isEmpty() || !symbol.beziers.isEmpty() || !symbol.ieeeSymbols.isEmpty() ||
             !symbol.texts.isEmpty() || !symbol.textFrames.isEmpty() || !symbol.images.isEmpty()) {
             m_diagnostics.append(QStringLiteral("Xpedition 符号 %1 包含当前未写入的 IR 图元").arg(symbol.name));
+        }
+        if (std::any_of(symbol.pins.cbegin(), symbol.pins.cend(), [](const IR::SymbolPinIR& pin) {
+                return pin.style.hasAny();
+            })) {
+            m_diagnostics.append(QStringLiteral("Xpedition 符号 %1 包含当前未写入的引脚装饰").arg(symbol.name));
         }
         for (int partIndex = 0; partIndex < partCount; ++partIndex) {
             if (!archive.addFile(symbolFileName(symbol, partIndex), symbolFile(symbol, partIndex))) {
