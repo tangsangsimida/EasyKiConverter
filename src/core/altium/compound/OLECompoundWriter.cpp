@@ -153,11 +153,13 @@ bool OLECompoundWriter::writeStream(const QString& storagePath, const QString& s
     return true;
 }
 
+// 校验目录或流名称，确保其可安全编码为 OLE 目录条目。
 bool OLECompoundWriter::isValidEntryName(const QString& name) const {
     return !name.isEmpty() && name.size() <= 31 && !name.contains('/') && !name.contains('\\') && !name.contains(':') &&
            !name.contains('!') && !name.contains(QChar::Null);
 }
 
+// 记录写入过程中的首个结构错误，保留后续诊断的根因。
 void OLECompoundWriter::setError(const QString& message) {
     if (m_errorMessage.isEmpty())
         m_errorMessage = message;
