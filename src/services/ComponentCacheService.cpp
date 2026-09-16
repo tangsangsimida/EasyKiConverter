@@ -1031,17 +1031,36 @@ QByteArray ComponentCacheService::loadDatasheet(const QString& lcscId) const {
     if (file.open(QIODevice::ReadOnly)) {
         QByteArray data = file.readAll();
         file.close();
-        return data;
+        const QString format = datasheetFilePath.endsWith(QStringLiteral(".pdf"), Qt::CaseInsensitive)
+                                   ? QStringLiteral("pdf")
+                                   : QStringLiteral("html");
+        if (isValidDatasheetData(data, format)) {
+            return data;
+        }
+        QFile::remove(datasheetFilePath);
     }
 
     return QByteArray();
+}
+
+// 校验 PDF 签名或 HTML 文档标记，拒绝被错误响应污染的数据手册缓存。
+bool ComponentCacheService::isValidDatasheetData(const QByteArray& datasheetData, const QString& format) {
+    if (datasheetData.isEmpty()) {
+        return false;
+    }
+    if (format.compare(QStringLiteral("pdf"), Qt::CaseInsensitive) == 0) {
+        return datasheetData.startsWith("%PDF-");
+    }
+
+    const QByteArray normalized = datasheetData.toLower();
+    return normalized.contains("<html") || normalized.contains("<!doctype html") || normalized.contains("<body");
 }
 
 void ComponentCacheService::saveDatasheet(const QString& lcscId,
                                           const QByteArray& datasheetData,
                                           const QString& format,
                                           uint64_t expectedGeneration) {
-    if (datasheetData.isEmpty()) {
+    if (!isValidDatasheetData(datasheetData, format)) {
         return;
     }
 
@@ -1147,6 +1166,10 @@ QByteArray ComponentCacheService::downloadDatasheet(const QString& lcscId,
         if (format && ext == "pdf" && data.size() >= 5 && !data.startsWith("%PDF-")) {
             ext = "html";
             *format = ext;
+        }
+        if (!isValidDatasheetData(data, ext)) {
+            data.clear();
+            errorString = QStringLiteral("Invalid datasheet data");
         }
     } else {
         errorString = result.error;

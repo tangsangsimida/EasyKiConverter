@@ -287,6 +287,14 @@ public:
     QByteArray loadDatasheet(const QString& lcscId) const;
 
     /**
+     * @brief 检查数据手册内容与声明格式是否匹配
+     * @param datasheetData 数据手册原始数据
+     * @param format 数据格式（pdf/html）
+     * @return true 表示内容可以作为该格式的数据手册使用
+     */
+    static bool isValidDatasheetData(const QByteArray& datasheetData, const QString& format);
+
+    /**
      * @brief 检查元器件是否有符号封装缓存（CAD数据）
      * @param lcscId 元器件ID
      * @return bool 是否有有效的符号封装缓存

@@ -142,8 +142,13 @@ public:
                 if (ext == QStringLiteral("pdf") && result.data.size() >= 5 && !result.data.startsWith("%PDF-")) {
                     ext = QStringLiteral("html");
                 }
-                cache->saveDatasheet(lcscId, result.data, ext, gen);
-                onComplete(result.data, diag);
+                if (ComponentCacheService::isValidDatasheetData(result.data, ext)) {
+                    cache->saveDatasheet(lcscId, result.data, ext, gen);
+                    onComplete(result.data, diag);
+                } else {
+                    diag.errorString = QStringLiteral("Invalid datasheet data");
+                    onComplete(QByteArray(), diag);
+                }
             } else {
                 diag.errorString = result.error;
                 onComplete(QByteArray(), diag);
