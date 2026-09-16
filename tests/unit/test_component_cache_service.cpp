@@ -1,5 +1,6 @@
 #include "services/CacheRepository.h"
 #include "services/ComponentCacheService.h"
+#include "services/LcscImageService.h"
 
 #include <QAtomicInt>
 #include <QBuffer>
@@ -82,6 +83,26 @@ private slots:
         m_cache->savePreviewImage(componentId, QByteArrayLiteral("<html>403</html>"), 0);
         QVERIFY(m_cache->loadPreviewImage(componentId, 0).isEmpty());
         QVERIFY(!QFileInfo::exists(m_cache->previewImagePath(componentId, 0)));
+    }
+
+    // 验证图片服务不会把损坏的缓存文件报告为可用预览图。
+    void testImageServiceRejectsCorruptCachedPreview() {
+        const QString componentId = QStringLiteral("C54326");
+        const QString imagePath = m_cache->previewImagePath(componentId, 0);
+        QVERIFY(QDir().mkpath(QFileInfo(imagePath).absolutePath()));
+        QFile imageFile(imagePath);
+        QVERIFY(imageFile.open(QIODevice::WriteOnly));
+        QVERIFY(imageFile.write(QByteArrayLiteral("<html>403</html>")) > 0);
+        imageFile.close();
+
+        LcscImageService imageService;
+        QSignalSpy errorSpy(&imageService, &LcscImageService::error);
+        imageService.fetchPreviewImages(componentId);
+
+        QVERIFY2(errorSpy.wait(3000), "Corrupt cached preview should report an error");
+        QCOMPARE(errorSpy.count(), 1);
+        QCOMPARE(errorSpy.at(0).at(0).toString(), componentId);
+        QCOMPARE(errorSpy.at(0).at(1).toString(), QStringLiteral("No images downloaded"));
     }
 
     // 验证既不是 PDF 也不是 HTML 的响应不会进入数据手册缓存。
