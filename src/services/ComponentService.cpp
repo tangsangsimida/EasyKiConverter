@@ -280,20 +280,23 @@ void ComponentService::fetchComponentDataInternal(const QString& componentId, bo
 
         {
             QMutexLocker locker(&m_fetchingComponentsMutex);
-            if (!m_fetchingComponents.contains(result.componentId)) {
+            const auto it = m_fetchingComponents.find(result.componentId);
+            if (it == m_fetchingComponents.end() || it->cacheGeneration != gen) {
+                qDebug() << "ComponentService: Discarding stale CAD result for" << result.componentId;
                 return;
             }
         }
 
         if (!result.success) {
-            emitFetchErrorAndClearState(result.componentId, result.errorMessage);
+            emitFetchErrorAndClearState(result.componentId, result.errorMessage, gen);
             return;
         }
 
         {
             QMutexLocker locker(&m_fetchingComponentsMutex);
             auto it = m_fetchingComponents.find(result.componentId);
-            if (it == m_fetchingComponents.end()) {
+            if (it == m_fetchingComponents.end() || it->cacheGeneration != gen) {
+                qDebug() << "ComponentService: Discarding stale CAD result for" << result.componentId;
                 return;
             }
             it->data = result.parsed.componentData;
@@ -455,20 +458,23 @@ void ComponentService::loadComponentDataFromCacheAsync(const QString& normalized
 
                         {
                             QMutexLocker locker(&m_fetchingComponentsMutex);
-                            if (!m_fetchingComponents.contains(result.componentId)) {
+                            const auto it = m_fetchingComponents.find(result.componentId);
+                            if (it == m_fetchingComponents.end() || it->cacheGeneration != retryGen) {
+                                qDebug() << "ComponentService: Discarding stale retry result for" << result.componentId;
                                 return;
                             }
                         }
 
                         if (!result.success) {
-                            emitFetchErrorAndClearState(result.componentId, result.errorMessage);
+                            emitFetchErrorAndClearState(result.componentId, result.errorMessage, retryGen);
                             return;
                         }
 
                         {
                             QMutexLocker locker(&m_fetchingComponentsMutex);
                             auto it = m_fetchingComponents.find(result.componentId);
-                            if (it == m_fetchingComponents.end()) {
+                            if (it == m_fetchingComponents.end() || it->cacheGeneration != retryGen) {
+                                qDebug() << "ComponentService: Discarding stale retry result for" << result.componentId;
                                 return;
                             }
                             it->data = result.parsed.componentData;
@@ -893,14 +899,15 @@ void ComponentService::handleCadDataFetched(const QString& componentId, const QJ
         watcher->deleteLater();
 
         if (!parsed.success) {
-            emitFetchErrorAndClearState(parsed.componentId, parsed.errorMessage);
+            emitFetchErrorAndClearState(parsed.componentId, parsed.errorMessage, gen);
             return;
         }
 
         {
             QMutexLocker locker(&m_fetchingComponentsMutex);
             auto it = m_fetchingComponents.find(parsed.componentId);
-            if (it == m_fetchingComponents.end()) {
+            if (it == m_fetchingComponents.end() || it->cacheGeneration != gen) {
+                qDebug() << "ComponentService: Discarding stale parsed CAD result for" << parsed.componentId;
                 return;
             }
             it->data = parsed.componentData;
@@ -1161,12 +1168,22 @@ void ComponentService::cancelRequestForComponent(const QString& componentId) {
 }
 
 /** @brief 清理失败请求状态并发送错误信号。 */
-void ComponentService::emitFetchErrorAndClearState(const QString& componentId, const QString& error) {
+void ComponentService::emitFetchErrorAndClearState(const QString& componentId,
+                                                   const QString& error,
+                                                   uint64_t expectedGeneration) {
     qWarning() << "Fetch error for component" << componentId << ":" << error;
 
     {
         QMutexLocker locker(&m_fetchingComponentsMutex);
-        m_fetchingComponents.remove(componentId);
+        const auto it = m_fetchingComponents.find(componentId.toUpper());
+        if (it == m_fetchingComponents.end() ||
+            (expectedGeneration != 0 && it->cacheGeneration != expectedGeneration)) {
+            if (expectedGeneration != 0) {
+                qDebug() << "ComponentService: Discarding stale error for" << componentId;
+            }
+            return;
+        }
+        m_fetchingComponents.erase(it);
     }
     {
         QMutexLocker locker(&m_componentCacheMutex);

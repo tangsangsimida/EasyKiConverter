@@ -143,6 +143,20 @@ private slots:
         service.cancelAllPendingRequests();
     }
 
+    /** @brief 验证旧代次失败回调不会清理新请求状态。 */
+    void testStaleGenerationDoesNotClearNewRequest() {
+        const QString componentId = QStringLiteral("C54332");
+        ComponentService service;
+        service.testSetFetchingState(componentId, componentId, false, true);
+
+        const uint64_t currentGeneration = m_cache->currentGeneration();
+        QVERIFY(currentGeneration > 0);
+        service.testEmitFetchErrorForGeneration(componentId, QStringLiteral("stale error"), currentGeneration - 1);
+
+        QVERIFY(service.testHasFetchingState(componentId));
+        service.cancelAllPendingRequests();
+    }
+
 private:
     /** @brief 写入用于触发缓存加载失败回退的最小缓存。 */
     void saveCorruptSymbolFootprintCache(const QString& componentId) {

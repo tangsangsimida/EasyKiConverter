@@ -361,7 +361,7 @@ private:
      * @param componentId 元件ID
      * @param error 错误信息
      */
-    void emitFetchErrorAndClearState(const QString& componentId, const QString& error);
+    void emitFetchErrorAndClearState(const QString& componentId, const QString& error, uint64_t expectedGeneration = 0);
 
     /**
      * @brief 处理并行数据收集完成
@@ -510,6 +510,7 @@ public:
         fetching.componentId = storedComponentId;
         fetching.hasCadData = hasCadData;
         fetching.requestActive = requestActive;
+        fetching.cacheGeneration = ComponentCacheService::instance()->currentGeneration();
     }
 
     // 返回测试用的元件获取状态是否存在。
@@ -538,6 +539,13 @@ public:
         const QString normalizedId = componentId.toUpper();
         QMutexLocker locker(&m_fetchingComponentsMutex);
         return m_fetchingComponents.value(normalizedId).hasCadData;
+    }
+
+    /** @brief 使用指定代次触发测试用失败清理流程。 */
+    void testEmitFetchErrorForGeneration(const QString& componentId,
+                                         const QString& error,
+                                         uint64_t expectedGeneration) {
+        emitFetchErrorAndClearState(componentId, error, expectedGeneration);
     }
 #endif
 };
