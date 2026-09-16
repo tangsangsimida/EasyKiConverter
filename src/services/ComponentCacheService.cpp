@@ -321,17 +321,14 @@ QString ComponentCacheService::makeMemoryKey(const QString& lcscId, const QStrin
 }
 
 bool ComponentCacheService::hasCache(const QString& lcscId) const {
-    // 先检查文件是否存在（不使用锁，避免阻塞主线程的磁盘I/O）
-    QString metaPath = metadataPath(lcscId);
-    if (!QFileInfo::exists(metaPath)) {
-        return false;
-    }
-    // 文件存在时，验证缓存完整性
+    // 统一由完整性检查负责路径读取，避免目录迁移期间出现先检查后失效。
     return isCacheValid(lcscId);
 }
 
 bool ComponentCacheService::isCacheValid(const QString& lcscId) const {
-    const QJsonObject metadata = loadMetadata(lcscId);
+    // 元数据和 CAD 文件必须在同一次目录迁移保护下完成检查。
+    QMutexLocker diskLocker(&m_diskWriteMutex);
+    const QJsonObject metadata = readMetadataFile(metadataPath(lcscId));
     if (metadata.isEmpty()) {
         return false;
     }
@@ -636,6 +633,8 @@ QByteArray ComponentCacheService::loadSymbolData(const QString& lcscId) const {
         return data;
     }
 
+    // L2 文件读取必须与目录迁移串行化。
+    QMutexLocker diskLocker(&m_diskWriteMutex);
     // L1未命中，查L2磁盘
     QString symbolPath = componentCacheDir(lcscId) + "/symbol.json";
     if (!QFileInfo::exists(symbolPath)) {
@@ -695,6 +694,8 @@ QByteArray ComponentCacheService::loadFootprintData(const QString& lcscId) const
         return data;
     }
 
+    // L2 文件读取必须与目录迁移串行化。
+    QMutexLocker diskLocker(&m_diskWriteMutex);
     // L1未命中，查L2磁盘
     QString footprintPath = componentCacheDir(lcscId) + "/footprint.json";
     if (!QFileInfo::exists(footprintPath)) {
@@ -745,6 +746,8 @@ void ComponentCacheService::saveCadDataJson(const QString& lcscId,
 }
 
 QByteArray ComponentCacheService::loadCadDataJson(const QString& lcscId) const {
+    // CAD 文件读取必须与目录迁移串行化。
+    QMutexLocker diskLocker(&m_diskWriteMutex);
     QString cadDataPath = componentCacheDir(lcscId) + "/cad_data.json";
     if (!QFileInfo::exists(cadDataPath)) {
         return QByteArray();
@@ -761,6 +764,8 @@ QByteArray ComponentCacheService::loadCadDataJson(const QString& lcscId) const {
 }
 
 bool ComponentCacheService::hasSymbolFootprintCache(const QString& lcscId) const {
+    // 缓存存在性和完整性检查必须使用稳定的缓存目录。
+    QMutexLocker diskLocker(&m_diskWriteMutex);
     // Fast path: if metadata is in memory cache, cad_data.json exists and was previously valid
     // This avoids disk I/O for components that were cached in this session
     QString metadataKey = makeMemoryKey(lcscId, "metadata");
@@ -823,6 +828,8 @@ QByteArray ComponentCacheService::loadPreviewImage(const QString& lcscId, int im
         return QByteArray();
     }
 
+    // 预览图读取必须与缓存目录迁移串行化。
+    QMutexLocker diskLocker(&m_diskWriteMutex);
     // 获取路径在锁外进行
     QString previewPath;
     {
@@ -963,7 +970,9 @@ QByteArray ComponentCacheService::downloadPreviewImage(const QString& lcscId,
 }
 
 QByteArray ComponentCacheService::loadDatasheet(const QString& lcscId) const {
-    const QString preferredFormat = loadMetadata(lcscId).value("datasheetFormat").toString();
+    // 数据手册路径和文件读取必须与目录迁移串行化。
+    QMutexLocker diskLocker(&m_diskWriteMutex);
+    const QString preferredFormat = readMetadataFile(metadataPath(lcscId)).value("datasheetFormat").toString();
     const QString datasheetFilePath = resolveDatasheetPath(lcscId, preferredFormat, false);
     if (!QFileInfo::exists(datasheetFilePath)) {
         return QByteArray();
