@@ -934,7 +934,7 @@ QByteArray ComponentCacheService::downloadPreviewImage(const QString& lcscId,
                                                        ComponentExportStatus::NetworkDiagnostics* diag,
                                                        QAtomicInt* cancelled,
                                                        bool weakNetwork) {
-    if (imageUrl.isEmpty() || imageIndex < 0) {
+    if (imageUrl.isEmpty() || imageIndex < 0 || imageIndex >= 3) {
         return QByteArray();
     }
     const uint64_t gen = currentGeneration();

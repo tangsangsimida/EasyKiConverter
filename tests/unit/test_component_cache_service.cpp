@@ -109,6 +109,16 @@ private slots:
         QVERIFY(!QFileInfo::exists(cachedPath));
     }
 
+    // 验证超出预览图范围的索引会在网络请求前被拒绝。
+    void testDownloadPreviewRejectsOutOfRangeIndex() {
+        QAtomicInt cancelled(0);
+
+        const QByteArray data = m_cache->downloadPreviewImage(
+            QStringLiteral("C54326"), QStringLiteral("https://example.com/preview.jpg"), 3, nullptr, &cancelled);
+
+        QVERIFY(data.isEmpty());
+    }
+
     // 验证缓存自愈会清理非空但格式无效的媒体和三维文件。
     void testCacheHealthRemovesInvalidNonEmptyFiles() {
         const QString componentId = QStringLiteral("C54324");
