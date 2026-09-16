@@ -85,6 +85,11 @@ private slots:
         pad.size = QSizeF(1.27, 1.27);
         pad.shape = IR::PadShape::Rect;
         footprint.pads.append(pad);
+        IR::FootprintTrackIR overlay;
+        overlay.layer = IR::LayerType::TopOverlay;
+        overlay.points = {QPointF(-1.0, 0.0), QPointF(1.0, 0.0)};
+        overlay.width = 0.1;
+        footprint.tracks.append(overlay);
 
         const QString outputPath = tempDir.filePath(QStringLiteral("footprints.zip"));
         ExporterXpeditionFootprint exporter;
@@ -101,6 +106,8 @@ private slots:
         QVERIFY(data.contains("TOP_SOLDERMASK_PAD"));
         QVERIFY(data.contains("_MASK"));
         QVERIFY(data.contains("..PIN \"1\""));
+        QVERIFY(data.contains("SILKSCREEN_OUTLINE"));
+        QVERIFY(data.contains("MNT_SIDE"));
     }
 
     // 验证通孔焊盘会建立可被 Padstack 引用的钻孔定义。

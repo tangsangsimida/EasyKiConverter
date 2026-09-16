@@ -131,8 +131,11 @@ LayerSection layerSection(IR::LayerType layer) {
     switch (layer) {
         case IR::LayerType::TopSilk:
         case IR::LayerType::BottomSilk:
+        case IR::LayerType::TopOverlay:
+        case IR::LayerType::BottomOverlay:
             return {QStringLiteral("SILKSCREEN_OUTLINE"),
-                    layer == IR::LayerType::TopSilk ? QStringLiteral("MNT_SIDE") : QStringLiteral("OPP_SIDE")};
+                    layer == IR::LayerType::TopSilk || layer == IR::LayerType::TopOverlay ? QStringLiteral("MNT_SIDE")
+                                                                                          : QStringLiteral("OPP_SIDE")};
         case IR::LayerType::TopAssembly:
         case IR::LayerType::BottomAssembly:
             return {QStringLiteral("ASSEMBLY_OUTLINE"),
