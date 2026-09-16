@@ -1087,6 +1087,8 @@ QByteArray ComponentCacheService::downloadDatasheet(const QString& lcscId,
 }
 
 bool ComponentCacheService::hasModel3DCached(const QString& uuid, const QString& extension) const {
+    // 与目录迁移和模型写入串行化，避免检查到迁移中的文件。
+    QMutexLocker diskLocker(&m_diskWriteMutex);
     QMutexLocker locker(&m_mutex);
     QString path = model3DPath(uuid, extension);
     QFileInfo fileInfo(path);
@@ -1095,6 +1097,8 @@ bool ComponentCacheService::hasModel3DCached(const QString& uuid, const QString&
 }
 
 QByteArray ComponentCacheService::loadModel3D(const QString& uuid, const QString& extension) const {
+    // 与目录迁移和模型写入串行化，避免读取到不完整的文件。
+    QMutexLocker diskLocker(&m_diskWriteMutex);
     QMutexLocker locker(&m_mutex);
 
     QString path = model3DPath(uuid, extension);
@@ -1150,6 +1154,8 @@ bool ComponentCacheService::copyModel3DToFile(const QString& uuid,
         return false;
     }
 
+    // 保证源文件在复制期间不会被缓存目录迁移或写入操作替换。
+    QMutexLocker diskLocker(&m_diskWriteMutex);
     QString sourcePath = model3DPath(uuid, extension);
     const QFileInfo sourceInfo(sourcePath);
     if (!sourceInfo.exists() || !sourceInfo.isFile() || sourceInfo.size() <= 0) {
