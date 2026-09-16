@@ -1074,6 +1074,9 @@ void ComponentCacheService::saveDatasheet(const QString& lcscId,
                                           const QString& format,
                                           uint64_t expectedGeneration) {
     QString effectiveFormat = format.toLower();
+    if (effectiveFormat != QStringLiteral("pdf") && effectiveFormat != QStringLiteral("html")) {
+        return;
+    }
     if (effectiveFormat == QStringLiteral("pdf") && !datasheetData.startsWith("%PDF-")) {
         effectiveFormat = QStringLiteral("html");
     }

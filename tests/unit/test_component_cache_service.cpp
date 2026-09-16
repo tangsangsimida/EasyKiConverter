@@ -91,6 +91,18 @@ private slots:
         QVERIFY(m_cache->loadDatasheet(componentId).isEmpty());
     }
 
+    // 验证未知数据手册格式不会写入错误的 PDF 缓存路径。
+    void testUnsupportedDatasheetFormatIsRejected() {
+        const QString componentId = QStringLiteral("C54324");
+        const QByteArray htmlData = QByteArrayLiteral("<html><body>unsupported</body></html>");
+
+        m_cache->saveDatasheet(componentId, htmlData, QStringLiteral("doc"));
+
+        QVERIFY(m_cache->loadDatasheet(componentId).isEmpty());
+        QVERIFY(!QFileInfo::exists(m_tempDir.filePath(componentId + QStringLiteral("/datasheet.pdf"))));
+        QVERIFY(!QFileInfo::exists(m_tempDir.filePath(componentId + QStringLiteral("/datasheet.html"))));
+    }
+
     // 验证数据手册下载不会直接返回格式无效的磁盘缓存。
     void testDownloadDatasheetRemovesInvalidCachedData() {
         const QString componentId = QStringLiteral("C54325");
