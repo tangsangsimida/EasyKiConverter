@@ -3,6 +3,7 @@
 #include "services/export/ExportTypeStage.h"
 #include "services/export/FootprintExportStage.h"
 #include "services/export/Model3DExportStage.h"
+#include "services/export/Model3DExportWorker.h"
 #include "services/export/SymbolExportStage.h"
 
 #include <QDir>
@@ -420,6 +421,48 @@ private slots:
         const ExportItemStatus modelStatus = qvariant_cast<ExportItemStatus>(modelSpy.at(0).at(1));
         QCOMPARE(modelStatus.status, ExportItemStatus::Status::Success);
         QVERIFY(QFileInfo::exists(outputDir.filePath(QStringLiteral("CachedAltium.PcbLib"))));
+
+        cache->setCacheDir(previousCacheDir);
+    }
+
+    // 验证预加载的有效 OBJ 会写入公共三维缓存。
+    void model3DWorkerCachesPreloadedObj() {
+        QTemporaryDir outputDir;
+        QTemporaryDir cacheDir;
+        QVERIFY(outputDir.isValid());
+        QVERIFY(cacheDir.isValid());
+
+        ComponentCacheService* cache = ComponentCacheService::instance();
+        const QString previousCacheDir = cache->cacheDir();
+        cache->setCacheDir(cacheDir.path());
+        cache->clearAllCache();
+
+        const QString componentId = QStringLiteral("C12346");
+        const QString modelUuid = QStringLiteral("preloaded-obj-model");
+        const QByteArray objData = QByteArrayLiteral("v 0 0 0\nv 1 0 0\nv 0 1 0\nf 1 2 3\n");
+        auto component = QSharedPointer<ComponentData>::create();
+        component->setLcscId(componentId);
+        auto model = QSharedPointer<Model3DData>::create();
+        model->setUuid(modelUuid);
+        model->setName(QStringLiteral("PRELOADED"));
+        model->setRawObj(QString::fromUtf8(objData));
+        component->setModel3DData(model);
+        component->setModel3DObjRaw(objData);
+
+        ExportOptions options;
+        options.outputPath = outputDir.path();
+        options.exportModel3D = true;
+        options.exportModel3DFormat = ExportOptions::MODEL_3D_FORMAT_WRL;
+        options.overwriteExistingFiles = true;
+
+        Model3DExportWorker worker;
+        QSignalSpy completedSpy(&worker, &Model3DExportWorker::completed);
+        worker.setData(componentId, component, options);
+        worker.run();
+
+        QCOMPARE(completedSpy.count(), 1);
+        QVERIFY(completedSpy.at(0).at(1).toBool());
+        QCOMPARE(cache->loadModel3D(modelUuid, QStringLiteral("obj")), objData);
 
         cache->setCacheDir(previousCacheDir);
     }

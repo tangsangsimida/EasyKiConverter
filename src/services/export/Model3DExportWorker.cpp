@@ -194,6 +194,10 @@ void Model3DExportWorker::run() {
             qWarning() << "Model3DExportWorker: Ignoring malformed OBJ data for" << m_componentId << "uuid" << uuid;
             objData.clear();
         }
+        if (!objData.isEmpty()) {
+            // 预加载阶段已经取得有效 OBJ 时也写入公共缓存，避免后续导出重复下载。
+            cache->saveModel3D(uuid, objData, QStringLiteral("obj"), gen);
+        }
         if (objData.isEmpty()) {
             QMutexLocker downloadLocker(&modelDownloadMutex());
             objData = cache->loadModel3D(uuid, QStringLiteral("obj"));
