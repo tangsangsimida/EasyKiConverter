@@ -190,9 +190,18 @@ void Model3DExportWorker::run() {
         if (m_data && !m_data->model3DObjRaw().isEmpty()) {
             objData = m_data->model3DObjRaw();
         }
+        if (!objData.isEmpty() && !Exporter3DModel::hasUsableObjGeometry(objData)) {
+            qWarning() << "Model3DExportWorker: Ignoring malformed OBJ data for" << m_componentId << "uuid" << uuid;
+            objData.clear();
+        }
         if (objData.isEmpty()) {
             QMutexLocker downloadLocker(&modelDownloadMutex());
             objData = cache->loadModel3D(uuid, QStringLiteral("obj"));
+            if (!objData.isEmpty() && !Exporter3DModel::hasUsableObjGeometry(objData)) {
+                qWarning() << "Model3DExportWorker: Ignoring malformed cached OBJ for" << m_componentId << "uuid"
+                           << uuid;
+                objData.clear();
+            }
             if (objData.isEmpty() && cache->hasModel3DCached(uuid, QStringLiteral("wrl")) &&
                 cache->copyModel3DToFile(uuid, QStringLiteral("wrl"), wrlWritePath)) {
                 usedWrlCache = true;
@@ -201,6 +210,12 @@ void Model3DExportWorker::run() {
                 if (error.isEmpty()) {
                     error = QStringLiteral("Failed to download OBJ data for WRL export");
                 }
+            }
+            if (!objData.isEmpty() && !Exporter3DModel::hasUsableObjGeometry(objData)) {
+                qWarning() << "Model3DExportWorker: Rejecting invalid downloaded OBJ for" << m_componentId << "uuid"
+                           << uuid;
+                objData.clear();
+                error = QStringLiteral("Downloaded OBJ data has no usable geometry");
             }
             if (!objData.isEmpty()) {
                 cache->saveModel3D(uuid, objData, QStringLiteral("obj"), gen);

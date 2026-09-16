@@ -18,15 +18,18 @@ private slots:
 
     // === calculateObjMinZ 测试 ===
 
+    /** @brief 验证空 OBJ 的最小 Z 返回无穷大哨兵值。 */
     void calculateObjMinZEmptyReturnsMax() {
         QCOMPARE(Exporter3DModel::calculateObjMinZ(QByteArray()), std::numeric_limits<double>::max());
     }
 
+    /** @brief 验证没有顶点的 OBJ 返回无穷大哨兵值。 */
     void calculateObjMinZNoVerticesReturnsMax() {
         const QByteArray obj("# comment\nmtllib test.mtl\nusemtl default\n");
         QCOMPARE(Exporter3DModel::calculateObjMinZ(obj), std::numeric_limits<double>::max());
     }
 
+    /** @brief 验证单个顶点的 Z 坐标换算结果。 */
     void calculateObjMinZSingleVertex() {
         // OBJ 坐标单位是 0.01 inch，除以 2.54 转换为 mm
         // v 0 0 254 => Z = 254/2.54 = 100 mm
@@ -34,6 +37,7 @@ private slots:
         QCOMPARE(Exporter3DModel::calculateObjMinZ(obj), 100.0);
     }
 
+    /** @brief 验证多个顶点取最小 Z 坐标。 */
     void calculateObjMinZMultipleVertices() {
         const QByteArray obj(
             "v 0 0 254\n"
@@ -43,11 +47,13 @@ private slots:
         QCOMPARE(Exporter3DModel::calculateObjMinZ(obj), 50.0);
     }
 
+    /** @brief 验证负 Z 坐标可以正确参与最小值计算。 */
     void calculateObjMinZNegativeZ() {
         const QByteArray obj("v 0 0 -254\n");
         QCOMPARE(Exporter3DModel::calculateObjMinZ(obj), -100.0);
     }
 
+    /** @brief 验证最小 Z 计算忽略法线、纹理和面定义。 */
     void calculateObjMinZIgnoresNonVertexLines() {
         const QByteArray obj(
             "# comment\n"
@@ -58,17 +64,32 @@ private slots:
         QCOMPARE(Exporter3DModel::calculateObjMinZ(obj), 100.0);
     }
 
+    /** @brief 验证 OBJ 几何校验接受包含顶点和面的模型。 */
+    void hasUsableObjGeometryAcceptsValidModel() {
+        const QByteArray obj("v 0 0 0\nv 1 0 0\nv 0 1 0\nf 1/1 2/2 3/3\n");
+        QVERIFY(Exporter3DModel::hasUsableObjGeometry(obj));
+    }
+
+    /** @brief 验证 OBJ 几何校验拒绝错误响应和不完整模型。 */
+    void hasUsableObjGeometryRejectsInvalidModel() {
+        QVERIFY(!Exporter3DModel::hasUsableObjGeometry(QByteArrayLiteral("<html>access denied</html>")));
+        QVERIFY(!Exporter3DModel::hasUsableObjGeometry(QByteArrayLiteral("v 0 0 0\nv 1 0 0\n")));
+    }
+
     // === calculateWrlDisplayMinZ 测试 ===
 
+    /** @brief 验证空 WRL 的最小 Z 返回无穷大哨兵值。 */
     void calculateWrlDisplayMinZEmptyReturnsMax() {
         QCOMPARE(Exporter3DModel::calculateWrlDisplayMinZ(QByteArray()), std::numeric_limits<double>::max());
     }
 
+    /** @brief 验证没有坐标点的 WRL 返回无穷大哨兵值。 */
     void calculateWrlDisplayMinZNoPointsReturnsMax() {
         const QByteArray wrl("#VRML V2.0 utf8\nShape {}\n");
         QCOMPARE(Exporter3DModel::calculateWrlDisplayMinZ(wrl), std::numeric_limits<double>::max());
     }
 
+    /** @brief 验证单个 WRL 坐标点的单位换算结果。 */
     void calculateWrlDisplayMinZSinglePoint() {
         // WRL 坐标 * 2.54 = mm（KiCad 按 1 WRL unit = 2.54 mm 解释）
         // point [0 0 0.5] => Z = 0.5 * 2.54 = 1.27 mm
@@ -84,6 +105,7 @@ private slots:
         QCOMPARE(Exporter3DModel::calculateWrlDisplayMinZ(wrl), 1.27);
     }
 
+    /** @brief 验证多个 WRL 坐标点取最小 Z 坐标。 */
     void calculateWrlDisplayMinZMultiplePoints() {
         const QByteArray wrl(
             "#VRML V2.0 utf8\n"
@@ -102,6 +124,7 @@ private slots:
         QCOMPARE(Exporter3DModel::calculateWrlDisplayMinZ(wrl), 0.254);
     }
 
+    /** @brief 验证多个 WRL 图形的坐标点共同参与最小值计算。 */
     void calculateWrlDisplayMinZMultipleShapes() {
         const QByteArray wrl(
             "#VRML V2.0 utf8\n"
@@ -144,6 +167,7 @@ private slots:
         QCOMPARE(file.readAll(), stepData);
     }
 
+    /** @brief 验证空 STEP 数据仍能生成空输出文件。 */
     void exportToStepEmptyDataCreatesEmptyFile() {
         QTemporaryDir tempDir;
         QVERIFY(tempDir.isValid());
@@ -193,6 +217,7 @@ private slots:
                  qPrintable(error));
     }
 
+    /** @brief 验证 WRL 输出包含标准文件头。 */
     void exportToWrlContainsVrmlHeader() {
         QTemporaryDir tempDir;
         QVERIFY(tempDir.isValid());
@@ -212,6 +237,7 @@ private slots:
         QVERIFY(content.startsWith(QStringLiteral("#VRML V2.0 utf8")));
     }
 
+    /** @brief 验证 WRL 顶点按毫米规则归一化。 */
     void exportToWrlVerticesNormalizedToMm() {
         QTemporaryDir tempDir;
         QVERIFY(tempDir.isValid());
