@@ -1229,6 +1229,11 @@ void ComponentService::cancelAllPreviewImageFetches() {
 void ComponentService::cancelAllPendingRequests() {
     qDebug() << "ComponentService: Cancelling all pending component data requests";
 
+    // 通过当前 API 实例取消请求，确保注入的网络客户端也能同步清理活动请求。
+    if (m_api) {
+        m_api->cancelRequest();
+    }
+    // 同步清理全局网络客户端中的排队请求，避免取消后的队列任务阻塞后续请求。
     NetworkClient::instance().cancelAllRequests();
 
     // 清空正在获取的组件记录，防止响应到达时更新已清除的数据
