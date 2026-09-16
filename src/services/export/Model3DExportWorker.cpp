@@ -42,6 +42,7 @@ void Model3DExportWorker::setData(const QString& componentId,
     m_componentId = componentId;
     m_data = data;
     m_options = options;
+    m_cacheGeneration = ComponentCacheService::instance()->currentGeneration();
 }
 
 // 更新 Worker 使用的三维导出选项。
@@ -55,7 +56,7 @@ void Model3DExportWorker::run() {
         emit completed(m_componentId, false, QStringLiteral("Cancelled"));
         return;
     }
-    const uint64_t gen = ComponentCacheService::instance()->currentGeneration();
+    const uint64_t gen = m_cacheGeneration;
 
     if (!m_data) {
         emit completed(m_componentId, false, QStringLiteral("No data available"));

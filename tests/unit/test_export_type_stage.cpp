@@ -517,6 +517,49 @@ private slots:
         cache->setCacheDir(previousCacheDir);
     }
 
+    // 验证缓存清空后已排队的三维导出任务不会重新写入旧模型。
+    void model3DWorkerRejectsStaleCacheGeneration() {
+        QTemporaryDir outputDir;
+        QTemporaryDir cacheDir;
+        QVERIFY(outputDir.isValid());
+        QVERIFY(cacheDir.isValid());
+
+        ComponentCacheService* cache = ComponentCacheService::instance();
+        const QString previousCacheDir = cache->cacheDir();
+        cache->setCacheDir(cacheDir.path());
+        cache->clearAllCache();
+
+        const QString componentId = QStringLiteral("C12348");
+        const QString modelUuid = QStringLiteral("stale-generation-model");
+        const QByteArray objData = QByteArrayLiteral("v 0 0 0\nv 1 0 0\nv 0 1 0\nf 1 2 3\n");
+        auto component = QSharedPointer<ComponentData>::create();
+        component->setLcscId(componentId);
+        auto model = QSharedPointer<Model3DData>::create();
+        model->setUuid(modelUuid);
+        model->setName(QStringLiteral("STALE_GENERATION"));
+        model->setRawObj(QString::fromUtf8(objData));
+        component->setModel3DData(model);
+        component->setModel3DObjRaw(objData);
+
+        ExportOptions options;
+        options.outputPath = outputDir.path();
+        options.exportModel3D = true;
+        options.exportModel3DFormat = ExportOptions::MODEL_3D_FORMAT_WRL;
+        options.overwriteExistingFiles = true;
+
+        Model3DExportWorker worker;
+        QSignalSpy completedSpy(&worker, &Model3DExportWorker::completed);
+        worker.setData(componentId, component, options);
+        cache->clearAllCache();
+        worker.run();
+
+        QCOMPARE(completedSpy.count(), 1);
+        QVERIFY(completedSpy.at(0).at(1).toBool());
+        QVERIFY(cache->loadModel3D(modelUuid, QStringLiteral("obj")).isEmpty());
+
+        cache->setCacheDir(previousCacheDir);
+    }
+
     // 验证预加载的有效 STEP 会被直接导出并写入公共三维缓存。
     void model3DWorkerCachesPreloadedStep() {
         QTemporaryDir outputDir;
