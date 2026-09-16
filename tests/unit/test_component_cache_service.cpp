@@ -185,6 +185,16 @@ private slots:
 
         const QStringList cachedIds = m_cache->getCachedComponentIds();
         QCOMPARE(cachedIds.count(componentId), 1);
+
+        const QString invalidId = QStringLiteral("C54335");
+        const QString invalidDir = m_tempDir.filePath(invalidId);
+        QVERIFY(QDir().mkpath(invalidDir));
+        QFile invalidMetadata(QDir(invalidDir).filePath(QStringLiteral("component.json")));
+        QVERIFY(invalidMetadata.open(QIODevice::WriteOnly));
+        QVERIFY(invalidMetadata.write(QByteArrayLiteral("not-json")) > 0);
+        invalidMetadata.close();
+
+        QVERIFY(!m_cache->getCachedComponentIds().contains(invalidId));
     }
 
     // 验证 CAD 缓存写入和读取都会拒绝结构损坏的 JSON。

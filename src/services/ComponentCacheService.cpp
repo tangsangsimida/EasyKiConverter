@@ -1494,9 +1494,16 @@ QStringList ComponentCacheService::getCachedComponentIds() const {
 
     for (const QString& entry : dir.entryList(QDir::Dirs)) {
         if (entry != "." && entry != ".." && entry != "model3d") {
-            // 检查是否是有效的缓存目录（有component.json），并过滤大小写变体重复项。
+            // 解析元数据并校验三维字段，避免仅凭文件存在把损坏目录列为有效缓存。
             const QString normalizedId = entry.toUpper();
-            if (QFileInfo::exists(metadataPath(entry)) && !seenIds.contains(normalizedId)) {
+            const QJsonObject metadata = readMetadataFile(metadataPath(entry));
+            const QJsonValue metadataId = metadata.value(QStringLiteral("lcscId"));
+            const bool matchesEntry =
+                !metadata.contains(QStringLiteral("lcscId")) ||
+                (metadataId.isString() &&
+                 (metadataId.toString().isEmpty() || metadataId.toString().compare(entry, Qt::CaseInsensitive) == 0));
+            if (!metadata.isEmpty() && matchesEntry && hasValidModel3DMetadata(metadata) &&
+                !seenIds.contains(normalizedId)) {
                 result.append(normalizedId);
                 seenIds.insert(normalizedId);
             }
