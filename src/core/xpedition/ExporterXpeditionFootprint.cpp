@@ -194,6 +194,17 @@ QString holePadName(double diameterMm) {
 }
 
 /**
+ * @brief 根据表贴焊盘所在面生成 Padstack 名称后缀。
+ * @param pad 待处理的焊盘。
+ * @return 表贴焊盘的安装面后缀；通孔焊盘返回空字符串。
+ */
+QString padstackSideSuffix(const IR::FootprintPadIR& pad) {
+    if (pad.isThroughHole())
+        return {};
+    return pad.layer == IR::LayerType::BottomCopper ? QStringLiteral("_BOTTOM_SMD") : QStringLiteral("_TOP_SMD");
+}
+
+/**
  * @brief 计算封装所有几何元素的包围盒。
  * @param footprint 待计算的封装。
  * @return 包含焊盘、线条、圆、孔和轮廓的包围盒。
@@ -348,15 +359,24 @@ QByteArray ExporterXpeditionFootprint::padstackFile(const IR::FootprintComponent
         const QString maskName = solderMaskPadName(baseName);
         appendPad(maskName, pad, kSolderMaskExpansionTh);
 
-        const QString stackName = baseName + (pad.isThroughHole() ? QStringLiteral("_TH") : QStringLiteral("_SMD"));
+        const QString stackName = baseName + (pad.isThroughHole() ? QStringLiteral("_TH") : padstackSideSuffix(pad));
         if (writtenStacks.contains(stackName))
             continue;
         output += QStringLiteral(".PADSTACK \"%1\"\n..PADSTACK_TYPE %2\n..TECHNOLOGY \"(Default)\"\n")
                       .arg(stackName, pad.isThroughHole() ? QStringLiteral("PIN_THROUGH") : QStringLiteral("PIN_SMD"));
-        output += QStringLiteral("...TECHNOLOGY_OPTIONS NONE\n...TOP_PAD \"%1\"\n...BOTTOM_PAD \"%1\"\n").arg(baseName);
-        output += QStringLiteral("...TOP_SOLDERMASK_PAD \"%1\"\n...BOTTOM_SOLDERMASK_PAD \"%1\"\n").arg(maskName);
-        if (!pad.isThroughHole())
-            output += QStringLiteral("...TOP_SOLDERPASTE_PAD \"%1\"\n...BOTTOM_SOLDERPASTE_PAD \"%1\"\n").arg(baseName);
+        output += QStringLiteral("...TECHNOLOGY_OPTIONS NONE\n");
+        if (pad.isThroughHole() || pad.layer == IR::LayerType::TopCopper)
+            output += QStringLiteral("...TOP_PAD \"%1\"\n").arg(baseName);
+        if (pad.isThroughHole() || pad.layer == IR::LayerType::BottomCopper)
+            output += QStringLiteral("...BOTTOM_PAD \"%1\"\n").arg(baseName);
+        if (pad.isThroughHole() || pad.layer == IR::LayerType::TopCopper)
+            output += QStringLiteral("...TOP_SOLDERMASK_PAD \"%1\"\n").arg(maskName);
+        if (pad.isThroughHole() || pad.layer == IR::LayerType::BottomCopper)
+            output += QStringLiteral("...BOTTOM_SOLDERMASK_PAD \"%1\"\n").arg(maskName);
+        if (!pad.isThroughHole() && pad.layer == IR::LayerType::TopCopper)
+            output += QStringLiteral("...TOP_SOLDERPASTE_PAD \"%1\"\n").arg(baseName);
+        if (!pad.isThroughHole() && pad.layer == IR::LayerType::BottomCopper)
+            output += QStringLiteral("...BOTTOM_SOLDERPASTE_PAD \"%1\"\n").arg(baseName);
         if (pad.isThroughHole()) {
             // 通孔焊盘需要独立的 Hole 定义，孔径以实际直径参与命名和写入。
             const QString drillName = holeName(pad.holeSize, pad.holeLength);
@@ -420,7 +440,8 @@ QByteArray ExporterXpeditionFootprint::cellFile(const IR::FootprintComponentIR& 
 
     int pinIndex = 1;
     for (const auto& pad : footprint.pads) {
-        const QString stackName = padName(pad) + (pad.isThroughHole() ? QStringLiteral("_TH") : QStringLiteral("_SMD"));
+        const QString stackName =
+            padName(pad) + (pad.isThroughHole() ? QStringLiteral("_TH") : padstackSideSuffix(pad));
         output +=
             QStringLiteral(
                 " ..PIN \"%1\"\n  ...XY (%2, %3)\n  ...PADSTACK \"%4\"\n  ...ROTATION %5\n  ...PIN_OPTIONS NONE\n")

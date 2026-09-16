@@ -166,6 +166,35 @@ private slots:
         QVERIFY(data.contains(".Hole \"HOLE_39.3701\""));
     }
 
+    // 验证底层表贴焊盘不会被错误写入顶层铜、阻焊和锡膏层。
+    void bottomSmdPadUsesBottomAssignments() {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        IR::FootprintComponentIR footprint;
+        footprint.name = QStringLiteral("BOTTOM_SMD");
+        IR::FootprintPadIR pad;
+        pad.number = QStringLiteral("1");
+        pad.size = QSizeF(1.0, 1.0);
+        pad.layer = IR::LayerType::BottomCopper;
+        footprint.pads.append(pad);
+
+        const QString outputPath = tempDir.filePath(QStringLiteral("bottom-smd.zip"));
+        ExporterXpeditionFootprint exporter;
+        QVERIFY(exporter.exportFootprintLibrary({footprint}, QStringLiteral("Library"), outputPath));
+
+        QFile output(outputPath);
+        QVERIFY(output.open(QIODevice::ReadOnly));
+        const QByteArray data = output.readAll();
+        QVERIFY(data.contains("PADSTACK \"PAD_RECTANGLE_39.3701x39.3701_BOTTOM_SMD\""));
+        QVERIFY(data.contains("...BOTTOM_PAD \"PAD_RECTANGLE_39.3701x39.3701\""));
+        QVERIFY(data.contains("...BOTTOM_SOLDERMASK_PAD \"PAD_RECTANGLE_39.3701x39.3701_MASK\""));
+        QVERIFY(data.contains("...BOTTOM_SOLDERPASTE_PAD \"PAD_RECTANGLE_39.3701x39.3701\""));
+        QVERIFY(!data.contains("...TOP_PAD \"PAD_RECTANGLE_39.3701x39.3701\""));
+        QVERIFY(!data.contains("...TOP_SOLDERMASK_PAD \"PAD_RECTANGLE_39.3701x39.3701_MASK\""));
+        QVERIFY(!data.contains("...TOP_SOLDERPASTE_PAD \"PAD_RECTANGLE_39.3701x39.3701\""));
+    }
+
     // 验证槽孔会写出独立的宽高定义，而不是退化为圆孔。
     void slottedThroughHoleUsesSlotDefinition() {
         QTemporaryDir tempDir;
