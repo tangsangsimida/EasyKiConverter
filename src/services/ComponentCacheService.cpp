@@ -67,6 +67,32 @@ bool hasValidModel3DMetadata(const QJsonObject& metadata) {
     return validateVector(QStringLiteral("model3dTranslation")) && validateVector(QStringLiteral("model3dRotation"));
 }
 
+/**
+ * @brief 从指定路径读取元器件元数据。
+ * @param metadataPath 元数据文件路径。
+ * @return 解析成功的 JSON 对象，读取或解析失败时返回空对象。
+ */
+QJsonObject readMetadataFile(const QString& metadataPath) {
+    if (!QFileInfo::exists(metadataPath))
+        return QJsonObject();
+
+    QFile file(metadataPath);
+    if (!file.open(QIODevice::ReadOnly))
+        return QJsonObject();
+
+    const QByteArray data = file.readAll();
+    file.close();
+
+    QJsonParseError error;
+    const QJsonDocument doc = QJsonDocument::fromJson(data, &error);
+    if (error.error != QJsonParseError::NoError) {
+        LOG_WARN(LogModule::Core, "JSON parse error: {}", error.errorString());
+        return QJsonObject();
+    }
+
+    return doc.object();
+}
+
 }  // namespace
 
 std::unique_ptr<ComponentCacheService> ComponentCacheService::s_instance;
@@ -430,6 +456,8 @@ void ComponentCacheService::saveFootprintDataToMemory(const QString& lcscId, con
 // ==================== L2 磁盘缓存操作 ====================
 
 QSharedPointer<ComponentData> ComponentCacheService::loadComponentData(const QString& lcscId) const {
+    // 锁住整个元数据读取过程，避免目录迁移在检查和读取之间切换路径。
+    QMutexLocker diskLocker(&m_diskWriteMutex);
     // 先检查缓存是否存在（不使用锁，因为只是检查文件是否存在）
     QString metaPath = metadataPath(lcscId);
     if (!QFileInfo::exists(metaPath)) {
@@ -439,7 +467,7 @@ QSharedPointer<ComponentData> ComponentCacheService::loadComponentData(const QSt
     // 再加载数据（使用锁保护）
     QMutexLocker locker(&m_mutex);
 
-    QJsonObject metadata = loadMetadata(lcscId);
+    QJsonObject metadata = readMetadataFile(metaPath);
     if (metadata.isEmpty()) {
         return nullptr;
     }
@@ -523,7 +551,7 @@ void ComponentCacheService::saveComponentMetadata(const QString& componentId,
             }
         }
 
-        const QJsonObject existingMetadata = loadMetadata(componentId);
+        const QJsonObject existingMetadata = readMetadataFile(metadataPath(componentId));
         metadata = mergeMetadata(existingMetadata, metadata);
         const Model3DData model3D = effectiveModel3D(data);
         if (replaceModel3DMetadata && model3D.uuid().isEmpty()) {
@@ -1406,27 +1434,9 @@ void ComponentCacheService::enforceDiskCacheLimit(bool bypassCooldown) {
 }
 
 QJsonObject ComponentCacheService::loadMetadata(const QString& lcscId) const {
-    QString metaPath = metadataPath(lcscId);
-    if (!QFileInfo::exists(metaPath)) {
-        return QJsonObject();
-    }
-
-    QFile file(metaPath);
-    if (!file.open(QIODevice::ReadOnly)) {
-        return QJsonObject();
-    }
-
-    QByteArray data = file.readAll();
-    file.close();
-
-    QJsonParseError error;
-    QJsonDocument doc = QJsonDocument::fromJson(data, &error);
-    if (error.error != QJsonParseError::NoError) {
-        LOG_WARN(LogModule::Core, "JSON parse error: {}", error.errorString());
-        return QJsonObject();
-    }
-
-    return doc.object();
+    // 外部元数据读取必须与缓存目录迁移串行化。
+    QMutexLocker diskLocker(&m_diskWriteMutex);
+    return readMetadataFile(metadataPath(lcscId));
 }
 
 void ComponentCacheService::saveMetadata(const QString& lcscId, const QJsonObject& metadata) {
