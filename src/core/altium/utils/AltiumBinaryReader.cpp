@@ -6,20 +6,24 @@
 
 namespace EasyKiConverter {
 
+// 以小端序读取 Altium 二进制记录，并统一维护边界与错误状态。
 AltiumBinaryReader::AltiumBinaryReader(const QByteArray& buffer) : m_buffer(buffer) {}
 
+// 检查即将读取的字节数，防止解析位置越过输入缓冲区。
 bool AltiumBinaryReader::ensure(int size, const QString& operation) {
     if (size < 0 || size > remaining())
         return fail(QStringLiteral("读取 %1 时超出数据边界").arg(operation));
     return true;
 }
 
+// 只保留首次解析失败的错误信息，避免后续错误覆盖根因。
 bool AltiumBinaryReader::fail(const QString& message) {
     if (m_errorMessage.isEmpty())
         m_errorMessage = message;
     return false;
 }
 
+// 读取有符号八位整数，并复用无符号读取逻辑保证位置一致。
 bool AltiumBinaryReader::readInt8(int8_t* value) {
     if (value == nullptr)
         return fail(QStringLiteral("读取 i8 时输出指针为空"));
@@ -30,6 +34,7 @@ bool AltiumBinaryReader::readInt8(int8_t* value) {
     return true;
 }
 
+// 读取一个无符号八位整数。
 bool AltiumBinaryReader::readUInt8(uint8_t* value) {
     if (value == nullptr)
         return fail(QStringLiteral("读取 u8 时输出指针为空"));
@@ -39,6 +44,7 @@ bool AltiumBinaryReader::readUInt8(uint8_t* value) {
     return true;
 }
 
+// 读取有符号十六位整数，并按位模式转换结果。
 bool AltiumBinaryReader::readInt16(int16_t* value) {
     if (value == nullptr)
         return fail(QStringLiteral("读取 i16 时输出指针为空"));
@@ -49,6 +55,7 @@ bool AltiumBinaryReader::readInt16(int16_t* value) {
     return true;
 }
 
+// 读取一个小端序无符号十六位整数。
 bool AltiumBinaryReader::readUInt16(uint16_t* value) {
     if (value == nullptr)
         return fail(QStringLiteral("读取 u16 时输出指针为空"));
@@ -62,6 +69,7 @@ bool AltiumBinaryReader::readUInt16(uint16_t* value) {
     return true;
 }
 
+// 读取有符号三十二位整数，并按位模式转换结果。
 bool AltiumBinaryReader::readInt32(int32_t* value) {
     if (value == nullptr)
         return fail(QStringLiteral("读取 i32 时输出指针为空"));
@@ -72,6 +80,7 @@ bool AltiumBinaryReader::readInt32(int32_t* value) {
     return true;
 }
 
+// 执行小端序无符号三十二位整数的实际读取。
 bool AltiumBinaryReader::readUInt32Internal(uint32_t* value) {
     if (value == nullptr)
         return fail(QStringLiteral("读取 u32 时输出指针为空"));
@@ -85,10 +94,12 @@ bool AltiumBinaryReader::readUInt32Internal(uint32_t* value) {
     return true;
 }
 
+// 读取一个无符号三十二位整数。
 bool AltiumBinaryReader::readUInt32(uint32_t* value) {
     return readUInt32Internal(value);
 }
 
+// 读取 IEEE 754 单精度浮点数。
 bool AltiumBinaryReader::readFloat(float* value) {
     if (value == nullptr)
         return fail(QStringLiteral("读取 float 时输出指针为空"));
@@ -99,6 +110,7 @@ bool AltiumBinaryReader::readFloat(float* value) {
     return true;
 }
 
+// 读取 IEEE 754 双精度浮点数。
 bool AltiumBinaryReader::readDouble(double* value) {
     if (value == nullptr)
         return fail(QStringLiteral("读取 double 时输出指针为空"));
@@ -112,6 +124,7 @@ bool AltiumBinaryReader::readDouble(double* value) {
     return true;
 }
 
+// 读取指定长度的原始字节，并推进当前解析位置。
 bool AltiumBinaryReader::readBytes(int size, QByteArray* value) {
     if (value == nullptr)
         return fail(QStringLiteral("读取字节时输出指针为空"));
@@ -122,6 +135,7 @@ bool AltiumBinaryReader::readBytes(int size, QByteArray* value) {
     return true;
 }
 
+// 读取带有长度和标志位头部的二进制块。
 bool AltiumBinaryReader::readBlock(QByteArray* payload, uint8_t* flags) {
     uint32_t header = 0;
     if (!readUInt32(&header))
@@ -132,6 +146,7 @@ bool AltiumBinaryReader::readBlock(QByteArray* payload, uint8_t* flags) {
     return readBytes(size, payload);
 }
 
+// 读取单字节长度前缀的 Pascal 短字符串。
 bool AltiumBinaryReader::readPascalShortString(QString* value) {
     if (value == nullptr)
         return fail(QStringLiteral("读取 Pascal 短字符串时输出指针为空"));
@@ -145,6 +160,7 @@ bool AltiumBinaryReader::readPascalShortString(QString* value) {
     return true;
 }
 
+// 读取带块长度的字符串，并跳过块内未使用的尾部空间。
 bool AltiumBinaryReader::readStringBlock(QString* value) {
     uint32_t blockSize = 0;
     if (!readUInt32(&blockSize) || blockSize < 1 || blockSize > static_cast<uint32_t>(remaining()))
@@ -163,6 +179,7 @@ bool AltiumBinaryReader::readStringBlock(QString* value) {
     return true;
 }
 
+// 读取包含终止字节的 Pascal 字符串块。
 bool AltiumBinaryReader::readPascalString(QString* value) {
     QByteArray block;
     if (!readBlock(&block))
@@ -176,6 +193,7 @@ bool AltiumBinaryReader::readPascalString(QString* value) {
     return true;
 }
 
+// 读取并解析一个 C 字符串参数块。
 bool AltiumBinaryReader::readCStringParameterBlock(QMap<QString, QString>* params) {
     if (params == nullptr)
         return fail(QStringLiteral("读取参数块时输出指针为空"));
@@ -185,6 +203,7 @@ bool AltiumBinaryReader::readCStringParameterBlock(QMap<QString, QString>* param
     return parseCStringParameterData(block, params);
 }
 
+// 解析以竖线分隔的键值参数，并校验重复键和 UTF-8 前缀。
 bool AltiumBinaryReader::parseCStringParameterData(const QByteArray& data, QMap<QString, QString>* params) {
     if (params == nullptr)
         return fail(QStringLiteral("解析参数数据时输出指针为空"));
@@ -220,18 +239,22 @@ bool AltiumBinaryReader::parseCStringParameterData(const QByteArray& data, QMap<
     return true;
 }
 
+// 返回当前读取位置。
 int AltiumBinaryReader::position() const {
     return m_position;
 }
 
+// 返回当前读取位置之后尚未消费的字节数。
 int AltiumBinaryReader::remaining() const {
     return m_buffer.size() - m_position;
 }
 
+// 判断读取过程中是否记录过错误。
 bool AltiumBinaryReader::hasError() const {
     return !m_errorMessage.isEmpty();
 }
 
+// 返回首次解析失败时记录的错误信息。
 QString AltiumBinaryReader::errorString() const {
     return m_errorMessage;
 }
