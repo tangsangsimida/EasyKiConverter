@@ -362,13 +362,15 @@ void ExportSettingsViewModel::buildExportOptions() {
     options.targetFormat =
         m_targetModel ? static_cast<TargetEdaFormat>(m_targetModel->currentIndex()) : TargetEdaFormat::KiCad;
 
+    const char* targetFormatName = options.targetFormat == TargetEdaFormat::Altium      ? "Altium"
+                                   : options.targetFormat == TargetEdaFormat::Xpedition ? "Xpedition"
+                                                                                        : "KiCad";
     qInfo() << "Export options:" << "OutputPath:" << options.outputPath << "LibName:" << options.libName
-            << "TargetFormat:" << (options.targetFormat == TargetEdaFormat::Altium ? "Altium" : "KiCad")
-            << "Symbol:" << options.exportSymbol << "Footprint:" << options.exportFootprint
-            << "3D Model:" << options.exportModel3D << "3D Model Format:" << options.exportModel3DFormat
-            << "(1=WRL, 2=STEP, 3=Both)" << "3D Model Path Mode:" << options.exportModel3DPathMode
-            << "(0=Relative, 1=Absolute)" << "Preview Images:" << options.exportPreviewImages
-            << "Datasheet:" << options.exportDatasheet
+            << "TargetFormat:" << targetFormatName << "Symbol:" << options.exportSymbol
+            << "Footprint:" << options.exportFootprint << "3D Model:" << options.exportModel3D
+            << "3D Model Format:" << options.exportModel3DFormat << "(1=WRL, 2=STEP, 3=Both)"
+            << "3D Model Path Mode:" << options.exportModel3DPathMode << "(0=Relative, 1=Absolute)"
+            << "Preview Images:" << options.exportPreviewImages << "Datasheet:" << options.exportDatasheet
             << "Client Weak Network Adaptation:" << options.weakNetworkSupport << "Update Mode:" << options.updateMode
             << "Debug Mode:" << options.debugMode << "Symbol Description:" << options.exportSymbolDescription
             << "Footprint Description:" << options.exportFootprintDescription

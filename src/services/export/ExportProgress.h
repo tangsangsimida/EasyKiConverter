@@ -15,8 +15,8 @@ namespace EasyKiConverter {
  */
 enum class TargetEdaFormat {
     KiCad = 0, /**< KiCad 格式（默认） */
-    Altium = 1 /**< Altium Designer 格式 */
-    // 后续扩展: Allegro = 2, Eagle = 3, ...
+    Altium = 1, /**< Altium Designer 格式 */
+    Xpedition = 2 /**< Xpedition ASCII 库格式 */
 };
 
 /**

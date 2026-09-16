@@ -69,6 +69,8 @@ Item {
                                         return ".kicad_sym";
                                     if (targetId === "altium")
                                         return ".SchLib";
+                                    if (targetId === "xpedition")
+                                        return "_Symbols.zip / _Footprints.zip";
                                     return "";
                                 }
                                 font.pixelSize: 9

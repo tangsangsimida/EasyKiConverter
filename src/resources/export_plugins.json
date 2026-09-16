@@ -11,6 +11,12 @@
             "displayName": "Altium Designer",
             "icon": "altium",
             "optionsComponent": "AltiumSettingsCard.qml"
+        },
+        {
+            "id": "xpedition",
+            "displayName": "Xpedition",
+            "icon": "kicad",
+            "optionsComponent": "ExportSettingsBaseCard.qml"
         }
     ]
 }

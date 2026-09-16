@@ -407,6 +407,18 @@ target_include_directories(test_kicad_exporter_golden PRIVATE
 )
 add_test(NAME test_kicad_exporter_golden COMMAND test_kicad_exporter_golden)
 
+add_executable(test_xpedition_exporter test_xpedition_exporter.cpp)
+target_link_libraries(test_xpedition_exporter PRIVATE
+    Qt6::Test
+    Qt6::Gui
+    EasyKiConverterLib
+)
+target_include_directories(test_xpedition_exporter PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}
+)
+add_test(NAME test_xpedition_exporter COMMAND test_xpedition_exporter)
+
 add_executable(test_kicad_library_table_manager test_kicad_library_table_manager.cpp)
 target_link_libraries(test_kicad_library_table_manager PRIVATE
     Qt6::Test
@@ -542,6 +554,7 @@ set(EASYKICONVERTER_UNIT_TESTS
     test_export_worker_helpers
     test_test_paths
     test_kicad_exporter_golden
+    test_xpedition_exporter
     test_kicad_library_table_manager
     test_exporter_3d_model
     test_easyeda_importer_fixtures

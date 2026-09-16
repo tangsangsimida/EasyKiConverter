@@ -5,6 +5,8 @@
 #include "core/kicad/Exporter3DModel.h"
 #include "core/kicad/ExporterFootprint.h"
 #include "core/kicad/ExporterSymbol.h"
+#include "core/xpedition/ExporterXpeditionFootprint.h"
+#include "core/xpedition/ExporterXpeditionSymbol.h"
 
 namespace EasyKiConverter {
 
@@ -17,6 +19,8 @@ std::unique_ptr<ISymbolExporter> ExporterFactory::createSymbolExporter(TargetEda
             return std::make_unique<ExporterSymbol>();
         case TargetEdaFormat::Altium:
             return std::make_unique<ExporterAltiumSymbol>();
+        case TargetEdaFormat::Xpedition:
+            return std::make_unique<ExporterXpeditionSymbol>();
         default:
             return nullptr;
     }
@@ -31,6 +35,8 @@ std::unique_ptr<IFootprintExporter> ExporterFactory::createFootprintExporter(Tar
             return std::make_unique<ExporterFootprint>();
         case TargetEdaFormat::Altium:
             return std::make_unique<ExporterAltiumFootprint>();
+        case TargetEdaFormat::Xpedition:
+            return std::make_unique<ExporterXpeditionFootprint>();
         default:
             return nullptr;
     }
