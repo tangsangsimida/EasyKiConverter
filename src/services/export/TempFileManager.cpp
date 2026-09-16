@@ -34,6 +34,7 @@ constexpr int kDefaultMaxBackupSets = 3;
 QMutex g_tempDirectoryUsersMutex;
 QHash<QString, int> g_tempDirectoryUsers;
 
+// 记录共享临时目录的使用者数量。
 void registerTempDirectoryUser(const QString& path) {
     if (path.isEmpty())
         return;
@@ -41,6 +42,7 @@ void registerTempDirectoryUser(const QString& path) {
     ++g_tempDirectoryUsers[path];
 }
 
+// 释放共享临时目录的一个使用者引用。
 void unregisterTempDirectoryUser(const QString& path) {
     if (path.isEmpty())
         return;
@@ -52,16 +54,19 @@ void unregisterTempDirectoryUser(const QString& path) {
         g_tempDirectoryUsers.erase(it);
 }
 
+// 判断临时目录是否仍有任意阶段在使用。
 bool hasTempDirectoryUsers(const QString& path) {
     QMutexLocker locker(&g_tempDirectoryUsersMutex);
     return g_tempDirectoryUsers.value(path, 0) > 0;
 }
 
+// 判断临时目录是否由当前阶段之外的阶段使用。
 bool hasOtherTempDirectoryUsers(const QString& path) {
     QMutexLocker locker(&g_tempDirectoryUsersMutex);
     return g_tempDirectoryUsers.value(path, 0) > 1;
 }
 
+// 获取导出事务备份的根目录。
 QString backupRootPath() {
     QString appDataPath = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
     if (appDataPath.isEmpty()) {
@@ -70,17 +75,20 @@ QString backupRootPath() {
     return QDir(appDataPath).filePath(QStringLiteral("backups"));
 }
 
+// 生成用于备份事务清单的唯一标识。
 QString createTransactionId() {
     return QDateTime::currentDateTimeUtc().toString(QStringLiteral("yyyyMMddTHHmmsszzzZ")) + QStringLiteral("_") +
            QString::number(QRandomGenerator::global()->generate64(), 16);
 }
 
+// 确保目标路径的父目录存在。
 bool ensureParentDirectory(const QString& path) {
     const QFileInfo info(path);
     const QDir parentDir = info.absoluteDir();
     return parentDir.exists() || QDir().mkpath(info.absolutePath());
 }
 
+// 递归复制目录及其中的文件。
 bool copyDirectoryRecursively(const QString& sourcePath, const QString& targetPath) {
     QDir sourceDir(sourcePath);
     if (!sourceDir.exists()) {
@@ -113,6 +121,7 @@ bool copyDirectoryRecursively(const QString& sourcePath, const QString& targetPa
     return true;
 }
 
+// 优先重命名移动文件，失败时重试并回退到复制删除。
 bool moveFileWithFallback(const QString& sourcePath, const QString& targetPath) {
     if (!ensureParentDirectory(targetPath)) {
         return false;
@@ -135,6 +144,7 @@ bool moveFileWithFallback(const QString& sourcePath, const QString& targetPath) 
     return QFile::remove(sourcePath);
 }
 
+// 优先重命名移动目录，失败时回退到递归复制删除。
 bool moveDirectoryWithFallback(const QString& sourcePath, const QString& targetPath) {
     if (!ensureParentDirectory(targetPath)) {
         return false;
@@ -151,6 +161,7 @@ bool moveDirectoryWithFallback(const QString& sourcePath, const QString& targetP
     return QDir(sourcePath).removeRecursively();
 }
 
+// 按路径类型删除文件或目录，目标不存在时视为成功。
 bool removePath(const QString& path, bool isDirectory) {
     if (path.isEmpty()) {
         return true;
@@ -162,15 +173,18 @@ bool removePath(const QString& path, bool isDirectory) {
     return !QFile::exists(path) || QFile::remove(path);
 }
 
+// 根据路径类型选择文件或目录的移动回退策略。
 bool movePathWithFallback(const QString& sourcePath, const QString& targetPath, bool isDirectory) {
     return isDirectory ? moveDirectoryWithFallback(sourcePath, targetPath)
                        : moveFileWithFallback(sourcePath, targetPath);
 }
 
+// 按路径类型检查文件或目录是否存在。
 bool pathExists(const QString& path, bool isDirectory) {
     return isDirectory ? QDir(path).exists() : QFile::exists(path);
 }
 
+// 写入备份事务清单，记录提交状态和全部路径映射。
 bool writeManifest(const QString& manifestPath,
                    const QString& transactionId,
                    const QString& outputRoot,
@@ -203,6 +217,7 @@ bool writeManifest(const QString& manifestPath,
     return manifestFile.write(QJsonDocument(root).toJson(QJsonDocument::Indented)) > 0;
 }
 
+// 读取备份事务清单并恢复路径映射及提交状态。
 QVector<BackupEntry> readManifestEntries(const QString& manifestPath, bool* committed) {
     QVector<BackupEntry> entries;
     QFile manifestFile(manifestPath);
@@ -233,6 +248,7 @@ QVector<BackupEntry> readManifestEntries(const QString& manifestPath, bool* comm
 
 }  // namespace
 
+// 初始化临时文件管理器。
 TempFileManager::TempFileManager(QObject* parent) : QObject(parent) {}
 
 TempFileManager::~TempFileManager() {
@@ -257,6 +273,7 @@ TempFileManager::~TempFileManager() {
     }
 }
 
+// 设置导出输出目录并更新共享临时目录引用。
 void TempFileManager::setOutputPath(const QString& outputPath) {
     QMutexLocker locker(&m_mutex);
     const QString newTempDirectory = outputPath.isEmpty() ? QString() : QDir(outputPath).filePath(m_tempDirName);
@@ -268,6 +285,7 @@ void TempFileManager::setOutputPath(const QString& outputPath) {
     m_outputPath = outputPath;
 }
 
+// 返回当前输出目录下的共享临时目录。
 QString TempFileManager::tempDirectory() const {
     if (m_outputPath.isEmpty()) {
         return QString();
@@ -275,6 +293,7 @@ QString TempFileManager::tempDirectory() const {
     return m_outputPath + QDir::separator() + m_tempDirName;
 }
 
+// 创建并登记单个元器件的临时文件路径。
 QString TempFileManager::createTempFilePath(const QString& componentId, const QString& suffix) {
     QMutexLocker locker(&m_mutex);
 
@@ -291,6 +310,7 @@ QString TempFileManager::createTempFilePath(const QString& componentId, const QS
     return tempPath;
 }
 
+// 根据最终文件名查找已登记的临时文件路径。
 QString TempFileManager::tempFilePath(const QString& finalPath) const {
     QMutexLocker locker(&m_mutex);
 
@@ -309,6 +329,7 @@ QString TempFileManager::tempFilePath(const QString& finalPath) const {
     return tempDirectory() + QDir::separator() + fileName;
 }
 
+// 创建并登记符号库文件的临时路径。
 QString TempFileManager::createSymbolTempPath(const QString& libName, const QString& suffix) {
     QMutexLocker locker(&m_mutex);
 
@@ -326,6 +347,7 @@ QString TempFileManager::createSymbolTempPath(const QString& libName, const QStr
     return tempPath;
 }
 
+// 创建并登记目录型导出结果的临时路径。
 QString TempFileManager::createTempDirectoryPath(const QString& dirName) {
     QMutexLocker locker(&m_mutex);
 
@@ -341,6 +363,7 @@ QString TempFileManager::createTempDirectoryPath(const QString& dirName) {
     return tempPath;
 }
 
+// 将匹配的临时文件提交到最终文件路径。
 bool TempFileManager::commit(const QString& finalPath) {
     QMutexLocker locker(&m_mutex);
 
@@ -376,6 +399,7 @@ bool TempFileManager::commit(const QString& finalPath) {
     return committed;
 }
 
+// 将匹配的临时目录提交到最终目录路径。
 bool TempFileManager::commitDirectory(const QString& finalDirPath) {
     QMutexLocker locker(&m_mutex);
 
@@ -412,6 +436,7 @@ bool TempFileManager::commitDirectory(const QString& finalDirPath) {
     return committed;
 }
 
+// 带备份地提交单个临时文件。
 bool TempFileManager::commitWithBackup(const QString& tempPath, const QString& finalPath) {
     QMutexLocker locker(&m_mutex);
     const bool committed = commitBatchLocked({CommitItem{tempPath, finalPath, false}});
@@ -422,6 +447,7 @@ bool TempFileManager::commitWithBackup(const QString& tempPath, const QString& f
     return committed;
 }
 
+// 带备份地提交单个临时目录。
 bool TempFileManager::commitDirectoryWithBackup(const QString& tempDirPath, const QString& finalDirPath) {
     QMutexLocker locker(&m_mutex);
     const bool committed = commitBatchLocked({CommitItem{tempDirPath, finalDirPath, true}});
@@ -432,6 +458,7 @@ bool TempFileManager::commitDirectoryWithBackup(const QString& tempDirPath, cons
     return committed;
 }
 
+// 原子提交一组文件或目录，并为每项发出提交结果信号。
 bool TempFileManager::commitBatch(const QVector<CommitItem>& items) {
     QMutexLocker locker(&m_mutex);
     const bool committed = commitBatchLocked(items);
@@ -444,6 +471,7 @@ bool TempFileManager::commitBatch(const QVector<CommitItem>& items) {
     return committed;
 }
 
+// 扫描并恢复未完成的备份事务，同时清理过期备份。
 bool TempFileManager::recoverIncompleteTransactions() {
     QDir backupRoot(backupRootPath());
     if (!backupRoot.exists()) {
@@ -502,6 +530,7 @@ bool TempFileManager::recoverIncompleteTransactions() {
     return recoveredAll;
 }
 
+// 在持有互斥锁时执行带备份的批量提交事务。
 bool TempFileManager::commitBatchLocked(const QVector<CommitItem>& items) {
     if (items.isEmpty()) {
         return true;
@@ -606,6 +635,7 @@ bool TempFileManager::commitBatchLocked(const QVector<CommitItem>& items) {
     return true;
 }
 
+// 删除本实例登记的全部临时文件并回收空临时目录。
 void TempFileManager::rollbackAll() {
     QMutexLocker locker(&m_mutex);
 
@@ -631,6 +661,7 @@ void TempFileManager::rollbackAll() {
     qDebug() << "TempFileManager: Rolled back" << deletedCount << "temp files";
 }
 
+// 清理当前临时目录中的普通临时文件。
 void TempFileManager::cleanupTempDirectory() {
     QMutexLocker locker(&m_mutex);
 
@@ -655,6 +686,7 @@ void TempFileManager::cleanupTempDirectory() {
     emit cleanupCompleted(deletedCount);
 }
 
+// 清理临时目录中未登记的孤立文件。
 void TempFileManager::cleanupOrphanedTempFiles() {
     QString tempDir = tempDirectory();
     if (tempDir.isEmpty() || !QDir(tempDir).exists()) {
@@ -679,22 +711,26 @@ void TempFileManager::cleanupOrphanedTempFiles() {
     qDebug() << "TempFileManager: Cleaned up" << deletedCount << "orphaned temp files";
 }
 
+// 登记一个由本实例负责回收的临时路径。
 void TempFileManager::registerTempFile(const QString& tempPath) {
     QMutexLocker locker(&m_mutex);
     m_tempFiles.insert(tempPath);
 }
 
+// 返回当前实例登记的临时路径集合快照。
 QSet<QString> TempFileManager::registeredTempFiles() const {
     QMutexLocker locker(&m_mutex);
     return m_tempFiles;
 }
 
+// 根据前缀、后缀和随机值生成临时文件名。
 QString TempFileManager::generateUniqueTempName(const QString& prefix, const QString& suffix) const {
     quint64 random = QRandomGenerator::global()->generate64();
     QString uuid = QString::number(random, 16);
     return prefix + QStringLiteral("_") + uuid + suffix;
 }
 
+// 确保当前共享临时目录存在。
 bool TempFileManager::ensureTempDirectory() const {
     QString tempDir = tempDirectory();
     if (tempDir.isEmpty()) {
@@ -711,6 +747,7 @@ bool TempFileManager::ensureTempDirectory() const {
     return result;
 }
 
+// 删除指定文件，并将不存在的文件视为已完成清理。
 bool TempFileManager::deleteFile(const QString& path) const {
     if (path.isEmpty()) {
         return true;
@@ -730,6 +767,7 @@ bool TempFileManager::deleteFile(const QString& path) const {
     return false;
 }
 
+// 在持锁状态下清理空的共享临时目录。
 bool TempFileManager::cleanupEmptyTempDirectoryLocked() const {
     const QString tempDir = tempDirectory();
     if (tempDir.isEmpty()) {
