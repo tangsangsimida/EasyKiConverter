@@ -3,6 +3,7 @@
 #include "CacheHealthManager.h"
 #include "CachePruner.h"
 #include "ConfigService.h"
+#include "core/kicad/Exporter3DModel.h"
 #include "core/network/NetworkClient.h"
 #include "core/utils/UrlUtils.h"
 #include "services/BomParser.h"
@@ -1231,6 +1232,19 @@ QByteArray ComponentCacheService::loadModel3D(const QString& uuid, const QString
     if (file.open(QIODevice::ReadOnly)) {
         QByteArray data = file.readAll();
         file.close();
+        const QString normalizedExtension = extension.toLower();
+        bool valid = true;
+        if (normalizedExtension == QStringLiteral("obj")) {
+            valid = Exporter3DModel::hasUsableObjGeometry(data);
+        } else if (normalizedExtension == QStringLiteral("wrl")) {
+            valid = Exporter3DModel::hasUsableWrlGeometry(data);
+        } else if (normalizedExtension == QStringLiteral("step")) {
+            valid = Exporter3DModel::hasUsableStepData(data);
+        }
+        if (!valid) {
+            QFile::remove(path);
+            return QByteArray();
+        }
         return data;
     }
 

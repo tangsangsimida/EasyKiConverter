@@ -180,13 +180,23 @@ private slots:
         datasheetFile.close();
 
         m_cache->saveModel3D(modelUuid, QByteArrayLiteral("not-an-obj"), QStringLiteral("obj"));
-        QVERIFY(!m_cache->loadModel3D(modelUuid, QStringLiteral("obj")).isEmpty());
+        const QString invalidModelPath = m_tempDir.filePath(QStringLiteral("model3d/health-invalid-model.obj"));
+        QVERIFY(QFileInfo::exists(invalidModelPath));
 
         m_cache->setCacheDir(m_tempDir.path(), false);
 
         QVERIFY(!QFileInfo::exists(previewFile.fileName()));
         QVERIFY(!QFileInfo::exists(datasheetFile.fileName()));
         QVERIFY(m_cache->loadModel3D(modelUuid, QStringLiteral("obj")).isEmpty());
+    }
+
+    // 验证读取三维缓存时会拒绝并删除结构无效的模型文件。
+    void testLoadModel3DRejectsInvalidContent() {
+        const QString modelUuid = QStringLiteral("load-invalid-model");
+        m_cache->saveModel3D(modelUuid, QByteArrayLiteral("not-an-obj"), QStringLiteral("obj"));
+
+        QVERIFY(m_cache->loadModel3D(modelUuid, QStringLiteral("obj")).isEmpty());
+        QVERIFY(!QFileInfo::exists(m_tempDir.filePath(QStringLiteral("model3d/load-invalid-model.obj"))));
     }
 
     // 验证仅由封装数据携带的 3D 模型也能完整写入并恢复缓存元数据。
@@ -455,9 +465,11 @@ private slots:
     void testModel3DArtifactsRoundTripThroughDiskCache() {
         const QString uuid = QStringLiteral("model-cache-13579");
         const QList<QPair<QString, QByteArray>> artifacts = {
-            {QStringLiteral("step"), QByteArray("ISO-10303-21; cached step")},
+            {QStringLiteral("step"), QByteArray("ISO-10303-21; cached step END-ISO-10303-21;")},
             {QStringLiteral("obj"), QByteArray("v 0 0 0\nf 1 2 3")},
-            {QStringLiteral("wrl"), QByteArray("#VRML V2.0 cached wrl")},
+            {QStringLiteral("wrl"),
+             QByteArray("#VRML V2.0 utf8\nShape { geometry IndexedFaceSet { coord Coordinate { point [0 0 0, 1 0 0, "
+                        "0 1 0] } coordIndex [0, 1, 2, -1] } }")},
         };
 
         for (const auto& artifact : artifacts) {
