@@ -219,154 +219,192 @@ public:
         return m_info;
     }
 
+    /** @brief 设置封装元数据。 */
     void setInfo(const FootprintInfo& info) {
         m_info = info;
     }
 
+    /** @brief 返回封装边界框。 */
     FootprintBBox bbox() const {
         return m_bbox;
     }
 
+    /** @brief 设置封装边界框。 */
     void setBbox(const FootprintBBox& bbox) {
         m_bbox = bbox;
     }
 
+    /** @brief 返回全部焊盘。 */
     QList<FootprintPad> pads() const {
         return m_pads;
     }
 
+    /** @brief 批量设置焊盘。 */
     void setPads(const QList<FootprintPad>& pads) {
         m_pads = pads;
     }
 
+    /** @brief 追加一个焊盘。 */
     void addPad(const FootprintPad& pad) {
         m_pads.append(pad);
     }
 
+    /** @brief 返回全部铜线路径。 */
     QList<FootprintTrack> tracks() const {
         return m_tracks;
     }
 
+    /** @brief 批量设置铜线路径。 */
     void setTracks(const QList<FootprintTrack>& tracks) {
         m_tracks = tracks;
     }
 
+    /** @brief 追加一条铜线路径。 */
     void addTrack(const FootprintTrack& track) {
         m_tracks.append(track);
     }
 
+    /** @brief 返回全部孔。 */
     QList<FootprintHole> holes() const {
         return m_holes;
     }
 
+    /** @brief 批量设置孔。 */
     void setHoles(const QList<FootprintHole>& holes) {
         m_holes = holes;
     }
 
+    /** @brief 追加一个孔。 */
     void addHole(const FootprintHole& hole) {
         m_holes.append(hole);
     }
 
+    /** @brief 返回全部圆形图元。 */
     QList<FootprintCircle> circles() const {
         return m_circles;
     }
 
+    /** @brief 批量设置圆形图元。 */
     void setCircles(const QList<FootprintCircle>& circles) {
         m_circles = circles;
     }
 
+    /** @brief 追加一个圆形图元。 */
     void addCircle(const FootprintCircle& circle) {
         m_circles.append(circle);
     }
 
+    /** @brief 返回全部矩形图元。 */
     QList<FootprintRectangle> rectangles() const {
         return m_rectangles;
     }
 
+    /** @brief 批量设置矩形图元。 */
     void setRectangles(const QList<FootprintRectangle>& rectangles) {
         m_rectangles = rectangles;
     }
 
+    /** @brief 追加一个矩形图元。 */
     void addRectangle(const FootprintRectangle& rect) {
         m_rectangles.append(rect);
     }
 
+    /** @brief 返回全部圆弧图元。 */
     QList<FootprintArc> arcs() const {
         return m_arcs;
     }
 
+    /** @brief 批量设置圆弧图元。 */
     void setArcs(const QList<FootprintArc>& arcs) {
         m_arcs = arcs;
     }
 
+    /** @brief 追加一个圆弧图元。 */
     void addArc(const FootprintArc& arc) {
         m_arcs.append(arc);
     }
 
+    /** @brief 返回全部文本图元。 */
     QList<FootprintText> texts() const {
         return m_texts;
     }
 
+    /** @brief 批量设置文本图元。 */
     void setTexts(const QList<FootprintText>& texts) {
         m_texts = texts;
     }
 
+    /** @brief 追加一个文本图元。 */
     void addText(const FootprintText& text) {
         m_texts.append(text);
     }
 
+    /** @brief 返回全部实心区域。 */
     QList<FootprintSolidRegion> solidRegions() const {
         return m_solidRegions;
     }
 
+    /** @brief 批量设置实心区域。 */
     void setSolidRegions(const QList<FootprintSolidRegion>& solidRegions) {
         m_solidRegions = solidRegions;
     }
 
+    /** @brief 追加一个实心区域。 */
     void addSolidRegion(const FootprintSolidRegion& solidRegion) {
         m_solidRegions.append(solidRegion);
     }
 
+    /** @brief 返回全部封装轮廓。 */
     QList<FootprintOutline> outlines() const {
         return m_outlines;
     }
 
+    /** @brief 批量设置封装轮廓。 */
     void setOutlines(const QList<FootprintOutline>& outlines) {
         m_outlines = outlines;
     }
 
+    /** @brief 追加一个封装轮廓。 */
     void addOutline(const FootprintOutline& outline) {
         m_outlines.append(outline);
     }
 
+    /** @brief 返回全部层定义。 */
     QList<LayerDefinition> layers() const {
         return m_layers;
     }
 
+    /** @brief 批量设置层定义。 */
     void setLayers(const QList<LayerDefinition>& layers) {
         m_layers = layers;
     }
 
+    /** @brief 追加一个层定义。 */
     void addLayer(const LayerDefinition& layer) {
         m_layers.append(layer);
     }
 
+    /** @brief 返回全部对象可见性设置。 */
     QList<ObjectVisibility> objectVisibilities() const {
         return m_objectVisibilities;
     }
 
+    /** @brief 批量设置对象可见性。 */
     void setObjectVisibilities(const QList<ObjectVisibility>& objectVisibilities) {
         m_objectVisibilities = objectVisibilities;
     }
 
+    /** @brief 追加一个对象可见性设置。 */
     void addObjectVisibility(const ObjectVisibility& objectVisibility) {
         m_objectVisibilities.append(objectVisibility);
     }
 
+    /** @brief 返回封装关联的三维模型数据。 */
     Model3DData model3D() const {
         return m_model3D;
     }
 
+    /** @brief 设置封装关联的三维模型数据。 */
     void setModel3D(const Model3DData& model3D) {
         m_model3D = model3D;
     }
