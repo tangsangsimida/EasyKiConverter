@@ -19,6 +19,7 @@ target_link_libraries(test_fixture_to_kicad_export PRIVATE
 target_link_libraries(test_parallel_export_cancellation PRIVATE
     Qt6::Test
     Qt6::Gui
+    Qt6::Network
     EasyKiConverterLib
 )
 

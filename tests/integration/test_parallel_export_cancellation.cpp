@@ -1,6 +1,7 @@
 #include "core/easyeda/EasyedaFootprintImporter.h"
 #include "core/easyeda/EasyedaSymbolImporter.h"
 #include "models/ComponentData.h"
+#include "services/ComponentCacheService.h"
 #include "services/export/ParallelExportService.h"
 #include "tests/common/TestPaths.hpp"
 
@@ -20,12 +21,14 @@ class TestParallelExportCancellation : public QObject {
 
 private slots:
 
+    // 注册跨线程测试所需的 Qt 元类型。
     void initTestCase() {
         qRegisterMetaType<ExportOverallProgress>();
         qRegisterMetaType<ExportItemStatus>();
         qRegisterMetaType<QList<ComponentData>>();
     }
 
+    // 验证实际夹具数据可以完成完整导出流程。
     void testFixtureDataCompletesExportPipeline() {
         QTemporaryDir tempDir;
         QVERIFY(tempDir.isValid());
@@ -79,6 +82,7 @@ private slots:
         QVERIFY(footprintContent.contains(QStringLiteral("(pad 1 smd rect")));
     }
 
+    // 验证预加载数据不完整时导出流程会明确失败。
     void testMissingPreloadedDataFailsExportPipeline() {
         QTemporaryDir tempDir;
         QVERIFY(tempDir.isValid());
@@ -124,6 +128,45 @@ private slots:
         QVERIFY(!QDir(tempDir.filePath(libName + QStringLiteral(".pretty"))).exists());
     }
 
+    // 验证未注入 ComponentService 时，预加载可以使用实际磁盘缓存完成。
+    void testPreloadFallsBackToDiskCacheWithoutComponentService() {
+        QTemporaryDir cacheDir;
+        QVERIFY(cacheDir.isValid());
+
+        ComponentCacheService* cache = ComponentCacheService::instance();
+        const QString originalCacheDir = cache->cacheDir();
+        cache->setCacheDir(cacheDir.path());
+
+        const QString componentId = QStringLiteral("C77777");
+        ComponentData metadata;
+        metadata.setLcscId(componentId);
+        metadata.setName(QStringLiteral("Disk Cached Fixture"));
+        cache->saveComponentMetadata(componentId, metadata);
+
+        QString error;
+        const QString cadData =
+            TestPaths::readText(TestPaths::fixturePath(QStringLiteral("easyeda/cad_basic.json")), &error);
+        QVERIFY2(error.isEmpty(), qPrintable(error));
+        QVERIFY(!cadData.isEmpty());
+        cache->saveCadDataJson(componentId, cadData.toUtf8());
+
+        ParallelExportService service;
+        const QStringList componentIds = {componentId};
+        QSignalSpy preloadSpy(&service, &ParallelExportService::preloadCompleted);
+        service.startPreload(componentIds);
+
+        QCOMPARE(preloadSpy.count(), 1);
+        QCOMPARE(preloadSpy.at(0).at(0).toInt(), 1);
+        QCOMPARE(preloadSpy.at(0).at(1).toInt(), 0);
+        QCOMPARE(service.cachedData().size(), 1);
+        QVERIFY(service.cachedData().value(componentId)->symbolData() != nullptr);
+        QVERIFY(service.cachedData().value(componentId)->footprintData() != nullptr);
+
+        cache->clearAllCache();
+        cache->setCacheDir(originalCacheDir);
+    }
+
+    // 验证状态更新会保留先前产生的诊断信息。
     void testItemStatusPreservesDiagnosticsAcrossUpdates() {
         ParallelExportService service;
 
@@ -156,6 +199,7 @@ private slots:
         QVERIFY(finalStatus.diagnostics.contains(QStringLiteral("输入图元 UNKNOWN 未支持")));
     }
 
+    // 验证 Altium 三维失败状态不会被封装成功覆盖。
     void testAltiumModel3DFailureIsNotOverwrittenByFootprintSuccess() {
         ParallelExportService service;
         ExportOptions options;
@@ -188,6 +232,7 @@ private slots:
         QCOMPARE(finalStatus.errorMessage, modelFailure.errorMessage);
     }
 
+    // 验证 Altium 最终库写入失败会覆盖此前的三维成功状态。
     void testAltiumModel3DFinalFailureReplacesEarlierSuccess() {
         ParallelExportService service;
         ExportOptions options;
@@ -220,6 +265,7 @@ private slots:
         QCOMPARE(finalStatus.errorMessage, finalFailure.errorMessage);
     }
 
+    // 验证取消报告会保留已经收集到的诊断信息。
     void testCancellationReportPreservesCollectedDiagnostics() {
         QTemporaryDir tempDir;
         QVERIFY(tempDir.isValid());
@@ -250,6 +296,7 @@ private slots:
         QVERIFY(report.contains(QStringLiteral("输入图元 UNKNOWN 未支持")));
     }
 
+    // 验证取消请求可以停止正在运行的完整导出流程。
     void testCancellationStopsRunningExportPipeline() {
         QTemporaryDir tempDir;
         QVERIFY(tempDir.isValid());
