@@ -126,6 +126,23 @@ private slots:
         QVERIFY(failedComponents.isEmpty());
     }
 
+    /** @brief 验证清空缓存后新请求可以恢复缓存写入。 */
+    void testNewRequestReleasesGlobalCacheTombstone() {
+        const QString componentId = QStringLiteral("C54331");
+        m_cache->clearAllCache();
+
+        ComponentService service;
+        service.fetchComponentData(componentId, false);
+
+        ComponentData data;
+        data.setLcscId(componentId);
+        data.setName(QStringLiteral("New request component"));
+        m_cache->saveComponentMetadata(componentId, data, m_cache->currentGeneration());
+
+        QVERIFY(m_cache->hasCache(componentId));
+        service.cancelAllPendingRequests();
+    }
+
 private:
     /** @brief 写入用于触发缓存加载失败回退的最小缓存。 */
     void saveCorruptSymbolFootprintCache(const QString& componentId) {

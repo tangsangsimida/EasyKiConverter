@@ -224,8 +224,8 @@ void ComponentService::fetchComponentDataInternal(const QString& componentId, bo
             // 创建占位条目，防止重复调度
             FetchingComponent& fc = m_fetchingComponents[normalizedId];
             initializeFetchingComponent(fc, normalizedId, fetch3DModel);
-            // 真正创建新请求时才解除 tombstone，允许缓存写入
-            ComponentCacheService::instance()->clearTombstone(normalizedId);
+            // 新请求已捕获当前 generation，解除全局屏蔽后允许新结果写入缓存。
+            ComponentCacheService::instance()->clearGlobalTombstone();
         }
     }
 
