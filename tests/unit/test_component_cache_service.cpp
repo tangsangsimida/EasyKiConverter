@@ -584,6 +584,29 @@ private slots:
         QVERIFY(m_cache->loadFootprintDataFromMemory(memoryOnlyId).isEmpty());
     }
 
+    // 验证损坏的 CAD 原始缓存不会被完整缓存检查误判为命中。
+    void testHasCacheRejectsInvalidCadData() {
+        const QString componentId = QStringLiteral("C54334");
+        ComponentData metadata;
+        metadata.setLcscId(componentId);
+        metadata.setName(QStringLiteral("Invalid CAD cache component"));
+        m_cache->saveComponentMetadata(componentId, metadata);
+
+        const QString metadataPath = QDir(m_cache->componentCacheDir(componentId)).filePath("component.json");
+        QFile metadataFile(metadataPath);
+        QVERIFY(metadataFile.open(QIODevice::WriteOnly | QIODevice::Truncate));
+        QVERIFY(metadataFile.write(QByteArrayLiteral("{\"cachedAt\":\"test\"}")) > 0);
+        metadataFile.close();
+
+        const QString cadPath = QDir(m_cache->componentCacheDir(componentId)).filePath("cad_data.json");
+        QFile cadFile(cadPath);
+        QVERIFY(cadFile.open(QIODevice::WriteOnly));
+        QVERIFY(cadFile.write(QByteArrayLiteral("{\"cad\":}")) > 0);
+        cadFile.close();
+
+        QVERIFY(!m_cache->hasCache(componentId));
+    }
+
     // 验证异常三维元数据会使对应缓存失效并触发自愈。
     void testMalformedModel3DMetadataInvalidatesCache() {
         const QString componentId = QStringLiteral("C13579");

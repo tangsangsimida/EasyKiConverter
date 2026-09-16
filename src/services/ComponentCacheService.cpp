@@ -404,7 +404,7 @@ bool ComponentCacheService::isCacheValid(const QString& lcscId) const {
         return false;
     }
 
-    const bool hasCadJson = QFileInfo::exists(componentCacheDir(lcscId) + "/cad_data.json");
+    const bool hasCadJson = hasValidCadDataFile(componentCacheDir(lcscId) + "/cad_data.json");
     const bool hasBasicIdentity =
         !metadata.value("lcscId").toString().isEmpty() || !metadata.value("name").toString().isEmpty();
 
