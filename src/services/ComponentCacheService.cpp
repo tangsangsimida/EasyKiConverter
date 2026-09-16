@@ -469,7 +469,7 @@ QByteArray ComponentCacheService::loadSymbolDataFromMemory(const QString& lcscId
 
 // 将符号数据写入一级内存缓存。
 void ComponentCacheService::saveSymbolDataToMemory(const QString& lcscId, const QByteArray& data) {
-    if (data.isEmpty()) {
+    if (!isValidCadData(data)) {
         return;
     }
 
@@ -500,7 +500,7 @@ QByteArray ComponentCacheService::loadFootprintDataFromMemory(const QString& lcs
 
 // 将封装数据写入一级内存缓存。
 void ComponentCacheService::saveFootprintDataToMemory(const QString& lcscId, const QByteArray& data) {
-    if (data.isEmpty()) {
+    if (!isValidCadData(data)) {
         return;
     }
 

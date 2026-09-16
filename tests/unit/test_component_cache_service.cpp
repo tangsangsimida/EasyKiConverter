@@ -576,6 +576,12 @@ private slots:
         m_cache->saveFootprintData(componentId, QByteArrayLiteral("{\"footprint\":{}}"));
         QVERIFY(!m_cache->loadSymbolData(componentId).isEmpty());
         QVERIFY(!m_cache->loadFootprintData(componentId).isEmpty());
+
+        const QString memoryOnlyId = QStringLiteral("C54333");
+        m_cache->saveSymbolDataToMemory(memoryOnlyId, QByteArrayLiteral("invalid-symbol"));
+        m_cache->saveFootprintDataToMemory(memoryOnlyId, QByteArrayLiteral("invalid-footprint"));
+        QVERIFY(m_cache->loadSymbolDataFromMemory(memoryOnlyId).isEmpty());
+        QVERIFY(m_cache->loadFootprintDataFromMemory(memoryOnlyId).isEmpty());
     }
 
     // 验证异常三维元数据会使对应缓存失效并触发自愈。
