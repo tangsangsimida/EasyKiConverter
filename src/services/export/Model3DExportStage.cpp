@@ -103,7 +103,9 @@ void Model3DExportStage::start(const QStringList& componentIds,
                 m_tempManager.createTempFilePath(componentId + QStringLiteral("_step"), QStringLiteral(".step"));
         }
 
-        if ((needWrl && !paths.wrlTempPath.isEmpty()) || (needStep && !paths.stepTempPath.isEmpty())) {
+        const bool hasAllRequiredTempPaths =
+            (!needWrl || !paths.wrlTempPath.isEmpty()) && (!needStep || !paths.stepTempPath.isEmpty());
+        if (hasAllRequiredTempPaths) {
             m_componentPaths[componentId] = paths;
         } else if (needWrl || needStep) {
             qWarning() << "Model3DExportStage: Failed to create temp path for component:" << componentId
