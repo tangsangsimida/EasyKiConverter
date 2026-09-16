@@ -373,6 +373,22 @@ private slots:
         QCOMPARE(restored.pads().at(0).shape, original.pads().at(0).shape);
     }
 
+    // 验证清空封装数据时不会残留旧的三维模型关联。
+    void testFootprintClearRemovesModel3D() {
+        FootprintData footprint;
+        Model3DData model;
+        model.setUuid(QStringLiteral("stale-model"));
+        model.setName(QStringLiteral("STALE_MODEL"));
+        model.setStep(QByteArrayLiteral("STEP_DATA"));
+        footprint.setModel3D(model);
+
+        footprint.clear();
+
+        QVERIFY(footprint.model3D().uuid().isEmpty());
+        QVERIFY(footprint.model3D().name().isEmpty());
+        QVERIFY(footprint.model3D().step().isEmpty());
+    }
+
     // 验证绝对三维模型原点的导入坐标。
     void testModel3DAbsoluteOriginImport() {
         EasyedaFootprintImporter importer;

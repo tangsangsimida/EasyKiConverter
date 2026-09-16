@@ -69,6 +69,7 @@ void FootprintData::clear() {
     m_layers.clear();
     m_objectVisibilities.clear();
     m_validationErrors.clear();
+    m_model3D.clear();
 }
 
 }  // namespace EasyKiConverter
