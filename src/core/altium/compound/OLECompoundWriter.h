@@ -13,8 +13,7 @@ namespace EasyKiConverter {
  * @details 仅支持写入，不支持读取。实现 OLE Structured Storage V3 格式（512 字节扇区）。
  *          用于生成 Altium Designer 可读取的 .SchLib / .PcbLib 文件。
  *
- * 参考：OpenMcdf (https://github.com/ironfede/openmcdf)
- * 规范：[MS-CFB] Compound File Binary File Format
+ * 遵循：[MS-CFB] Compound File Binary File Format
  */
 class OLECompoundWriter {
 public:
