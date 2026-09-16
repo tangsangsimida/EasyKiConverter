@@ -395,6 +395,11 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
                             model3D.uuid(), stepData, QStringLiteral("step"), gen);
                     }
                 }
+                if (!stepData.isEmpty() && !isLikelyValidStepData(stepData)) {
+                    qWarning() << "FootprintExportStage: Rejecting invalid downloaded STEP for" << componentId << "uuid"
+                               << model3D.uuid();
+                    stepData.clear();
+                }
 
                 Model3DBase geometryCenter;
                 if (!stepData.isEmpty()) {
