@@ -23,12 +23,15 @@ void PreviewImagesExportWorker::setData(const QString& componentId,
     m_componentId = componentId;
     m_data = data;
     m_options = options;
+    m_cacheGeneration = ComponentCacheService::instance()->currentGeneration();
 }
 
+// 更新预览图导出选项。
 void PreviewImagesExportWorker::setOptions(const struct ExportOptions& options) {
     m_options = options;
 }
 
+// 执行预览图缓存读取、必要时下载并写入输出文件。
 void PreviewImagesExportWorker::run() {
     if (m_cancelled.load()) {
         emit completed(m_componentId, false, QStringLiteral("Cancelled"));
@@ -65,8 +68,13 @@ void PreviewImagesExportWorker::run() {
         if (!previewUrls.isEmpty()) {
             ComponentCacheService* cache = ComponentCacheService::instance();
             for (int i = 0; i < previewUrls.size(); ++i) {
-                const QByteArray imageData = cache->downloadPreviewImage(
-                    m_componentId, previewUrls[i], i, nullptr, nullptr, m_options.weakNetworkSupport);
+                const QByteArray imageData = cache->downloadPreviewImage(m_componentId,
+                                                                         previewUrls[i],
+                                                                         i,
+                                                                         nullptr,
+                                                                         nullptr,
+                                                                         m_options.weakNetworkSupport,
+                                                                         m_cacheGeneration);
                 if (!imageData.isEmpty()) {
                     previewDataList.append(imageData);
                 }
@@ -190,6 +198,7 @@ void PreviewImagesExportWorker::run() {
     }
 }
 
+// 设置取消标志，使正在执行的导出尽快停止。
 void PreviewImagesExportWorker::cancel() {
     m_cancelled.store(true);
 }

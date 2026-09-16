@@ -959,11 +959,12 @@ QByteArray ComponentCacheService::downloadPreviewImage(const QString& lcscId,
                                                        int imageIndex,
                                                        ComponentExportStatus::NetworkDiagnostics* diag,
                                                        QAtomicInt* cancelled,
-                                                       bool weakNetwork) {
+                                                       bool weakNetwork,
+                                                       uint64_t expectedGeneration) {
     if (imageUrl.isEmpty() || imageIndex < 0 || imageIndex >= 3) {
         return QByteArray();
     }
-    const uint64_t gen = currentGeneration();
+    const uint64_t gen = expectedGeneration != 0 ? expectedGeneration : currentGeneration();
 
     QElapsedTimer timer;
     timer.start();
@@ -1147,11 +1148,12 @@ QByteArray ComponentCacheService::downloadDatasheet(const QString& lcscId,
                                                     QString* format,
                                                     ComponentExportStatus::NetworkDiagnostics* diag,
                                                     QAtomicInt* cancelled,
-                                                    bool weakNetwork) {
+                                                    bool weakNetwork,
+                                                    uint64_t expectedGeneration) {
     if (datasheetUrl.isEmpty()) {
         return QByteArray();
     }
-    const uint64_t gen = currentGeneration();
+    const uint64_t gen = expectedGeneration != 0 ? expectedGeneration : currentGeneration();
 
     QElapsedTimer timer;
     timer.start();

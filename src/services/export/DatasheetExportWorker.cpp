@@ -20,12 +20,15 @@ void DatasheetExportWorker::setData(const QString& componentId,
     m_componentId = componentId;
     m_data = data;
     m_options = options;
+    m_cacheGeneration = ComponentCacheService::instance()->currentGeneration();
 }
 
+// 更新数据手册导出选项。
 void DatasheetExportWorker::setOptions(const struct ExportOptions& options) {
     m_options = options;
 }
 
+// 执行数据手册缓存读取、必要时下载并写入输出文件。
 void DatasheetExportWorker::run() {
     if (m_cancelled.load()) {
         emit completed(m_componentId, false, QStringLiteral("Cancelled"));
@@ -114,8 +117,14 @@ void DatasheetExportWorker::run() {
             }
         } else if (!datasheetUrl.isEmpty()) {
             QString format = m_data->datasheetFormat();
-            QByteArray downloadedData = ComponentCacheService::instance()->downloadDatasheet(
-                m_componentId, datasheetUrl, &format, nullptr, nullptr, m_options.weakNetworkSupport);
+            QByteArray downloadedData =
+                ComponentCacheService::instance()->downloadDatasheet(m_componentId,
+                                                                     datasheetUrl,
+                                                                     &format,
+                                                                     nullptr,
+                                                                     nullptr,
+                                                                     m_options.weakNetworkSupport,
+                                                                     m_cacheGeneration);
 
             if (downloadedData.isEmpty()) {
                 emit completed(m_componentId, false, QStringLiteral("Failed to download datasheet from cached URL"));
@@ -152,6 +161,7 @@ void DatasheetExportWorker::run() {
     }
 }
 
+// 设置取消标志，使正在执行的导出尽快停止。
 void DatasheetExportWorker::cancel() {
     m_cancelled.store(true);
 }

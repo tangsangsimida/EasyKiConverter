@@ -107,6 +107,7 @@ public:
      * @param imageIndex 图片索引
      * @param diag 网络诊断信息输出参数
      * @param cancelled 可选的取消标志，如果不为nullptr且被设置为1则立即返回
+     * @param expectedGeneration 可选的请求缓存代次，避免旧任务回写新缓存
      * @return QByteArray 下载的图片数据，下载失败或取消返回空
      */
     QByteArray downloadPreviewImage(const QString& lcscId,
@@ -114,7 +115,8 @@ public:
                                     int imageIndex,
                                     ComponentExportStatus::NetworkDiagnostics* diag = nullptr,
                                     QAtomicInt* cancelled = nullptr,
-                                    bool weakNetwork = false);
+                                    bool weakNetwork = false,
+                                    uint64_t expectedGeneration = 0);
 
     /**
      * @brief 检查元器件是否有有效缓存
@@ -326,6 +328,7 @@ public:
      * @param format 数据格式输出参数（pdf/html）
      * @param diag 网络诊断信息输出参数
      * @param cancelled 可选的取消标志，如果不为nullptr且被设置为1则立即返回
+     * @param expectedGeneration 可选的请求缓存代次，避免旧任务回写新缓存
      * @return QByteArray 下载的数据，下载失败或取消返回空
      */
     QByteArray downloadDatasheet(const QString& lcscId,
@@ -333,7 +336,8 @@ public:
                                  QString* format,
                                  ComponentExportStatus::NetworkDiagnostics* diag = nullptr,
                                  QAtomicInt* cancelled = nullptr,
-                                 bool weakNetwork = false);
+                                 bool weakNetwork = false,
+                                 uint64_t expectedGeneration = 0);
 
     /**
      * @brief 加载3D模型（STEP/WRL）
