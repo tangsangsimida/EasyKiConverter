@@ -1,4 +1,5 @@
 #include "models/ComponentData.h"
+#include "services/ComponentCacheService.h"
 #include "services/export/ExportTypeStage.h"
 #include "services/export/FootprintExportStage.h"
 #include "services/export/Model3DExportStage.h"
@@ -361,6 +362,65 @@ private slots:
                 failedComponents.insert(arguments.at(0).toString());
         }
         QCOMPARE(failedComponents, QSet<QString>({QStringLiteral("C9101"), QStringLiteral("C9102")}));
+    }
+
+    // 验证 Altium 封装阶段优先使用缓存 STEP，并报告嵌入成功。
+    void altiumFootprintUsesCachedStepModel() {
+        QTemporaryDir outputDir;
+        QTemporaryDir cacheDir;
+        QVERIFY(outputDir.isValid());
+        QVERIFY(cacheDir.isValid());
+
+        ComponentCacheService* cache = ComponentCacheService::instance();
+        const QString previousCacheDir = cache->cacheDir();
+        cache->setCacheDir(cacheDir.path());
+        cache->clearAllCache();
+
+        const QString componentId = QStringLiteral("C12345");
+        const QString modelUuid = QStringLiteral("cached-step-model");
+        const QByteArray stepData = QByteArrayLiteral(
+            "ISO-10303-21;\n"
+            "DATA;\n"
+            "#1=CARTESIAN_POINT('',(0.,0.,0.));\n"
+            "#2=VERTEX_POINT('',#1);\n"
+            "ENDSEC;\n"
+            "END-ISO-10303-21;\n");
+        cache->saveModel3D(modelUuid, stepData, QStringLiteral("step"));
+
+        auto component = makeFootprintComponent(componentId, QStringLiteral("CACHED_PKG"), QStringLiteral("CACHED"));
+        Model3DData model = component->footprintData()->model3D();
+        model.setUuid(modelUuid);
+        component->footprintData()->setModel3D(model);
+        auto componentModel = QSharedPointer<Model3DData>::create(model);
+        componentModel->setRawObj(QStringLiteral("v 0 0 0\nv 1 0 0\nv 0 1 0\nf 1 2 3\n"));
+        component->setModel3DData(componentModel);
+
+        FootprintExportStage stage;
+        ExportOptions options;
+        options.outputPath = outputDir.path();
+        options.libName = QStringLiteral("CachedAltium");
+        options.targetFormat = TargetEdaFormat::Altium;
+        options.exportModel3D = true;
+        options.exportModel3DFormat = ExportOptions::MODEL_3D_FORMAT_WRL;
+        options.overwriteExistingFiles = true;
+        stage.setOptions(options);
+
+        QMap<QString, QSharedPointer<ComponentData>> cachedData;
+        cachedData.insert(componentId, component);
+        QSignalSpy completedSpy(&stage, &FootprintExportStage::completed);
+        QSignalSpy modelSpy(&stage, &FootprintExportStage::embeddedModel3DStatusChanged);
+        stage.start({componentId}, cachedData);
+
+        QVERIFY2(completedSpy.wait(3000), "Altium cached STEP export should complete");
+        QCOMPARE(completedSpy.count(), 1);
+        QCOMPARE(completedSpy.at(0).at(0).toInt(), 1);
+        QCOMPARE(completedSpy.at(0).at(1).toInt(), 0);
+        QCOMPARE(modelSpy.count(), 1);
+        const ExportItemStatus modelStatus = qvariant_cast<ExportItemStatus>(modelSpy.at(0).at(1));
+        QCOMPARE(modelStatus.status, ExportItemStatus::Status::Success);
+        QVERIFY(QFileInfo::exists(outputDir.filePath(QStringLiteral("CachedAltium.PcbLib"))));
+
+        cache->setCacheDir(previousCacheDir);
     }
 
     // 验证多个符号可以合并写入同一个符号库。
