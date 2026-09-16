@@ -1,6 +1,7 @@
 #include "services/ComponentService.h"
 #include "tests/common/TestPaths.hpp"
 
+#include <QSignalSpy>
 #include <QTemporaryDir>
 #include <QtTest>
 
@@ -107,6 +108,22 @@ private slots:
         QVERIFY(receivedData.model3DData() != nullptr);
         QCOMPARE(receivedData.model3DData()->uuid(), modelUuid);
         QCOMPARE(receivedData.model3DObjRaw(), objData);
+    }
+
+    /** @brief 验证空批量请求会立即发出完成信号。 */
+    void testEmptyBatchFetchCompletesImmediately() {
+        ComponentService service;
+        QSignalSpy completedSpy(&service, &ComponentService::allComponentsDataCollectedWithErrors);
+
+        service.fetchMultipleComponentsData({}, false);
+
+        QCOMPARE(completedSpy.count(), 1);
+        const QList<QVariant> arguments = completedSpy.at(0);
+        QCOMPARE(arguments.size(), 2);
+        const QList<ComponentData> collectedData = qvariant_cast<QList<ComponentData>>(arguments.at(0));
+        const QMap<QString, QString> failedComponents = qvariant_cast<QMap<QString, QString>>(arguments.at(1));
+        QCOMPARE(collectedData.size(), 0);
+        QVERIFY(failedComponents.isEmpty());
     }
 
 private:

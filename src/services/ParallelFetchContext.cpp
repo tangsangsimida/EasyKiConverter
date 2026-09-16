@@ -15,12 +15,19 @@ ParallelFetchContext::~ParallelFetchContext() = default;
 
 // 开始新一轮批量获取并清理上一轮结果。
 void ParallelFetchContext::start(int totalCount) {
-    QMutexLocker locker(&m_mutex);
-    m_totalCount = totalCount;
-    m_completedCount = 0;
-    m_isAllDone = false;
-    m_collectedData.clear();
-    m_failedComponents.clear();
+    bool shouldEmit = false;
+    {
+        QMutexLocker locker(&m_mutex);
+        m_totalCount = totalCount;
+        m_completedCount = 0;
+        m_isAllDone = totalCount == 0;
+        m_collectedData.clear();
+        m_failedComponents.clear();
+        shouldEmit = m_isAllDone;
+    }
+    if (shouldEmit) {
+        Q_EMIT allCompleted({});
+    }
 }
 
 // 记录一个成功结果并检查批量任务是否完成。
