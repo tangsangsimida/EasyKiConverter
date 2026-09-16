@@ -29,6 +29,34 @@ QString fmt(double value) {
     return QString::number(value, 'f', 4);
 }
 
+/**
+ * @brief 将 IR 引脚电气类型转换为符号文件中的 PINTYPE 值。
+ * @param type IR 中已经归一化的引脚电气类型。
+ * @return 目标格式类型字符串；未指定类型返回空字符串。
+ */
+QString pinElectricalTypeName(IR::PinElectricalType type) {
+    // 未指定类型不写入属性，避免用猜测覆盖目标工具的默认语义。
+    switch (type) {
+        case IR::PinElectricalType::Input:
+            return QStringLiteral("IN");
+        case IR::PinElectricalType::Output:
+            return QStringLiteral("OUT");
+        case IR::PinElectricalType::Bidirectional:
+            return QStringLiteral("BI");
+        case IR::PinElectricalType::Passive:
+            return QStringLiteral("PASSIVE");
+        case IR::PinElectricalType::Power:
+            return QStringLiteral("PWR");
+        case IR::PinElectricalType::OpenCollector:
+            return QStringLiteral("OCL");
+        case IR::PinElectricalType::OpenEmitter:
+            return QStringLiteral("OEM");
+        case IR::PinElectricalType::Unspecified:
+        default:
+            return {};
+    }
+}
+
 /** @brief 将引脚方向转换为单位方向向量。 */
 QPointF directionVector(IR::PinDirection direction) {
     // 方向枚举到单位向量的转换决定引脚内外端点的几何关系。
@@ -88,6 +116,12 @@ void appendPin(QString& output, const IR::SymbolPinIR& pin, int index) {
                       .arg(fmt(toTh(pin.numberPosition.x())))
                       .arg(fmt(toTh(pin.numberPosition.y())))
                       .arg(pin.designator);
+    const QString electricalType = pinElectricalTypeName(pin.electricalType);
+    if (!electricalType.isEmpty())
+        output += QStringLiteral("A %1 %2 10 0 2 0 PINTYPE=%3\n")
+                      .arg(fmt(toTh(outer.x())))
+                      .arg(fmt(toTh(outer.y())))
+                      .arg(electricalType);
 }
 
 }  // namespace

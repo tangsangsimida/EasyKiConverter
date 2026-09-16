@@ -30,6 +30,7 @@ private slots:
         pin.numberPosition = QPointF(1.27, -1.27);
         pin.length = 2.54;
         pin.direction = IR::PinDirection::Right;
+        pin.electricalType = IR::PinElectricalType::Input;
         symbol.pins.append(pin);
         symbol.rectangles.append({-2.54, -1.27, 2.54, 1.27});
 
@@ -45,6 +46,7 @@ private slots:
         QVERIFY(data.contains("V 50"));
         QVERIFY(data.contains("P 1"));
         QVERIFY(data.contains("l 2"));
+        QVERIFY(data.contains("PINTYPE=IN"));
     }
 
     // 验证封装库同时写出 Padstack 与 Cell 两类目标文件。
