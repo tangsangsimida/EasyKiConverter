@@ -81,6 +81,14 @@ public:
     static bool hasUsableObjGeometry(const QByteArray& objData);
 
     /**
+     * @brief 检查 WRL 数据是否包含可显示的坐标和面索引
+     *
+     * @param wrlData WRL 模型的原始数据
+     * @return true 表示数据包含坐标点和面索引
+     */
+    static bool hasUsableWrlGeometry(const QByteArray& wrlData);
+
+    /**
      * @brief 计算 WRL 文件在 KiCad 显示单位下的最小 Z 坐标
      *
      * @param wrlData WRL 文件数据

@@ -76,6 +76,21 @@ private slots:
         QVERIFY(!Exporter3DModel::hasUsableObjGeometry(QByteArrayLiteral("v 0 0 0\nv 1 0 0\n")));
     }
 
+    /** @brief 验证 WRL 几何校验接受包含坐标和面索引的模型。 */
+    void hasUsableWrlGeometryAcceptsValidModel() {
+        const QByteArray wrl(
+            "#VRML V2.0 utf8\n"
+            "Shape { geometry IndexedFaceSet { coord Coordinate { point [0 0 0, 1 0 0, 0 1 0] } "
+            "coordIndex [0 1 2 -1] } }\n");
+        QVERIFY(Exporter3DModel::hasUsableWrlGeometry(wrl));
+    }
+
+    /** @brief 验证 WRL 几何校验拒绝错误响应和不完整模型。 */
+    void hasUsableWrlGeometryRejectsInvalidModel() {
+        QVERIFY(!Exporter3DModel::hasUsableWrlGeometry(QByteArrayLiteral("<html>access denied</html>")));
+        QVERIFY(!Exporter3DModel::hasUsableWrlGeometry(QByteArrayLiteral("#VRML V2.0 utf8\nShape {}\n")));
+    }
+
     // === calculateWrlDisplayMinZ 测试 ===
 
     /** @brief 验证空 WRL 的最小 Z 返回无穷大哨兵值。 */

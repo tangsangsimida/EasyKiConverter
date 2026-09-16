@@ -197,6 +197,33 @@ bool Exporter3DModel::hasUsableObjGeometry(const QByteArray& objData) {
     return hasVertex && hasFace;
 }
 
+// 检查 WRL 是否包含文件头、至少三个坐标点和可闭合的面索引。
+bool Exporter3DModel::hasUsableWrlGeometry(const QByteArray& wrlData) {
+    if (wrlData.isEmpty()) {
+        return false;
+    }
+
+    const QString text = QString::fromUtf8(wrlData);
+    if (!text.trimmed().startsWith(QStringLiteral("#VRML V2.0"))) {
+        return false;
+    }
+
+    static const QRegularExpression numberRegex(QStringLiteral("[-+]?(?:\\d+\\.?\\d*|\\.\\d+)(?:[eE][-+]?\\d+)?"));
+    const int pointStart = text.indexOf(QStringLiteral("point ["));
+    const int pointEnd = pointStart < 0 ? -1 : text.indexOf(QLatin1Char(']'), pointStart);
+    const int coordIndexStart = text.indexOf(QStringLiteral("coordIndex ["));
+    const int coordIndexEnd = coordIndexStart < 0 ? -1 : text.indexOf(QLatin1Char(']'), coordIndexStart);
+    if (pointStart < 0 || pointEnd < 0 || coordIndexStart < 0 || coordIndexEnd < 0) {
+        return false;
+    }
+
+    const QString pointData = text.mid(pointStart + QStringLiteral("point [").size(), pointEnd - pointStart);
+    const int coordinateCount = pointData.count(numberRegex);
+    const QString indexData =
+        text.mid(coordIndexStart + QStringLiteral("coordIndex [").size(), coordIndexEnd - coordIndexStart);
+    return coordinateCount >= 9 && indexData.contains(QStringLiteral("-1"));
+}
+
 // 解析 WRL 坐标点并计算 KiCad 显示单位下的最小 Z 坐标。
 double Exporter3DModel::calculateWrlDisplayMinZ(const QByteArray& wrlData) {
     if (wrlData.isEmpty()) {

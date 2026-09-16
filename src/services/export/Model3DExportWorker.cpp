@@ -202,11 +202,16 @@ void Model3DExportWorker::run() {
                            << uuid;
                 objData.clear();
             }
-            if (objData.isEmpty() && cache->hasModel3DCached(uuid, QStringLiteral("wrl")) &&
+            const QByteArray cachedWrl = cache->loadModel3D(uuid, QStringLiteral("wrl"));
+            if (objData.isEmpty() && !cachedWrl.isEmpty() && Exporter3DModel::hasUsableWrlGeometry(cachedWrl) &&
                 cache->copyModel3DToFile(uuid, QStringLiteral("wrl"), wrlWritePath)) {
                 usedWrlCache = true;
                 qDebug() << "Model3DExportWorker: WRL cache fallback for" << uuid;
-            } else if (objData.isEmpty() && !exporter.downloadObjDataSync(uuid, &objData, &error)) {
+            } else if (objData.isEmpty() && !cachedWrl.isEmpty()) {
+                qWarning() << "Model3DExportWorker: Ignoring malformed cached WRL for" << m_componentId << "uuid"
+                           << uuid;
+            }
+            if (objData.isEmpty() && !usedWrlCache && !exporter.downloadObjDataSync(uuid, &objData, &error)) {
                 if (error.isEmpty()) {
                     error = QStringLiteral("Failed to download OBJ data for WRL export");
                 }
