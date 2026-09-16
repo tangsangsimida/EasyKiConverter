@@ -14,6 +14,7 @@ namespace EasyKiConverter {
 namespace {
 
 constexpr double kThousandthInchMm = 0.0254;
+constexpr double kSolderMaskExpansionTh = 8.0;
 
 /**
  * @brief 将毫米转换为 Xpedition 使用的千分之一英寸单位。
@@ -65,6 +66,15 @@ QString padName(const IR::FootprintPadIR& pad) {
         .arg(padShape(pad.shape))
         .arg(fmt(toTh(pad.size.width())))
         .arg(fmt(toTh(pad.size.height())));
+}
+
+/**
+ * @brief 生成同一焊盘的阻焊层定义名称。
+ * @param baseName 铜焊盘定义名称。
+ * @return 可复用的阻焊焊盘名称。
+ */
+QString solderMaskPadName(const QString& baseName) {
+    return baseName + QStringLiteral("_MASK");
 }
 
 struct LayerSection {
@@ -244,27 +254,38 @@ QByteArray ExporterXpeditionFootprint::padstackFile(const IR::FootprintComponent
                      QStringLiteral(".CREATOR \"EasyKiConverter\"\n\n.UNITS TH\n\n");
     QSet<QString> writtenPads;
     QSet<QString> writtenStacks;
+
+    // IR 没有独立的阻焊扩展字段，使用明确的 8 TH 默认扩展生成工艺层焊盘。
+    const auto appendPad = [&](const QString& name, const IR::FootprintPadIR& pad, double expansionTh) {
+        if (writtenPads.contains(name))
+            return;
+        const double width = toTh(pad.size.width()) + expansionTh;
+        const double height = toTh(pad.size.height()) + expansionTh;
+        output += QStringLiteral(".PAD \"%1\"\n..PAD_OPTIONS USER_GENERATED_NAME\n..OFFSET (0, 0)\n..%2\n")
+                      .arg(name, padShape(pad.shape));
+        if (pad.shape == IR::PadShape::Ellipse) {
+            output += QStringLiteral("...DIAMETER %1\n").arg(fmt(width));
+        } else if (pad.shape == IR::PadShape::Polygon && !pad.customShapePoints.isEmpty()) {
+            // 自定义焊盘按 X/Y 尺寸比例扩展，保持多边形的相对形状。
+            const double scaleX = pad.size.width() > 0.0 ? width / toTh(pad.size.width()) : 1.0;
+            const double scaleY = pad.size.height() > 0.0 ? height / toTh(pad.size.height()) : 1.0;
+            output += QStringLiteral("...POLYLINE_SHAPE\n....XY");
+            for (const QPointF& point : pad.customShapePoints)
+                output +=
+                    QStringLiteral(" (%1, %2)").arg(fmt(toTh(point.x()) * scaleX)).arg(fmt(toTh(point.y()) * scaleY));
+            output += QStringLiteral("\n....SHAPE_OPTIONS FILLED\n");
+        } else {
+            output += QStringLiteral("...WIDTH %1\n...HEIGHT %2\n").arg(fmt(width)).arg(fmt(height));
+        }
+        writtenPads.insert(name);
+    };
+
     for (const auto& pad : footprint.pads) {
         const QString baseName = padName(pad);
-        if (!writtenPads.contains(baseName)) {
-            // 先写入物理焊盘形状，后续 Padstack 只引用该名称。
-            output += QStringLiteral(".PAD \"%1\"\n..PAD_OPTIONS USER_GENERATED_NAME\n..OFFSET (0, 0)\n..%2\n")
-                          .arg(baseName, padShape(pad.shape));
-            if (pad.shape == IR::PadShape::Ellipse)
-                output += QStringLiteral("...DIAMETER %1\n").arg(fmt(toTh(pad.size.width())));
-            // 自定义多边形保留点列和填充属性，其余形状使用宽高字段。
-            else if (pad.shape == IR::PadShape::Polygon && !pad.customShapePoints.isEmpty()) {
-                output += QStringLiteral("...POLYLINE_SHAPE\n....XY");
-                for (const QPointF& point : pad.customShapePoints)
-                    output += QStringLiteral(" (%1, %2)").arg(fmt(toTh(point.x()))).arg(fmt(toTh(point.y())));
-                output += QStringLiteral("\n....SHAPE_OPTIONS FILLED\n");
-            } else {
-                output += QStringLiteral("...WIDTH %1\n...HEIGHT %2\n")
-                              .arg(fmt(toTh(pad.size.width())))
-                              .arg(fmt(toTh(pad.size.height())));
-            }
-            writtenPads.insert(baseName);
-        }
+        // 先写入铜焊盘，再写入供阻焊层引用的放大定义。
+        appendPad(baseName, pad, 0.0);
+        const QString maskName = solderMaskPadName(baseName);
+        appendPad(maskName, pad, kSolderMaskExpansionTh);
 
         const QString stackName = baseName + (pad.isThroughHole() ? QStringLiteral("_TH") : QStringLiteral("_SMD"));
         if (writtenStacks.contains(stackName))
@@ -272,6 +293,9 @@ QByteArray ExporterXpeditionFootprint::padstackFile(const IR::FootprintComponent
         output += QStringLiteral(".PADSTACK \"%1\"\n..PADSTACK_TYPE %2\n..TECHNOLOGY \"(Default)\"\n")
                       .arg(stackName, pad.isThroughHole() ? QStringLiteral("PIN_THROUGH") : QStringLiteral("PIN_SMD"));
         output += QStringLiteral("...TECHNOLOGY_OPTIONS NONE\n...TOP_PAD \"%1\"\n...BOTTOM_PAD \"%1\"\n").arg(baseName);
+        output += QStringLiteral("...TOP_SOLDERMASK_PAD \"%1\"\n...BOTTOM_SOLDERMASK_PAD \"%1\"\n").arg(maskName);
+        if (!pad.isThroughHole())
+            output += QStringLiteral("...TOP_SOLDERPASTE_PAD \"%1\"\n...BOTTOM_SOLDERPASTE_PAD \"%1\"\n").arg(baseName);
         if (pad.isThroughHole()) {
             // 通孔焊盘需要独立的 Hole 定义，孔径以实际直径参与命名和写入。
             const QString drillName = holeName(pad.holeSize);

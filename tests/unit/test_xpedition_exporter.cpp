@@ -74,6 +74,9 @@ private slots:
         QVERIFY(data.contains("TEST_FOOTPRINT_Pads.hkp"));
         QVERIFY(data.contains("TEST_FOOTPRINT_Cell.hkp"));
         QVERIFY(data.contains(".PADSTACK"));
+        QVERIFY(data.contains("TOP_SOLDERPASTE_PAD"));
+        QVERIFY(data.contains("TOP_SOLDERMASK_PAD"));
+        QVERIFY(data.contains("_MASK"));
         QVERIFY(data.contains("..PIN \"1\""));
     }
 
