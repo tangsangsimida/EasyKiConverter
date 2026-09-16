@@ -536,7 +536,7 @@ private slots:
         data.setLcscId(componentId);
         data.setName(QStringLiteral("Old Directory Component"));
         m_cache->saveComponentMetadata(componentId, data);
-        m_cache->saveSymbolData(componentId, QByteArray("old-symbol"));
+        m_cache->saveSymbolData(componentId, QByteArrayLiteral("{\"symbol\":{}}"));
         QVERIFY(m_cache->hasInMemoryCache(componentId));
 
         QTemporaryDir newCacheDir;
@@ -547,6 +547,35 @@ private slots:
         QCOMPARE(m_cache->getMemoryCacheSize(), qint64(0));
         QVERIFY(m_cache->loadSymbolData(componentId).isEmpty());
         QVERIFY(m_cache->loadComponentData(componentId) == nullptr);
+    }
+
+    // 验证符号和封装缓存拒绝损坏内容并清理已有无效文件。
+    void testInvalidSymbolAndFootprintDataIsRejected() {
+        const QString componentId = QStringLiteral("C54332");
+        ComponentData metadata;
+        metadata.setLcscId(componentId);
+        metadata.setName(QStringLiteral("Symbol footprint validation component"));
+        m_cache->saveComponentMetadata(componentId, metadata);
+
+        const QString componentDir = m_cache->componentCacheDir(componentId);
+        QFile symbolFile(QDir(componentDir).filePath(QStringLiteral("symbol.json")));
+        QVERIFY(symbolFile.open(QIODevice::WriteOnly));
+        QVERIFY(symbolFile.write(QByteArrayLiteral("{\"symbol\":}")) > 0);
+        symbolFile.close();
+        QFile footprintFile(QDir(componentDir).filePath(QStringLiteral("footprint.json")));
+        QVERIFY(footprintFile.open(QIODevice::WriteOnly));
+        QVERIFY(footprintFile.write(QByteArrayLiteral("not-json")) > 0);
+        footprintFile.close();
+
+        QVERIFY(m_cache->loadSymbolData(componentId).isEmpty());
+        QVERIFY(m_cache->loadFootprintData(componentId).isEmpty());
+        QVERIFY(!QFileInfo::exists(symbolFile.fileName()));
+        QVERIFY(!QFileInfo::exists(footprintFile.fileName()));
+
+        m_cache->saveSymbolData(componentId, QByteArrayLiteral("{\"symbol\":{}}"));
+        m_cache->saveFootprintData(componentId, QByteArrayLiteral("{\"footprint\":{}}"));
+        QVERIFY(!m_cache->loadSymbolData(componentId).isEmpty());
+        QVERIFY(!m_cache->loadFootprintData(componentId).isEmpty());
     }
 
     // 验证异常三维元数据会使对应缓存失效并触发自愈。

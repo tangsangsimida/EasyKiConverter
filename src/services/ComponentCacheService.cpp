@@ -662,7 +662,7 @@ void ComponentCacheService::saveComponentMetadataAsync(const QString& componentI
 
 // 将符号数据原子写入二级磁盘缓存。
 void ComponentCacheService::saveSymbolData(const QString& lcscId, const QByteArray& data, uint64_t expectedGeneration) {
-    if (data.isEmpty()) {
+    if (!isValidCadData(data)) {
         return;
     }
 
@@ -715,7 +715,10 @@ QByteArray ComponentCacheService::loadSymbolData(const QString& lcscId) const {
     if (file.open(QIODevice::ReadOnly)) {
         data = file.readAll();
         file.close();
-        return data;
+        if (isValidCadData(data)) {
+            return data;
+        }
+        QFile::remove(symbolPath);
     }
 
     return QByteArray();
@@ -725,7 +728,7 @@ QByteArray ComponentCacheService::loadSymbolData(const QString& lcscId) const {
 void ComponentCacheService::saveFootprintData(const QString& lcscId,
                                               const QByteArray& data,
                                               uint64_t expectedGeneration) {
-    if (data.isEmpty()) {
+    if (!isValidCadData(data)) {
         return;
     }
 
@@ -778,7 +781,10 @@ QByteArray ComponentCacheService::loadFootprintData(const QString& lcscId) const
     if (file.open(QIODevice::ReadOnly)) {
         data = file.readAll();
         file.close();
-        return data;
+        if (isValidCadData(data)) {
+            return data;
+        }
+        QFile::remove(footprintPath);
     }
 
     return QByteArray();
