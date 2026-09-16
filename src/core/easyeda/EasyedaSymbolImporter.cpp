@@ -16,6 +16,7 @@ namespace EasyKiConverter {
 
 EasyedaSymbolImporter::EasyedaSymbolImporter() {}
 
+// 从 EasyEDA CAD JSON 导入符号元数据、单部分或多部分图元及原始顺序。
 QSharedPointer<SymbolData> EasyedaSymbolImporter::importSymbolData(const QJsonObject& cadData) {
     auto symbolData = QSharedPointer<SymbolData>::create();
 
@@ -334,6 +335,7 @@ QSharedPointer<SymbolData> EasyedaSymbolImporter::importSymbolData(const QJsonOb
     return symbolData;
 }
 
+// 解析引脚记录中的名称、编号、方向、电气类型和显示属性。
 SymbolPin EasyedaSymbolImporter::importPinData(const QString& pinData) {
     SymbolPin pin;
     QList<QStringList> segments = parsePinDataString(pinData);
@@ -409,6 +411,7 @@ SymbolPin EasyedaSymbolImporter::importPinData(const QString& pinData) {
     return pin;
 }
 
+// 解析符号矩形图元的边界、线宽、填充和部件归属。
 SymbolRectangle EasyedaSymbolImporter::importRectangleData(const QString& rectangleData) {
     SymbolRectangle rectangle;
     QStringList fields = EasyedaUtils::parseDataString(rectangleData);
@@ -431,6 +434,7 @@ SymbolRectangle EasyedaSymbolImporter::importRectangleData(const QString& rectan
     return rectangle;
 }
 
+// 解析符号圆形图元的圆心、半径和绘制属性。
 SymbolCircle EasyedaSymbolImporter::importCircleData(const QString& circleData) {
     SymbolCircle circle;
     QStringList fields = EasyedaUtils::parseDataString(circleData);
@@ -450,6 +454,7 @@ SymbolCircle EasyedaSymbolImporter::importCircleData(const QString& circleData) 
     return circle;
 }
 
+// 解析符号弧线图元的圆心、半径、角度和绘制属性。
 SymbolArc EasyedaSymbolImporter::importArcData(const QString& arcData) {
     SymbolArc arc;
     QStringList fields = EasyedaUtils::parseDataString(arcData);
@@ -478,6 +483,7 @@ SymbolArc EasyedaSymbolImporter::importArcData(const QString& arcData) {
     return arc;
 }
 
+// 解析符号椭圆图元的中心、半径、角度和部件归属。
 SymbolEllipse EasyedaSymbolImporter::importEllipseData(const QString& ellipseData) {
     SymbolEllipse ellipse;
     QStringList fields = EasyedaUtils::parseDataString(ellipseData);
@@ -498,6 +504,7 @@ SymbolEllipse EasyedaSymbolImporter::importEllipseData(const QString& ellipseDat
     return ellipse;
 }
 
+// 解析符号折线图元的顶点、线宽、样式和填充属性。
 SymbolPolyline EasyedaSymbolImporter::importPolylineData(const QString& polylineData) {
     SymbolPolyline polyline;
     QStringList fields = EasyedaUtils::parseDataString(polylineData);
@@ -515,6 +522,7 @@ SymbolPolyline EasyedaSymbolImporter::importPolylineData(const QString& polyline
     return polyline;
 }
 
+// 解析符号多边形图元的顶点、线型、颜色和部件归属。
 SymbolPolygon EasyedaSymbolImporter::importPolygonData(const QString& polygonData) {
     SymbolPolygon polygon;
     QStringList fields = EasyedaUtils::parseDataString(polygonData);
@@ -532,6 +540,7 @@ SymbolPolygon EasyedaSymbolImporter::importPolygonData(const QString& polygonDat
     return polygon;
 }
 
+// 解析 SVG 路径图元并保留其原始路径字符串和绘制属性。
 SymbolPath EasyedaSymbolImporter::importPathData(const QString& pathData) {
     SymbolPath path;
     QStringList fields = EasyedaUtils::parseDataString(pathData);
@@ -549,6 +558,7 @@ SymbolPath EasyedaSymbolImporter::importPathData(const QString& pathData) {
     return path;
 }
 
+// 解析符号图片图元的位置、边界、数据 URL 和显示属性。
 SymbolImage EasyedaSymbolImporter::importImageData(const QString& imageData) {
     SymbolImage image;
     const QStringList fields = EasyedaUtils::parseDataString(imageData);
@@ -590,6 +600,7 @@ SymbolImage EasyedaSymbolImporter::importImageData(const QString& imageData) {
     return image;
 }
 
+// 解析符号文本图元的内容、字体、位置、方向和显示属性。
 SymbolText EasyedaSymbolImporter::importTextData(const QString& textData) {
     SymbolText text;
     QStringList fields = EasyedaUtils::parseDataString(textData);
@@ -619,6 +630,7 @@ SymbolText EasyedaSymbolImporter::importTextData(const QString& textData) {
     return text;
 }
 
+// 将引脚复合字段拆分为可独立读取的键值列表，并保留字段顺序。
 QList<QStringList> EasyedaSymbolImporter::parsePinDataString(const QString& pinData) const {
     QList<QStringList> result;
     QStringList segments;
