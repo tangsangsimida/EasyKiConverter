@@ -562,6 +562,7 @@ private slots:
         model.setName(QStringLiteral("FOOTPRINT_MODEL"));
         footprint->setModel3D(model);
         auto component = QSharedPointer<ComponentData>::create();
+        component->setModel3DData(QSharedPointer<Model3DData>::create());
         component->setFootprintData(footprint);
         component->setModel3DObjRaw(QByteArrayLiteral("v 0 0 0\nv 1 0 0\nv 0 1 0\nf 1 2 3\n"));
 

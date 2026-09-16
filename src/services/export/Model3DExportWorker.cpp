@@ -80,7 +80,8 @@ void Model3DExportWorker::run() {
         if (cachedComponent) {
             if (cachedComponent->model3DData()) {
                 sourceModel = *cachedComponent->model3DData();
-            } else if (cachedComponent->footprintData()) {
+            }
+            if (sourceModel.uuid().isEmpty() && cachedComponent->footprintData()) {
                 sourceModel = cachedComponent->footprintData()->model3D();
             }
             uuid = sourceModel.uuid();
