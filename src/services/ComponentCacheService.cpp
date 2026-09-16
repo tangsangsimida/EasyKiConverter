@@ -43,6 +43,7 @@ Model3DData effectiveModel3D(const ComponentData& data) {
     return model;
 }
 
+// 校验缓存元数据中的三维模型字段是否完整有效。
 bool hasValidModel3DMetadata(const QJsonObject& metadata) {
     if (!metadata.contains(QStringLiteral("model3duuid")))
         return true;
@@ -112,6 +113,7 @@ ComponentCacheService::ComponentCacheService(QObject* parent)
 
 ComponentCacheService::~ComponentCacheService() = default;
 
+// 返回进程内唯一的缓存服务实例。
 ComponentCacheService* ComponentCacheService::instance() {
     if (!s_instance) {
         s_instance = std::unique_ptr<ComponentCacheService>(new ComponentCacheService());
@@ -119,6 +121,7 @@ ComponentCacheService* ComponentCacheService::instance() {
     return s_instance.get();
 }
 
+// 设置缓存目录，并按需迁移旧目录中的缓存内容。
 void ComponentCacheService::setCacheDir(const QString& cacheDir, bool migrateExistingCache) {
     const QString newCacheDir = QDir::cleanPath(cacheDir);
     QString oldCacheDir;
@@ -170,6 +173,7 @@ void ComponentCacheService::setCacheDir(const QString& cacheDir, bool migrateExi
     LOG_DEBUG(LogModule::Core, "Cache directory set to: {}", newCacheDir);
 }
 
+// 将旧缓存目录中的内容迁移到新的缓存目录。
 bool ComponentCacheService::migrateCacheDirectory(const QString& oldCacheDir, const QString& newCacheDir) const {
     if (oldCacheDir.isEmpty() || newCacheDir.isEmpty() || oldCacheDir == newCacheDir) {
         return true;
@@ -199,6 +203,7 @@ bool ComponentCacheService::migrateCacheDirectory(const QString& oldCacheDir, co
     return moved;
 }
 
+// 迁移目录中的全部缓存条目，并返回整体迁移结果。
 bool ComponentCacheService::moveDirectoryContents(const QString& sourceDir, const QString& targetDir) const {
     QDir source(sourceDir);
     if (!source.exists()) {
@@ -224,6 +229,7 @@ bool ComponentCacheService::moveDirectoryContents(const QString& sourceDir, cons
     return allMoved;
 }
 
+// 迁移单个缓存文件或目录条目。
 bool ComponentCacheService::moveCacheEntry(const QString& sourcePath, const QString& targetPath) const {
     QFileInfo sourceInfo(sourcePath);
     if (!sourceInfo.exists()) {
@@ -277,11 +283,13 @@ bool ComponentCacheService::moveCacheEntry(const QString& sourcePath, const QStr
     return false;
 }
 
+// 获取当前缓存根目录。
 QString ComponentCacheService::cacheDir() const {
     QMutexLocker locker(&m_cacheDirMutex);
     return m_cacheDir;
 }
 
+// 获取指定元器件的缓存目录。
 QString ComponentCacheService::componentCacheDir(const QString& lcscId) const {
     if (!BomParser::validateId(lcscId)) {
         qWarning() << "componentCacheDir: invalid lcscId, rejecting:" << lcscId;
@@ -291,6 +299,7 @@ QString ComponentCacheService::componentCacheDir(const QString& lcscId) const {
     return QDir::cleanPath(m_cacheDir + "/" + lcscId);
 }
 
+// 确保指定元器件的缓存目录存在。
 QString ComponentCacheService::ensureComponentDir(const QString& lcscId) const {
     // 注意：不再获取锁，因为：
     // 1. componentCacheDir 只是构建路径字符串（只读操作）
@@ -307,6 +316,7 @@ QString ComponentCacheService::ensureComponentDir(const QString& lcscId) const {
     return dirPath;
 }
 
+// 确保公共三维模型缓存目录存在。
 QString ComponentCacheService::ensureModel3DCacheDir() const {
     const QString dirPath = cacheDir() + "/model3d";
     QDir dir(dirPath);
@@ -316,15 +326,18 @@ QString ComponentCacheService::ensureModel3DCacheDir() const {
     return dirPath;
 }
 
+// 构造内存缓存使用的复合键。
 QString ComponentCacheService::makeMemoryKey(const QString& lcscId, const QString& type) const {
     return lcscId + ":" + type;
 }
 
+// 判断元器件是否具有可用的完整磁盘缓存。
 bool ComponentCacheService::hasCache(const QString& lcscId) const {
     // 统一由完整性检查负责路径读取，避免目录迁移期间出现先检查后失效。
     return isCacheValid(lcscId);
 }
 
+// 校验元数据、身份字段和 CAD 文件是否组成有效缓存。
 bool ComponentCacheService::isCacheValid(const QString& lcscId) const {
     // 元数据和 CAD 文件必须在同一次目录迁移保护下完成检查。
     QMutexLocker diskLocker(&m_diskWriteMutex);
@@ -350,6 +363,7 @@ bool ComponentCacheService::isCacheValid(const QString& lcscId) const {
     return hasCadJson || hasBasicIdentity;
 }
 
+// 判断元器件元数据是否存在于一级内存缓存。
 bool ComponentCacheService::hasInMemoryCache(const QString& lcscId) const {
     QMutexLocker locker(&m_mutex);
     QString key = makeMemoryKey(lcscId, "metadata");
@@ -358,6 +372,7 @@ bool ComponentCacheService::hasInMemoryCache(const QString& lcscId) const {
 
 // ==================== L1 内存缓存操作 ====================
 
+// 从一级内存缓存读取元器件元数据。
 QJsonObject ComponentCacheService::loadMetadataFromMemory(const QString& lcscId) const {
     QMutexLocker locker(&m_mutex);
     QString key = makeMemoryKey(lcscId, "metadata");
@@ -375,6 +390,7 @@ QJsonObject ComponentCacheService::loadMetadataFromMemory(const QString& lcscId)
     return doc.object();
 }
 
+// 将元器件元数据写入一级内存缓存。
 void ComponentCacheService::saveMetadataToMemory(const QString& lcscId, const QJsonObject& metadata) {
     qint64 sizeAfterUpdate = 0;
     {
@@ -392,6 +408,7 @@ void ComponentCacheService::saveMetadataToMemory(const QString& lcscId, const QJ
     emit memoryCacheSizeChanged(sizeAfterUpdate);
 }
 
+// 从一级内存缓存读取符号数据。
 QByteArray ComponentCacheService::loadSymbolDataFromMemory(const QString& lcscId) const {
     QMutexLocker locker(&m_mutex);
     QString key = makeMemoryKey(lcscId, "symbol");
@@ -402,6 +419,7 @@ QByteArray ComponentCacheService::loadSymbolDataFromMemory(const QString& lcscId
     return QByteArray();
 }
 
+// 将符号数据写入一级内存缓存。
 void ComponentCacheService::saveSymbolDataToMemory(const QString& lcscId, const QByteArray& data) {
     if (data.isEmpty()) {
         return;
@@ -421,6 +439,7 @@ void ComponentCacheService::saveSymbolDataToMemory(const QString& lcscId, const 
     emit memoryCacheSizeChanged(sizeAfterUpdate);
 }
 
+// 从一级内存缓存读取封装数据。
 QByteArray ComponentCacheService::loadFootprintDataFromMemory(const QString& lcscId) const {
     QMutexLocker locker(&m_mutex);
     QString key = makeMemoryKey(lcscId, "footprint");
@@ -431,6 +450,7 @@ QByteArray ComponentCacheService::loadFootprintDataFromMemory(const QString& lcs
     return QByteArray();
 }
 
+// 将封装数据写入一级内存缓存。
 void ComponentCacheService::saveFootprintDataToMemory(const QString& lcscId, const QByteArray& data) {
     if (data.isEmpty()) {
         return;
@@ -592,6 +612,7 @@ void ComponentCacheService::saveComponentMetadataAsync(const QString& componentI
     });
 }
 
+// 将符号数据原子写入二级磁盘缓存。
 void ComponentCacheService::saveSymbolData(const QString& lcscId, const QByteArray& data, uint64_t expectedGeneration) {
     if (data.isEmpty()) {
         return;
@@ -626,6 +647,7 @@ void ComponentCacheService::saveSymbolData(const QString& lcscId, const QByteArr
     saveSymbolDataToMemory(lcscId, data);
 }
 
+// 从二级磁盘缓存读取符号数据。
 QByteArray ComponentCacheService::loadSymbolData(const QString& lcscId) const {
     // 先查L1内存缓存
     QByteArray data = loadSymbolDataFromMemory(lcscId);
@@ -651,6 +673,7 @@ QByteArray ComponentCacheService::loadSymbolData(const QString& lcscId) const {
     return QByteArray();
 }
 
+// 将封装数据原子写入二级磁盘缓存。
 void ComponentCacheService::saveFootprintData(const QString& lcscId,
                                               const QByteArray& data,
                                               uint64_t expectedGeneration) {
@@ -687,6 +710,7 @@ void ComponentCacheService::saveFootprintData(const QString& lcscId,
     saveFootprintDataToMemory(lcscId, data);
 }
 
+// 从二级磁盘缓存读取封装数据。
 QByteArray ComponentCacheService::loadFootprintData(const QString& lcscId) const {
     // 先查L1内存缓存
     QByteArray data = loadFootprintDataFromMemory(lcscId);
@@ -712,6 +736,7 @@ QByteArray ComponentCacheService::loadFootprintData(const QString& lcscId) const
     return QByteArray();
 }
 
+// 将 CAD 原始 JSON 原子写入二级磁盘缓存。
 void ComponentCacheService::saveCadDataJson(const QString& lcscId,
                                             const QByteArray& cadData,
                                             uint64_t expectedGeneration) {
@@ -745,6 +770,7 @@ void ComponentCacheService::saveCadDataJson(const QString& lcscId,
     }
 }
 
+// 从二级磁盘缓存读取 CAD 原始 JSON。
 QByteArray ComponentCacheService::loadCadDataJson(const QString& lcscId) const {
     // CAD 文件读取必须与目录迁移串行化。
     QMutexLocker diskLocker(&m_diskWriteMutex);
@@ -763,6 +789,7 @@ QByteArray ComponentCacheService::loadCadDataJson(const QString& lcscId) const {
     return QByteArray();
 }
 
+// 判断符号、封装和 CAD 数据缓存是否完整。
 bool ComponentCacheService::hasSymbolFootprintCache(const QString& lcscId) const {
     // 缓存存在性和完整性检查必须使用稳定的缓存目录。
     QMutexLocker diskLocker(&m_diskWriteMutex);
@@ -823,6 +850,7 @@ bool ComponentCacheService::hasSymbolFootprintCache(const QString& lcscId) const
     return false;
 }
 
+// 从二级磁盘缓存读取指定预览图。
 QByteArray ComponentCacheService::loadPreviewImage(const QString& lcscId, int imageIndex) const {
     if (imageIndex < 0 || imageIndex >= 3) {
         return QByteArray();
@@ -901,26 +929,24 @@ QByteArray ComponentCacheService::downloadPreviewImage(const QString& lcscId,
     QElapsedTimer timer;
     timer.start();
 
-    // 检查磁盘缓存 - 只在锁内获取路径，文件读取在锁外执行以避免阻塞
-    QString previewFilePath;
+    // 缓存目录路径、文件检查和读取必须与目录迁移串行化。
     {
-        QMutexLocker locker(&m_mutex);
-        previewFilePath = previewImagePath(lcscId, imageIndex);
-    }
-
-    if (QFileInfo::exists(previewFilePath)) {
-        QFile file(previewFilePath);
-        if (file.open(QIODevice::ReadOnly)) {
-            LOG_DEBUG(LogModule::Core, "Preview image loaded from disk cache: {}", previewFilePath);
-            if (diag) {
-                diag->url = imageUrl;
-                diag->statusCode = 200;
-                diag->errorString = "";
-                diag->retryCount = 0;
-                diag->latencyMs = timer.elapsed();
-                diag->wasRateLimited = false;
+        QMutexLocker diskLocker(&m_diskWriteMutex);
+        const QString previewFilePath = previewImagePath(lcscId, imageIndex);
+        if (QFileInfo::exists(previewFilePath)) {
+            QFile file(previewFilePath);
+            if (file.open(QIODevice::ReadOnly)) {
+                LOG_DEBUG(LogModule::Core, "Preview image loaded from disk cache: {}", previewFilePath);
+                if (diag) {
+                    diag->url = imageUrl;
+                    diag->statusCode = 200;
+                    diag->errorString = "";
+                    diag->retryCount = 0;
+                    diag->latencyMs = timer.elapsed();
+                    diag->wasRateLimited = false;
+                }
+                return file.readAll();
             }
-            return file.readAll();
         }
     }
 
@@ -969,6 +995,7 @@ QByteArray ComponentCacheService::downloadPreviewImage(const QString& lcscId,
     return data;
 }
 
+// 从二级磁盘缓存读取数据手册。
 QByteArray ComponentCacheService::loadDatasheet(const QString& lcscId) const {
     // 数据手册路径和文件读取必须与目录迁移串行化。
     QMutexLocker diskLocker(&m_diskWriteMutex);
@@ -1049,9 +1076,9 @@ QByteArray ComponentCacheService::downloadDatasheet(const QString& lcscId,
         *format = ext;
     }
 
-    // 检查磁盘缓存是否已存在
+    // 缓存目录路径、文件检查和读取必须与目录迁移串行化。
     {
-        QMutexLocker locker(&m_mutex);
+        QMutexLocker diskLocker(&m_diskWriteMutex);
         QString datasheetFilePath = datasheetPath(lcscId);
         QString fullPath = datasheetFilePath;
         if (!fullPath.endsWith(".pdf") && !fullPath.endsWith(".html")) {
@@ -1123,6 +1150,7 @@ QByteArray ComponentCacheService::downloadDatasheet(const QString& lcscId,
     return data;
 }
 
+// 判断指定格式的三维模型文件是否存在且非空。
 bool ComponentCacheService::hasModel3DCached(const QString& uuid, const QString& extension) const {
     // 与目录迁移和模型写入串行化，避免检查到迁移中的文件。
     QMutexLocker diskLocker(&m_diskWriteMutex);
@@ -1133,6 +1161,7 @@ bool ComponentCacheService::hasModel3DCached(const QString& uuid, const QString&
     return fileInfo.exists() && fileInfo.size() > 0;
 }
 
+// 从公共三维模型缓存读取指定格式的数据。
 QByteArray ComponentCacheService::loadModel3D(const QString& uuid, const QString& extension) const {
     // 与目录迁移和模型写入串行化，避免读取到不完整的文件。
     QMutexLocker diskLocker(&m_diskWriteMutex);
@@ -1268,22 +1297,26 @@ void ComponentCacheService::removeCache(const QString& lcscId) {
     emit memoryCacheSizeChanged(sizeAfterUpdate);
 }
 
+// 清除指定元器件的旧请求屏蔽标记。
 void ComponentCacheService::clearTombstone(const QString& lcscId) {
     QMutexLocker tombLocker(&m_tombstoneMutex);
     m_tombstones.remove(lcscId.toUpper());
 }
 
+// 清除全局旧请求屏蔽标记。
 void ComponentCacheService::clearGlobalTombstone() {
     QMutexLocker tombLocker(&m_tombstoneMutex);
     m_allTombstoned = false;
     m_tombstones.clear();
 }
 
+// 判断元器件是否仍被旧请求屏蔽。
 bool ComponentCacheService::isTombstoned(const QString& lcscId) const {
     QMutexLocker tombLocker(&m_tombstoneMutex);
     return m_allTombstoned || m_tombstones.contains(lcscId.toUpper());
 }
 
+// 清空一级和二级缓存，并使旧异步写入失效。
 void ComponentCacheService::clearAllCache() {
     // 递增代次，使所有正在排队的异步写入任务失效
     m_cacheGeneration.fetch_add(1);
@@ -1317,11 +1350,13 @@ void ComponentCacheService::clearAllCache() {
     emit cacheSizeChanged(0);
 }
 
+// 清空一级内存缓存的内部实现。
 void ComponentCacheService::clearMemoryCacheInternal() {
     QMutexLocker locker(&m_mutex);
     m_memoryCache.clear();
 }
 
+// 清空一级内存缓存并解除旧请求屏蔽。
 void ComponentCacheService::clearMemoryCache() {
     {
         QMutexLocker tombLocker(&m_tombstoneMutex);
@@ -1333,8 +1368,10 @@ void ComponentCacheService::clearMemoryCache() {
     emit memoryCacheSizeChanged(0);
 }
 
+// 枚举当前缓存目录中具有有效元数据的元器件编号。
 QStringList ComponentCacheService::getCachedComponentIds() const {
-    QMutexLocker locker(&m_mutex);
+    // 目录枚举和元数据检查必须与目录迁移串行化。
+    QMutexLocker diskLocker(&m_diskWriteMutex);
 
     QStringList result;
     QDir dir(cacheDir());
@@ -1344,7 +1381,7 @@ QStringList ComponentCacheService::getCachedComponentIds() const {
 
     for (const QString& entry : dir.entryList(QDir::Dirs)) {
         if (entry != "." && entry != ".." && entry != "model3d") {
-            // 检查是否是有效的缓存目录（有metadata.json）
+            // 检查是否是有效的缓存目录（有component.json）。
             if (QFileInfo::exists(metadataPath(entry))) {
                 result.append(entry);
             }
@@ -1354,16 +1391,20 @@ QStringList ComponentCacheService::getCachedComponentIds() const {
     return result;
 }
 
+// 统计当前缓存目录的磁盘占用大小。
 qint64 ComponentCacheService::getCacheSize() const {
-    QMutexLocker locker(&m_mutex);
+    // 目录大小统计必须与目录迁移串行化，避免返回混合目录的大小。
+    QMutexLocker diskLocker(&m_diskWriteMutex);
     return calculateDirSize(cacheDir());
 }
 
+// 返回一级内存缓存的当前占用大小。
 qint64 ComponentCacheService::getMemoryCacheSize() const {
     QMutexLocker locker(&m_mutex);
     return m_memoryCache.totalCost();
 }
 
+// 递归计算指定目录及其子目录的文件大小。
 qint64 ComponentCacheService::calculateDirSize(const QString& dirPath) const {
     qint64 size = 0;
     QDir dir(dirPath);
@@ -1384,12 +1425,16 @@ qint64 ComponentCacheService::calculateDirSize(const QString& dirPath) const {
     return size;
 }
 
+// 将磁盘缓存裁剪到指定大小以内。
 void ComponentCacheService::pruneCache(qint64 targetSizeBytes) {
+    // 手动清理必须与目录迁移串行化，避免清理旧目录或新目录中的部分内容。
+    QMutexLocker diskLocker(&m_diskWriteMutex);
     CachePruner pruner(cacheDir());
     qint64 newSize = pruner.pruneTo(targetSizeBytes);
     emit cacheSizeChanged(newSize);
 }
 
+// 设置一级内存缓存的最大容量。
 void ComponentCacheService::setMemoryCacheLimit(int maxSizeMB) {
     QMutexLocker locker(&m_mutex);
     m_memoryCacheLimitMB = maxSizeMB;
@@ -1397,11 +1442,13 @@ void ComponentCacheService::setMemoryCacheLimit(int maxSizeMB) {
     LOG_DEBUG(LogModule::Core, "Memory cache limit set to: {} MB", maxSizeMB);
 }
 
+// 获取一级内存缓存的最大容量。
 int ComponentCacheService::memoryCacheLimit() const {
     QMutexLocker locker(&m_mutex);
     return m_memoryCacheLimitMB;
 }
 
+// 设置二级磁盘缓存的最大容量并立即触发清理。
 void ComponentCacheService::setDiskCacheLimit(int maxSizeMB) {
     {
         QMutexLocker locker(&m_mutex);
@@ -1413,11 +1460,13 @@ void ComponentCacheService::setDiskCacheLimit(int maxSizeMB) {
     LOG_DEBUG(LogModule::Core, "Disk cache limit set to: {} MB", maxSizeMB);
 }
 
+// 获取二级磁盘缓存的最大容量。
 int ComponentCacheService::diskCacheLimit() const {
     QMutexLocker locker(&m_mutex);
     return m_diskCacheLimitMB;
 }
 
+// 按冷却策略执行二级磁盘缓存容量限制。
 void ComponentCacheService::enforceDiskCacheLimit(bool bypassCooldown) {
     // 冷却机制：避免批量保存时频繁扫描目录（每次扫描开销较大）
     constexpr qint64 kCooldownMs = 3000;
@@ -1442,12 +1491,14 @@ void ComponentCacheService::enforceDiskCacheLimit(bool bypassCooldown) {
     emit cacheSizeChanged(newSize);
 }
 
+// 从二级磁盘缓存读取元器件元数据。
 QJsonObject ComponentCacheService::loadMetadata(const QString& lcscId) const {
     // 外部元数据读取必须与缓存目录迁移串行化。
     QMutexLocker diskLocker(&m_diskWriteMutex);
     return readMetadataFile(metadataPath(lcscId));
 }
 
+// 将元器件元数据原子写入二级磁盘缓存。
 void ComponentCacheService::saveMetadata(const QString& lcscId, const QJsonObject& metadata) {
     if (ensureComponentDir(lcscId).isEmpty()) {
         return;
@@ -1492,6 +1543,7 @@ QJsonObject ComponentCacheService::buildMetadata(const QString& componentId, con
     return metadata;
 }
 
+// 合并新旧元数据并保留未被空值覆盖的字段。
 QJsonObject ComponentCacheService::mergeMetadata(const QJsonObject& existing, const QJsonObject& incoming) const {
     QJsonObject merged = existing;
     for (auto it = incoming.begin(); it != incoming.end(); ++it) {
@@ -1515,6 +1567,7 @@ QJsonObject ComponentCacheService::mergeMetadata(const QJsonObject& existing, co
     return merged;
 }
 
+// 使用临时文件和提交操作原子写入缓存文件。
 bool ComponentCacheService::writeFileAtomically(const QString& path, const QByteArray& data) const {
     QFileInfo info(path);
     if (!info.absoluteDir().exists() && !QDir().mkpath(info.absolutePath())) {
@@ -1534,6 +1587,7 @@ bool ComponentCacheService::writeFileAtomically(const QString& path, const QByte
     return file.commit();
 }
 
+// 根据格式和现有文件解析数据手册的实际路径。
 QString ComponentCacheService::resolveDatasheetPath(const QString& lcscId,
                                                     const QString& preferredFormat,
                                                     bool forWrite) const {
@@ -1562,11 +1616,13 @@ QString ComponentCacheService::resolveDatasheetPath(const QString& lcscId,
     return pdfPath;
 }
 
+// 执行缓存目录的完整性修复。
 void ComponentCacheService::selfHealCache() {
     CacheHealthManager healer(cacheDir());
     healer.healAll();
 }
 
+// 获取指定元器件缓存目录的最后修改时间。
 QDateTime ComponentCacheService::getCacheAccessTime(const QString& lcscId) const {
     QString dirPath = componentCacheDir(lcscId);
     QFileInfo info(dirPath);
@@ -1576,6 +1632,7 @@ QDateTime ComponentCacheService::getCacheAccessTime(const QString& lcscId) const
     return QDateTime();
 }
 
+// 构造元器件元数据文件路径。
 QString ComponentCacheService::metadataPath(const QString& lcscId) const {
     const QString dir = componentCacheDir(lcscId);
     if (dir.isEmpty()) {
@@ -1584,6 +1641,7 @@ QString ComponentCacheService::metadataPath(const QString& lcscId) const {
     return dir + "/component.json";
 }
 
+// 构造元器件预览图文件路径。
 QString ComponentCacheService::previewImagePath(const QString& lcscId, int index) const {
     const QString dir = componentCacheDir(lcscId);
     if (dir.isEmpty()) {
@@ -1592,6 +1650,7 @@ QString ComponentCacheService::previewImagePath(const QString& lcscId, int index
     return dir + "/preview_" + QString::number(index) + ".jpg";
 }
 
+// 构造元器件数据手册基础路径。
 QString ComponentCacheService::datasheetPath(const QString& lcscId) const {
     const QString dir = componentCacheDir(lcscId);
     if (dir.isEmpty()) {
@@ -1600,6 +1659,7 @@ QString ComponentCacheService::datasheetPath(const QString& lcscId) const {
     return dir + "/datasheet";
 }
 
+// 根据经过校验的模型标识构造三维模型缓存路径。
 QString ComponentCacheService::model3DPath(const QString& uuid, const QString& extension) const {
     // 严格校验 uuid 格式：仅允许字母、数字、下划线、短横线，防止路径穿越
     static const QRegularExpression uuidRe(QStringLiteral("^[A-Za-z0-9_-]+$"));
