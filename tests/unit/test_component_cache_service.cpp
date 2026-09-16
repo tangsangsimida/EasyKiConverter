@@ -179,8 +179,12 @@ private slots:
         QVERIFY(datasheetFile.write(QByteArrayLiteral("not-a-pdf")) > 0);
         datasheetFile.close();
 
-        m_cache->saveModel3D(modelUuid, QByteArrayLiteral("not-an-obj"), QStringLiteral("obj"));
         const QString invalidModelPath = m_tempDir.filePath(QStringLiteral("model3d/health-invalid-model.obj"));
+        QFile invalidModelFile(invalidModelPath);
+        QVERIFY(QDir().mkpath(QFileInfo(invalidModelPath).absolutePath()));
+        QVERIFY(invalidModelFile.open(QIODevice::WriteOnly));
+        QVERIFY(invalidModelFile.write(QByteArrayLiteral("not-an-obj")) > 0);
+        invalidModelFile.close();
         QVERIFY(QFileInfo::exists(invalidModelPath));
 
         m_cache->setCacheDir(m_tempDir.path(), false);
@@ -193,7 +197,12 @@ private slots:
     // 验证读取三维缓存时会拒绝并删除结构无效的模型文件。
     void testLoadModel3DRejectsInvalidContent() {
         const QString modelUuid = QStringLiteral("load-invalid-model");
-        m_cache->saveModel3D(modelUuid, QByteArrayLiteral("not-an-obj"), QStringLiteral("obj"));
+        const QString invalidModelPath = m_tempDir.filePath(QStringLiteral("model3d/load-invalid-model.obj"));
+        QFile invalidModelFile(invalidModelPath);
+        QVERIFY(QDir().mkpath(QFileInfo(invalidModelPath).absolutePath()));
+        QVERIFY(invalidModelFile.open(QIODevice::WriteOnly));
+        QVERIFY(invalidModelFile.write(QByteArrayLiteral("not-an-obj")) > 0);
+        invalidModelFile.close();
 
         QVERIFY(m_cache->loadModel3D(modelUuid, QStringLiteral("obj")).isEmpty());
         QVERIFY(!QFileInfo::exists(m_tempDir.filePath(QStringLiteral("model3d/load-invalid-model.obj"))));
@@ -498,10 +507,17 @@ private slots:
     // 验证三维缓存命中和复制接口都会拒绝结构无效的模型文件。
     void testModel3DCacheInterfacesRejectInvalidContent() {
         const QString uuid = QStringLiteral("invalid-interface-model-13579");
-        m_cache->saveModel3D(uuid, QByteArrayLiteral("not-an-obj"), QStringLiteral("obj"));
+        const QString modelPath = m_tempDir.filePath(QStringLiteral("model3d/invalid-interface-model-13579.obj"));
+        QFile modelFile(modelPath);
+        QVERIFY(QDir().mkpath(QFileInfo(modelPath).absolutePath()));
+        QVERIFY(modelFile.open(QIODevice::WriteOnly));
+        QVERIFY(modelFile.write(QByteArrayLiteral("not-an-obj")) > 0);
+        modelFile.close();
         QVERIFY(!m_cache->hasModel3DCached(uuid, QStringLiteral("obj")));
 
-        m_cache->saveModel3D(uuid, QByteArrayLiteral("not-an-obj"), QStringLiteral("obj"));
+        QVERIFY(modelFile.open(QIODevice::WriteOnly));
+        QVERIFY(modelFile.write(QByteArrayLiteral("not-an-obj")) > 0);
+        modelFile.close();
         QTemporaryDir outputDir;
         QVERIFY(outputDir.isValid());
         const QString destinationPath = QDir(outputDir.path()).filePath(QStringLiteral("model.obj"));

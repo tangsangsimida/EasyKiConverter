@@ -1265,7 +1265,7 @@ void ComponentCacheService::saveModel3D(const QString& uuid,
                                         const QByteArray& data,
                                         const QString& extension,
                                         uint64_t expectedGeneration) {
-    if (data.isEmpty()) {
+    if (!isUsableModel3DCacheData(data, extension)) {
         return;
     }
 
