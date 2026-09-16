@@ -482,6 +482,24 @@ private slots:
         QVERIFY(!m_cache->isTombstoned(invalidComponentId));
     }
 
+    // 验证解除全局 tombstone 时不会误删单组件 tombstone。
+    void testClearGlobalTombstonePreservesComponentTombstone() {
+        const QString componentId = QStringLiteral("C88887");
+        ComponentData data;
+        data.setLcscId(componentId);
+        data.setName(QStringLiteral("Component Tombstone"));
+
+        m_cache->saveComponentMetadata(componentId, data);
+        m_cache->removeCache(componentId);
+        QVERIFY(m_cache->isTombstoned(componentId));
+
+        m_cache->clearGlobalTombstone();
+
+        QVERIFY(m_cache->isTombstoned(componentId));
+        m_cache->clearTombstone(componentId);
+        QVERIFY(!m_cache->isTombstoned(componentId));
+    }
+
     // 回归测试：clearAllCache 全局 tombstone 阻止所有写入，clearGlobalTombstone 解除
     void testGlobalTombstoneBlocksAllWrites() {
         const QString componentId = QStringLiteral("C88888");

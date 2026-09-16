@@ -1447,7 +1447,6 @@ void ComponentCacheService::clearTombstone(const QString& lcscId) {
 void ComponentCacheService::clearGlobalTombstone() {
     QMutexLocker tombLocker(&m_tombstoneMutex);
     m_allTombstoned = false;
-    m_tombstones.clear();
 }
 
 // 判断元器件是否仍被旧请求屏蔽。
