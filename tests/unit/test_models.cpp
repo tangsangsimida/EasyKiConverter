@@ -52,6 +52,10 @@ private slots:
         model->setUuid(QStringLiteral("stale-model"));
         component.setModel3DData(model);
         component.setPreviewImages(QStringList{QStringLiteral("old-preview")});
+        component.setDatasheetFormat(QStringLiteral("html"));
+        component.setCinfoJsonRaw(QByteArrayLiteral("old-cinfo"));
+        component.setCadJsonRaw(QByteArrayLiteral("old-cad"));
+        component.setModel3DObjRaw(QByteArrayLiteral("old-obj"));
 
         QJsonObject json;
         json[QStringLiteral("lcsc_id")] = QStringLiteral("C54321");
@@ -60,6 +64,26 @@ private slots:
         QCOMPARE(component.lcscId(), QStringLiteral("C54321"));
         QVERIFY(!component.model3DData());
         QVERIFY(component.previewImages().isEmpty());
+        QCOMPARE(component.datasheetFormat(), QStringLiteral("pdf"));
+        QVERIFY(component.cinfoJsonRaw().isEmpty());
+        QVERIFY(component.cadJsonRaw().isEmpty());
+        QVERIFY(component.model3DObjRaw().isEmpty());
+    }
+
+    // 验证清空组件数据时不会残留原始导出数据。
+    void testComponentClearRemovesRawData() {
+        ComponentData component;
+        component.setDatasheetFormat(QStringLiteral("html"));
+        component.setCinfoJsonRaw(QByteArrayLiteral("cinfo"));
+        component.setCadJsonRaw(QByteArrayLiteral("cad"));
+        component.setModel3DObjRaw(QByteArrayLiteral("obj"));
+
+        component.clear();
+
+        QCOMPARE(component.datasheetFormat(), QStringLiteral("pdf"));
+        QVERIFY(component.cinfoJsonRaw().isEmpty());
+        QVERIFY(component.cadJsonRaw().isEmpty());
+        QVERIFY(component.model3DObjRaw().isEmpty());
     }
 
     // 验证符号数据的 JSON 往返序列化。

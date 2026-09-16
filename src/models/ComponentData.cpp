@@ -63,10 +63,6 @@ QJsonObject ComponentData::toJson() const {
 bool ComponentData::fromJson(const QJsonObject& json) {
     // 反序列化表示替换完整对象，先清理未出现在新 JSON 中的旧数据。
     clear();
-    m_datasheetFormat = QStringLiteral("pdf");
-    m_cinfoJsonRaw.clear();
-    m_cadJsonRaw.clear();
-    m_model3DObjRaw.clear();
 
     // 读取基本信息
     m_lcscId = json["lcsc_id"].toString();
@@ -202,8 +198,12 @@ void ComponentData::clear() {
     m_manufacturerPart.clear();
     m_datasheet.clear();
     m_datasheetData.clear();
+    m_datasheetFormat = QStringLiteral("pdf");
     m_previewImages.clear();
     m_previewImageData.clear();
+    m_cinfoJsonRaw.clear();
+    m_cadJsonRaw.clear();
+    m_model3DObjRaw.clear();
 
     m_symbolData.reset();
     m_footprintData.reset();
