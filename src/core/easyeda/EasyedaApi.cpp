@@ -6,6 +6,8 @@
 #include <QJsonDocument>
 #include <QMutexLocker>
 
+#include <algorithm>
+
 namespace EasyKiConverter {
 
 static const QString API_ENDPOINT = "https://easyeda.com/api/products/%1/components?version=6.5.51";
@@ -103,7 +105,7 @@ void EasyedaApi::fetchWithNetworkClient(const QString& id, const QUrl& url, Reso
 
     {
         QMutexLocker locker(&m_requestsMutex);
-        m_activeRequests.append(QPointer<AsyncNetworkRequest>(request));
+        m_activeRequests.append({QPointer<AsyncNetworkRequest>(request), id});
     }
 
     connect(request,
@@ -123,13 +125,15 @@ void EasyedaApi::handleAsyncRequestFinished(AsyncNetworkRequest* request,
 
     {
         QMutexLocker locker(&m_requestsMutex);
-        const QPointer<AsyncNetworkRequest> trackedRequest(request);
-        if (!m_activeRequests.contains(trackedRequest)) {
+        const auto it = std::find_if(m_activeRequests.cbegin(),
+                                     m_activeRequests.cend(),
+                                     [request](const ActiveRequest& active) { return active.request == request; });
+        if (it == m_activeRequests.cend()) {
             qDebug() << "EasyedaApi: Discarding callback for cancelled request:" << id;
             request->deleteLater();
             return;
         }
-        m_activeRequests.removeOne(trackedRequest);
+        m_activeRequests.erase(it);
     }
 
     if (result.wasCancelled) {
@@ -193,7 +197,9 @@ void EasyedaApi::cancelRequest() {
     QList<QPointer<AsyncNetworkRequest>> requestsToCancel;
     {
         QMutexLocker locker(&m_requestsMutex);
-        requestsToCancel = m_activeRequests;
+        for (const ActiveRequest& active : std::as_const(m_activeRequests)) {
+            requestsToCancel.append(active.request);
+        }
         m_activeRequests.clear();
     }
 
@@ -203,6 +209,30 @@ void EasyedaApi::cancelRequest() {
         }
     }
     m_isFetching = false;
+}
+
+// 取消指定标识对应的活动请求，并保留其他并行请求。
+void EasyedaApi::cancelRequestForId(const QString& id) {
+    QList<QPointer<AsyncNetworkRequest>> requestsToCancel;
+    {
+        QMutexLocker locker(&m_requestsMutex);
+        for (int index = m_activeRequests.size() - 1; index >= 0; --index) {
+            const ActiveRequest& active = m_activeRequests.at(index);
+            if (active.id.compare(id, Qt::CaseInsensitive) == 0) {
+                requestsToCancel.append(active.request);
+                m_activeRequests.removeAt(index);
+            }
+        }
+    }
+
+    for (const auto& request : requestsToCancel) {
+        if (request && !request.isNull()) {
+            request->cancel();
+        }
+    }
+    if (id.compare(m_currentLcscId, Qt::CaseInsensitive) == 0) {
+        m_isFetching = false;
+    }
 }
 
 // 校验并转发元器件基础信息响应。

@@ -1256,6 +1256,11 @@ void ComponentService::cancelRequestForComponent(const QString& componentId) {
         m_fetchingComponents.remove(normalizedId);
     }
 
+    // 同步取消 EasyEDA API 请求，避免单组件删除后仍占用网络请求配额。
+    if (m_api) {
+        m_api->cancelRequestForId(normalizedId);
+    }
+
     // 取消预览图获取
     if (m_imageService) {
         m_imageService->cancelRequestForComponent(normalizedId);

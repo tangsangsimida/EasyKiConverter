@@ -30,6 +30,8 @@ public:
     void fetch3DModelObj(const QString& uuid);
     void fetch3DModelStep(const QString& uuid);
     void cancelRequest();
+    /** @brief 取消指定元件编号或模型 UUID 的活动请求。 */
+    void cancelRequestForId(const QString& id);
 
 signals:
     void componentInfoFetched(const QString& lcscId, const QJsonObject& data);
@@ -58,7 +60,13 @@ private:
     QString m_currentUuid;
     bool m_isFetching;
     bool m_weakNetworkSupport;
-    QVector<QPointer<AsyncNetworkRequest>> m_activeRequests;
+
+    struct ActiveRequest {
+        QPointer<AsyncNetworkRequest> request;
+        QString id;
+    };
+
+    QVector<ActiveRequest> m_activeRequests;
     QMutex m_requestsMutex;
 };
 
