@@ -1394,6 +1394,8 @@ void ComponentCacheService::removeCache(const QString& lcscId) {
         return;
     }
 
+    // 递增代次，使删除前排队的异步写入即使在解除 tombstone 后也无法恢复旧数据。
+    m_cacheGeneration.fetch_add(1);
     {
         // 锁顺序：先 disk，后 tombstone（与其他方法一致）
         QMutexLocker diskLocker(&m_diskWriteMutex);

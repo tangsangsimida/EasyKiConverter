@@ -451,20 +451,30 @@ private slots:
         QVERIFY(loaded != nullptr);
         QCOMPARE(loaded->name(), QStringLiteral("Tombstoned Component"));
 
+        const uint64_t generationBeforeRemove = m_cache->currentGeneration();
+
         // removeCache 会设置 tombstone
         m_cache->removeCache(componentId);
+        QVERIFY(m_cache->currentGeneration() > generationBeforeRemove);
         loaded = m_cache->loadComponentData(componentId);
         QVERIFY(loaded == nullptr);
 
-        // tombstone 状态下，带 generation 的写入应被阻止
-        const uint64_t staleGen = m_cache->currentGeneration();
+        // 当前 generation 的写入在 tombstone 保留期间也应被阻止
+        const uint64_t deletionGeneration = m_cache->currentGeneration();
+        data.setName(QStringLiteral("Blocked By Tombstone"));
+        m_cache->saveComponentMetadata(componentId, data, deletionGeneration);
+        loaded = m_cache->loadComponentData(componentId);
+        QVERIFY(loaded == nullptr);
+
+        // 删除前 generation 的写入即使解除 tombstone 也应被阻止
+        const uint64_t staleGen = generationBeforeRemove;
         data.setName(QStringLiteral("Should Not Write"));
+        m_cache->clearTombstone(componentId);
         m_cache->saveComponentMetadata(componentId, data, staleGen);
         loaded = m_cache->loadComponentData(componentId);
-        QVERIFY(loaded == nullptr);  // tombstone 阻止了写入
+        QVERIFY(loaded == nullptr);  // generation 不匹配阻止了旧写入
 
         // clearTombstone 后，新写入应成功
-        m_cache->clearTombstone(componentId);
         data.setName(QStringLiteral("Should Write Now"));
         m_cache->saveComponentMetadata(componentId, data);
         loaded = m_cache->loadComponentData(componentId);
