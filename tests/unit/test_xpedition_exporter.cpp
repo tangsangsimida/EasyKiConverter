@@ -166,6 +166,39 @@ private slots:
         QVERIFY(data.contains(".Hole \"HOLE_39.3701\""));
     }
 
+    // 验证相同几何参数但不同镀层属性的通孔焊盘不会错误复用钻孔定义。
+    void throughHolePlatingModesRemainDistinct() {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        IR::FootprintComponentIR footprint;
+        footprint.name = QStringLiteral("PLATING_MODES");
+        IR::FootprintPadIR plated;
+        plated.number = QStringLiteral("1");
+        plated.size = QSizeF(2.0, 2.0);
+        plated.holeSize = 1.0;
+        plated.padType = IR::PadType::ThroughHole;
+        IR::FootprintPadIR nonPlated = plated;
+        nonPlated.number = QStringLiteral("2");
+        nonPlated.isPlated = false;
+        footprint.pads = {plated, nonPlated};
+
+        const QString outputPath = tempDir.filePath(QStringLiteral("plating-modes.zip"));
+        ExporterXpeditionFootprint exporter;
+        QVERIFY(exporter.exportFootprintLibrary({footprint}, QStringLiteral("Library"), outputPath));
+
+        QFile output(outputPath);
+        QVERIFY(output.open(QIODevice::ReadOnly));
+        const QByteArray data = output.readAll();
+        QVERIFY(data.contains("PADSTACK \"PAD_RECTANGLE_78.7402x78.7402_H39.3701_L0.0000_TH\""));
+        QVERIFY(data.contains("PADSTACK \"PAD_RECTANGLE_78.7402x78.7402_H39.3701_L0.0000_NONPLATED_TH\""));
+        QVERIFY(data.contains(
+            ".Hole \"HOLE_39.3701\"\n..POSITIVE_TOLERANCE 0\n..NEGATIVE_TOLERANCE 0\n..HOLE_OPTIONS PLATED"));
+        QVERIFY(
+            data.contains(".Hole \"HOLE_39.3701_NONPLATED\"\n..POSITIVE_TOLERANCE 0\n..NEGATIVE_TOLERANCE "
+                          "0\n..HOLE_OPTIONS NON_PLATED"));
+    }
+
     // 验证底层表贴焊盘不会被错误写入顶层铜、阻焊和锡膏层。
     void bottomSmdPadUsesBottomAssignments() {
         QTemporaryDir tempDir;

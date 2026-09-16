@@ -78,6 +78,9 @@ QString padName(const IR::FootprintPadIR& pad) {
     if (pad.isThroughHole()) {
         // 通孔几何参数参与名称计算，避免不同孔径或槽长共享同一个钻孔定义。
         geometry += QStringLiteral("_H%1_L%2").arg(fmt(toTh(pad.holeSize))).arg(fmt(toTh(pad.holeLength)));
+        // 镀层属性决定孔定义的工艺选项，必须参与名称计算以避免错误复用。
+        if (!pad.isPlated)
+            geometry += QStringLiteral("_NONPLATED");
     }
     return QStringLiteral("PAD_") + geometry;
 }
@@ -178,10 +181,15 @@ QString escapedText(QString text) {
  * @param slotLengthMm 槽孔总长度，单位为毫米；不大于孔径时按圆孔处理。
  * @return 稳定的 Hole 名称。
  */
-QString holeName(double diameterMm, double slotLengthMm = 0.0) {
+QString holeName(double diameterMm, double slotLengthMm = 0.0, bool isPlated = true) {
+    QString name;
     if (slotLengthMm > diameterMm)
-        return QStringLiteral("HOLE_%1x%2").arg(fmt(toTh(diameterMm))).arg(fmt(toTh(slotLengthMm)));
-    return QStringLiteral("HOLE_%1").arg(fmt(toTh(diameterMm)));
+        name = QStringLiteral("HOLE_%1x%2").arg(fmt(toTh(diameterMm))).arg(fmt(toTh(slotLengthMm)));
+    else
+        name = QStringLiteral("HOLE_%1").arg(fmt(toTh(diameterMm)));
+    if (!isPlated)
+        name += QStringLiteral("_NONPLATED");
+    return name;
 }
 
 /**
@@ -379,7 +387,7 @@ QByteArray ExporterXpeditionFootprint::padstackFile(const IR::FootprintComponent
             output += QStringLiteral("...BOTTOM_SOLDERPASTE_PAD \"%1\"\n").arg(baseName);
         if (pad.isThroughHole()) {
             // 通孔焊盘需要独立的 Hole 定义，孔径以实际直径参与命名和写入。
-            const QString drillName = holeName(pad.holeSize, pad.holeLength);
+            const QString drillName = holeName(pad.holeSize, pad.holeLength, pad.isPlated);
             output += QStringLiteral("...INTERNAL_PAD \"%1\"\n...HOLE_NAME \"%2\"\n").arg(baseName, drillName);
             output += QStringLiteral(".Hole \"%1\"\n..POSITIVE_TOLERANCE 0\n..NEGATIVE_TOLERANCE 0\n").arg(drillName);
             output += QStringLiteral("..HOLE_OPTIONS %1 DRILLED USER_GENERATED_NAME\n")
@@ -401,7 +409,7 @@ QByteArray ExporterXpeditionFootprint::padstackFile(const IR::FootprintComponent
             continue;
         const double diameterMm = hole.radius * 2.0;
         const QString baseName = holePadName(diameterMm);
-        const QString stackName = holeName(diameterMm) + QStringLiteral("_TH");
+        const QString stackName = holeName(diameterMm, 0.0, false) + QStringLiteral("_TH");
         if (!writtenPads.contains(baseName)) {
             output += QStringLiteral(
                           ".PAD \"%1\"\n..PAD_OPTIONS USER_GENERATED_NAME\n..OFFSET (0, 0)\n..ROUND\n...DIAMETER %2\n")
@@ -411,7 +419,7 @@ QByteArray ExporterXpeditionFootprint::padstackFile(const IR::FootprintComponent
         }
         if (writtenStacks.contains(stackName))
             continue;
-        const QString drillName = holeName(diameterMm);
+        const QString drillName = holeName(diameterMm, 0.0, false);
         output += QStringLiteral(".PADSTACK \"%1\"\n..PADSTACK_TYPE PIN_THROUGH\n..TECHNOLOGY \"(Default)\"\n")
                       .arg(stackName);
         output += QStringLiteral(
