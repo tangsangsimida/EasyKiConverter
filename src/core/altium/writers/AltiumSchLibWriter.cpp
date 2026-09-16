@@ -1037,8 +1037,10 @@ bool AltiumSchLibWriter::hasCompleteGraphicOrder(const AltiumSchComponent& compo
     return true;
 }
 
+// 校验组件中所有图元的有限坐标、尺寸、角度和控制点数量。
 bool AltiumSchLibWriter::validateGeometry(const AltiumSchComponent& component) {
     const auto hasFinitePoints = [](const QList<QPointF>& points) {
+        // 拒绝包含 NaN 或无穷值的点，避免生成无法被 Altium 读取的记录。
         return std::all_of(points.cbegin(), points.cend(), [](const QPointF& point) {
             return std::isfinite(point.x()) && std::isfinite(point.y());
         });
@@ -1213,6 +1215,7 @@ bool AltiumSchLibWriter::validateGeometry(const AltiumSchComponent& component) {
     return true;
 }
 
+// 校验所有图元和参数记录的 OWNERPARTID 是否落在组件部件范围内。
 bool AltiumSchLibWriter::validatePartOwnership(const AltiumSchComponent& component) {
     const int partCount = qMax(1, component.partCount);
     const auto isOutOfRange = [partCount](int ownerPartId) { return ownerPartId < -1 || ownerPartId > partCount; };
@@ -2165,6 +2168,7 @@ int AltiumSchLibWriter::normalizeOwnerPartId(int ownerPartId, const QString& con
     return ownerPartId;
 }
 
+// 将非法角度归一化为回退值，并向调用方报告诊断信息。
 double AltiumSchLibWriter::normalizeFiniteAngle(double angle, double fallback, const QString& context) {
     if (std::isfinite(angle))
         return angle;
@@ -2176,6 +2180,7 @@ double AltiumSchLibWriter::normalizeFiniteAngle(double angle, double fallback, c
     return fallback;
 }
 
+// 写入图元通用的可见性、内容索引、显示模式和部件归属参数。
 void AltiumSchLibWriter::addOwnerParams(QMap<QString, QString>& params, int ownerPartId) {
     params["ISNOTACCESIBLE"] = "T";
     addContentIndex(params);
