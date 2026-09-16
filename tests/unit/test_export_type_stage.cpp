@@ -470,6 +470,7 @@ private slots:
         QCOMPARE(completedSpy.at(0).at(0).toInt(), 1);
         QCOMPARE(completedSpy.at(0).at(1).toInt(), 0);
         QCOMPARE(cache->loadModel3D(modelUuid, QStringLiteral("step")), stepData);
+        QCOMPARE(cache->loadModel3D(modelUuid, QStringLiteral("obj")), objData);
 
         cache->setCacheDir(previousCacheDir);
     }
