@@ -425,6 +425,55 @@ private slots:
         cache->setCacheDir(previousCacheDir);
     }
 
+    // 验证 Altium 封装阶段会缓存预加载的 STEP 模型。
+    void altiumFootprintCachesPreloadedStepModel() {
+        QTemporaryDir outputDir;
+        QTemporaryDir cacheDir;
+        QVERIFY(outputDir.isValid());
+        QVERIFY(cacheDir.isValid());
+
+        ComponentCacheService* cache = ComponentCacheService::instance();
+        const QString previousCacheDir = cache->cacheDir();
+        cache->setCacheDir(cacheDir.path());
+        cache->clearAllCache();
+
+        const QString componentId = QStringLiteral("C12348");
+        const QString modelUuid = QStringLiteral("preloaded-altium-step");
+        const QByteArray stepData = QByteArrayLiteral("ISO-10303-21;\nDATA;\nENDSEC;\nEND-ISO-10303-21;\n");
+        const QByteArray objData = QByteArrayLiteral("v 0 0 0\nv 1 0 0\nv 0 1 0\nf 1 2 3\n");
+        auto component =
+            makeFootprintComponent(componentId, QStringLiteral("PRELOADED_PKG"), QStringLiteral("PRELOADED"));
+        Model3DData footprintModel = component->footprintData()->model3D();
+        footprintModel.setUuid(modelUuid);
+        component->footprintData()->setModel3D(footprintModel);
+        auto componentModel = QSharedPointer<Model3DData>::create(footprintModel);
+        componentModel->setStep(stepData);
+        componentModel->setRawObj(QString::fromUtf8(objData));
+        component->setModel3DData(componentModel);
+        component->setModel3DObjRaw(objData);
+
+        FootprintExportStage stage;
+        ExportOptions options;
+        options.outputPath = outputDir.path();
+        options.libName = QStringLiteral("PreloadedAltium");
+        options.targetFormat = TargetEdaFormat::Altium;
+        options.exportModel3D = true;
+        options.overwriteExistingFiles = true;
+        stage.setOptions(options);
+
+        QMap<QString, QSharedPointer<ComponentData>> cachedData;
+        cachedData.insert(componentId, component);
+        QSignalSpy completedSpy(&stage, &FootprintExportStage::completed);
+        stage.start({componentId}, cachedData);
+
+        QVERIFY2(completedSpy.wait(3000), "Altium preloaded STEP export should complete");
+        QCOMPARE(completedSpy.at(0).at(0).toInt(), 1);
+        QCOMPARE(completedSpy.at(0).at(1).toInt(), 0);
+        QCOMPARE(cache->loadModel3D(modelUuid, QStringLiteral("step")), stepData);
+
+        cache->setCacheDir(previousCacheDir);
+    }
+
     // 验证预加载的有效 OBJ 会写入公共三维缓存。
     void model3DWorkerCachesPreloadedObj() {
         QTemporaryDir outputDir;

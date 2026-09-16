@@ -396,6 +396,11 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
                                << model3D.uuid();
                     stepData.clear();
                 }
+                if (!stepData.isEmpty()) {
+                    // 预加载或缓存中的有效 STEP 统一写回公共缓存，保持后续导出可复用。
+                    ComponentCacheService::instance()->saveModel3D(
+                        model3D.uuid(), stepData, QStringLiteral("step"), gen);
+                }
                 if (stepData.isEmpty()) {
                     Exporter3DModel modelExporter;
                     if (modelExporter.downloadStepDataSync(model3D.uuid(), &stepData) && !stepData.isEmpty()) {
@@ -426,6 +431,11 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
                         qWarning() << "FootprintExportStage: Ignoring malformed OBJ data for" << componentId << "uuid"
                                    << model3D.uuid();
                         objData.clear();
+                    }
+                    if (!objData.isEmpty()) {
+                        // 预加载或缓存中的有效 OBJ 统一写回公共缓存，供后续偏移计算复用。
+                        ComponentCacheService::instance()->saveModel3D(
+                            model3D.uuid(), objData, QStringLiteral("obj"), gen);
                     }
                     if (objData.isEmpty()) {
                         objData = ComponentCacheService::instance()->loadModel3D(model3D.uuid(), QStringLiteral("obj"));
