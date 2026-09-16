@@ -578,6 +578,35 @@ bool ExporterXpeditionFootprint::exportFootprintLibrary(const QList<IR::Footprin
             m_diagnostics.append(QStringLiteral("Xpedition 封装 %1 已将 %2 个独立孔写为安装孔引脚")
                                      .arg(footprint.name)
                                      .arg(footprint.holes.size()));
+        bool hasUnsupportedLayer = false;
+        for (const auto& track : footprint.tracks)
+            hasUnsupportedLayer |= layerSection(track.layer).name.isEmpty();
+        for (const auto& rectangle : footprint.rectangles)
+            hasUnsupportedLayer |= layerSection(rectangle.layer).name.isEmpty();
+        for (const auto& circle : footprint.circles)
+            hasUnsupportedLayer |= layerSection(circle.layer).name.isEmpty();
+        for (const auto& arc : footprint.arcs)
+            hasUnsupportedLayer |= layerSection(arc.layer).name.isEmpty();
+        for (const auto& region : footprint.regions)
+            hasUnsupportedLayer |= layerSection(region.layer).name.isEmpty();
+        for (const auto& outline : footprint.outlines)
+            hasUnsupportedLayer |= layerSection(outline.layer).name.isEmpty();
+        for (const auto& text : footprint.texts)
+            hasUnsupportedLayer |= layerSection(text.layer).name.isEmpty();
+        if (hasUnsupportedLayer)
+            m_diagnostics.append(QStringLiteral("Xpedition 封装 %1 包含无法映射的图层图元").arg(footprint.name));
+        if (std::any_of(footprint.texts.cbegin(), footprint.texts.cend(), [](const IR::FootprintTextIR& text) {
+                return text.mirror || !text.textPathPoints.isEmpty();
+            })) {
+            m_diagnostics.append(QStringLiteral("Xpedition 封装 %1 的文本镜像或路径字形未写入").arg(footprint.name));
+        }
+        if (std::any_of(footprint.regions.cbegin(), footprint.regions.cend(), [](const IR::FootprintRegionIR& region) {
+                return region.isKeepOut && region.layer != IR::LayerType::KeepOut;
+            })) {
+            m_diagnostics.append(QStringLiteral("Xpedition 封装 %1 的 KeepOut 标志与图层不一致").arg(footprint.name));
+        }
+        if (footprint.shouldGenerateCourtyard)
+            m_diagnostics.append(QStringLiteral("Xpedition 封装 %1 未自动生成 courtyard").arg(footprint.name));
         usedNames.insert(name);
         if (!archive.addFile(name + QStringLiteral("_Pads.hkp"), padstackFile(footprint)) ||
             !archive.addFile(name + QStringLiteral("_Cell.hkp"), cellFile(footprint))) {

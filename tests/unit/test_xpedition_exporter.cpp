@@ -199,6 +199,8 @@ private slots:
         text.text = QStringLiteral("MARK");
         text.position = QPointF(1.0, 2.0);
         text.fontSize = 1.0;
+        text.mirror = true;
+        text.textPathPoints = {QPointF(0.0, 0.0), QPointF(1.0, 1.0)};
         footprint.texts.append(text);
         IR::FootprintArcIR arc;
         arc.center = QPointF(0.0, 0.0);
@@ -208,7 +210,13 @@ private slots:
         footprint.arcs.append(arc);
         IR::FootprintRegionIR region;
         region.vertices = {QPointF(-1.0, -1.0), QPointF(1.0, -1.0), QPointF(1.0, 1.0)};
+        region.isKeepOut = true;
         footprint.regions.append(region);
+        IR::FootprintOutlineIR unsupportedOutline;
+        unsupportedOutline.layer = IR::LayerType::Mechanical1;
+        unsupportedOutline.points = {QPointF(0.0, 0.0), QPointF(1.0, 0.0)};
+        footprint.outlines.append(unsupportedOutline);
+        footprint.shouldGenerateCourtyard = true;
         IR::FootprintHoleIR hole;
         hole.center = QPointF(3.0, 4.0);
         hole.radius = 0.5;
@@ -221,6 +229,10 @@ private slots:
         const QString diagnosticText = diagnostics.join(QStringLiteral("\n"));
         QVERIFY(diagnosticText.contains(QStringLiteral("折线近似")));
         QVERIFY(diagnosticText.contains(QStringLiteral("已写入")));
+        QVERIFY(diagnosticText.contains(QStringLiteral("无法映射的图层")));
+        QVERIFY(diagnosticText.contains(QStringLiteral("文本镜像或路径字形")));
+        QVERIFY(diagnosticText.contains(QStringLiteral("KeepOut 标志")));
+        QVERIFY(diagnosticText.contains(QStringLiteral("courtyard")));
 
         QFile output(outputPath);
         QVERIFY(output.open(QIODevice::ReadOnly));
