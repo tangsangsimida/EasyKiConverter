@@ -490,6 +490,7 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
             int segmentIndex = 0;
             for (const IR::SymbolPathSegmentIR& segment : p.segments) {
                 bool validSegment = isFinitePoint(segment.start) && isFinitePoint(segment.end);
+                // 按路径段类型校验所需控制点，避免将不完整曲线写入目标库。
                 switch (segment.type) {
                     case IR::SymbolPathSegmentIR::Type::QuadraticBezier:
                         validSegment = validSegment && isFinitePoint(segment.control1);
@@ -1483,6 +1484,7 @@ void ExporterAltiumSymbol::centerComponent(AltiumSchComponent& component) {
             bodyMaxY = qMax(bodyMaxY, qMax(rect.locationY, rect.cornerY));
         }
         for (auto& pin : component.pins) {
+            // 将引脚主体端对齐到图形边界，保持符号内部结构和连接方向一致。
             switch (pin.orientation) {
                 case AltiumModels::PinOrientation::Right:
                     pin.locationX = bodyMaxX;
