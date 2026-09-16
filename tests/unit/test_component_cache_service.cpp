@@ -525,6 +525,16 @@ private slots:
         QVERIFY(!QFileInfo::exists(destinationPath));
     }
 
+    // 验证三维缓存不会接受项目未支持的文件扩展名。
+    void testModel3DRejectsUnsupportedExtension() {
+        const QString uuid = QStringLiteral("unsupported-extension-model-13579");
+        const QByteArray objData = QByteArrayLiteral("v 0 0 0\nf 1 2 3");
+
+        m_cache->saveModel3D(uuid, objData, QStringLiteral("txt"));
+
+        QVERIFY(!m_cache->hasModel3DCached(uuid, QStringLiteral("txt")));
+    }
+
     // 验证权威 CAD 元数据移除模型后会清理旧三维关联。
     void testAuthoritativeCadMetadataClearsRemovedModel3D() {
         const QString componentId = QStringLiteral("C24681");

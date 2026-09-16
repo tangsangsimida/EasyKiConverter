@@ -79,7 +79,7 @@ bool isUsableModel3DCacheData(const QByteArray& data, const QString& extension) 
         return Exporter3DModel::hasUsableWrlGeometry(data);
     if (normalizedExtension == QStringLiteral("step"))
         return Exporter3DModel::hasUsableStepData(data);
-    return !data.isEmpty();
+    return false;
 }
 
 /**
