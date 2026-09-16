@@ -1130,21 +1130,24 @@ QStringList ComponentService::parseBomFile(const QString& filePath) {
 
 /** @brief 从内存缓存中读取元器件数据。 */
 ComponentData ComponentService::getComponentData(const QString& componentId) const {
+    const QString normalizedId = componentId.toUpper();
     QMutexLocker locker(&m_componentCacheMutex);
-    return m_componentCache.value(componentId, ComponentData());
+    return m_componentCache.value(normalizedId, ComponentData());
 }
 
 /** @brief 更新内存中的元器件缓存。 */
 void ComponentService::updateComponentCache(const QString& componentId, const ComponentData& data) {
+    const QString normalizedId = componentId.toUpper();
     QMutexLocker locker(&m_componentCacheMutex);
-    m_componentCache[componentId] = data;
-    qDebug() << "ComponentService: Updated cache for" << componentId;
+    m_componentCache[normalizedId] = data;
+    qDebug() << "ComponentService: Updated cache for" << normalizedId;
 }
 
 /** @brief 更新缓存元器件的描述字段。 */
 void ComponentService::updateComponentDescription(const QString& componentId, const QString& description) {
+    const QString normalizedId = componentId.toUpper();
     QMutexLocker locker(&m_componentCacheMutex);
-    auto it = m_componentCache.find(componentId);
+    auto it = m_componentCache.find(normalizedId);
     if (it == m_componentCache.end()) {
         return;
     }

@@ -59,6 +59,20 @@ private slots:
         QVERIFY(service.testFetchingRequestActive(componentId));
     }
 
+    /** @brief 验证内存缓存读写会统一元器件编号大小写。 */
+    void testComponentMemoryCacheNormalizesIdCase() {
+        const QString storedId = QStringLiteral("c54330");
+        ComponentData data;
+        data.setLcscId(storedId);
+        data.setName(QStringLiteral("Case normalized component"));
+
+        ComponentService service;
+        service.updateComponentCache(storedId, data);
+
+        const ComponentData loadedData = service.getComponentData(QStringLiteral("C54330"));
+        QCOMPARE(loadedData.name(), QStringLiteral("Case normalized component"));
+    }
+
     /** @brief 验证取消缓存加载后不会重新创建获取状态。 */
     void testCancelledCacheLoadDoesNotRecreateFetchingEntry() {
         const QString componentId = QStringLiteral("C34567");
