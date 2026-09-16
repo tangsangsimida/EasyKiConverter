@@ -918,9 +918,20 @@ void ComponentService::handleAllImagesReady(const QString& componentId, const QS
 
 /** @brief 处理元器件基础信息响应。 */
 void ComponentService::handleComponentInfoFetched(const QString& componentId, const QJsonObject& data) {
+    const QString normalizedId = componentId.toUpper();
+    {
+        QMutexLocker locker(&m_fetchingComponentsMutex);
+        const auto it = m_fetchingComponents.find(normalizedId);
+        if (it == m_fetchingComponents.end() ||
+            it->cacheGeneration != ComponentCacheService::instance()->currentGeneration()) {
+            qDebug() << "ComponentService: Discarding stale component info callback for" << componentId;
+            return;
+        }
+    }
+
     // 解析组件信息
     ComponentData componentData;
-    componentData.setLcscId(componentId);
+    componentData.setLcscId(normalizedId);
 
     // 从响应中提取基本信息
     if (data.contains("result")) {
@@ -940,7 +951,7 @@ void ComponentService::handleComponentInfoFetched(const QString& componentId, co
         }
     }
 
-    emit componentInfoReady(componentId, componentData);
+    emit componentInfoReady(normalizedId, componentData);
 }
 
 /** @brief 处理 CAD 数据响应并启动解析流程。 */

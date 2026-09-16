@@ -94,6 +94,22 @@ private slots:
         QCOMPARE(imageSpy.count(), 0);
     }
 
+    /** @brief 验证没有活动请求时不会转发过期的组件基础信息回调。 */
+    void testComponentInfoCallbackWithoutActiveRequestIsDiscarded() {
+        ComponentService service;
+        QSignalSpy infoSpy(&service, &ComponentService::componentInfoReady);
+        QJsonObject data;
+        data.insert(QStringLiteral("result"), QJsonObject{{QStringLiteral("title"), QStringLiteral("Stale data")}});
+
+        QVERIFY(QMetaObject::invokeMethod(&service,
+                                          "handleComponentInfoFetched",
+                                          Qt::DirectConnection,
+                                          Q_ARG(QString, QStringLiteral("c54335")),
+                                          Q_ARG(QJsonObject, data)));
+
+        QCOMPARE(infoSpy.count(), 0);
+    }
+
     /** @brief 验证并行上下文不会重复计算同一元器件的完成回调。 */
     void testParallelContextDeduplicatesFinishedComponents() {
         ParallelFetchContext context;
