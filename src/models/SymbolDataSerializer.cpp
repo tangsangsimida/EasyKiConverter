@@ -150,78 +150,97 @@ QJsonObject SymbolDataSerializer::toJson(const SymbolBBox& bbox) {
     return SymbolShapeSerializer::toJson(bbox);
 }
 
+// 委托统一图形序列化器恢复符号边界框。
 bool SymbolDataSerializer::fromJson(SymbolBBox& bbox, const QJsonObject& json) {
     return SymbolShapeSerializer::fromJson(bbox, json);
 }
 
+// 委托统一图形序列化器序列化矩形图元。
 QJsonObject SymbolDataSerializer::toJson(const SymbolRectangle& rect) {
     return SymbolShapeSerializer::toJson(rect);
 }
 
+// 委托统一图形序列化器恢复矩形图元。
 bool SymbolDataSerializer::fromJson(SymbolRectangle& rect, const QJsonObject& json) {
     return SymbolShapeSerializer::fromJson(rect, json);
 }
 
+// 委托统一图形序列化器序列化圆形图元。
 QJsonObject SymbolDataSerializer::toJson(const SymbolCircle& circle) {
     return SymbolShapeSerializer::toJson(circle);
 }
 
+// 委托统一图形序列化器恢复圆形图元。
 bool SymbolDataSerializer::fromJson(SymbolCircle& circle, const QJsonObject& json) {
     return SymbolShapeSerializer::fromJson(circle, json);
 }
 
+// 委托统一图形序列化器序列化圆弧图元。
 QJsonObject SymbolDataSerializer::toJson(const SymbolArc& arc) {
     return SymbolShapeSerializer::toJson(arc);
 }
 
+// 委托统一图形序列化器恢复圆弧图元。
 bool SymbolDataSerializer::fromJson(SymbolArc& arc, const QJsonObject& json) {
     return SymbolShapeSerializer::fromJson(arc, json);
 }
 
+// 委托统一图形序列化器序列化椭圆图元。
 QJsonObject SymbolDataSerializer::toJson(const SymbolEllipse& ellipse) {
     return SymbolShapeSerializer::toJson(ellipse);
 }
 
+// 委托统一图形序列化器恢复椭圆图元。
 bool SymbolDataSerializer::fromJson(SymbolEllipse& ellipse, const QJsonObject& json) {
     return SymbolShapeSerializer::fromJson(ellipse, json);
 }
 
+// 委托统一图形序列化器序列化折线图元。
 QJsonObject SymbolDataSerializer::toJson(const SymbolPolyline& polyline) {
     return SymbolShapeSerializer::toJson(polyline);
 }
 
+// 委托统一图形序列化器恢复折线图元。
 bool SymbolDataSerializer::fromJson(SymbolPolyline& polyline, const QJsonObject& json) {
     return SymbolShapeSerializer::fromJson(polyline, json);
 }
 
+// 委托统一图形序列化器序列化多边形图元。
 QJsonObject SymbolDataSerializer::toJson(const SymbolPolygon& polygon) {
     return SymbolShapeSerializer::toJson(polygon);
 }
 
+// 委托统一图形序列化器恢复多边形图元。
 bool SymbolDataSerializer::fromJson(SymbolPolygon& polygon, const QJsonObject& json) {
     return SymbolShapeSerializer::fromJson(polygon, json);
 }
 
+// 委托统一图形序列化器序列化路径图元。
 QJsonObject SymbolDataSerializer::toJson(const SymbolPath& path) {
     return SymbolShapeSerializer::toJson(path);
 }
 
+// 委托统一图形序列化器恢复路径图元。
 bool SymbolDataSerializer::fromJson(SymbolPath& path, const QJsonObject& json) {
     return SymbolShapeSerializer::fromJson(path, json);
 }
 
+// 委托统一图形序列化器序列化图片图元。
 QJsonObject SymbolDataSerializer::toJson(const SymbolImage& image) {
     return SymbolShapeSerializer::toJson(image);
 }
 
+// 委托统一图形序列化器恢复图片图元。
 bool SymbolDataSerializer::fromJson(SymbolImage& image, const QJsonObject& json) {
     return SymbolShapeSerializer::fromJson(image, json);
 }
 
+// 委托统一图形序列化器序列化文本图元。
 QJsonObject SymbolDataSerializer::toJson(const SymbolText& text) {
     return SymbolShapeSerializer::toJson(text);
 }
 
+// 委托统一图形序列化器恢复文本图元。
 bool SymbolDataSerializer::fromJson(SymbolText& text, const QJsonObject& json) {
     return SymbolShapeSerializer::fromJson(text, json);
 }
@@ -231,6 +250,7 @@ QJsonObject SymbolDataSerializer::toJson(const SymbolPin& pin) {
     return SymbolPinSerializer::toJson(pin);
 }
 
+// 委托引脚序列化器恢复符号引脚及其显示属性。
 bool SymbolDataSerializer::fromJson(SymbolPin& pin, const QJsonObject& json) {
     return SymbolPinSerializer::fromJson(pin, json);
 }
@@ -286,6 +306,7 @@ QJsonObject SymbolDataSerializer::toJson(const SymbolInfo& info) {
     return json;
 }
 
+// 从 JSON 恢复符号基本信息、来源字段和供应商字段。
 bool SymbolDataSerializer::fromJson(SymbolInfo& info, const QJsonObject& json) {
     info.name = json["name"].toString();
     info.prefix = json["prefix"].toString();
@@ -412,6 +433,7 @@ QJsonObject SymbolDataSerializer::toJson(const SymbolPart& part) {
     return json;
 }
 
+// 从 JSON 恢复多部分符号的元数据、图元集合和绘制顺序。
 bool SymbolDataSerializer::fromJson(SymbolPart& part, const QJsonObject& json) {
     part.unitNumber = json["unit_number"].toInt(0);
     part.originX = json["origin_x"].toDouble(0.0);
@@ -619,6 +641,7 @@ QJsonObject SymbolDataSerializer::toJson(const SymbolData& data) {
     return json;
 }
 
+// 按数据类别恢复完整符号，并保留各类图元的结构关系。
 bool SymbolDataSerializer::fromJson(SymbolData& data, const QJsonObject& json) {
     // 读取信息
     if (json.contains("info") && json["info"].isObject()) {
