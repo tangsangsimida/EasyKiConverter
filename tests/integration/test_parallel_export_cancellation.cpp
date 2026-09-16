@@ -217,6 +217,22 @@ private slots:
         QVERIFY(!service.isRunning());
     }
 
+    // 验证预加载入口会统一大小写并删除重复或空的组件编号。
+    void testPreloadNormalizesAndDeduplicatesComponentIds() {
+        ParallelExportService service;
+        QSignalSpy preloadSpy(&service, &ParallelExportService::preloadCompleted);
+
+        service.startPreload({QStringLiteral("c90007"), QStringLiteral("C90007"), QString()});
+
+        QCOMPARE(preloadSpy.count(), 1);
+        QCOMPARE(preloadSpy.at(0).at(0).toInt(), 0);
+        QCOMPARE(preloadSpy.at(0).at(1).toInt(), 1);
+        const ExportOverallProgress progress = service.getProgress();
+        QCOMPARE(progress.totalComponents, 1);
+        QCOMPARE(progress.preloadProgress.totalCount, 1);
+        QCOMPARE(progress.preloadProgress.completedCount, 1);
+    }
+
     // 验证状态更新会保留先前产生的诊断信息。
     void testItemStatusPreservesDiagnosticsAcrossUpdates() {
         ParallelExportService service;

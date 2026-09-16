@@ -16,6 +16,7 @@
 #include <QMutexLocker>
 #include <QPointer>
 #include <QSaveFile>
+#include <QSet>
 #include <QTextStream>
 #include <QTimer>
 
@@ -158,6 +159,16 @@ void ParallelExportService::startPreload(const QStringList& componentIds) {
         disconnect(m_componentService, &ComponentService::allComponentsDataCollectedWithErrors, this, nullptr);
     }
 
+    QStringList normalizedComponentIds;
+    QSet<QString> seenComponentIds;
+    for (const QString& componentId : componentIds) {
+        const QString normalizedId = componentId.trimmed().toUpper();
+        if (!normalizedId.isEmpty() && !seenComponentIds.contains(normalizedId)) {
+            seenComponentIds.insert(normalizedId);
+            normalizedComponentIds.append(normalizedId);
+        }
+    }
+
     cleanupExportStages();
     m_runningExportStages = 0;
     ++m_activeRunGeneration;
@@ -165,14 +176,14 @@ void ParallelExportService::startPreload(const QStringList& componentIds) {
     // 新一轮验证/导出开始，解除全局 tombstone
     // 旧回调靠 generation token 被拒绝，新请求携带新 token 可正常写入
     ComponentCacheService::instance()->clearGlobalTombstone();
-    qDebug() << "ParallelExportService: Starting preload for" << componentIds.size() << "components";
+    qDebug() << "ParallelExportService: Starting preload for" << normalizedComponentIds.size() << "components";
 
-    m_componentIds = componentIds;
+    m_componentIds = normalizedComponentIds;
     m_progress.currentStage = ExportOverallProgress::Stage::Preloading;
-    m_progress.totalComponents = componentIds.size();
+    m_progress.totalComponents = m_componentIds.size();
     m_progress.startTime = QDateTime::currentDateTime();
     m_progress.preloadProgress = PreloadProgress();
-    m_progress.preloadProgress.totalCount = componentIds.size();
+    m_progress.preloadProgress.totalCount = m_componentIds.size();
     m_cachedData.clear();
     m_preloadCompleted = false;
     m_nextPreloadIndex = 0;
@@ -183,7 +194,7 @@ void ParallelExportService::startPreload(const QStringList& componentIds) {
         m_progress.preloadProgress.inProgressCount = 0;
     }
 
-    if (componentIds.isEmpty()) {
+    if (m_componentIds.isEmpty()) {
         m_progress.currentStage = ExportOverallProgress::Stage::Idle;
         m_progress.endTime = QDateTime::currentDateTime();
         m_preloadCompleted = true;
@@ -208,9 +219,9 @@ void ParallelExportService::startPreload(const QStringList& componentIds) {
                 Qt::UniqueConnection);
 
         // 启动并行获取
-        m_componentService->fetchMultipleComponentsData(componentIds, m_options.exportModel3D);
+        m_componentService->fetchMultipleComponentsData(m_componentIds, m_options.exportModel3D);
 
-        qDebug() << "ParallelExportService: Started parallel fetch for" << componentIds.size() << "components";
+        qDebug() << "ParallelExportService: Started parallel fetch for" << m_componentIds.size() << "components";
     } else {
         // 如果没有 ComponentService，直接从本地缓存读取
         qWarning() << "ParallelExportService: ComponentService not set, using sync cache fallback";
