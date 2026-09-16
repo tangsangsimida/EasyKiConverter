@@ -581,6 +581,48 @@ private slots:
         QCOMPARE(progress.itemStatus.value(componentId).status, ExportItemStatus::Status::Failed);
     }
 
+    // 验证封装库阶段的失败统计包含预加载缺失和库写入失败的全部元器件。
+    void footprintLibraryFailureCountsAllComponents() {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        const QString blockerPath = tempDir.filePath(QStringLiteral("blocked-output"));
+        QFile blocker(blockerPath);
+        QVERIFY(blocker.open(QIODevice::WriteOnly));
+        blocker.close();
+
+        FootprintExportStage stage;
+        ExportOptions options;
+        options.outputPath = blockerPath;
+        options.libName = QStringLiteral("BrokenFootprints");
+        options.targetFormat = TargetEdaFormat::KiCad;
+        stage.setOptions(options);
+
+        auto component = QSharedPointer<ComponentData>::create();
+        component->setFootprintData(QSharedPointer<FootprintData>::create());
+        QMap<QString, QSharedPointer<ComponentData>> cachedData;
+        cachedData[QStringLiteral("C_VALID")] = component;
+
+        QSignalSpy progressSpy(&stage, &ExportTypeStage::progressChanged);
+        QSignalSpy completedSpy(&stage, &ExportTypeStage::completed);
+        stage.start({QStringLiteral("C_MISSING"), QStringLiteral("C_VALID")}, cachedData);
+
+        if (completedSpy.count() == 0)
+            QVERIFY2(completedSpy.wait(3000), "Footprint export should complete");
+        QCOMPARE(completedSpy.count(), 1);
+        QCOMPARE(completedSpy.at(0).at(0).toInt(), 0);
+        QCOMPARE(completedSpy.at(0).at(1).toInt(), 2);
+        QCOMPARE(completedSpy.at(0).at(2).toInt(), 0);
+
+        const ExportTypeProgress progress = stage.getProgress();
+        QCOMPARE(progress.totalCount, 2);
+        QCOMPARE(progress.completedCount, 2);
+        QCOMPARE(progress.successCount, 0);
+        QCOMPARE(progress.failedCount, 2);
+        QCOMPARE(progress.inProgressCount, 0);
+        QVERIFY(progressSpy.count() >= 2);
+    }
+
     // 验证封装数据中的 3D UUID 也能驱动独立三维导出阶段。
     void model3DUuidFromFootprintIsExported() {
         QTemporaryDir tempDir;

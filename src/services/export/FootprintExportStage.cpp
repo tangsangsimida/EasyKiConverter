@@ -300,6 +300,38 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
     int successCount = 0;
     int skippedCount = 0;
 
+    // 统一更新阶段进度，确保库级导出与普通 Worker 阶段提供一致的快照。
+    const auto publishItemStatus = [this](const QString& componentId, const ExportItemStatus& status) {
+        ExportTypeProgress progressSnapshot;
+        {
+            QMutexLocker locker(&m_progressMutex);
+            auto item = m_progress.itemStatus.find(componentId);
+            if (item == m_progress.itemStatus.end())
+                return;
+            item.value() = status;
+            m_progress.completedCount = 0;
+            m_progress.successCount = 0;
+            m_progress.failedCount = 0;
+            m_progress.skippedCount = 0;
+            m_progress.inProgressCount = 0;
+            for (const ExportItemStatus& itemStatus : std::as_const(m_progress.itemStatus)) {
+                if (itemStatus.status == ExportItemStatus::Status::Success) {
+                    ++m_progress.successCount;
+                } else if (itemStatus.status == ExportItemStatus::Status::Failed) {
+                    ++m_progress.failedCount;
+                } else if (itemStatus.status == ExportItemStatus::Status::Skipped) {
+                    ++m_progress.skippedCount;
+                } else if (itemStatus.status == ExportItemStatus::Status::InProgress) {
+                    ++m_progress.inProgressCount;
+                }
+            }
+            m_progress.completedCount = m_progress.successCount + m_progress.failedCount + m_progress.skippedCount;
+            progressSnapshot = m_progress;
+        }
+        emit itemStatusChanged(componentId, status);
+        emit progressChanged(progressSnapshot);
+    };
+
     for (const QString& componentId : componentIds) {
         if (m_cancelled.load()) {
             qDebug() << "FootprintExportStage: Export cancelled during data collection";
@@ -313,7 +345,7 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
             ExportItemStatus status;
             status.status = ExportItemStatus::Status::Failed;
             status.errorMessage = "No component data";
-            emit itemStatusChanged(componentId, status);
+            publishItemStatus(componentId, status);
             continue;
         }
 
@@ -325,7 +357,7 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
             ExportItemStatus status;
             status.status = ExportItemStatus::Status::Failed;
             status.errorMessage = "No footprint data";
-            emit itemStatusChanged(componentId, status);
+            publishItemStatus(componentId, status);
             continue;
         }
 
@@ -425,7 +457,7 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
         status.diagnostics = footprint.validationErrors();
         if (!status.diagnostics.isEmpty())
             qWarning() << "FootprintExportStage: Input diagnostics for" << componentId << status.diagnostics;
-        emit itemStatusChanged(componentId, status);
+        publishItemStatus(componentId, status);
 
         if (m_options.targetFormat == TargetEdaFormat::Altium && m_options.exportModel3D) {
             ExportItemStatus modelStatus;
@@ -486,27 +518,28 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
     }
 
     // 标记所有已收集的封装为失败（参照 SymbolExportStage 的 failCollectedSymbols 模式）
-    const auto failCollectedFootprints = [this, &collectedIds, &failedIds, &successCount](const QString& errorMessage) {
-        for (const QString& componentId : collectedIds) {
-            failedIds.append(componentId);
-            ExportItemStatus status;
-            status.status = ExportItemStatus::Status::Failed;
-            status.errorMessage = errorMessage;
-            status.endTime = QDateTime::currentDateTime();
-            emit itemStatusChanged(componentId, status);
+    const auto failCollectedFootprints =
+        [this, &collectedIds, &failedIds, &successCount, &publishItemStatus](const QString& errorMessage) {
+            for (const QString& componentId : collectedIds) {
+                failedIds.append(componentId);
+                ExportItemStatus status;
+                status.status = ExportItemStatus::Status::Failed;
+                status.errorMessage = errorMessage;
+                status.endTime = QDateTime::currentDateTime();
+                publishItemStatus(componentId, status);
 
-            // Altium 的 3D 状态可能已经在收集阶段报告成功，但最终 PcbLib
-            // 写入或提交失败时，模型实际上没有进入最终库，必须同步回写失败。
-            if (m_options.targetFormat == TargetEdaFormat::Altium && m_options.exportModel3D) {
-                ExportItemStatus modelStatus;
-                modelStatus.status = ExportItemStatus::Status::Failed;
-                modelStatus.errorMessage = QStringLiteral("Altium PcbLib 导出失败，3D 模型未写入最终库");
-                modelStatus.endTime = status.endTime;
-                emit embeddedModel3DStatusChanged(componentId, modelStatus);
+                // Altium 的 3D 状态可能已经在收集阶段报告成功，但最终 PcbLib
+                // 写入或提交失败时，模型实际上没有进入最终库，必须同步回写失败。
+                if (m_options.targetFormat == TargetEdaFormat::Altium && m_options.exportModel3D) {
+                    ExportItemStatus modelStatus;
+                    modelStatus.status = ExportItemStatus::Status::Failed;
+                    modelStatus.errorMessage = QStringLiteral("Altium PcbLib 导出失败，3D 模型未写入最终库");
+                    modelStatus.endTime = status.endTime;
+                    emit embeddedModel3DStatusChanged(componentId, modelStatus);
+                }
             }
-        }
-        successCount = 0;
-    };
+            successCount = 0;
+        };
 
     // 统一的中止导出 lambda
     const auto abortExport = [&](const QString& errorMessage) {
@@ -515,7 +548,7 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
         m_tempManager.rollbackAll();
         m_isExporting.store(false);
         m_isRunning.store(false);
-        emit completed(0, footprintList.size(), 0);
+        emit completed(0, failedIds.size(), skippedCount);
     };
 
     QString libName = m_options.libName.isEmpty() ? QStringLiteral("EasyKiConverter") : m_options.libName;
