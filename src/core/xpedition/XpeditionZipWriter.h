@@ -14,10 +14,19 @@ namespace EasyKiConverter {
  */
 class XpeditionZipWriter {
 public:
-    /** @brief 添加一个文本或二进制文件条目 */
+    /**
+     * @brief 添加一个文本或二进制文件条目。
+     * @param name ZIP 内的相对条目名称。
+     * @param data 条目内容。
+     * @return 名称安全且未重复时返回 true。
+     */
     bool addFile(const QString& name, const QByteArray& data);
 
-    /** @brief 将当前条目写入 ZIP 文件 */
+    /**
+     * @brief 将当前条目写入 ZIP 文件。
+     * @param filePath 输出文件路径。
+     * @return 文件创建并写入成功时返回 true。
+     */
     bool write(const QString& filePath) const;
 
 private:

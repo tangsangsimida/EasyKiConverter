@@ -5,6 +5,7 @@
 #include <QFileInfo>
 #include <QRegularExpression>
 #include <QSet>
+#include <QtMath>
 
 #include <cmath>
 
@@ -14,15 +15,31 @@ namespace {
 
 constexpr double kThousandthInchMm = 0.0254;
 
+/**
+ * @brief 将毫米转换为 Xpedition 使用的千分之一英寸单位。
+ * @param valueMm 输入的毫米数。
+ * @return 转换后的 TH 数值。
+ */
 double toTh(double valueMm) {
     return valueMm / kThousandthInchMm;
 }
 
+/**
+ * @brief 使用固定精度格式化几何数值。
+ * @param value 待格式化的数值。
+ * @return 适合写入 HKP 文本的十进制字符串。
+ */
 QString fmt(double value) {
     return QString::number(value, 'f', 4);
 }
 
+/**
+ * @brief 将统一表示中的焊盘形状映射到目标格式名称。
+ * @param shape 统一表示中的焊盘形状。
+ * @return Xpedition Pad 定义使用的形状名称。
+ */
 QString padShape(IR::PadShape shape) {
+    // 形状映射保持有限集合，无法表达的复杂焊盘退化为矩形并由上层记录诊断。
     switch (shape) {
         case IR::PadShape::Ellipse:
             return QStringLiteral("ROUND");
@@ -38,6 +55,11 @@ QString padShape(IR::PadShape shape) {
     }
 }
 
+/**
+ * @brief 根据焊盘形状和尺寸生成可复用的 Pad 名称。
+ * @param pad 待命名的焊盘。
+ * @return 稳定且可去重的 Pad 名称。
+ */
 QString padName(const IR::FootprintPadIR& pad) {
     return QStringLiteral("PAD_%1_%2x%3")
         .arg(padShape(pad.shape))
@@ -45,6 +67,82 @@ QString padName(const IR::FootprintPadIR& pad) {
         .arg(fmt(toTh(pad.size.height())));
 }
 
+struct LayerSection {
+    QString name;
+    QString side;
+};
+
+/**
+ * @brief 将统一表示的图层映射为目标格式的段名和安装面。
+ * @param layer 统一表示中的图层。
+ * @return 目标格式段名与面向信息；不支持的图层返回空值。
+ */
+LayerSection layerSection(IR::LayerType layer) {
+    // 每组图层同时决定目标段名和安装面，未知图层返回空值由调用方跳过。
+    switch (layer) {
+        case IR::LayerType::TopSilk:
+        case IR::LayerType::BottomSilk:
+            return {QStringLiteral("SILKSCREEN_OUTLINE"),
+                    layer == IR::LayerType::TopSilk ? QStringLiteral("MNT_SIDE") : QStringLiteral("OPP_SIDE")};
+        case IR::LayerType::TopAssembly:
+        case IR::LayerType::BottomAssembly:
+            return {QStringLiteral("ASSEMBLY_OUTLINE"),
+                    layer == IR::LayerType::TopAssembly ? QStringLiteral("MNT_SIDE") : QStringLiteral("OPP_SIDE")};
+        case IR::LayerType::TopPaste:
+        case IR::LayerType::BottomPaste:
+            return {QStringLiteral("SOLDER_PASTE"),
+                    layer == IR::LayerType::TopPaste ? QStringLiteral("MNT_SIDE") : QStringLiteral("OPP_SIDE")};
+        case IR::LayerType::TopMask:
+        case IR::LayerType::BottomMask:
+            return {QStringLiteral("SOLDER_MASK"),
+                    layer == IR::LayerType::TopMask ? QStringLiteral("MNT_SIDE") : QStringLiteral("OPP_SIDE")};
+        case IR::LayerType::TopCopper:
+        case IR::LayerType::BottomCopper:
+            return {QStringLiteral("GRAPHIC"),
+                    layer == IR::LayerType::TopCopper ? QStringLiteral("MNT_SIDE") : QStringLiteral("OPP_SIDE")};
+        case IR::LayerType::EdgeCuts:
+            return {QStringLiteral("ASSEMBLY_OUTLINE"), QStringLiteral("MNT_SIDE")};
+        default:
+            return {};
+    }
+}
+
+/**
+ * @brief 转义 HKP 文本字段中的特殊字符。
+ * @param text 原始文本。
+ * @return 可安全放入双引号字段的文本。
+ */
+QString escapedText(QString text) {
+    text.replace('\\', QStringLiteral("\\\\"));
+    text.replace('"', QStringLiteral("\\\""));
+    text.replace('\n', QStringLiteral(" "));
+    text.replace('\r', QStringLiteral(" "));
+    return text;
+}
+
+/**
+ * @brief 根据钻孔直径生成共享的钻孔定义名称。
+ * @param diameterMm 钻孔直径，单位为毫米。
+ * @return 稳定的 Hole 名称。
+ */
+QString holeName(double diameterMm) {
+    return QStringLiteral("HOLE_%1").arg(fmt(toTh(diameterMm)));
+}
+
+/**
+ * @brief 根据独立安装孔直径生成对应的焊盘名称。
+ * @param diameterMm 安装孔直径，单位为毫米。
+ * @return 稳定的孔焊盘名称。
+ */
+QString holePadName(double diameterMm) {
+    return QStringLiteral("HOLE_PAD_%1").arg(fmt(toTh(diameterMm)));
+}
+
+/**
+ * @brief 计算封装所有几何元素的包围盒。
+ * @param footprint 待计算的封装。
+ * @return 包含焊盘、线条、圆、孔和轮廓的包围盒。
+ */
 QRectF footprintBounds(const IR::FootprintComponentIR& footprint) {
     QRectF bounds;
     bool initialized = false;
@@ -79,12 +177,22 @@ QRectF footprintBounds(const IR::FootprintComponentIR& footprint) {
         for (const auto& point : track.points)
             addPoint(point);
     }
-    for (const auto& hole : footprint.holes)
-        addPoint(hole.center);
+    for (const auto& hole : footprint.holes) {
+        addPoint(hole.center - QPointF(hole.radius, hole.radius));
+        addPoint(hole.center + QPointF(hole.radius, hole.radius));
+    }
     return initialized ? bounds : QRectF(-1, -1, 2, 2);
 }
 
-QString shapeBlock(const QString& kind, const QList<QPointF>& points, double width = 0.0) {
+/**
+ * @brief 将点列写成目标格式的折线或填充多边形。
+ * @param kind 目标格式图元类型。
+ * @param points 已经完成原点归一化的点列。
+ * @param width 线宽，单位为毫米。
+ * @param filled 是否标记为填充区域。
+ * @return HKP 图元文本；点列为空时返回空字符串。
+ */
+QString shapeBlock(const QString& kind, const QList<QPointF>& points, double width = 0.0, bool filled = false) {
     if (points.isEmpty())
         return {};
     QString output = QStringLiteral(" ...%1\n  ....WIDTH %2\n  ....XY (%3, %4)")
@@ -95,31 +203,43 @@ QString shapeBlock(const QString& kind, const QList<QPointF>& points, double wid
     for (int index = 1; index < points.size(); ++index)
         output +=
             QStringLiteral("\n   ...XY (%1, %2)").arg(fmt(toTh(points[index].x()))).arg(fmt(toTh(points[index].y())));
+    if (filled)
+        output += QStringLiteral("\n  ....SHAPE_OPTIONS FILLED");
     output += QLatin1Char('\n');
     return output;
 }
 
 }  // namespace
 
+// 封装归档由 Padstack 和 Cell 两类 HKP 文件组成，使用专用扩展名标识。
 QString ExporterXpeditionFootprint::libraryFileExtension() const {
+    // 封装导出结果由多个 HKP 文件组成，因此使用专用 ZIP 扩展名区分符号库。
     return QStringLiteral("_Footprints.zip");
 }
 
+// 目录输出能力由导出接口统一查询，当前归档实现始终返回单文件结果。
 bool ExporterXpeditionFootprint::isDirectoryOutput() const {
+    // 写入器会在内存中组装归档，外部接口看到的是单个文件而不是目录。
     return false;
 }
 
+// 诊断接口不改写内部列表，保证调用方可以区分多个封装的处理结果。
 QStringList ExporterXpeditionFootprint::diagnostics() const {
+    // 返回值按导出顺序保留，调用方可以直接展示降级和跳过原因。
     return m_diagnostics;
 }
 
+// 清理名称后再同时用于 ZIP 条目和 HKP 逻辑名称，避免两处命名不一致。
 QString ExporterXpeditionFootprint::safeName(QString name) const {
+    // 文件名必须同时适合 ZIP 条目和 HKP 逻辑名称，因此在导出边界统一清理。
     name = name.trimmed();
     name.replace(QRegularExpression(QStringLiteral("[^A-Za-z0-9_.-]")), QStringLiteral("_"));
     return name.isEmpty() ? QStringLiteral("unnamed") : name;
 }
 
+// Padstack 文件集中声明可复用焊盘、钻孔以及两者的技术组合。
 QByteArray ExporterXpeditionFootprint::padstackFile(const IR::FootprintComponentIR& footprint) const {
+    // Pad 与 Padstack 分开去重，保证相同尺寸的焊盘只生成一次定义。
     QString output = QStringLiteral(".FILETYPE PADSTACK_LIBRARY\n.VERSION \"VB99.0\"\n.SCHEMA_VERSION 13\n") +
                      QStringLiteral(".CREATOR \"EasyKiConverter\"\n\n.UNITS TH\n\n");
     QSet<QString> writtenPads;
@@ -127,10 +247,12 @@ QByteArray ExporterXpeditionFootprint::padstackFile(const IR::FootprintComponent
     for (const auto& pad : footprint.pads) {
         const QString baseName = padName(pad);
         if (!writtenPads.contains(baseName)) {
+            // 先写入物理焊盘形状，后续 Padstack 只引用该名称。
             output += QStringLiteral(".PAD \"%1\"\n..PAD_OPTIONS USER_GENERATED_NAME\n..OFFSET (0, 0)\n..%2\n")
                           .arg(baseName, padShape(pad.shape));
             if (pad.shape == IR::PadShape::Ellipse)
                 output += QStringLiteral("...DIAMETER %1\n").arg(fmt(toTh(pad.size.width())));
+            // 自定义多边形保留点列和填充属性，其余形状使用宽高字段。
             else if (pad.shape == IR::PadShape::Polygon && !pad.customShapePoints.isEmpty()) {
                 output += QStringLiteral("...POLYLINE_SHAPE\n....XY");
                 for (const QPointF& point : pad.customShapePoints)
@@ -151,26 +273,58 @@ QByteArray ExporterXpeditionFootprint::padstackFile(const IR::FootprintComponent
                       .arg(stackName, pad.isThroughHole() ? QStringLiteral("PIN_THROUGH") : QStringLiteral("PIN_SMD"));
         output += QStringLiteral("...TECHNOLOGY_OPTIONS NONE\n...TOP_PAD \"%1\"\n...BOTTOM_PAD \"%1\"\n").arg(baseName);
         if (pad.isThroughHole()) {
-            const QString holeName = QStringLiteral("HOLE_%1").arg(fmt(toTh(pad.holeSize)));
-            output += QStringLiteral("...INTERNAL_PAD \"%1\"\n...HOLE_NAME \"%2\"\n").arg(baseName, holeName);
-            output += QStringLiteral(".Hole \"%1\"\n..POSITIVE_TOLERANCE 0\n..NEGATIVE_TOLERANCE 0\n").arg(holeName);
+            // 通孔焊盘需要独立的 Hole 定义，孔径以实际直径参与命名和写入。
+            const QString drillName = holeName(pad.holeSize);
+            output += QStringLiteral("...INTERNAL_PAD \"%1\"\n...HOLE_NAME \"%2\"\n").arg(baseName, drillName);
+            output += QStringLiteral(".Hole \"%1\"\n..POSITIVE_TOLERANCE 0\n..NEGATIVE_TOLERANCE 0\n").arg(drillName);
             output += QStringLiteral("..HOLE_OPTIONS %1 DRILLED USER_GENERATED_NAME\n..ROUND\n...DIAMETER %2\n")
                           .arg(pad.isPlated ? QStringLiteral("PLATED") : QStringLiteral("NON_PLATED"))
                           .arg(fmt(toTh(pad.holeSize)));
         }
         writtenStacks.insert(stackName);
     }
+    for (const auto& hole : footprint.holes) {
+        // IR 中没有焊盘的独立孔仍需转换为可定位的安装孔引脚。
+        if (hole.radius <= 0.0)
+            continue;
+        const double diameterMm = hole.radius * 2.0;
+        const QString baseName = holePadName(diameterMm);
+        const QString stackName = holeName(diameterMm) + QStringLiteral("_TH");
+        if (!writtenPads.contains(baseName)) {
+            output += QStringLiteral(
+                          ".PAD \"%1\"\n..PAD_OPTIONS USER_GENERATED_NAME\n..OFFSET (0, 0)\n..ROUND\n...DIAMETER %2\n")
+                          .arg(baseName)
+                          .arg(fmt(toTh(diameterMm)));
+            writtenPads.insert(baseName);
+        }
+        if (writtenStacks.contains(stackName))
+            continue;
+        const QString drillName = holeName(diameterMm);
+        output += QStringLiteral(".PADSTACK \"%1\"\n..PADSTACK_TYPE PIN_THROUGH\n..TECHNOLOGY \"(Default)\"\n")
+                      .arg(stackName);
+        output += QStringLiteral(
+                      "...TECHNOLOGY_OPTIONS NONE\n...TOP_PAD \"%1\"\n...BOTTOM_PAD \"%1\"\n...INTERNAL_PAD "
+                      "\"%1\"\n...HOLE_NAME \"%2\"\n")
+                      .arg(baseName, drillName);
+        output += QStringLiteral(".Hole \"%1\"\n..POSITIVE_TOLERANCE 0\n..NEGATIVE_TOLERANCE 0\n").arg(drillName);
+        output += QStringLiteral("..HOLE_OPTIONS NON_PLATED DRILLED USER_GENERATED_NAME\n..ROUND\n...DIAMETER %1\n")
+                      .arg(fmt(toTh(diameterMm)));
+        writtenStacks.insert(stackName);
+    }
     return output.toUtf8();
 }
 
+// Cell 文件保存引脚、图形、文本和安装孔的相对位置。
 QByteArray ExporterXpeditionFootprint::cellFile(const IR::FootprintComponentIR& footprint) const {
+    // Cell 的局部原点取包围盒中心，能让没有明确原点的封装保持几何居中。
     const QRectF bounds = footprintBounds(footprint);
     const QPointF origin = bounds.center();
     QString output =
         QStringLiteral(".FILETYPE CELL_LIBRARY\n.VERSION \"1.01.01\"\n.CREATOR \"EasyKiConverter\"\n\n.UNITS TH\n\n");
     output += QStringLiteral(".PACKAGE_CELL \"%1\"\n ..NUMBER_LAYERS 2\n ..PACKAGE_GROUP General\n ..MOUNT_TYPE %2\n")
                   .arg(safeName(footprint.name),
-                       footprint.hasThroughHolePads() ? QStringLiteral("THROUGH") : QStringLiteral("SURFACE"));
+                       footprint.hasThroughHolePads() || !footprint.holes.isEmpty() ? QStringLiteral("THROUGH")
+                                                                                    : QStringLiteral("SURFACE"));
 
     int pinIndex = 1;
     for (const auto& pad : footprint.pads) {
@@ -186,43 +340,120 @@ QByteArray ExporterXpeditionFootprint::cellFile(const IR::FootprintComponentIR& 
         ++pinIndex;
     }
 
-    const auto appendPolyline = [&](const QString& section, const QList<QPointF>& points, double width) {
-        QList<QPointF> normalized;
-        for (const QPointF& point : points)
-            normalized.append(point - origin);
-        output += QStringLiteral(" ..%1\n  ...SIDE MNT_SIDE\n").arg(section);
-        output += shapeBlock(QStringLiteral("POLYLINE_PATH"), normalized, width);
-    };
+    const auto appendPolyline =
+        [&](const LayerSection& layer, const QList<QPointF>& points, double width, bool filled) {
+            // 目标坐标系的 Y 轴方向与 IR 相反，这里集中完成平移和翻转。
+            if (layer.name.isEmpty() || points.isEmpty())
+                return;
+            QList<QPointF> normalized;
+            for (const QPointF& point : points)
+                normalized.append(QPointF(point.x() - origin.x(), -(point.y() - origin.y())));
+            output += QStringLiteral(" ..%1\n  ...SIDE %2\n").arg(layer.name, layer.side);
+            output += shapeBlock(
+                filled ? QStringLiteral("POLYLINE_SHAPE") : QStringLiteral("POLYLINE_PATH"), normalized, width, filled);
+        };
     for (const auto& outline : footprint.outlines)
-        appendPolyline(QStringLiteral("ASSEMBLY_OUTLINE"), outline.points, outline.strokeWidth);
+        appendPolyline(layerSection(outline.layer), outline.points, outline.strokeWidth, false);
     for (const auto& track : footprint.tracks)
-        appendPolyline(QStringLiteral("GRAPHIC"), track.points, track.width);
+        appendPolyline(layerSection(track.layer), track.points, track.width, false);
     for (const auto& rect : footprint.rectangles) {
         QList<QPointF> points{rect.bounds.topLeft(),
                               rect.bounds.topRight(),
                               rect.bounds.bottomRight(),
                               rect.bounds.bottomLeft(),
                               rect.bounds.topLeft()};
-        appendPolyline(QStringLiteral("SILKSCREEN_OUTLINE"), points, rect.strokeWidth);
+        appendPolyline(layerSection(rect.layer), points, rect.strokeWidth, false);
     }
     for (const auto& circle : footprint.circles) {
+        const LayerSection layer = layerSection(circle.layer);
+        if (layer.name.isEmpty())
+            continue;
         output += QStringLiteral(
-                      " ..SILKSCREEN_OUTLINE\n  ...SIDE MNT_SIDE\n   ...CIRCLE_PATH\n   ....WIDTH %1\n   ....XY (%2, "
-                      "%3)\n   ....RADIUS %4\n")
+                      " ..%1\n  ...SIDE %2\n   ...CIRCLE_PATH\n   ....WIDTH %3\n   ....XY (%4, %5)\n   ....RADIUS %6\n")
+                      .arg(layer.name, layer.side)
                       .arg(fmt(toTh(circle.strokeWidth)))
                       .arg(fmt(toTh(circle.center.x() - origin.x())))
                       .arg(fmt(-toTh(circle.center.y() - origin.y())))
                       .arg(fmt(toTh(circle.radius)));
     }
+    for (const auto& arc : footprint.arcs) {
+        // 目标格式的封装图元统一使用折线，因此按最多 15 度的弦段近似圆弧。
+        const LayerSection layer = layerSection(arc.layer);
+        if (layer.name.isEmpty() || arc.radius <= 0.0)
+            continue;
+        double sweep = arc.endAngle - arc.startAngle;
+        if (qFuzzyIsNull(sweep))
+            sweep = 360.0;
+        const int segments = qMax(8, static_cast<int>(std::ceil(std::abs(sweep) / 15.0)));
+        QList<QPointF> points;
+        points.reserve(segments + 1);
+        for (int index = 0; index <= segments; ++index) {
+            const double angle = qDegreesToRadians(arc.startAngle + sweep * index / segments);
+            points.append(
+                QPointF(arc.center.x() + arc.radius * std::cos(angle), arc.center.y() + arc.radius * std::sin(angle)));
+        }
+        appendPolyline(layer, points, arc.width, false);
+    }
+    for (const auto& region : footprint.regions) {
+        // 填充区域必须闭合，否则目标工具会把它解释为开放轮廓。
+        const LayerSection layer = layerSection(region.layer);
+        if (layer.name.isEmpty() || region.vertices.size() < 3)
+            continue;
+        QList<QPointF> points = region.vertices;
+        if (points.first() != points.last())
+            points.append(points.first());
+        appendPolyline(layer, points, 0.0, true);
+    }
+    int holeIndex = 1;
+    for (const auto& hole : footprint.holes) {
+        // 独立孔通过 MH 前缀的无电气引脚表达，保持其位置可被 Cell 引用。
+        if (hole.radius <= 0.0)
+            continue;
+        output +=
+            QStringLiteral(
+                " ..PIN \"MH%1\"\n  ...XY (%2, %3)\n  ...PADSTACK \"%4\"\n  ...ROTATION 0\n  ...PIN_OPTIONS NONE\n")
+                .arg(holeIndex++)
+                .arg(fmt(toTh(hole.center.x() - origin.x())))
+                .arg(fmt(-toTh(hole.center.y() - origin.y())))
+                .arg(holeName(hole.radius * 2.0) + QStringLiteral("_TH"));
+    }
+    for (const auto& text : footprint.texts) {
+        // 仅导出可见文本；隐藏文本不应改变目标封装的视觉结果。
+        if (!text.isDisplayed || text.text.isEmpty())
+            continue;
+        const LayerSection layer = layerSection(text.layer);
+        if (layer.name.isEmpty())
+            continue;
+        const double height = text.fontSize > 0.0 ? toTh(text.fontSize) : 50.0;
+        const double stroke = text.strokeWidth > 0.0 ? toTh(text.strokeWidth) : 3.0;
+        output += QStringLiteral(" ..TEXT \"%1\"\n  ...TEXT_TYPE USER_DEFINED\n   ...DISPLAY_ATTR\n")
+                      .arg(escapedText(text.text));
+        output += QStringLiteral("    ....XY (%1, %2)\n    ....TEXT_LYR %3\n    ....HORZ_JUST CENTER\n")
+                      .arg(fmt(toTh(text.position.x() - origin.x())))
+                      .arg(fmt(-toTh(text.position.y() - origin.y())))
+                      .arg(layer.name == QStringLiteral("SILKSCREEN_OUTLINE")
+                               ? (layer.side == QStringLiteral("MNT_SIDE") ? QStringLiteral("SILKSCREEN_MNT_SIDE")
+                                                                           : QStringLiteral("SILKSCREEN_OPP_SIDE"))
+                               : layer.name);
+        output +=
+            QStringLiteral("    ....VERT_JUST CENTER\n    ....HEIGHT %1\n    ....WIDTH 0\n    ....STROKE_WIDTH %2\n")
+                .arg(fmt(height))
+                .arg(fmt(stroke));
+        output += QStringLiteral("    ....ROTATION %1\n    ....FONT \"vf_std\"\n    ....TEXT_OPTIONS NONE\n")
+                      .arg(fmt(text.rotation));
+    }
     return output.toUtf8();
 }
 
+// 单个封装入口沿用批量导出实现，以保持诊断和命名规则一致。
 bool ExporterXpeditionFootprint::exportFootprint(const IR::FootprintComponentIR& footprint,
                                                  const QString& filePath,
                                                  const QString&) {
+    // 单个封装复用批量路径，确保命名、诊断和 ZIP 写入行为保持一致。
     return exportFootprintLibrary({footprint}, footprint.name, filePath);
 }
 
+// 批量入口负责去重名称、收集诊断并提交最终 ZIP 文件。
 bool ExporterXpeditionFootprint::exportFootprintLibrary(const QList<IR::FootprintComponentIR>& footprints,
                                                         const QString&,
                                                         const QString& filePath,
@@ -232,6 +463,7 @@ bool ExporterXpeditionFootprint::exportFootprintLibrary(const QList<IR::Footprin
                                                         const QString&,
                                                         bool,
                                                         const QString&) {
+    // 每次批量导出都清空旧诊断，避免上一次任务的消息污染当前结果。
     m_diagnostics.clear();
     XpeditionZipWriter archive;
     QSet<QString> usedNames;
@@ -249,17 +481,20 @@ bool ExporterXpeditionFootprint::exportFootprintLibrary(const QList<IR::Footprin
             m_diagnostics.append(
                 QStringLiteral("Xpedition 封装名称重复，已重命名：%1 -> %2").arg(footprint.name, name));
         if (!footprint.arcs.isEmpty())
-            m_diagnostics.append(
-                QStringLiteral("Xpedition 封装 %1 未写入 %2 个圆弧").arg(footprint.name).arg(footprint.arcs.size()));
+            m_diagnostics.append(QStringLiteral("Xpedition 封装 %1 的 %2 个圆弧已使用折线近似")
+                                     .arg(footprint.name)
+                                     .arg(footprint.arcs.size()));
         if (!footprint.texts.isEmpty())
             m_diagnostics.append(
-                QStringLiteral("Xpedition 封装 %1 未写入 %2 个文本").arg(footprint.name).arg(footprint.texts.size()));
+                QStringLiteral("Xpedition 封装 %1 已写入 %2 个文本").arg(footprint.name).arg(footprint.texts.size()));
         if (!footprint.regions.isEmpty())
-            m_diagnostics.append(
-                QStringLiteral("Xpedition 封装 %1 未写入 %2 个区域").arg(footprint.name).arg(footprint.regions.size()));
+            m_diagnostics.append(QStringLiteral("Xpedition 封装 %1 已写入 %2 个填充区域")
+                                     .arg(footprint.name)
+                                     .arg(footprint.regions.size()));
         if (!footprint.holes.isEmpty())
-            m_diagnostics.append(
-                QStringLiteral("Xpedition 封装 %1 未写入 %2 个独立孔").arg(footprint.name).arg(footprint.holes.size()));
+            m_diagnostics.append(QStringLiteral("Xpedition 封装 %1 已将 %2 个独立孔写为安装孔引脚")
+                                     .arg(footprint.name)
+                                     .arg(footprint.holes.size()));
         usedNames.insert(name);
         if (!archive.addFile(name + QStringLiteral("_Pads.hkp"), padstackFile(footprint)) ||
             !archive.addFile(name + QStringLiteral("_Cell.hkp"), cellFile(footprint))) {

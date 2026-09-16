@@ -8,6 +8,11 @@ namespace EasyKiConverter {
 
 namespace {
 
+/**
+ * @brief 计算 ZIP 条目的 CRC-32 校验值。
+ * @param data 条目原始内容。
+ * @return ZIP 规范要求的 CRC-32 值。
+ */
 quint32 crc32(const QByteArray& data) {
     quint32 crc = 0xFFFFFFFFu;
     for (const auto byte : data) {
@@ -18,16 +23,23 @@ quint32 crc32(const QByteArray& data) {
     return ~crc;
 }
 
+/** @brief 以小端序追加一个 16 位整数。 */
 void appendU16(QByteArray& output, quint16 value) {
     output.append(static_cast<char>(value & 0xFF));
     output.append(static_cast<char>((value >> 8) & 0xFF));
 }
 
+/** @brief 以小端序追加一个 32 位整数。 */
 void appendU32(QByteArray& output, quint32 value) {
     appendU16(output, static_cast<quint16>(value & 0xFFFF));
     appendU16(output, static_cast<quint16>((value >> 16) & 0xFFFF));
 }
 
+/**
+ * @brief 校验 ZIP 条目名称是否为安全的相对路径。
+ * @param name 待校验的条目名称。
+ * @return 不包含绝对路径和目录穿越片段时返回 true。
+ */
 bool isSafeEntryName(const QString& name) {
     if (name.isEmpty() || name.startsWith('/') || name.contains('\\'))
         return false;
@@ -41,7 +53,9 @@ bool isSafeEntryName(const QString& name) {
 
 }  // namespace
 
+// 添加条目前先执行路径安全和名称唯一性校验，避免破坏归档结构。
 bool XpeditionZipWriter::addFile(const QString& name, const QByteArray& data) {
+    // 先拒绝不安全路径，再拒绝重复名称，避免生成不可预测的库结构。
     if (!isSafeEntryName(name))
         return false;
     for (const Entry& entry : m_entries) {
@@ -52,7 +66,9 @@ bool XpeditionZipWriter::addFile(const QString& name, const QByteArray& data) {
     return true;
 }
 
+// 写入顺序固定为本地文件头、文件数据、中央目录和结束记录。
 bool XpeditionZipWriter::write(const QString& filePath) const {
+    // 采用无压缩 ZIP，直接写入本地文件头、中央目录和结束记录。
     QFile file(filePath);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate))
         return false;

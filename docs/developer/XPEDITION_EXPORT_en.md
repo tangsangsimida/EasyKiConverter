@@ -7,7 +7,7 @@ This document describes the current Xpedition ASCII library export implemented t
 | Capability | Status | Notes |
 | --- | --- | --- |
 | Symbol export | Implemented | Generates Xpedition ASCII symbol text for pins, rectangles, polylines, polygons, circles, and three-point arcs |
-| Footprint export | Implemented | Generates Padstack and Cell HKP text |
+| Footprint export | Implemented | Generates Padstack and Cell HKP text for outlines, graphics, text, regions, and standalone holes |
 | Multi-part symbols | Implemented | Writes one symbol entry per part |
 | ZIP packaging | Implemented | Produces separate uncompressed ZIP packages for symbols and footprints |
 | 3D model association | Not implemented | No Xpedition 3D association is written; CLI and GUI report and skip the option |
@@ -48,9 +48,10 @@ The two stages cannot share one `.zip` path because they run concurrently and wo
 
 IR data that cannot be safely represented is not silently reported as exported:
 
-- Footprint arcs, text, regions, and standalone holes produce export diagnostics.
+- Footprint arcs are approximated as polylines with a maximum 15-degree step and produce an approximation diagnostic; text, filled regions, and standalone holes are written to the Cell.
+- Text mirroring, text paths, and unknown layers produce diagnostics when the target cannot express them completely.
 - 3D model references produce an unassociated-model diagnostic.
-- Symbol ellipses, pies, elliptical arcs, paths, Bézier curves, IEEE graphics, ordinary text, text frames, and images produce unsupported-element diagnostics.
+- Symbol ellipses, pies, elliptical arcs, paths, Bézier curves, IEEE graphics, ordinary text, text frames, and images still produce unsupported-element diagnostics.
 - Duplicate footprint names receive numeric suffixes so ZIP entry names remain unique.
 - Entry names are restricted to safe relative names; absolute paths, backslashes, and traversal segments are rejected.
 
