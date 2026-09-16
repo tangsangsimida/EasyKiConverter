@@ -261,6 +261,15 @@ signals:
     void allComponentsDataCollected(const QList<ComponentData>& componentDataList);
 
     /**
+     * @brief 所有元件数据收集完成并包含失败原因的信号
+     *
+     * @param componentDataList 获取成功的元件数据
+     * @param failedComponents 获取失败的元件编号及原因
+     */
+    void allComponentsDataCollectedWithErrors(const QList<ComponentData>& componentDataList,
+                                              const QMap<QString, QString>& failedComponents);
+
+    /**
      * @brief LCSC 数据更新信号（数据手册和预览图 URL）
      *
      * 当 LCSC API 返回数据手册和预览图 URL 后发送此信号
@@ -503,24 +512,28 @@ public:
         fetching.requestActive = requestActive;
     }
 
+    // 返回测试用的元件获取状态是否存在。
     bool testHasFetchingState(const QString& componentId) const {
         const QString normalizedId = componentId.toUpper();
         QMutexLocker locker(&m_fetchingComponentsMutex);
         return m_fetchingComponents.contains(normalizedId);
     }
 
+    // 返回测试用获取状态中保存的原始元件编号。
     QString testFetchingComponentId(const QString& componentId) const {
         const QString normalizedId = componentId.toUpper();
         QMutexLocker locker(&m_fetchingComponentsMutex);
         return m_fetchingComponents.value(normalizedId).componentId;
     }
 
+    // 返回测试用获取状态是否仍处于活动状态。
     bool testFetchingRequestActive(const QString& componentId) const {
         const QString normalizedId = componentId.toUpper();
         QMutexLocker locker(&m_fetchingComponentsMutex);
         return m_fetchingComponents.value(normalizedId).requestActive;
     }
 
+    // 返回测试用获取状态是否已经拥有 CAD 数据。
     bool testFetchingHasCadData(const QString& componentId) const {
         const QString normalizedId = componentId.toUpper();
         QMutexLocker locker(&m_fetchingComponentsMutex);

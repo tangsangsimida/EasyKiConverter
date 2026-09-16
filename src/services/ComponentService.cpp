@@ -977,7 +977,9 @@ void ComponentService::fetchMultipleComponentsData(const QStringList& componentI
     // 初始化并行获取状态
     m_parallelContext = new ParallelFetchContext(this);
     connect(m_parallelContext, &ParallelFetchContext::allCompleted, this, [this](const QList<ComponentData>& data) {
+        const QMap<QString, QString> failedComponents = m_parallelContext->failedComponents();
         emit allComponentsDataCollected(data);
+        emit allComponentsDataCollectedWithErrors(data, failedComponents);
         m_activeRequestCount = 0;
         resetQueueState();
     });
@@ -1028,7 +1030,7 @@ void ComponentService::handleParallelFetchError(const QString& componentId, cons
         parallelContext = m_parallelContext;
     }
     if (parallelContext != nullptr) {
-        parallelContext->markFailed(componentId);
+        parallelContext->markFailed(componentId, error);
     }
 
     if (m_queueManager != nullptr) {
@@ -1203,7 +1205,9 @@ void ComponentService::handleQueueTimeout() {
 
         if (completedCount > 0) {
             QList<ComponentData> allData = m_parallelContext->collectedData();
+            const QMap<QString, QString> failedComponents = m_parallelContext->failedComponents();
             emit allComponentsDataCollected(allData);
+            emit allComponentsDataCollectedWithErrors(allData, failedComponents);
         }
 
         resetQueueState();

@@ -98,6 +98,22 @@ private slots:
         QVERIFY(content.contains(QStringLiteral("NetworkRuntimeStats total{")));
     }
 
+    // 验证网络拒绝原因会原样进入预加载失败报告。
+    void detailedReportIncludesNetworkFailureReason() {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        ExportOptions options = makeOptions(tempDir.path());
+        ExportOverallProgress progress = makeProgress();
+        progress.preloadProgress.failedComponents.insert(
+            QStringLiteral("C403"), QStringLiteral("HTTP 403: Forbidden; response: access denied"));
+
+        ExportReportGenerator::writeDetailedReport(QStringLiteral("preload-completed"), options, progress);
+
+        const QString content = readText(reportPath(tempDir.path()));
+        QVERIFY(content.contains(QStringLiteral("- `C403`: HTTP 403: Forbidden; response: access denied")));
+    }
+
 private:
     static ExportOptions makeOptions(const QString& outputPath) {
         ExportOptions options;

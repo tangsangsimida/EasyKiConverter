@@ -155,6 +155,7 @@ void ParallelExportService::startPreload(const QStringList& componentIds) {
 
     if (m_componentService) {
         disconnect(m_componentService, &ComponentService::allComponentsDataCollected, this, nullptr);
+        disconnect(m_componentService, &ComponentService::allComponentsDataCollectedWithErrors, this, nullptr);
     }
 
     cleanupExportStages();
@@ -201,9 +202,9 @@ void ParallelExportService::startPreload(const QStringList& componentIds) {
     if (m_componentService) {
         // 连接到 ComponentService 的信号以接收数据
         connect(m_componentService,
-                &ComponentService::allComponentsDataCollected,
+                &ComponentService::allComponentsDataCollectedWithErrors,
                 this,
-                &ParallelExportService::onAllComponentDataCollected,
+                &ParallelExportService::onAllComponentDataCollectedWithErrors,
                 Qt::UniqueConnection);
 
         // 启动并行获取
@@ -225,6 +226,7 @@ void ParallelExportService::cancelPreload() {
     m_nextPreloadIndex = m_componentIds.size();
     if (m_componentService) {
         disconnect(m_componentService, &ComponentService::allComponentsDataCollected, this, nullptr);
+        disconnect(m_componentService, &ComponentService::allComponentsDataCollectedWithErrors, this, nullptr);
         m_componentService->abortBatchFetch();
     }
     {
@@ -743,9 +745,15 @@ void ParallelExportService::processNextPreloadBatch() {
 
 // 接收网络批量获取结果并完成预加载统计。
 void ParallelExportService::onAllComponentDataCollected(const QList<ComponentData>& componentDataList) {
+    onAllComponentDataCollectedWithErrors(componentDataList, {});
+}
+
+// 接收网络失败原因并完成预加载统计。
+void ParallelExportService::onAllComponentDataCollectedWithErrors(const QList<ComponentData>& componentDataList,
+                                                                  const QMap<QString, QString>& failedComponents) {
     // 断开连接，避免重复处理
     if (m_componentService) {
-        disconnect(m_componentService, &ComponentService::allComponentsDataCollected, this, nullptr);
+        disconnect(m_componentService, &ComponentService::allComponentsDataCollectedWithErrors, this, nullptr);
     }
 
     // 检查是否已请求取消 - 如果是则直接返回，避免覆盖取消状态
@@ -761,7 +769,11 @@ void ParallelExportService::onAllComponentDataCollected(const QList<ComponentDat
 
     // 统计成功和失败数量
     int successCount = 0;
-    int failedCount = 0;
+    int failedCount = failedComponents.size();
+
+    for (auto it = failedComponents.cbegin(); it != failedComponents.cend(); ++it) {
+        m_progress.preloadProgress.failedComponents[it.key()] = it.value();
+    }
 
     // 处理每个组件数据
     for (const ComponentData& data : componentDataList) {
@@ -792,7 +804,7 @@ void ParallelExportService::onAllComponentDataCollected(const QList<ComponentDat
         QMutexLocker locker(&m_progressMutex);
         m_progress.preloadProgress.successCount = successCount;
         m_progress.preloadProgress.failedCount = failedCount;
-        m_progress.preloadProgress.completedCount = componentDataList.size();
+        m_progress.preloadProgress.completedCount = successCount + failedCount;
         m_progress.preloadProgress.inProgressCount = 0;
         m_progress.preloadProgress.currentComponentId.clear();
         m_progress.currentStage = ExportOverallProgress::Stage::Idle;
