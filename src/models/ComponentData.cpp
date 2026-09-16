@@ -21,6 +21,7 @@ ComponentData::ComponentData()
     , m_footprintData(nullptr)
     , m_model3DData(nullptr) {}
 
+/** @brief 将组件数据序列化为 JSON 对象。 */
 QJsonObject ComponentData::toJson() const {
     QJsonObject json;
 
@@ -58,7 +59,15 @@ QJsonObject ComponentData::toJson() const {
     return json;
 }
 
+/** @brief 从 JSON 对象替换当前组件数据。 */
 bool ComponentData::fromJson(const QJsonObject& json) {
+    // 反序列化表示替换完整对象，先清理未出现在新 JSON 中的旧数据。
+    clear();
+    m_datasheetFormat = QStringLiteral("pdf");
+    m_cinfoJsonRaw.clear();
+    m_cadJsonRaw.clear();
+    m_model3DObjRaw.clear();
+
     // 读取基本信息
     m_lcscId = json["lcsc_id"].toString();
     m_name = json["name"].toString();
@@ -113,6 +122,7 @@ bool ComponentData::fromJson(const QJsonObject& json) {
     return true;
 }
 
+/** @brief 检查组件是否包含有效身份和基础元数据。 */
 bool ComponentData::isValid() const {
     // 验证 LCSC ID 格式（以 C 开头，后面跟数字）
     if (m_lcscId.isEmpty()) {
@@ -141,6 +151,7 @@ bool ComponentData::isValid() const {
     return true;
 }
 
+/** @brief 返回组件数据的校验错误。 */
 QString ComponentData::validate() const {
     if (m_lcscId.isEmpty()) {
         return "LCSC ID is empty";
@@ -181,6 +192,7 @@ QString ComponentData::validate() const {
     return QString();  // 返回空字符串表示验证通过
 }
 
+/** @brief 清空组件数据及其关联对象。 */
 void ComponentData::clear() {
     m_lcscId.clear();
     m_name.clear();

@@ -3,6 +3,7 @@
 #include "core/ir/Model3DDataConverter.h"
 #include "core/ir/SymbolDataConverter.h"
 #include "core/kicad/Exporter3DModel.h"
+#include "models/ComponentData.h"
 #include "models/FootprintData.h"
 #include "models/FootprintDataSerializer.h"
 #include "models/SymbolData.h"
@@ -41,6 +42,24 @@ private slots:
         const IR::FootprintComponentIR converted = IR::toFootprintIR(footprint);
 
         QVERIFY(converted.models3d.isEmpty());
+    }
+
+    // 验证组件反序列化时不会保留旧的三维模型关联。
+    void testComponentFromJsonReplacesMissingModel() {
+        ComponentData component;
+        component.setLcscId(QStringLiteral("C12345"));
+        auto model = QSharedPointer<Model3DData>::create();
+        model->setUuid(QStringLiteral("stale-model"));
+        component.setModel3DData(model);
+        component.setPreviewImages(QStringList{QStringLiteral("old-preview")});
+
+        QJsonObject json;
+        json[QStringLiteral("lcsc_id")] = QStringLiteral("C54321");
+        QVERIFY(component.fromJson(json));
+
+        QCOMPARE(component.lcscId(), QStringLiteral("C54321"));
+        QVERIFY(!component.model3DData());
+        QVERIFY(component.previewImages().isEmpty());
     }
 
     // 验证符号数据的 JSON 往返序列化。
