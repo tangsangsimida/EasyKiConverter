@@ -12,27 +12,35 @@ static const QString API_ENDPOINT = "https://easyeda.com/api/products/%1/compone
 static const QString ENDPOINT_3D_MODEL = "https://modules.easyeda.com/3dmodel/%1";
 static const QString ENDPOINT_3D_MODEL_STEP = "https://modules.easyeda.com/qAxj6KHrDKw4blvCG8QJPs7Y/%1";
 
+// 创建使用全局网络客户端的 EasyEDA API 服务。
 EasyedaApi::EasyedaApi(QObject* parent)
+    // 初始化网络客户端和请求状态。
     : QObject(parent), m_networkClient(&NetworkClient::instance()), m_isFetching(false), m_weakNetworkSupport(false) {}
 
+// 创建使用指定网络客户端的 EasyEDA API 服务。
 EasyedaApi::EasyedaApi(INetworkClient* networkClient, QObject* parent)
+    // 初始化注入的网络客户端和请求状态。
     : QObject(parent)
     , m_networkClient(networkClient ? networkClient : &NetworkClient::instance())
     , m_isFetching(false)
     , m_weakNetworkSupport(false) {}
 
+// 析构前取消所有尚未完成的网络请求。
 EasyedaApi::~EasyedaApi() {
     cancelRequest();
 }
 
+// 设置网络请求是否启用弱网策略。
 void EasyedaApi::setWeakNetworkSupport(bool enabled) {
     m_weakNetworkSupport = enabled;
 }
 
+// 返回当前弱网策略开关。
 bool EasyedaApi::weakNetworkSupport() const {
     return m_weakNetworkSupport;
 }
 
+// 异步获取指定元器件的基础信息。
 void EasyedaApi::fetchComponentInfo(const QString& lcscId) {
     if (m_isFetching) {
         qWarning() << "Already fetching component info";
@@ -50,6 +58,7 @@ void EasyedaApi::fetchComponentInfo(const QString& lcscId) {
     fetchWithNetworkClient(lcscId, QUrl(buildComponentApiUrl(lcscId)), ResourceType::ComponentInfo, false);
 }
 
+// 异步获取指定元器件的 CAD 数据。
 void EasyedaApi::fetchCadData(const QString& lcscId) {
     if (!validateLcscId(lcscId)) {
         emit fetchError(lcscId, QString("Invalid LCSC ID format: %1").arg(lcscId));
@@ -59,6 +68,7 @@ void EasyedaApi::fetchCadData(const QString& lcscId) {
     fetchWithNetworkClient(lcscId, QUrl(buildComponentApiUrl(lcscId)), ResourceType::CadData, false);
 }
 
+// 异步获取指定 UUID 的 OBJ 模型。
 void EasyedaApi::fetch3DModelObj(const QString& uuid) {
     if (uuid.isEmpty()) {
         emit fetchError("UUID is empty");
@@ -69,6 +79,7 @@ void EasyedaApi::fetch3DModelObj(const QString& uuid) {
     fetchWithNetworkClient(uuid, QUrl(build3DModelObjUrl(uuid)), ResourceType::Model3DObj, true);
 }
 
+// 异步获取指定 UUID 的 STEP 模型。
 void EasyedaApi::fetch3DModelStep(const QString& uuid) {
     if (uuid.isEmpty()) {
         emit fetchError("UUID is empty");
@@ -79,6 +90,7 @@ void EasyedaApi::fetch3DModelStep(const QString& uuid) {
     fetchWithNetworkClient(uuid, QUrl(build3DModelStepUrl(uuid)), ResourceType::Model3DStep, true);
 }
 
+// 创建网络请求并登记活动请求，用于取消和回调归属校验。
 void EasyedaApi::fetchWithNetworkClient(const QString& id, const QUrl& url, ResourceType resourceType, bool isBinary) {
     if (!m_networkClient) {
         emit fetchError(id, "NetworkClient not available");
@@ -102,6 +114,7 @@ void EasyedaApi::fetchWithNetworkClient(const QString& id, const QUrl& url, Reso
             });
 }
 
+// 处理网络请求完成事件并分发解析后的 API 结果。
 void EasyedaApi::handleAsyncRequestFinished(AsyncNetworkRequest* request,
                                             const QString& id,
                                             ResourceType resourceType,
@@ -110,7 +123,13 @@ void EasyedaApi::handleAsyncRequestFinished(AsyncNetworkRequest* request,
 
     {
         QMutexLocker locker(&m_requestsMutex);
-        m_activeRequests.removeOne(QPointer<AsyncNetworkRequest>(request));
+        const QPointer<AsyncNetworkRequest> trackedRequest(request);
+        if (!m_activeRequests.contains(trackedRequest)) {
+            qDebug() << "EasyedaApi: Discarding callback for cancelled request:" << id;
+            request->deleteLater();
+            return;
+        }
+        m_activeRequests.removeOne(trackedRequest);
     }
 
     if (result.wasCancelled) {
@@ -152,6 +171,7 @@ void EasyedaApi::handleAsyncRequestFinished(AsyncNetworkRequest* request,
     }
 
     const QJsonObject jsonObject = jsonDoc.object();
+    // 按资源类型分发结构化响应。
     switch (resourceType) {
         case ResourceType::ComponentInfo:
             m_isFetching = false;
@@ -168,17 +188,24 @@ void EasyedaApi::handleAsyncRequestFinished(AsyncNetworkRequest* request,
     request->deleteLater();
 }
 
+// 取消全部活动请求，并在释放互斥锁后执行取消操作。
 void EasyedaApi::cancelRequest() {
-    QMutexLocker locker(&m_requestsMutex);
-    for (auto& req : m_activeRequests) {
+    QList<QPointer<AsyncNetworkRequest>> requestsToCancel;
+    {
+        QMutexLocker locker(&m_requestsMutex);
+        requestsToCancel = m_activeRequests;
+        m_activeRequests.clear();
+    }
+
+    for (const auto& req : requestsToCancel) {
         if (req && !req.isNull()) {
             req->cancel();
         }
     }
-    m_activeRequests.clear();
     m_isFetching = false;
 }
 
+// 校验并转发元器件基础信息响应。
 void EasyedaApi::handleComponentInfoResponse(const QString& lcscId, const QJsonObject& data) {
     m_isFetching = false;
     if (data.contains("success") && !data["success"].toBool()) {
@@ -188,6 +215,7 @@ void EasyedaApi::handleComponentInfoResponse(const QString& lcscId, const QJsonO
     emit componentInfoFetched(lcscId, data);
 }
 
+// 校验并转发元器件 CAD 响应。
 void EasyedaApi::handleCadDataResponse(const QString& lcscId, const QJsonObject& data) {
     if (!data.contains("result")) {
         emit fetchError(lcscId, "No result");
@@ -198,20 +226,25 @@ void EasyedaApi::handleCadDataResponse(const QString& lcscId, const QJsonObject&
     emit cadDataFetched(lcscId, result);
 }
 
+// 预留请求状态重置接口，当前状态由活动请求列表维护。
 void EasyedaApi::resetRequestState() {}
 
+// 构造元器件信息和 CAD 数据接口地址。
 QString EasyedaApi::buildComponentApiUrl(const QString& lcscId) const {
     return API_ENDPOINT.arg(lcscId);
 }
 
+// 构造 OBJ 模型接口地址。
 QString EasyedaApi::build3DModelObjUrl(const QString& uuid) const {
     return ENDPOINT_3D_MODEL.arg(uuid);
 }
 
+// 构造 STEP 模型接口地址。
 QString EasyedaApi::build3DModelStepUrl(const QString& uuid) const {
     return ENDPOINT_3D_MODEL_STEP.arg(uuid);
 }
 
+// 校验元器件编号是否符合 EasyEDA 接口要求。
 bool EasyedaApi::validateLcscId(const QString& lcscId) const {
     if (!lcscId.startsWith('C', Qt::CaseInsensitive)) {
         return false;
