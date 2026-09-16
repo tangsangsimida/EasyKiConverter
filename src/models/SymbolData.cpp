@@ -10,23 +10,28 @@ namespace EasyKiConverter {
 
 SymbolData::SymbolData() : m_info(), m_bbox() {}
 
+// 将符号数据交给统一序列化器转换为 JSON。
 QJsonObject SymbolData::toJson() const {
     return SymbolDataSerializer::toJson(*this);
 }
 
+// 从 JSON 恢复符号数据并返回序列化器的解析结果。
 bool SymbolData::fromJson(const QJsonObject& json) {
     return SymbolDataSerializer::fromJson(*this, json);
 }
 
+// 通过完整诊断列表判断符号数据是否有效。
 bool SymbolData::isValid() const {
     return validationErrors().isEmpty();
 }
 
+// 返回符号诊断列表中的首个错误或空字符串。
 QString SymbolData::validate() const {
     const QStringList errors = validationErrors();
     return errors.isEmpty() ? QString() : errors.first();
 }
 
+// 收集符号元数据、引脚、图元和多部分结构的全部校验错误。
 QStringList SymbolData::validationErrors() const {
     QStringList errors;
     const auto addError = [&](const QString& message) { errors.append(message); };
@@ -122,6 +127,7 @@ QStringList SymbolData::validationErrors() const {
 
         const auto isCommandToken = [](const QString& token) { return token.size() == 1 && token.at(0).isLetter(); };
         const auto parameterCount = [](QChar command) {
+            // 按 SVG 命令返回一组参数的固定数量，用于检查路径命令完整性。
             switch (command.toUpper().unicode()) {
                 case 'M':
                 case 'L':
@@ -385,6 +391,7 @@ QStringList SymbolData::validationErrors() const {
     return errors;
 }
 
+// 清空符号元数据、所有图元、绘制顺序和多部分数据。
 void SymbolData::clear() {
     m_info = SymbolInfo();
     m_bbox = SymbolBBox();

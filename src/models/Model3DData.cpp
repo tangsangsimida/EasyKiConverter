@@ -14,6 +14,7 @@ QJsonObject Model3DBase::toJson() const {
     return json;
 }
 
+// 从 JSON 读取有限的坐标值，并保留缺失字段的当前值。
 bool Model3DBase::fromJson(const QJsonObject& json) {
     const auto readCoordinate = [&json](const QString& name, double current, double* value) {
         if (!json.contains(name)) {
@@ -40,9 +41,12 @@ bool Model3DBase::fromJson(const QJsonObject& json) {
 
 // ==================== Model3DData ====================
 
+// 初始化三维模型的元数据、变换、原始模型和 STEP 内容。
 Model3DData::Model3DData()
+    // 成员初始化保持为空值，便于后续从 JSON 或导入阶段逐项填充。
     : m_name(), m_uuid(), m_translation(), m_rotation(), m_stepOffsetMm(), m_rawObj(), m_step() {}
 
+// 序列化三维模型元数据、变换参数和可选的二进制 STEP 数据。
 QJsonObject Model3DData::toJson() const {
     QJsonObject json;
 
@@ -61,6 +65,7 @@ QJsonObject Model3DData::toJson() const {
     return json;
 }
 
+// 以临时变量解析 JSON，全部成功后再原子更新三维模型状态。
 bool Model3DData::fromJson(const QJsonObject& json) {
     QString parsedName = m_name;
     QString parsedUuid = m_uuid;
@@ -126,6 +131,7 @@ bool Model3DData::fromJson(const QJsonObject& json) {
     return true;
 }
 
+// 检查三维模型是否至少包含名称或 UUID 标识。
 bool Model3DData::isValid() const {
     // 至少要有名称UUID
     if (m_name.isEmpty() && m_uuid.isEmpty()) {
@@ -135,6 +141,7 @@ bool Model3DData::isValid() const {
     return true;
 }
 
+// 返回三维模型标识校验的首个错误或空字符串。
 QString Model3DData::validate() const {
     if (m_name.isEmpty() && m_uuid.isEmpty()) {
         return "3D model must have either name or UUID";
@@ -143,6 +150,7 @@ QString Model3DData::validate() const {
     return QString();  // 返回空字符串表示验证通过
 }
 
+// 清空三维模型标识、变换、原始 OBJ 和 STEP 数据。
 void Model3DData::clear() {
     m_name.clear();
     m_uuid.clear();
