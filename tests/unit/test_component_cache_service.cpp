@@ -180,6 +180,16 @@ private slots:
         QCOMPARE(loaded->name(), QStringLiteral("Should Write Now"));
     }
 
+    // 验证无效元器件编号不会污染 tombstone 状态。
+    void testRemoveCacheIgnoresInvalidComponentId() {
+        const QString invalidComponentId = QStringLiteral("not-a-component");
+
+        m_cache->clearGlobalTombstone();
+        m_cache->removeCache(invalidComponentId);
+
+        QVERIFY(!m_cache->isTombstoned(invalidComponentId));
+    }
+
     // 回归测试：clearAllCache 全局 tombstone 阻止所有写入，clearGlobalTombstone 解除
     void testGlobalTombstoneBlocksAllWrites() {
         const QString componentId = QStringLiteral("C88888");

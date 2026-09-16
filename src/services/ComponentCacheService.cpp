@@ -1306,15 +1306,21 @@ bool ComponentCacheService::copyModel3DToFile(const QString& uuid,
 // ==================== 缓存管理 ====================
 
 void ComponentCacheService::removeCache(const QString& lcscId) {
+    const QString normalizedId = lcscId.toUpper();
+    if (!BomParser::validateId(normalizedId)) {
+        qWarning() << "removeCache: invalid lcscId, ignoring:" << lcscId;
+        return;
+    }
+
     // 锁顺序：先 disk，后 tombstone（与其他方法一致）
     QMutexLocker diskLocker(&m_diskWriteMutex);
     // 标记为 tombstone，阻止旧回调写回
     {
         QMutexLocker tombLocker(&m_tombstoneMutex);
-        m_tombstones.insert(lcscId.toUpper());
+        m_tombstones.insert(normalizedId);
     }
     // 先删除L2磁盘缓存
-    QString dirPath = componentCacheDir(lcscId);
+    QString dirPath = componentCacheDir(normalizedId);
     if (dirPath.isEmpty()) {
         return;
     }
@@ -1322,7 +1328,7 @@ void ComponentCacheService::removeCache(const QString& lcscId) {
         QDir dir(dirPath);
         if (dir.exists()) {
             dir.removeRecursively();
-            LOG_DEBUG(LogModule::Core, "Removed disk cache for: {}", lcscId);
+            LOG_DEBUG(LogModule::Core, "Removed disk cache for: {}", normalizedId);
         }
     }
 
