@@ -324,7 +324,10 @@ void ParallelExportService::startExport() {
     // Altium PcbLib 将 STEP 直接嵌入 Library/Models，不生成 KiCad 风格的
     // 外部 .3dmodels 目录；封装阶段仍会按需获取 STEP 并交给写入器。
     // Model3D 统计项仍需保留，Altium 下由封装阶段镜像完成状态。
-    const bool enableModel3D = m_options.exportModel3D;
+    const bool enableModel3D = m_options.exportModel3D && m_options.targetFormat != TargetEdaFormat::Xpedition;
+    if (m_options.exportModel3D && m_options.targetFormat == TargetEdaFormat::Xpedition) {
+        qWarning() << "ParallelExportService: Xpedition 目标当前不支持 3D 模型关联，已跳过 3D 导出阶段";
+    }
     const bool runExternalModel3DStage = enableModel3D && m_options.targetFormat != TargetEdaFormat::Altium;
     const bool enablePreview = m_options.exportPreviewImages;
     const bool enableDatasheet = m_options.exportDatasheet;

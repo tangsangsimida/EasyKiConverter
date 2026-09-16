@@ -4,6 +4,8 @@
 #include "services/export/ParallelExportService.h"
 #include "utils/PathSecurity.h"
 
+#include <QDebug>
+
 namespace EasyKiConverter {
 
 static int model3DFormatFromString(const QString& format) {
@@ -83,6 +85,10 @@ ExportOptions CliContext::createExportOptions() const {
         (options.exportModel3DFormat & ExportOptions::MODEL_3D_FORMAT_WRL)) {
         // Altium PcbLib 仅可靠嵌入 STEP；CLI 即使收到 wrl/both 也自动收敛到 STEP。
         options.exportModel3DFormat = ExportOptions::MODEL_3D_FORMAT_STEP;
+    }
+    if (options.targetFormat == TargetEdaFormat::Xpedition && options.exportModel3D) {
+        qWarning() << "Xpedition 目标当前不支持 3D 模型关联，已忽略 --3d-model";
+        options.exportModel3D = false;
     }
 
     return options;

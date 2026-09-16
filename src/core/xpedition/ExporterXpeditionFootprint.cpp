@@ -152,11 +152,11 @@ QByteArray ExporterXpeditionFootprint::padstackFile(const IR::FootprintComponent
         output += QStringLiteral("...TECHNOLOGY_OPTIONS NONE\n...TOP_PAD \"%1\"\n...BOTTOM_PAD \"%1\"\n").arg(baseName);
         if (pad.isThroughHole()) {
             const QString holeName = QStringLiteral("HOLE_%1").arg(fmt(toTh(pad.holeSize)));
+            output += QStringLiteral("...INTERNAL_PAD \"%1\"\n...HOLE_NAME \"%2\"\n").arg(baseName, holeName);
             output += QStringLiteral(".Hole \"%1\"\n..POSITIVE_TOLERANCE 0\n..NEGATIVE_TOLERANCE 0\n").arg(holeName);
             output += QStringLiteral("..HOLE_OPTIONS %1 DRILLED USER_GENERATED_NAME\n..ROUND\n...DIAMETER %2\n")
                           .arg(pad.isPlated ? QStringLiteral("PLATED") : QStringLiteral("NON_PLATED"))
                           .arg(fmt(toTh(pad.holeSize)));
-            output += QStringLiteral("...HOLE_NAME \"%1\"\n").arg(holeName);
         }
         writtenStacks.insert(stackName);
     }
@@ -248,6 +248,18 @@ bool ExporterXpeditionFootprint::exportFootprintLibrary(const QList<IR::Footprin
         if (name != baseName)
             m_diagnostics.append(
                 QStringLiteral("Xpedition 封装名称重复，已重命名：%1 -> %2").arg(footprint.name, name));
+        if (!footprint.arcs.isEmpty())
+            m_diagnostics.append(
+                QStringLiteral("Xpedition 封装 %1 未写入 %2 个圆弧").arg(footprint.name).arg(footprint.arcs.size()));
+        if (!footprint.texts.isEmpty())
+            m_diagnostics.append(
+                QStringLiteral("Xpedition 封装 %1 未写入 %2 个文本").arg(footprint.name).arg(footprint.texts.size()));
+        if (!footprint.regions.isEmpty())
+            m_diagnostics.append(
+                QStringLiteral("Xpedition 封装 %1 未写入 %2 个区域").arg(footprint.name).arg(footprint.regions.size()));
+        if (!footprint.holes.isEmpty())
+            m_diagnostics.append(
+                QStringLiteral("Xpedition 封装 %1 未写入 %2 个独立孔").arg(footprint.name).arg(footprint.holes.size()));
         usedNames.insert(name);
         if (!archive.addFile(name + QStringLiteral("_Pads.hkp"), padstackFile(footprint)) ||
             !archive.addFile(name + QStringLiteral("_Cell.hkp"), cellFile(footprint))) {

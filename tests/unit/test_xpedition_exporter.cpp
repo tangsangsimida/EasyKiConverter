@@ -72,6 +72,49 @@ private slots:
         QVERIFY(data.contains(".PADSTACK"));
         QVERIFY(data.contains("..PIN \"1\""));
     }
+
+    void throughHolePadUsesReferencedHoleDefinition() {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        IR::FootprintComponentIR footprint;
+        footprint.name = QStringLiteral("TH_FOOTPRINT");
+        IR::FootprintPadIR pad;
+        pad.number = QStringLiteral("1");
+        pad.size = QSizeF(2.0, 2.0);
+        pad.holeSize = 1.0;
+        pad.padType = IR::PadType::ThroughHole;
+        pad.shape = IR::PadShape::Ellipse;
+        footprint.pads.append(pad);
+
+        const QString outputPath = tempDir.filePath(QStringLiteral("through-hole.zip"));
+        ExporterXpeditionFootprint exporter;
+        QVERIFY(exporter.exportFootprintLibrary({footprint}, QStringLiteral("Library"), outputPath));
+
+        QFile output(outputPath);
+        QVERIFY(output.open(QIODevice::ReadOnly));
+        const QByteArray data = output.readAll();
+        QVERIFY(data.contains("...HOLE_NAME \"HOLE_39.3701\""));
+        QVERIFY(data.contains(".Hole \"HOLE_39.3701\""));
+    }
+
+    void unsupportedFootprintElementsAreReported() {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        IR::FootprintComponentIR footprint;
+        footprint.name = QStringLiteral("DIAGNOSTIC_FOOTPRINT");
+        footprint.texts.append(IR::FootprintTextIR{});
+        footprint.arcs.append(IR::FootprintArcIR{});
+        footprint.regions.append(IR::FootprintRegionIR{});
+        footprint.holes.append(IR::FootprintHoleIR{});
+
+        const QString outputPath = tempDir.filePath(QStringLiteral("diagnostics.zip"));
+        ExporterXpeditionFootprint exporter;
+        QVERIFY(exporter.exportFootprintLibrary({footprint}, QStringLiteral("Library"), outputPath));
+        const QStringList diagnostics = exporter.diagnostics();
+        QVERIFY(diagnostics.join(QStringLiteral("\n")).contains(QStringLiteral("未写入")));
+    }
 };
 
 QTEST_GUILESS_MAIN(TestXpeditionExporter)

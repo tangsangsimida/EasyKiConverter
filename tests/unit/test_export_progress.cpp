@@ -45,6 +45,24 @@ private slots:
         QVERIFY(!options.needsEmbeddedModel3DStep());
     }
 
+    void model3DIsNotRequestedWhenDisabled() {
+        ExportOptions options;
+        options.targetFormat = TargetEdaFormat::KiCad;
+        options.exportModel3D = false;
+        options.exportModel3DFormat = ExportOptions::MODEL_3D_FORMAT_STEP;
+
+        QVERIFY(!options.needsEmbeddedModel3DStep());
+    }
+
+    void xpeditionDoesNotRequestEmbeddedModel3D() {
+        ExportOptions options;
+        options.targetFormat = TargetEdaFormat::Xpedition;
+        options.exportModel3D = true;
+        options.exportModel3DFormat = ExportOptions::MODEL_3D_FORMAT_BOTH;
+
+        QVERIFY(!options.needsEmbeddedModel3DStep());
+    }
+
     void exportOptionsNormalizePathMode_data() {
         QTest::addColumn<int>("input");
         QTest::addColumn<int>("expected");

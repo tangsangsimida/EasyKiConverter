@@ -160,6 +160,11 @@ bool ExporterXpeditionSymbol::exportSymbolLibrary(const QList<IR::SymbolComponen
             continue;
         }
         const int partCount = qMax(1, symbol.partCount);
+        if (!symbol.ellipses.isEmpty() || !symbol.pies.isEmpty() || !symbol.ellipticalArcs.isEmpty() ||
+            !symbol.paths.isEmpty() || !symbol.beziers.isEmpty() || !symbol.ieeeSymbols.isEmpty() ||
+            !symbol.texts.isEmpty() || !symbol.textFrames.isEmpty() || !symbol.images.isEmpty()) {
+            m_diagnostics.append(QStringLiteral("Xpedition 符号 %1 包含当前未写入的 IR 图元").arg(symbol.name));
+        }
         for (int partIndex = 0; partIndex < partCount; ++partIndex) {
             if (!archive.addFile(symbolFileName(symbol, partIndex), symbolFile(symbol, partIndex))) {
                 m_diagnostics.append(QStringLiteral("Xpedition 符号文件名重复：%1").arg(symbol.name));

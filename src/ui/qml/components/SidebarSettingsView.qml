@@ -159,11 +159,23 @@ Item {
                 SidebarToggleRow {
                     id: model3dToggle
                     label: qsTranslate("MainWindow", "3D 模型")
+                    property bool isXpeditionTarget: root.exportTargetModel && root.exportTargetModel.currentIndex === 2
                     checked: root.exportSettingsController ? root.exportSettingsController.exportModel3D : false
+                    enabled: !isXpeditionTarget
                     onToggled: val => {
                         if (root.exportSettingsController)
                             root.exportSettingsController.setExportModel3D(val);
                     }
+                }
+
+                Text {
+                    visible: model3dToggle.isXpeditionTarget
+                    Layout.fillWidth: true
+                    Layout.leftMargin: AppStyle.spacing.lg
+                    text: qsTranslate("MainWindow", "Xpedition 当前不支持 3D 模型关联")
+                    color: AppStyle.colors.textSecondary
+                    font.pixelSize: AppStyle.fontSizes.xs
+                    wrapMode: Text.WordWrap
                 }
 
                 // 子选项区域（高度动画 + clip）

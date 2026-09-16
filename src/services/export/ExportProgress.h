@@ -57,6 +57,8 @@ struct ExportOptions {
      * 为 Altium 获取并嵌入 STEP。
      */
     constexpr bool needsEmbeddedModel3DStep() const {
+        if (!exportModel3D || targetFormat == TargetEdaFormat::Xpedition)
+            return false;
         return needsModel3DStep() || (targetFormat == TargetEdaFormat::Altium && exportModel3D);
     }
 
