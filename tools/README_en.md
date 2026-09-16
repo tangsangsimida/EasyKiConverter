@@ -20,6 +20,7 @@ tools/
     ├── manage_version.py         # Version management tool
     ├── manage_translations.py    # Translation file management tool
     ├── format_code.py            # Code formatter
+    ├── check_comment_rate.py     # C++ comment coverage and policy checker
     ├── count_lines.py            # Code line counter
     ├── analyze_lines.py          # Code complexity analyzer
     ├── build_docs.py             # Documentation builder
@@ -243,6 +244,22 @@ File encoding converter, converting files to UTF-8 encoding (without BOM).
 # Convert entire src directory
 python tools/python/convert_to_utf8.py src/
 ```
+
+### [check_comment_rate.py](../python/check_comment_rate.py)
+
+Checks C++ logical-unit comment coverage and can reject external-project references in source comments.
+
+**Quick usage:**
+```bash
+# Check selected files with a 90% minimum coverage
+python tools/python/check_comment_rate.py --threshold 90 src/core/utils/GeometryUtils.cpp
+
+# Also enforce the source-comment reference policy
+python tools/python/check_comment_rate.py --threshold 100 --forbid-external-references \
+  $(git diff --name-only master...HEAD -- '*.cpp' '*.h')
+```
+
+The tool only inspects source comments and never modifies files. External project names and phrases such as “reference implementation” are reported as policy violations.
 
 ### [fix_qml_translations.py](../python/fix_qml_translations.py)
 

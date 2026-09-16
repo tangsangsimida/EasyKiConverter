@@ -27,6 +27,7 @@ tools/
     ├── manage_version.py         # 版本号管理工具
     ├── manage_translations.py    # 翻译文件管理工具
     ├── format_code.py            # 代码格式化工具
+    ├── check_comment_rate.py     # C++ 注释率与注释策略检查工具
     ├── count_lines.py            # 代码行数统计工具
     ├── analyze_lines.py          # 代码复杂度分析工具
     ├── build_docs.py             # 文档构建工具
@@ -215,6 +216,22 @@ python tools/python/check_env.py
 # 转换整个 src 目录
 python tools/python/convert_to_utf8.py src/
 ```
+
+### [check_comment_rate.py](file:///C:/Users/48813/Desktop/workspace/github_projects/EasyKiConverter_QT/tools/python/check_comment_rate.py)
+
+检查 C++ 逻辑代码的注释覆盖率，并可拒绝源码注释中的外部项目引用。
+
+**快速用法:**
+```bash
+# 检查指定文件，注释率不得低于 90%
+python tools/python/check_comment_rate.py --threshold 90 src/core/utils/GeometryUtils.cpp
+
+# 同时检查外部项目引用注释
+python tools/python/check_comment_rate.py --threshold 100 --forbid-external-references \
+  $(git diff --name-only master...HEAD -- '*.cpp' '*.h')
+```
+
+该工具只检查源码注释文本，不会修改源文件；外部项目名称和“参考实现”等表达会被报告为策略违规。
 
 ### [fix_qml_translations.py](file:///C:/Users/48813/Desktop/workspace/github_projects/EasyKiConverter_QT/tools/python/fix_qml_translations.py)
 
