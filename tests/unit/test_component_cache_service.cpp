@@ -145,6 +145,28 @@ private slots:
         QCOMPARE(cacheSizeSpy.last().at(0).toLongLong(), m_cache->getCacheSize());
     }
 
+    // 验证升级前的小写缓存目录仍可读取并通过规范化编号删除。
+    void testLegacyLowercaseComponentCacheRemainsAccessible() {
+        const QString componentId = QStringLiteral("C54329");
+        const QString legacyDir = m_tempDir.filePath(QStringLiteral("c54329"));
+        QVERIFY(QDir().mkpath(legacyDir));
+
+        QJsonObject metadata;
+        metadata.insert(QStringLiteral("lcscId"), componentId);
+        metadata.insert(QStringLiteral("name"), QStringLiteral("Legacy component"));
+        QFile metadataFile(QDir(legacyDir).filePath(QStringLiteral("component.json")));
+        QVERIFY(metadataFile.open(QIODevice::WriteOnly));
+        QVERIFY(metadataFile.write(QJsonDocument(metadata).toJson(QJsonDocument::Compact)) > 0);
+        metadataFile.close();
+
+        const QSharedPointer<ComponentData> loaded = m_cache->loadComponentData(componentId);
+        QVERIFY(loaded != nullptr);
+        QCOMPARE(loaded->name(), QStringLiteral("Legacy component"));
+
+        m_cache->removeCache(componentId);
+        QVERIFY(!QFileInfo::exists(legacyDir));
+    }
+
     // 验证数据手册下载不会直接返回格式无效的磁盘缓存。
     void testDownloadDatasheetRemovesInvalidCachedData() {
         const QString componentId = QStringLiteral("C54325");

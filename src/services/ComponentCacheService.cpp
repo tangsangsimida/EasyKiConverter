@@ -311,7 +311,19 @@ QString ComponentCacheService::componentCacheDir(const QString& lcscId) const {
     }
     const QString normalizedId = lcscId.toUpper();
     QMutexLocker locker(&m_cacheDirMutex);
-    return QDir::cleanPath(m_cacheDir + "/" + normalizedId);
+    const QString normalizedPath = QDir::cleanPath(m_cacheDir + "/" + normalizedId);
+    if (QFileInfo::exists(normalizedPath)) {
+        return normalizedPath;
+    }
+
+    // 兼容规范化前已经创建的大小写目录，避免升级后旧缓存失去可见性。
+    const QDir rootDir(m_cacheDir);
+    for (const QString& entry : rootDir.entryList(QDir::Dirs | QDir::NoDotAndDotDot)) {
+        if (entry.compare(normalizedId, Qt::CaseInsensitive) == 0) {
+            return QDir::cleanPath(rootDir.absoluteFilePath(entry));
+        }
+    }
+    return normalizedPath;
 }
 
 // 确保指定元器件的缓存目录存在。
