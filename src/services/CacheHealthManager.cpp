@@ -16,22 +16,27 @@
 namespace EasyKiConverter {
 
 namespace {
+// 生成指定元件的缓存目录路径。
 QString _componentCacheDir(const QString& cacheRoot, const QString& lcscId) {
     return cacheRoot + "/" + lcscId;
 }
 
+// 生成元件元数据文件路径。
 QString _metadataPath(const QString& cacheRoot, const QString& lcscId) {
     return _componentCacheDir(cacheRoot, lcscId) + "/component.json";
 }
 
+// 生成遗留数据手册文件路径。
 QString _datasheetPath(const QString& cacheRoot, const QString& lcscId) {
     return _componentCacheDir(cacheRoot, lcscId) + "/datasheet";
 }
 
+// 生成指定序号的预览图缓存路径。
 QString _previewImagePath(const QString& cacheRoot, const QString& lcscId, int index) {
     return _componentCacheDir(cacheRoot, lcscId) + "/preview_" + QString::number(index) + ".jpg";
 }
 
+// 根据数据手册格式生成当前缓存文件路径。
 QString _resolveDatasheetPath(const QString& cacheRoot,
                               const QString& lcscId,
                               const QString& format,
@@ -40,6 +45,7 @@ QString _resolveDatasheetPath(const QString& cacheRoot,
     return _componentCacheDir(cacheRoot, lcscId) + "/datasheet." + ext;
 }
 
+// 从指定文件读取并解析元数据 JSON 对象。
 QJsonObject _loadMetadataFromPath(const QString& metaPath) {
     QFile metaFile(metaPath);
     if (!metaFile.open(QIODevice::ReadOnly)) {
@@ -55,6 +61,7 @@ QJsonObject _loadMetadataFromPath(const QString& metaPath) {
     return doc.object();
 }
 
+// 将元数据 JSON 以紧凑格式写入指定文件。
 bool _saveMetadataToPath(const QString& metaPath, const QJsonObject& metadata) {
     QFile metaFile(metaPath);
     if (!metaFile.open(QIODevice::WriteOnly)) {
@@ -66,6 +73,7 @@ bool _saveMetadataToPath(const QString& metaPath, const QJsonObject& metadata) {
     return written > 0;
 }
 
+// 校验缓存中三维模型标识及变换字段是否可解析。
 bool _hasValidModel3DMetadata(const QJsonObject& metadata) {
     if (!metadata.contains(QStringLiteral("model3duuid")))
         return true;
@@ -88,8 +96,10 @@ bool _hasValidModel3DMetadata(const QJsonObject& metadata) {
 }
 }  // namespace
 
+// 保存缓存根目录，供后续自愈操作解析各类缓存路径。
 CacheHealthManager::CacheHealthManager(const QString& cacheRoot) : m_cacheRoot(cacheRoot) {}
 
+// 扫描全部元件和三维模型缓存，并修复或移除无效条目。
 int CacheHealthManager::healAll() {
     QDir rootDir(m_cacheRoot);
     if (!rootDir.exists()) {
@@ -123,34 +133,42 @@ int CacheHealthManager::healAll() {
     return repairedComponents;
 }
 
+// 返回指定元件的缓存目录路径。
 QString CacheHealthManager::componentCacheDir(const QString& lcscId) const {
     return _componentCacheDir(m_cacheRoot, lcscId);
 }
 
+// 返回指定元件的元数据文件路径。
 QString CacheHealthManager::metadataPath(const QString& lcscId) const {
     return _metadataPath(m_cacheRoot, lcscId);
 }
 
+// 返回指定元件的遗留数据手册路径。
 QString CacheHealthManager::datasheetPath(const QString& lcscId) const {
     return _datasheetPath(m_cacheRoot, lcscId);
 }
 
+// 返回指定序号的预览图缓存路径。
 QString CacheHealthManager::previewImagePath(const QString& lcscId, int index) const {
     return _previewImagePath(m_cacheRoot, lcscId, index);
 }
 
+// 根据数据手册格式返回当前缓存路径。
 QString CacheHealthManager::resolveDatasheetPath(const QString& lcscId, const QString& format, bool migrate) const {
     return _resolveDatasheetPath(m_cacheRoot, lcscId, format, migrate);
 }
 
+// 读取指定元件的缓存元数据。
 QJsonObject CacheHealthManager::loadMetadata(const QString& lcscId) const {
     return _loadMetadataFromPath(metadataPath(lcscId));
 }
 
+// 保存指定元件的缓存元数据。
 bool CacheHealthManager::saveMetadata(const QString& lcscId, const QJsonObject& metadata) {
     return _saveMetadataToPath(metadataPath(lcscId), metadata);
 }
 
+// 检查并修复单个元件缓存目录及其关联文件。
 bool CacheHealthManager::repairComponentCache(const QString& lcscId) {
     const QString dirPath = componentCacheDir(lcscId);
     QDir componentDir(dirPath);
@@ -283,6 +301,7 @@ bool CacheHealthManager::repairComponentCache(const QString& lcscId) {
     return true;
 }
 
+// 清理无效、空文件和临时文件形式的三维模型缓存。
 void CacheHealthManager::repairModel3DCache() {
     const QString modelCacheDir = m_cacheRoot + "/model3d";
     QDir dir(modelCacheDir);
