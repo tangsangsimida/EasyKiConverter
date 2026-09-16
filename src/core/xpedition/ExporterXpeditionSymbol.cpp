@@ -86,6 +86,64 @@ void appendPolyline(QString& output, const QList<QPointF>& points) {
 }
 
 /**
+ * @brief 计算一个符号部件的几何包围盒。
+ * @param symbol 符号统一表示。
+ * @param partIndex 当前部件索引。
+ * @return 包含引脚和已支持图元的包围盒，单位为毫米。
+ */
+QRectF symbolBounds(const IR::SymbolComponentIR& symbol, int partIndex) {
+    QRectF bounds;
+    bool initialized = false;
+    const auto addPoint = [&](const QPointF& point) {
+        if (!initialized) {
+            bounds = QRectF(point, QSizeF(0.0, 0.0));
+            initialized = true;
+            return;
+        }
+        bounds.setLeft(qMin(bounds.left(), point.x()));
+        bounds.setTop(qMin(bounds.top(), point.y()));
+        bounds.setRight(qMax(bounds.right(), point.x()));
+        bounds.setBottom(qMax(bounds.bottom(), point.y()));
+    };
+    for (const IR::SymbolPinIR& pin : symbol.pins) {
+        if (pin.partIndex != partIndex && !pin.commonToAllParts)
+            continue;
+        addPoint(pin.position);
+        addPoint(pin.position - directionVector(pin.direction) * pin.length);
+    }
+    for (const IR::SymbolRectangleIR& rect : symbol.rectangles) {
+        if (rect.partIndex != partIndex)
+            continue;
+        addPoint(QPointF(rect.x0, rect.y0));
+        addPoint(QPointF(rect.x1, rect.y1));
+    }
+    const auto addPointList = [&](const QList<QPointF>& points, int elementPartIndex) {
+        if (elementPartIndex != partIndex)
+            return;
+        for (const QPointF& point : points)
+            addPoint(point);
+    };
+    for (const IR::SymbolPolylineIR& polyline : symbol.polylines)
+        addPointList(polyline.points, polyline.partIndex);
+    for (const IR::SymbolPolygonIR& polygon : symbol.polygons)
+        addPointList(polygon.points, polygon.partIndex);
+    for (const IR::SymbolCircleIR& circle : symbol.circles) {
+        if (circle.partIndex != partIndex)
+            continue;
+        addPoint(circle.center - QPointF(circle.radius, circle.radius));
+        addPoint(circle.center + QPointF(circle.radius, circle.radius));
+    }
+    for (const IR::SymbolArcIR& arc : symbol.arcs) {
+        if (arc.partIndex != partIndex)
+            continue;
+        addPoint(arc.startPoint);
+        addPoint(arc.midPoint);
+        addPoint(arc.endPoint);
+    }
+    return initialized ? bounds.normalized() : QRectF(-1.0, -1.0, 2.0, 2.0);
+}
+
+/**
  * @brief 写入一个符号引脚及可选的名称、编号文本。
  * @param output 输出缓冲区。
  * @param pin 统一表示中的引脚。
@@ -152,6 +210,12 @@ QByteArray ExporterXpeditionSymbol::symbolFile(const IR::SymbolComponentIR& symb
     body += QStringLiteral("U 0 0 10 0 5 0 %1\n").arg(safeName(symbol.name));
     body += QStringLiteral("U 0 0 5 0 5 0 REFDES=%1\n").arg(symbol.designatorPrefix);
     body += QStringLiteral("U 0 0 5 0 5 0 VALUE=%1\n").arg(symbol.name);
+    const QRectF bounds = symbolBounds(symbol, partIndex);
+    body += QStringLiteral("b %1 %2 %3 %4\n")
+                .arg(fmt(toTh(bounds.left())))
+                .arg(fmt(toTh(bounds.top())))
+                .arg(fmt(toTh(bounds.right())))
+                .arg(fmt(toTh(bounds.bottom())));
 
     int pinIndex = 1;
     for (const IR::SymbolPinIR& pin : symbol.pins) {

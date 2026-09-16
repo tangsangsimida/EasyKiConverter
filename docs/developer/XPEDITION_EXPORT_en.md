@@ -6,7 +6,7 @@ This document describes the current Xpedition ASCII library export implemented t
 
 | Capability | Status | Notes |
 | --- | --- | --- |
-| Symbol export | Implemented | Generates Xpedition ASCII symbol text for pins, electrical types, rectangles, polylines, polygons, circles, and three-point arcs |
+| Symbol export | Implemented | Generates Xpedition ASCII symbol text for pins, electrical types, body bounds, rectangles, polylines, polygons, circles, and three-point arcs |
 | Footprint export | Implemented | Generates Padstack and Cell HKP text for pad solder paste/mask layers, outlines, graphics, text, regions, and standalone holes |
 | Multi-part symbols | Implemented | Writes one symbol entry per part |
 | ZIP packaging | Implemented | Produces separate uncompressed ZIP packages for symbols and footprints |

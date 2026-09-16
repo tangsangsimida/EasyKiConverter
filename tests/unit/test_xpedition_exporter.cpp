@@ -47,6 +47,7 @@ private slots:
         QVERIFY(data.contains("P 1"));
         QVERIFY(data.contains("l 2"));
         QVERIFY(data.contains("PINTYPE=IN"));
+        QVERIFY(data.contains("b -100.0000 -50.0000 100.0000 50.0000"));
     }
 
     // 验证封装库同时写出 Padstack 与 Cell 两类目标文件。
