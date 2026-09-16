@@ -147,9 +147,12 @@ QString escapedText(QString text) {
 /**
  * @brief 根据钻孔直径生成共享的钻孔定义名称。
  * @param diameterMm 钻孔直径，单位为毫米。
+ * @param slotLengthMm 槽孔总长度，单位为毫米；不大于孔径时按圆孔处理。
  * @return 稳定的 Hole 名称。
  */
-QString holeName(double diameterMm) {
+QString holeName(double diameterMm, double slotLengthMm = 0.0) {
+    if (slotLengthMm > diameterMm)
+        return QStringLiteral("HOLE_%1x%2").arg(fmt(toTh(diameterMm))).arg(fmt(toTh(slotLengthMm)));
     return QStringLiteral("HOLE_%1").arg(fmt(toTh(diameterMm)));
 }
 
@@ -332,12 +335,19 @@ QByteArray ExporterXpeditionFootprint::padstackFile(const IR::FootprintComponent
             output += QStringLiteral("...TOP_SOLDERPASTE_PAD \"%1\"\n...BOTTOM_SOLDERPASTE_PAD \"%1\"\n").arg(baseName);
         if (pad.isThroughHole()) {
             // 通孔焊盘需要独立的 Hole 定义，孔径以实际直径参与命名和写入。
-            const QString drillName = holeName(pad.holeSize);
+            const QString drillName = holeName(pad.holeSize, pad.holeLength);
             output += QStringLiteral("...INTERNAL_PAD \"%1\"\n...HOLE_NAME \"%2\"\n").arg(baseName, drillName);
             output += QStringLiteral(".Hole \"%1\"\n..POSITIVE_TOLERANCE 0\n..NEGATIVE_TOLERANCE 0\n").arg(drillName);
-            output += QStringLiteral("..HOLE_OPTIONS %1 DRILLED USER_GENERATED_NAME\n..ROUND\n...DIAMETER %2\n")
-                          .arg(pad.isPlated ? QStringLiteral("PLATED") : QStringLiteral("NON_PLATED"))
-                          .arg(fmt(toTh(pad.holeSize)));
+            output += QStringLiteral("..HOLE_OPTIONS %1 DRILLED USER_GENERATED_NAME\n")
+                          .arg(pad.isPlated ? QStringLiteral("PLATED") : QStringLiteral("NON_PLATED"));
+            if (pad.holeLength > pad.holeSize) {
+                // 槽孔长度和孔径分别写入目标格式的宽高字段，方向由 Cell 引脚旋转控制。
+                output += QStringLiteral("..SLOT\n...WIDTH %1\n...HEIGHT %2\n")
+                              .arg(fmt(toTh(pad.holeLength)))
+                              .arg(fmt(toTh(pad.holeSize)));
+            } else {
+                output += QStringLiteral("..ROUND\n...DIAMETER %1\n").arg(fmt(toTh(pad.holeSize)));
+            }
         }
         writtenStacks.insert(stackName);
     }

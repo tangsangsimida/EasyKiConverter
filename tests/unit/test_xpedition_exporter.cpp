@@ -159,6 +159,35 @@ private slots:
         QVERIFY(data.contains(".Hole \"HOLE_39.3701\""));
     }
 
+    // 验证槽孔会写出独立的宽高定义，而不是退化为圆孔。
+    void slottedThroughHoleUsesSlotDefinition() {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        IR::FootprintComponentIR footprint;
+        footprint.name = QStringLiteral("SLOTTED_HOLE");
+        IR::FootprintPadIR pad;
+        pad.number = QStringLiteral("1");
+        pad.size = QSizeF(3.0, 3.0);
+        pad.holeSize = 1.0;
+        pad.holeLength = 2.0;
+        pad.padType = IR::PadType::ThroughHole;
+        footprint.pads.append(pad);
+
+        const QString outputPath = tempDir.filePath(QStringLiteral("slotted-hole.zip"));
+        ExporterXpeditionFootprint exporter;
+        QVERIFY(exporter.exportFootprintLibrary({footprint}, QStringLiteral("Library"), outputPath));
+
+        QFile output(outputPath);
+        QVERIFY(output.open(QIODevice::ReadOnly));
+        const QByteArray data = output.readAll();
+        QVERIFY(data.contains("SLOTTED_HOLE_Pads.hkp"));
+        QVERIFY(data.contains("SLOTTED_HOLE_Cell.hkp"));
+        QVERIFY(data.contains("PADSTACK \"PAD_RECTANGLE_118.1102x118.1102_H39.3701_L78.7402_TH\""));
+        QVERIFY(data.contains("..HOLE_NAME \"HOLE_39.3701x78.7402\""));
+        QVERIFY(data.contains("..SLOT\n...WIDTH 78.7402\n...HEIGHT 39.3701"));
+    }
+
     // 验证圆弧、文本、填充区域和独立孔都能写入，并且诊断信息说明转换策略。
     void unsupportedFootprintElementsAreReported() {
         QTemporaryDir tempDir;
