@@ -1,5 +1,7 @@
 #include "services/ComponentCacheService.h"
 
+#include <QBuffer>
+#include <QImage>
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QTemporaryDir>
@@ -68,6 +70,14 @@ private slots:
         QSharedPointer<ComponentData> loadedData = m_cache->loadComponentData(componentId);
         QVERIFY(loadedData != nullptr);
         QCOMPARE(loadedData->previewImages().value(0), QStringLiteral("https://image.lceda.cn/components/c.jpg"));
+    }
+
+    // 验证错误页和非图片字节不会进入预览图缓存。
+    void testInvalidPreviewImageDataIsRejected() {
+        const QString componentId = QStringLiteral("C54322");
+        m_cache->savePreviewImage(componentId, QByteArrayLiteral("<html>403</html>"), 0);
+        QVERIFY(m_cache->loadPreviewImage(componentId, 0).isEmpty());
+        QVERIFY(!QFileInfo::exists(m_cache->previewImagePath(componentId, 0)));
     }
 
     // 验证仅由封装数据携带的 3D 模型也能完整写入并恢复缓存元数据。
@@ -205,7 +215,13 @@ private slots:
         data.setName(QStringLiteral("Migrated Component"));
 
         m_cache->saveComponentMetadata(componentId, data);
-        m_cache->savePreviewImage(componentId, QByteArray("preview-data"), 0);
+        QImage image(2, 2, QImage::Format_RGB32);
+        image.fill(Qt::white);
+        QBuffer imageBuffer;
+        QVERIFY(imageBuffer.open(QIODevice::WriteOnly));
+        QVERIFY(image.save(&imageBuffer, "PNG"));
+        const QByteArray previewData = imageBuffer.data();
+        m_cache->savePreviewImage(componentId, previewData, 0);
 
         QTemporaryDir newCacheDir;
         QVERIFY(newCacheDir.isValid());
@@ -215,7 +231,7 @@ private slots:
         QSharedPointer<ComponentData> loadedData = m_cache->loadComponentData(componentId);
         QVERIFY(loadedData != nullptr);
         QCOMPARE(loadedData->name(), QStringLiteral("Migrated Component"));
-        QCOMPARE(m_cache->loadPreviewImage(componentId, 0), QByteArray("preview-data"));
+        QCOMPARE(m_cache->loadPreviewImage(componentId, 0), previewData);
     }
 
     // 验证缓存枚举和磁盘大小统计在目录迁移前后保持一致。

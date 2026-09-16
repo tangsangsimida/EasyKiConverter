@@ -262,6 +262,13 @@ public:
     QByteArray loadPreviewImage(const QString& lcscId, int imageIndex) const;
 
     /**
+     * @brief 检查预览图字节是否可以被 Qt 解码
+     * @param imageData 预览图原始数据
+     * @return true 表示数据是可解码的图片
+     */
+    static bool isValidPreviewImageData(const QByteArray& imageData);
+
+    /**
      * @brief 保存预览图（直接写磁盘）
      * @param lcscId 元器件ID
      * @param imageData 图片数据

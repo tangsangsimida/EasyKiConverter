@@ -33,6 +33,7 @@ add_test(NAME test_models COMMAND test_models)
 add_executable(test_component_cache_service test_component_cache_service.cpp)
 target_link_libraries(test_component_cache_service PRIVATE
     Qt6::Test
+    Qt6::Gui
     Qt6::Network
     EasyKiConverterLib
 )

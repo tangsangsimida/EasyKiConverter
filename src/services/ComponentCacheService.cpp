@@ -13,6 +13,7 @@
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
+#include <QImage>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -874,17 +875,29 @@ QByteArray ComponentCacheService::loadPreviewImage(const QString& lcscId, int im
     if (file.open(QIODevice::ReadOnly)) {
         QByteArray data = file.readAll();
         file.close();
-        return data;
+        if (isValidPreviewImageData(data)) {
+            return data;
+        }
+        QFile::remove(previewPath);
     }
 
     return QByteArray();
+}
+
+// 使用 Qt 图片解码器拒绝错误页、截断文件和其他非图片缓存内容。
+bool ComponentCacheService::isValidPreviewImageData(const QByteArray& imageData) {
+    if (imageData.isEmpty()) {
+        return false;
+    }
+    QImage image;
+    return image.loadFromData(imageData);
 }
 
 void ComponentCacheService::savePreviewImage(const QString& lcscId,
                                              const QByteArray& imageData,
                                              int imageIndex,
                                              uint64_t expectedGeneration) {
-    if (imageIndex < 0 || imageIndex >= 3 || imageData.isEmpty()) {
+    if (imageIndex < 0 || imageIndex >= 3 || !isValidPreviewImageData(imageData)) {
         return;
     }
 
@@ -936,16 +949,21 @@ QByteArray ComponentCacheService::downloadPreviewImage(const QString& lcscId,
         if (QFileInfo::exists(previewFilePath)) {
             QFile file(previewFilePath);
             if (file.open(QIODevice::ReadOnly)) {
-                LOG_DEBUG(LogModule::Core, "Preview image loaded from disk cache: {}", previewFilePath);
-                if (diag) {
-                    diag->url = imageUrl;
-                    diag->statusCode = 200;
-                    diag->errorString = "";
-                    diag->retryCount = 0;
-                    diag->latencyMs = timer.elapsed();
-                    diag->wasRateLimited = false;
+                const QByteArray data = file.readAll();
+                file.close();
+                if (isValidPreviewImageData(data)) {
+                    LOG_DEBUG(LogModule::Core, "Preview image loaded from disk cache: {}", previewFilePath);
+                    if (diag) {
+                        diag->url = imageUrl;
+                        diag->statusCode = 200;
+                        diag->errorString = "";
+                        diag->retryCount = 0;
+                        diag->latencyMs = timer.elapsed();
+                        diag->wasRateLimited = false;
+                    }
+                    return data;
                 }
-                return file.readAll();
+                QFile::remove(previewFilePath);
             }
         }
     }
@@ -971,6 +989,10 @@ QByteArray ComponentCacheService::downloadPreviewImage(const QString& lcscId,
         errorString = "Cancelled";
     } else if (result.success) {
         data = result.data;
+        if (!isValidPreviewImageData(data)) {
+            data.clear();
+            errorString = QStringLiteral("Invalid preview image data");
+        }
     } else {
         errorString = result.error;
     }

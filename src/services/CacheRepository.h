@@ -43,18 +43,15 @@ public:
             return;
         }
 
-        const QString previewFilePath = cache->previewImagePath(lcscId, imageIndex);
-        if (QFileInfo::exists(previewFilePath)) {
-            QFile file(previewFilePath);
-            if (file.open(QIODevice::ReadOnly)) {
-                ComponentExportStatus::NetworkDiagnostics diag;
-                diag.url = imageUrl;
-                diag.statusCode = 200;
-                diag.retryCount = 0;
-                diag.wasRateLimited = false;
-                onComplete(file.readAll(), diag);
-                return;
-            }
+        const QByteArray cachedImage = cache->loadPreviewImage(lcscId, imageIndex);
+        if (!cachedImage.isEmpty()) {
+            ComponentExportStatus::NetworkDiagnostics diag;
+            diag.url = imageUrl;
+            diag.statusCode = 200;
+            diag.retryCount = 0;
+            diag.wasRateLimited = false;
+            onComplete(cachedImage, diag);
+            return;
         }
 
         const RetryPolicy policy = RetryPolicy::fromProfile(RequestProfiles::previewImage(), weakNetwork);
@@ -74,8 +71,13 @@ public:
                 diag.errorString = QStringLiteral("Cancelled");
                 onComplete(QByteArray(), diag);
             } else if (result.success) {
-                cache->savePreviewImage(lcscId, result.data, imageIndex, gen);
-                onComplete(result.data, diag);
+                if (ComponentCacheService::isValidPreviewImageData(result.data)) {
+                    cache->savePreviewImage(lcscId, result.data, imageIndex, gen);
+                    onComplete(result.data, diag);
+                } else {
+                    diag.errorString = QStringLiteral("Invalid preview image data");
+                    onComplete(QByteArray(), diag);
+                }
             } else {
                 diag.errorString = result.error;
                 onComplete(QByteArray(), diag);
