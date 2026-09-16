@@ -495,6 +495,20 @@ private slots:
         QVERIFY(!QFileInfo::exists(destinationPath));
     }
 
+    // 验证三维缓存命中和复制接口都会拒绝结构无效的模型文件。
+    void testModel3DCacheInterfacesRejectInvalidContent() {
+        const QString uuid = QStringLiteral("invalid-interface-model-13579");
+        m_cache->saveModel3D(uuid, QByteArrayLiteral("not-an-obj"), QStringLiteral("obj"));
+        QVERIFY(!m_cache->hasModel3DCached(uuid, QStringLiteral("obj")));
+
+        m_cache->saveModel3D(uuid, QByteArrayLiteral("not-an-obj"), QStringLiteral("obj"));
+        QTemporaryDir outputDir;
+        QVERIFY(outputDir.isValid());
+        const QString destinationPath = QDir(outputDir.path()).filePath(QStringLiteral("model.obj"));
+        QVERIFY(!m_cache->copyModel3DToFile(uuid, QStringLiteral("obj"), destinationPath));
+        QVERIFY(!QFileInfo::exists(destinationPath));
+    }
+
     // 验证权威 CAD 元数据移除模型后会清理旧三维关联。
     void testAuthoritativeCadMetadataClearsRemovedModel3D() {
         const QString componentId = QStringLiteral("C24681");

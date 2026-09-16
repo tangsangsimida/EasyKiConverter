@@ -70,6 +70,18 @@ bool hasValidModel3DMetadata(const QJsonObject& metadata) {
     return validateVector(QStringLiteral("model3dTranslation")) && validateVector(QStringLiteral("model3dRotation"));
 }
 
+// 按文件扩展名校验公共三维模型缓存内容。
+bool isUsableModel3DCacheData(const QByteArray& data, const QString& extension) {
+    const QString normalizedExtension = extension.toLower();
+    if (normalizedExtension == QStringLiteral("obj"))
+        return Exporter3DModel::hasUsableObjGeometry(data);
+    if (normalizedExtension == QStringLiteral("wrl"))
+        return Exporter3DModel::hasUsableWrlGeometry(data);
+    if (normalizedExtension == QStringLiteral("step"))
+        return Exporter3DModel::hasUsableStepData(data);
+    return !data.isEmpty();
+}
+
 /**
  * @brief 从指定路径读取元器件元数据。
  * @param metadataPath 元数据文件路径。
@@ -1211,10 +1223,17 @@ bool ComponentCacheService::hasModel3DCached(const QString& uuid, const QString&
     // 与目录迁移和模型写入串行化，避免检查到迁移中的文件。
     QMutexLocker diskLocker(&m_diskWriteMutex);
     QMutexLocker locker(&m_mutex);
-    QString path = model3DPath(uuid, extension);
-    QFileInfo fileInfo(path);
-    // 空文件视为未缓存（防止损坏文件被误判）
-    return fileInfo.exists() && fileInfo.size() > 0;
+    const QString path = model3DPath(uuid, extension);
+    QFile file(path);
+    if (!file.open(QIODevice::ReadOnly))
+        return false;
+    const QByteArray data = file.readAll();
+    file.close();
+    if (!isUsableModel3DCacheData(data, extension)) {
+        QFile::remove(path);
+        return false;
+    }
+    return true;
 }
 
 // 从公共三维模型缓存读取指定格式的数据。
@@ -1232,16 +1251,7 @@ QByteArray ComponentCacheService::loadModel3D(const QString& uuid, const QString
     if (file.open(QIODevice::ReadOnly)) {
         QByteArray data = file.readAll();
         file.close();
-        const QString normalizedExtension = extension.toLower();
-        bool valid = true;
-        if (normalizedExtension == QStringLiteral("obj")) {
-            valid = Exporter3DModel::hasUsableObjGeometry(data);
-        } else if (normalizedExtension == QStringLiteral("wrl")) {
-            valid = Exporter3DModel::hasUsableWrlGeometry(data);
-        } else if (normalizedExtension == QStringLiteral("step")) {
-            valid = Exporter3DModel::hasUsableStepData(data);
-        }
-        if (!valid) {
+        if (!isUsableModel3DCacheData(data, extension)) {
             QFile::remove(path);
             return QByteArray();
         }
@@ -1295,6 +1305,16 @@ bool ComponentCacheService::copyModel3DToFile(const QString& uuid,
     const QFileInfo sourceInfo(sourcePath);
     if (!sourceInfo.exists() || !sourceInfo.isFile() || sourceInfo.size() <= 0) {
         LOG_WARN(LogModule::Core, "copyModel3DToFile: Source file does not exist: {}", sourcePath);
+        return false;
+    }
+    QFile sourceFile(sourcePath);
+    if (!sourceFile.open(QIODevice::ReadOnly)) {
+        return false;
+    }
+    const QByteArray sourceData = sourceFile.readAll();
+    sourceFile.close();
+    if (!isUsableModel3DCacheData(sourceData, extension)) {
+        QFile::remove(sourcePath);
         return false;
     }
 
