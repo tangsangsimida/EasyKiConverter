@@ -293,6 +293,11 @@ private slots:
         QVERIFY(datasheetFile.write(QByteArrayLiteral("not-a-pdf")) > 0);
         datasheetFile.close();
 
+        QFile cadFile(QDir(componentDir).filePath(QStringLiteral("cad_data.json")));
+        QVERIFY(cadFile.open(QIODevice::WriteOnly));
+        QVERIFY(cadFile.write(QByteArrayLiteral("{\"cad\":}")) > 0);
+        cadFile.close();
+
         const QString invalidModelPath = m_tempDir.filePath(QStringLiteral("model3d/health-invalid-model.obj"));
         QFile invalidModelFile(invalidModelPath);
         QVERIFY(QDir().mkpath(QFileInfo(invalidModelPath).absolutePath()));
@@ -305,6 +310,7 @@ private slots:
 
         QVERIFY(!QFileInfo::exists(previewFile.fileName()));
         QVERIFY(!QFileInfo::exists(datasheetFile.fileName()));
+        QVERIFY(!QFileInfo::exists(cadFile.fileName()));
         QVERIFY(m_cache->loadModel3D(modelUuid, QStringLiteral("obj")).isEmpty());
     }
 
