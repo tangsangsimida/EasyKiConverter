@@ -1162,7 +1162,10 @@ void ComponentService::updateComponentDescription(const QString& componentId, co
 
 /** @brief 清理元器件及其预览图缓存。 */
 void ComponentService::clearCache() {
-    m_componentCache.clear();
+    {
+        QMutexLocker locker(&m_componentCacheMutex);
+        m_componentCache.clear();
+    }
 
     // 清空 LCSC 图片服务的缓存
     if (m_imageService) {

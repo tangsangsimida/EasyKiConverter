@@ -112,6 +112,21 @@ private slots:
         QVERIFY(m_cache->loadDatasheet(componentId).isEmpty());
     }
 
+    // 验证清空一级缓存会使清理前捕获的异步写入代次失效。
+    void testClearMemoryCacheInvalidatesPendingGeneration() {
+        const QString componentId = QStringLiteral("C54329");
+        const uint64_t oldGeneration = m_cache->currentGeneration();
+        m_cache->clearMemoryCache();
+        const uint64_t newGeneration = m_cache->currentGeneration();
+
+        QVERIFY(newGeneration > oldGeneration);
+        ComponentData staleData;
+        staleData.setLcscId(componentId);
+        staleData.setName(QStringLiteral("stale"));
+        m_cache->saveComponentMetadata(componentId, staleData, oldGeneration);
+        QVERIFY(m_cache->loadComponentData(componentId) == nullptr);
+    }
+
     // 验证未知数据手册格式不会写入错误的 PDF 缓存路径。
     void testUnsupportedDatasheetFormatIsRejected() {
         const QString componentId = QStringLiteral("C54324");

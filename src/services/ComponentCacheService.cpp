@@ -1498,8 +1498,10 @@ void ComponentCacheService::clearMemoryCacheInternal() {
     m_memoryCache.clear();
 }
 
-// 清空一级内存缓存并解除旧请求屏蔽。
+// 清空一级内存缓存并使清理前创建的异步写入失效。
 void ComponentCacheService::clearMemoryCache() {
+    // 内存缓存清理也会影响正在运行的请求，必须递增代次隔离旧回调。
+    m_cacheGeneration.fetch_add(1);
     {
         QMutexLocker tombLocker(&m_tombstoneMutex);
         m_allTombstoned = false;
