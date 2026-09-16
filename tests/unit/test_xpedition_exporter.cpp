@@ -129,6 +129,36 @@ private slots:
         QVERIFY(data.contains(".Hole \"HOLE_39.3701\""));
     }
 
+    // 验证外形相同但钻孔参数不同的通孔焊盘不会错误复用 Padstack。
+    void throughHolePadsWithDifferentDrillsRemainDistinct() {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        IR::FootprintComponentIR footprint;
+        footprint.name = QStringLiteral("DISTINCT_DRILLS");
+        IR::FootprintPadIR first;
+        first.number = QStringLiteral("1");
+        first.size = QSizeF(2.0, 2.0);
+        first.holeSize = 0.8;
+        first.padType = IR::PadType::ThroughHole;
+        IR::FootprintPadIR second = first;
+        second.number = QStringLiteral("2");
+        second.holeSize = 1.0;
+        footprint.pads = {first, second};
+
+        const QString outputPath = tempDir.filePath(QStringLiteral("distinct-drills.zip"));
+        ExporterXpeditionFootprint exporter;
+        QVERIFY(exporter.exportFootprintLibrary({footprint}, QStringLiteral("Library"), outputPath));
+
+        QFile output(outputPath);
+        QVERIFY(output.open(QIODevice::ReadOnly));
+        const QByteArray data = output.readAll();
+        QVERIFY(data.contains(".PADSTACK \"PAD_RECTANGLE_78.7402x78.7402_H31.4961_L0.0000_TH\""));
+        QVERIFY(data.contains(".PADSTACK \"PAD_RECTANGLE_78.7402x78.7402_H39.3701_L0.0000_TH\""));
+        QVERIFY(data.contains(".Hole \"HOLE_31.4961\""));
+        QVERIFY(data.contains(".Hole \"HOLE_39.3701\""));
+    }
+
     // 验证圆弧、文本、填充区域和独立孔都能写入，并且诊断信息说明转换策略。
     void unsupportedFootprintElementsAreReported() {
         QTemporaryDir tempDir;

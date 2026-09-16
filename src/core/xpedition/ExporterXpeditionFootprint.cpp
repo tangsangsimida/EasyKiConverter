@@ -2,6 +2,7 @@
 
 #include "XpeditionZipWriter.h"
 
+#include <QCryptographicHash>
 #include <QFileInfo>
 #include <QRegularExpression>
 #include <QSet>
@@ -62,10 +63,23 @@ QString padShape(IR::PadShape shape) {
  * @return 稳定且可去重的 Pad 名称。
  */
 QString padName(const IR::FootprintPadIR& pad) {
-    return QStringLiteral("PAD_%1_%2x%3")
-        .arg(padShape(pad.shape))
-        .arg(fmt(toTh(pad.size.width())))
-        .arg(fmt(toTh(pad.size.height())));
+    QString geometry = QStringLiteral("%1_%2x%3")
+                           .arg(padShape(pad.shape))
+                           .arg(fmt(toTh(pad.size.width())))
+                           .arg(fmt(toTh(pad.size.height())));
+    if (pad.shape == IR::PadShape::Polygon && !pad.customShapePoints.isEmpty()) {
+        // 自定义多边形顶点参与名称计算，避免相同外接尺寸的异形焊盘错误复用。
+        QByteArray points;
+        for (const QPointF& point : pad.customShapePoints)
+            points += QByteArray::number(point.x(), 'f', 6) + ',' + QByteArray::number(point.y(), 'f', 6) + ';';
+        geometry += QStringLiteral("_P%1").arg(
+            QString::fromLatin1(QCryptographicHash::hash(points, QCryptographicHash::Sha1).toHex().left(10)));
+    }
+    if (pad.isThroughHole()) {
+        // 通孔几何参数参与名称计算，避免不同孔径或槽长共享同一个钻孔定义。
+        geometry += QStringLiteral("_H%1_L%2").arg(fmt(toTh(pad.holeSize))).arg(fmt(toTh(pad.holeLength)));
+    }
+    return QStringLiteral("PAD_") + geometry;
 }
 
 /**
