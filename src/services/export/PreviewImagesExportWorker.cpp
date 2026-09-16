@@ -48,20 +48,24 @@ void PreviewImagesExportWorker::run() {
     // 检查预览图数据是否可用
     QList<QByteArray> previewDataList = m_data->previewImageData();
 
-    // 如果内存中没有预览图数据，尝试从磁盘缓存加载
-    if (previewDataList.isEmpty()) {
-        ComponentCacheService* cache = ComponentCacheService::instance();
-        for (int i = 0; i < 3; ++i) {  // 最多尝试加载3张预览图
-            QByteArray imageData = cache->loadPreviewImage(m_componentId, i);
-            if (imageData.isEmpty()) {
-                // 缓存允许单张图片下载失败，不能因前一个索引缺失而跳过后续图片。
-                continue;
-            }
+    // 用磁盘缓存补齐内存列表中的空槽位，避免部分回调形成的空洞阻断缓存复用。
+    ComponentCacheService* cache = ComponentCacheService::instance();
+    QList<QByteArray> cachedPreviewData(3);
+    for (int i = 0; i < cachedPreviewData.size(); ++i) {
+        if (i < previewDataList.size() && !previewDataList.at(i).isEmpty()) {
+            cachedPreviewData[i] = previewDataList.at(i);
+            continue;
+        }
+        cachedPreviewData[i] = cache->loadPreviewImage(m_componentId, i);
+    }
+    previewDataList.clear();
+    for (const QByteArray& imageData : std::as_const(cachedPreviewData)) {
+        if (!imageData.isEmpty()) {
             previewDataList.append(imageData);
         }
-        qDebug() << "PreviewImagesExportWorker: Loaded" << previewDataList.size() << "preview images from cache for"
-                 << m_componentId;
     }
+    qDebug() << "PreviewImagesExportWorker: Loaded" << previewDataList.size() << "preview images from cache for"
+             << m_componentId;
 
     // 如果缓存被清空，但内存里仍保留了预览图 URL，则在导出阶段直接回补下载。
     if (previewDataList.isEmpty()) {

@@ -127,6 +127,7 @@ private slots:
 
         auto component = QSharedPointer<ComponentData>::create();
         component->setLcscId(QStringLiteral("C45001"));
+        component->setPreviewImageData({QByteArray(), QByteArray()});
 
         ExportOptions options;
         options.outputPath = outputDir.path();
