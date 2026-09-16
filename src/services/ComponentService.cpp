@@ -426,6 +426,16 @@ void ComponentService::loadComponentDataFromCacheAsync(const QString& normalized
             CacheLoadResult result = watcher->result();
             watcher->deleteLater();
 
+            // 缓存读取可能跨越取消和重试，先校验请求代次，避免旧结果进入新请求。
+            {
+                QMutexLocker locker(&m_fetchingComponentsMutex);
+                const auto it = m_fetchingComponents.find(normalizedId);
+                if (it == m_fetchingComponents.end() || it->cacheGeneration != gen) {
+                    qDebug() << "ComponentService: Discarding stale cache result for" << normalizedId;
+                    return;
+                }
+            }
+
             if (!result.success || !result.cachedData) {
                 qWarning() << "ComponentService: Failed to load cache for" << normalizedId
                            << ", falling back to network fetch";
@@ -434,7 +444,8 @@ void ComponentService::loadComponentDataFromCacheAsync(const QString& normalized
                 {
                     QMutexLocker locker(&m_fetchingComponentsMutex);
                     auto it = m_fetchingComponents.find(normalizedId);
-                    if (it == m_fetchingComponents.end()) {
+                    if (it == m_fetchingComponents.end() || it->cacheGeneration != gen) {
+                        qDebug() << "ComponentService: Discarding stale cache retry for" << normalizedId;
                         return;
                     }
                     FetchingComponent& fetchingComponent = *it;
@@ -514,7 +525,8 @@ void ComponentService::loadComponentDataFromCacheAsync(const QString& normalized
             {
                 QMutexLocker locker(&m_fetchingComponentsMutex);
                 auto it = m_fetchingComponents.find(normalizedId);
-                if (it == m_fetchingComponents.end()) {
+                if (it == m_fetchingComponents.end() || it->cacheGeneration != gen) {
+                    qDebug() << "ComponentService: Discarding stale cached component for" << normalizedId;
                     return;
                 }
                 FetchingComponent& fetchingComponent = *it;
