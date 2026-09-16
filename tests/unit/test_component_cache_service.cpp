@@ -187,6 +187,24 @@ private slots:
         QCOMPARE(cachedIds.count(componentId), 1);
     }
 
+    // 验证 CAD 缓存写入和读取都会拒绝结构损坏的 JSON。
+    void testInvalidCadDataIsRejected() {
+        const QString componentId = QStringLiteral("C54331");
+        ComponentData metadata;
+        metadata.setLcscId(componentId);
+        metadata.setName(QStringLiteral("CAD validation component"));
+        m_cache->saveComponentMetadata(componentId, metadata);
+        m_cache->saveCadDataJson(componentId, QByteArrayLiteral("{\"shape\":}"));
+
+        QVERIFY(!m_cache->hasSymbolFootprintCache(componentId));
+        QVERIFY(m_cache->loadCadDataJson(componentId).isEmpty());
+        QVERIFY(!QFileInfo::exists(m_tempDir.filePath(componentId + QStringLiteral("/cad_data.json"))));
+
+        m_cache->saveCadDataJson(componentId, QByteArrayLiteral("{\"shape\":[]}"));
+        QVERIFY(m_cache->hasSymbolFootprintCache(componentId));
+        QCOMPARE(m_cache->loadCadDataJson(componentId), QByteArrayLiteral("{\"shape\":[]}"));
+    }
+
     // 验证数据手册下载不会直接返回格式无效的磁盘缓存。
     void testDownloadDatasheetRemovesInvalidCachedData() {
         const QString componentId = QStringLiteral("C54325");

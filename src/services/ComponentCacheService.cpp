@@ -82,6 +82,27 @@ bool isUsableModel3DCacheData(const QByteArray& data, const QString& extension) 
     return false;
 }
 
+// 判断 CAD 原始缓存是否为可解析的 JSON 对象。
+bool isValidCadData(const QByteArray& data) {
+    if (data.isEmpty()) {
+        return false;
+    }
+    QJsonParseError parseError;
+    const QJsonDocument document = QJsonDocument::fromJson(data, &parseError);
+    return parseError.error == QJsonParseError::NoError && document.isObject();
+}
+
+// 从磁盘读取并校验 CAD 原始缓存文件。
+bool hasValidCadDataFile(const QString& path) {
+    QFile file(path);
+    if (!file.open(QIODevice::ReadOnly)) {
+        return false;
+    }
+    const QByteArray data = file.readAll();
+    file.close();
+    return isValidCadData(data);
+}
+
 /**
  * @brief 从指定路径读取元器件元数据。
  * @param metadataPath 元数据文件路径。
@@ -767,7 +788,7 @@ QByteArray ComponentCacheService::loadFootprintData(const QString& lcscId) const
 void ComponentCacheService::saveCadDataJson(const QString& lcscId,
                                             const QByteArray& cadData,
                                             uint64_t expectedGeneration) {
-    if (cadData.isEmpty()) {
+    if (!isValidCadData(cadData)) {
         return;
     }
 
@@ -810,7 +831,10 @@ QByteArray ComponentCacheService::loadCadDataJson(const QString& lcscId) const {
     if (file.open(QIODevice::ReadOnly)) {
         QByteArray data = file.readAll();
         file.close();
-        return data;
+        if (isValidCadData(data)) {
+            return data;
+        }
+        QFile::remove(cadDataPath);
     }
 
     return QByteArray();
@@ -820,16 +844,13 @@ QByteArray ComponentCacheService::loadCadDataJson(const QString& lcscId) const {
 bool ComponentCacheService::hasSymbolFootprintCache(const QString& lcscId) const {
     // 缓存存在性和完整性检查必须使用稳定的缓存目录。
     QMutexLocker diskLocker(&m_diskWriteMutex);
-    // Fast path: if metadata is in memory cache, cad_data.json exists and was previously valid
-    // This avoids disk I/O for components that were cached in this session
-    QString metadataKey = makeMemoryKey(lcscId, "metadata");
+    // 内存缓存命中时仍需验证 CAD JSON 内容，避免损坏文件仅因存在而通过检查。
+    const QString metadataKey = makeMemoryKey(lcscId, "metadata");
     {
         QMutexLocker locker(&m_mutex);
         if (m_memoryCache.contains(metadataKey)) {
-            // Metadata in memory means component was cached before
-            // Just need to verify cad_data.json still exists (fast stat call)
-            QString cadDataPath = componentCacheDir(lcscId) + "/cad_data.json";
-            bool exists = QFileInfo::exists(cadDataPath);
+            const QString cadDataPath = componentCacheDir(lcscId) + "/cad_data.json";
+            const bool exists = hasValidCadDataFile(cadDataPath);
             LOG_DEBUG(LogModule::Core,
                       "hasSymbolFootprintCache: memory hit for {}, cad_data.json exists: {}",
                       lcscId,
@@ -838,43 +859,14 @@ bool ComponentCacheService::hasSymbolFootprintCache(const QString& lcscId) const
         }
     }
 
-    // Slow path: memory cache miss - do fast disk check without full JSON parse
-    // The actual JSON validity will be verified when loading the data
-    QString cadDataPath = componentCacheDir(lcscId) + "/cad_data.json";
-    QFileInfo fileInfo(cadDataPath);
-    if (!fileInfo.exists()) {
+    // 内存缓存未命中时直接校验磁盘中的 CAD JSON。
+    const QString cadDataPath = componentCacheDir(lcscId) + "/cad_data.json";
+    if (!hasValidCadDataFile(cadDataPath)) {
         LOG_DEBUG(LogModule::Core, "hasSymbolFootprintCache: no cad_data.json for {}", lcscId);
         return false;
     }
-
-    // Quick integrity check: verify file has minimum size and ends with valid JSON terminator
-    // This guards against truncated files from crashes during write, without full JSON parse
-    const qint64 fileSize = fileInfo.size();
-    if (fileSize < 2) {  // Minimum valid JSON: "{}"
-        LOG_DEBUG(LogModule::Core, "hasSymbolFootprintCache: cad_data.json too small for {}", lcscId);
-        return false;
-    }
-
-    // Check last non-whitespace character is '}' (JSON object terminator)
-    QFile file(cadDataPath);
-    if (file.open(QIODevice::ReadOnly)) {
-        const qint64 readSize = qMin(fileSize, qint64(16));
-        file.seek(fileSize - readSize);  // Read last 16 bytes
-        QByteArray tail = file.read(readSize);
-        file.close();
-        // Find last non-whitespace character
-        for (int i = tail.size() - 1; i >= 0; --i) {
-            char c = tail[i];
-            if (c == ' ' || c == '\n' || c == '\r' || c == '\t') {
-                continue;
-            }
-            bool valid = (c == '}');
-            LOG_DEBUG(LogModule::Core, "hasSymbolFootprintCache: disk check for {}, valid: {}", lcscId, valid);
-            return valid;
-        }
-    }
-    LOG_DEBUG(LogModule::Core, "hasSymbolFootprintCache: failed to open cad_data.json for {}", lcscId);
-    return false;
+    LOG_DEBUG(LogModule::Core, "hasSymbolFootprintCache: valid CAD data for {}", lcscId);
+    return true;
 }
 
 // 从二级磁盘缓存读取指定预览图。
