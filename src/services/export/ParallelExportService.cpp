@@ -182,6 +182,16 @@ void ParallelExportService::startPreload(const QStringList& componentIds) {
         m_progress.preloadProgress.inProgressCount = 0;
     }
 
+    if (componentIds.isEmpty()) {
+        m_progress.currentStage = ExportOverallProgress::Stage::Idle;
+        m_progress.endTime = QDateTime::currentDateTime();
+        m_preloadCompleted = true;
+        emit preloadProgressChanged(m_progress.preloadProgress);
+        updateOverallProgress();
+        emit preloadCompleted(0, 0);
+        return;
+    }
+
     emit preloadProgressChanged(m_progress.preloadProgress);
     updateOverallProgress();
     logNetworkRuntimeStats(QStringLiteral("preload-start"));

@@ -166,6 +166,20 @@ private slots:
         cache->setCacheDir(originalCacheDir);
     }
 
+    // 验证空组件列表会立即结束预加载并报告零成功、零失败。
+    void testEmptyPreloadCompletesImmediately() {
+        ParallelExportService service;
+        QSignalSpy preloadSpy(&service, &ParallelExportService::preloadCompleted);
+
+        service.startPreload({});
+
+        QCOMPARE(preloadSpy.count(), 1);
+        QCOMPARE(preloadSpy.at(0).at(0).toInt(), 0);
+        QCOMPARE(preloadSpy.at(0).at(1).toInt(), 0);
+        QCOMPARE(service.getProgress().currentStage, ExportOverallProgress::Stage::Idle);
+        QVERIFY(!service.isRunning());
+    }
+
     // 验证状态更新会保留先前产生的诊断信息。
     void testItemStatusPreservesDiagnosticsAcrossUpdates() {
         ParallelExportService service;
