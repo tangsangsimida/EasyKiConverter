@@ -1132,16 +1132,23 @@ QByteArray ComponentCacheService::downloadDatasheet(const QString& lcscId,
         if (QFileInfo::exists(fullPath)) {
             QFile file(fullPath);
             if (file.open(QIODevice::ReadOnly)) {
-                LOG_DEBUG(LogModule::Core, "Datasheet loaded from disk cache: {}", fullPath);
-                if (diag) {
-                    diag->url = datasheetUrl;
-                    diag->statusCode = 200;
-                    diag->errorString = "";
-                    diag->retryCount = 0;
-                    diag->latencyMs = timer.elapsed();
-                    diag->wasRateLimited = false;
+                const QByteArray cachedData = file.readAll();
+                file.close();
+                const QString cachedFormat =
+                    fullPath.endsWith(".pdf", Qt::CaseInsensitive) ? QStringLiteral("pdf") : QStringLiteral("html");
+                if (isValidDatasheetData(cachedData, cachedFormat)) {
+                    LOG_DEBUG(LogModule::Core, "Datasheet loaded from disk cache: {}", fullPath);
+                    if (diag) {
+                        diag->url = datasheetUrl;
+                        diag->statusCode = 200;
+                        diag->errorString = "";
+                        diag->retryCount = 0;
+                        diag->latencyMs = timer.elapsed();
+                        diag->wasRateLimited = false;
+                    }
+                    return cachedData;
                 }
-                return file.readAll();
+                QFile::remove(fullPath);
             }
         }
     }

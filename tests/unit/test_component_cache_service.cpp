@@ -1,6 +1,8 @@
 #include "services/ComponentCacheService.h"
 
+#include <QAtomicInt>
 #include <QBuffer>
+#include <QDir>
 #include <QFile>
 #include <QImage>
 #include <QJsonArray>
@@ -86,6 +88,25 @@ private slots:
         const QString componentId = QStringLiteral("C54323");
         m_cache->saveDatasheet(componentId, QByteArrayLiteral("not-a-datasheet"), QStringLiteral("pdf"));
         QVERIFY(m_cache->loadDatasheet(componentId).isEmpty());
+    }
+
+    // 验证数据手册下载不会直接返回格式无效的磁盘缓存。
+    void testDownloadDatasheetRemovesInvalidCachedData() {
+        const QString componentId = QStringLiteral("C54325");
+        QVERIFY(QDir().mkpath(m_tempDir.filePath(componentId)));
+        const QString cachedPath = m_tempDir.filePath(componentId + QStringLiteral("/datasheet.pdf"));
+        QFile cachedFile(cachedPath);
+        QVERIFY(cachedFile.open(QIODevice::WriteOnly));
+        QVERIFY(cachedFile.write(QByteArrayLiteral("not-a-pdf")) > 0);
+        cachedFile.close();
+
+        QAtomicInt cancelled(1);
+        QString format;
+        const QByteArray data = m_cache->downloadDatasheet(
+            componentId, QStringLiteral("https://example.com/manual.pdf"), &format, nullptr, &cancelled);
+
+        QVERIFY(data.isEmpty());
+        QVERIFY(!QFileInfo::exists(cachedPath));
     }
 
     // 验证缓存自愈会清理非空但格式无效的媒体和三维文件。
