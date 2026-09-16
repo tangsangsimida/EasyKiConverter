@@ -168,15 +168,28 @@ QString holePadName(double diameterMm) {
  * @return 包含焊盘、线条、圆、孔和轮廓的包围盒。
  */
 QRectF footprintBounds(const IR::FootprintComponentIR& footprint) {
-    QRectF bounds;
+    double minX = 0.0;
+    double minY = 0.0;
+    double maxX = 0.0;
+    double maxY = 0.0;
     bool initialized = false;
     const auto addPoint = [&](const QPointF& point) {
         if (!initialized) {
-            bounds = QRectF(point, QSizeF(0, 0));
+            minX = maxX = point.x();
+            minY = maxY = point.y();
             initialized = true;
-        } else {
-            bounds = bounds.united(QRectF(point, QSizeF(0, 0)));
+            return;
         }
+        minX = qMin(minX, point.x());
+        minY = qMin(minY, point.y());
+        maxX = qMax(maxX, point.x());
+        maxY = qMax(maxY, point.y());
+    };
+    const auto addRectangle = [&](const QRectF& rectangle) {
+        addPoint(rectangle.topLeft());
+        addPoint(rectangle.topRight());
+        addPoint(rectangle.bottomRight());
+        addPoint(rectangle.bottomLeft());
     };
     for (const auto& pad : footprint.pads) {
         addPoint(pad.position - QPointF(pad.size.width() / 2.0, pad.size.height() / 2.0));
@@ -187,12 +200,19 @@ QRectF footprintBounds(const IR::FootprintComponentIR& footprint) {
         addPoint(circle.center + QPointF(circle.radius, circle.radius));
     }
     for (const auto& rect : footprint.rectangles)
-        if (!initialized) {
-            bounds = rect.bounds;
-            initialized = true;
-        } else {
-            bounds = bounds.united(rect.bounds);
-        }
+        addRectangle(rect.bounds);
+    for (const auto& arc : footprint.arcs) {
+        // 用完整圆弧外接框参与原点计算，保证任意圆弧不会被遗漏；不会改变实际写出的弧段。
+        addPoint(arc.center - QPointF(arc.radius, arc.radius));
+        addPoint(arc.center + QPointF(arc.radius, arc.radius));
+    }
+    for (const auto& region : footprint.regions) {
+        for (const QPointF& point : region.vertices)
+            addPoint(point);
+    }
+    for (const auto& text : footprint.texts)
+        if (text.isDisplayed && !text.text.isEmpty())
+            addPoint(text.position);
     for (const auto& outline : footprint.outlines) {
         for (const auto& point : outline.points)
             addPoint(point);
@@ -205,7 +225,7 @@ QRectF footprintBounds(const IR::FootprintComponentIR& footprint) {
         addPoint(hole.center - QPointF(hole.radius, hole.radius));
         addPoint(hole.center + QPointF(hole.radius, hole.radius));
     }
-    return initialized ? bounds : QRectF(-1, -1, 2, 2);
+    return initialized ? QRectF(QPointF(minX, minY), QPointF(maxX, maxY)) : QRectF(-1, -1, 2, 2);
 }
 
 /**

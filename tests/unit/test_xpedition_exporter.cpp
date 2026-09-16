@@ -200,6 +200,39 @@ private slots:
         QVERIFY(data.contains("POLYLINE_SHAPE"));
         QVERIFY(data.contains("MH1"));
     }
+
+    // 验证圆弧、区域和可见文本会参与 Cell 原点计算，避免导出后整体偏移。
+    void footprintOriginIncludesAllVisibleGeometry() {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        IR::FootprintComponentIR footprint;
+        footprint.name = QStringLiteral("ORIGIN_GEOMETRY");
+        IR::FootprintPadIR pad;
+        pad.number = QStringLiteral("1");
+        pad.position = QPointF(0.0, 0.0);
+        pad.size = QSizeF(1.0, 1.0);
+        footprint.pads.append(pad);
+        IR::FootprintArcIR arc;
+        arc.center = QPointF(10.0, 0.0);
+        arc.radius = 2.0;
+        arc.endAngle = 90.0;
+        footprint.arcs.append(arc);
+        IR::FootprintTextIR text;
+        text.text = QStringLiteral("VISIBLE");
+        text.position = QPointF(0.0, 8.0);
+        footprint.texts.append(text);
+
+        const QString outputPath = tempDir.filePath(QStringLiteral("origin-geometry.zip"));
+        ExporterXpeditionFootprint exporter;
+        QVERIFY(exporter.exportFootprintLibrary({footprint}, QStringLiteral("Library"), outputPath));
+
+        QFile output(outputPath);
+        QVERIFY(output.open(QIODevice::ReadOnly));
+        const QByteArray data = output.readAll();
+        QVERIFY(data.contains("ORIGIN_GEOMETRY_Cell.hkp"));
+        QVERIFY(data.contains("...XY (-226.3780, 118.1102)"));
+    }
 };
 
 QTEST_GUILESS_MAIN(TestXpeditionExporter)
