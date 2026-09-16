@@ -38,6 +38,7 @@ int toAltiumOrientation(double rotation) {
     return ((qRound(rotation / 90.0) % 4) + 4) % 4;
 }
 
+// 将非法或负数几何尺寸归一化为可写入的非负有限值。
 double finiteNonNegative(double value) {
     return std::isfinite(value) ? qMax(0.0, value) : 0.0;
 }
@@ -46,7 +47,9 @@ double finiteNonNegative(double value) {
 
 namespace {
 
+// 将 IR 线型映射为 Altium SchLib 的线型编号。
 int toAltiumLineStyle(IR::StrokeStyle style) {
+    // 保留实线作为未知线型的安全回退，避免生成无法识别的编号。
     switch (style) {
         case IR::StrokeStyle::Dashed:
             return 1;
@@ -106,6 +109,7 @@ int quantizeToSnapGrid(int value) {
  * @return 连接端坐标（raw 单位）
  */
 QPointF computePinConnectionPoint(const AltiumSchPin& pin) {
+    // 按引脚方向把主体端坐标平移一个引脚长度，得到可连接端点。
     switch (pin.orientation) {
         case AltiumModels::PinOrientation::Right:
             return QPointF(pin.locationX + pin.length, pin.locationY);
@@ -130,6 +134,7 @@ void quantizePinConnectionPoint(AltiumSchPin& pin) {
     int quantizedConnX = quantizeToSnapGrid(static_cast<int>(conn.x()));
     int quantizedConnY = quantizeToSnapGrid(static_cast<int>(conn.y()));
 
+    // 根据量化后的连接端点反推主体端坐标，保持引脚长度不变。
     switch (pin.orientation) {
         case AltiumModels::PinOrientation::Right:
             pin.locationX = quantizedConnX - pin.length;
@@ -178,6 +183,7 @@ void quantizePinConnectionGroups(QList<AltiumSchPin>& pins) {
             int tangent = horizontal ? static_cast<int>(conn.y()) : static_cast<int>(conn.x());
             if (previousTangent != INT_MIN && tangent <= previousTangent) {
                 tangent = previousTangent + kSnapGrid;
+                // 将同侧重合的连接点沿切线方向逐格错开。
                 switch (pins[index].orientation) {
                     case AltiumModels::PinOrientation::Right:
                     case AltiumModels::PinOrientation::Left:
