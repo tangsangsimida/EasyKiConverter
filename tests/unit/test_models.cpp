@@ -444,6 +444,19 @@ private slots:
         QCOMPARE(footprint->model3D().translation().y, 2982.7698);
     }
 
+    /** @brief 验证乱序预览图回调会按索引扩容而不是追加到错误位置。 */
+    void testPreviewImageDataExpandsForIndexedCallback() {
+        ComponentData component;
+        const QByteArray imageData = QByteArrayLiteral("preview-image");
+
+        component.addPreviewImageData(imageData, 2);
+
+        QCOMPARE(component.previewImageData().size(), 3);
+        QVERIFY(component.previewImageData().at(0).isEmpty());
+        QVERIFY(component.previewImageData().at(1).isEmpty());
+        QCOMPARE(component.previewImageData().at(2), imageData);
+    }
+
     // 验证相对三维模型原点的导入坐标。
     void testModel3DRelativeOriginImport() {
         EasyedaFootprintImporter importer;
