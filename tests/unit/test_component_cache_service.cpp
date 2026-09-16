@@ -105,6 +105,26 @@ private slots:
         QCOMPARE(errorSpy.at(0).at(1).toString(), QStringLiteral("No images downloaded"));
     }
 
+    // 验证取消全部请求后，单个新请求可以重新加载已有预览图缓存。
+    void testImageServiceCanRestartSingleRequestAfterCancelAll() {
+        const QString componentId = QStringLiteral("C54327");
+        QImage image(2, 2, QImage::Format_RGB32);
+        image.fill(Qt::blue);
+        QBuffer buffer;
+        QVERIFY(buffer.open(QIODevice::WriteOnly));
+        QVERIFY(image.save(&buffer, "PNG"));
+        m_cache->savePreviewImage(componentId, buffer.data(), 0);
+
+        LcscImageService imageService;
+        imageService.cancelAll();
+        QSignalSpy readySpy(&imageService, &LcscImageService::allImagesReady);
+        imageService.fetchPreviewImages(componentId);
+
+        QVERIFY2(readySpy.wait(3000), "A restarted request should load cached preview images");
+        QCOMPARE(readySpy.count(), 1);
+        QCOMPARE(readySpy.at(0).at(0).toString(), componentId);
+    }
+
     // 验证既不是 PDF 也不是 HTML 的响应不会进入数据手册缓存。
     void testInvalidPdfDatasheetDataIsRejected() {
         const QString componentId = QStringLiteral("C54323");
