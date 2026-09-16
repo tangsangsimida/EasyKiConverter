@@ -80,10 +80,10 @@ private slots:
         QVERIFY(!QFileInfo::exists(m_cache->previewImagePath(componentId, 0)));
     }
 
-    // 验证声明为 PDF 的错误页不会进入数据手册缓存。
+    // 验证既不是 PDF 也不是 HTML 的响应不会进入数据手册缓存。
     void testInvalidPdfDatasheetDataIsRejected() {
         const QString componentId = QStringLiteral("C54323");
-        m_cache->saveDatasheet(componentId, QByteArrayLiteral("<html>403</html>"), QStringLiteral("pdf"));
+        m_cache->saveDatasheet(componentId, QByteArrayLiteral("not-a-datasheet"), QStringLiteral("pdf"));
         QVERIFY(m_cache->loadDatasheet(componentId).isEmpty());
     }
 

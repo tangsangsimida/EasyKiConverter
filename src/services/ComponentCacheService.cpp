@@ -1060,7 +1060,11 @@ void ComponentCacheService::saveDatasheet(const QString& lcscId,
                                           const QByteArray& datasheetData,
                                           const QString& format,
                                           uint64_t expectedGeneration) {
-    if (!isValidDatasheetData(datasheetData, format)) {
+    QString effectiveFormat = format.toLower();
+    if (effectiveFormat == QStringLiteral("pdf") && !datasheetData.startsWith("%PDF-")) {
+        effectiveFormat = QStringLiteral("html");
+    }
+    if (!isValidDatasheetData(datasheetData, effectiveFormat)) {
         return;
     }
 
@@ -1079,7 +1083,7 @@ void ComponentCacheService::saveDatasheet(const QString& lcscId,
         if (ensureComponentDir(lcscId).isEmpty()) {
             return;
         }
-        actualPath = resolveDatasheetPath(lcscId, format, true);
+        actualPath = resolveDatasheetPath(lcscId, effectiveFormat, true);
         const QString alternatePath = actualPath.endsWith(".pdf")
                                           ? resolveDatasheetPath(lcscId, QStringLiteral("html"), true)
                                           : resolveDatasheetPath(lcscId, QStringLiteral("pdf"), true);
