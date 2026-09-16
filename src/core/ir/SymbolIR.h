@@ -464,6 +464,7 @@ struct SymbolComponentIR {
                !texts.isEmpty() || !textFrames.isEmpty() || !images.isEmpty();
     }
 
+    /** @brief 清空符号组件的名称、几何数据和多单元状态。 */
     void clear() {
         name.clear();
         description.clear();

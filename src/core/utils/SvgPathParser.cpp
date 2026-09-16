@@ -24,10 +24,12 @@ struct SvgArcGeometry {
     double deltaAngle = 0.0;
 };
 
+// 检查点坐标是否为有限数，避免无效几何继续参与路径计算。
 bool isFinitePoint(const QPointF& point) {
     return std::isfinite(point.x()) && std::isfinite(point.y());
 }
 
+// 检查路径线段的端点、控制点、圆弧参数是否全部可用于后续导出。
 bool isFiniteSegment(const SvgPathSegment& segment) {
     return isFinitePoint(segment.start) && isFinitePoint(segment.control1) && isFinitePoint(segment.control2) &&
            isFinitePoint(segment.arcMid) && isFinitePoint(segment.arcCenter) && isFinitePoint(segment.end) &&
@@ -95,6 +97,7 @@ SvgArcGeometry calculateArcGeometry(const QPointF& start,
     return geometry;
 }
 
+// 将旋转椭圆圆弧按不超过九十度的区间近似为三次贝塞尔线段。
 QList<SvgPathSegment> approximateRotatedEllipse(const SvgArcGeometry& geometry, double xRotation) {
     QList<SvgPathSegment> segments;
     const double segmentAngle = PI / 2.0;
@@ -135,6 +138,7 @@ QList<SvgPathSegment> approximateRotatedEllipse(const SvgArcGeometry& geometry, 
 
 }  // namespace
 
+// 解析 SVG 路径并提取用于兼容旧调用方的折线点集合。
 QList<QPointF> SvgPathParser::parsePath(const QString& path) {
     QList<QPointF> points;
     if (path.isEmpty()) {
@@ -504,6 +508,7 @@ QList<QPointF> SvgPathParser::parsePath(const QString& path) {
     return points;
 }
 
+// 解析 SVG 路径并保留直线、贝塞尔曲线和圆弧的结构化线段信息。
 QList<SvgPathSegment> SvgPathParser::parseSegments(const QString& path) {
     QList<SvgPathSegment> segments;
     if (path.isEmpty())
@@ -771,6 +776,7 @@ QList<SvgPathSegment> SvgPathParser::parseSegments(const QString& path) {
     return segments;
 }
 
+// 规范化 SVG 命令和参数分隔符，并展开同一命令后的连续参数组。
 QStringList SvgPathParser::splitPath(const QString& path) {
     // 将命令字母前后添加空格，然后按空格分
     QString processed = path;
@@ -814,6 +820,7 @@ QStringList SvgPathParser::splitPath(const QString& path) {
     return tokens;
 }
 
+// 根据绝对或相对坐标更新当前路径位置并返回新的点。
 QPointF SvgPathParser::createPoint(double x, double y, bool relative, double& currentX, double& currentY) {
     if (relative) {
         currentX += x;
@@ -935,6 +942,7 @@ QList<QPointF> SvgPathParser::calcArcPoints(double cx,
     return points;
 }
 
+// 根据两个向量的点积和叉积计算带方向的夹角。
 double SvgPathParser::getAngle(double x1, double y1, double x2, double y2) {
     // 计算向量点积和叉
     double dot = x1 * x2 + y1 * y2;
