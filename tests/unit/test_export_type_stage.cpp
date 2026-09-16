@@ -543,6 +543,44 @@ private slots:
         QVERIFY(itemSpy.count() >= 2);
     }
 
+    // 验证输出目录创建失败时，每个元器件都会收敛为失败状态。
+    void model3DOutputDirectoryFailureIsReportedPerComponent() {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        const QString blockingFilePath = tempDir.filePath(QStringLiteral("output-file"));
+        QFile blockingFile(blockingFilePath);
+        QVERIFY(blockingFile.open(QIODevice::WriteOnly));
+        blockingFile.close();
+
+        Model3DExportStage stage;
+        ExportOptions options;
+        options.outputPath = blockingFilePath;
+        options.libName = QStringLiteral("UnwritableModels");
+        options.exportModel3DFormat = ExportOptions::MODEL_3D_FORMAT_WRL;
+        stage.setOptions(options);
+
+        const QString componentId = QStringLiteral("C_OUTPUT_FAILURE");
+        QMap<QString, QSharedPointer<ComponentData>> cachedData;
+        cachedData[componentId] = QSharedPointer<ComponentData>::create();
+
+        QSignalSpy completedSpy(&stage, &ExportTypeStage::completed);
+        stage.start({componentId}, cachedData);
+
+        if (completedSpy.count() == 0)
+            QVERIFY2(completedSpy.wait(3000), "Model3D output failure should complete");
+        QCOMPARE(completedSpy.count(), 1);
+        QCOMPARE(completedSpy.at(0).at(0).toInt(), 0);
+        QCOMPARE(completedSpy.at(0).at(1).toInt(), 1);
+        QCOMPARE(completedSpy.at(0).at(2).toInt(), 0);
+
+        const ExportTypeProgress progress = stage.getProgress();
+        QCOMPARE(progress.totalCount, 1);
+        QCOMPARE(progress.completedCount, 1);
+        QCOMPARE(progress.failedCount, 1);
+        QCOMPARE(progress.itemStatus.value(componentId).status, ExportItemStatus::Status::Failed);
+    }
+
     // 验证封装数据中的 3D UUID 也能驱动独立三维导出阶段。
     void model3DUuidFromFootprintIsExported() {
         QTemporaryDir tempDir;

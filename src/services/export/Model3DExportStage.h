@@ -4,6 +4,7 @@
 #include "ExportTypeStage.h"
 #include "TempFileManager.h"
 
+#include <QHash>
 #include <QSet>
 
 namespace EasyKiConverter {
@@ -89,6 +90,7 @@ private:
     TempFileManager m_tempManager;  ///< 临时文件管理器
     QMap<QString, TempFilePaths> m_componentPaths;  ///< componentId -> temp/final paths
     QSet<QString> m_skippedComponents;  ///< 没有可导出三维数据或格式的元器件
+    QHash<QString, QString> m_preflightErrors;  ///< 启动前路径准备失败的元器件及错误信息
 };
 
 }  // namespace EasyKiConverter

@@ -41,15 +41,6 @@ void Model3DExportStage::start(const QStringList& componentIds,
     QString outputDir = baseOutputDir + QDir::separator() + libName + QStringLiteral(".3dmodels");
 
     QDir dir;
-    if (!dir.mkpath(outputDir)) {
-        qCritical() << "Model3DExportStage: Failed to create output directory:" << outputDir;
-        m_isExporting.store(false);
-        emit completed(0, 0, 0);
-        return;
-    }
-
-    m_tempManager.setOutputPath(outputDir);
-
     const bool needWrl = m_options.needsModel3DWrl();
     const bool needStep = m_options.needsModel3DStep();
 
@@ -76,6 +67,21 @@ void Model3DExportStage::start(const QStringList& componentIds,
 
     m_componentPaths.clear();
     m_skippedComponents.clear();
+    m_preflightErrors.clear();
+
+    // 输出目录创建失败时仍然交给基类建立逐项状态，避免主服务留下 Pending 项。
+    if (!dir.exists(outputDir) && !dir.mkpath(outputDir)) {
+        qCritical() << "Model3DExportStage: Failed to create output directory:" << outputDir;
+        const QString error = QStringLiteral("Failed to create 3D model output directory");
+        for (const QString& componentId : componentIds)
+            m_preflightErrors.insert(componentId, error);
+        m_isExporting.store(true);
+        ExportTypeStage::start(componentIds, cachedData);
+        return;
+    }
+
+    m_tempManager.setOutputPath(outputDir);
+
     for (const QString& componentId : componentIds) {
         if (!needWrl && !needStep) {
             m_skippedComponents.insert(componentId);
@@ -102,6 +108,7 @@ void Model3DExportStage::start(const QStringList& componentIds,
         } else if (needWrl || needStep) {
             qWarning() << "Model3DExportStage: Failed to create temp path for component:" << componentId
                        << "needWrl:" << needWrl << "needStep:" << needStep;
+            m_preflightErrors.insert(componentId, QStringLiteral("Failed to create 3D model temporary path"));
         }
     }
 
@@ -153,6 +160,13 @@ void Model3DExportStage::startWorker(QObject* worker,
 
     if (m_skippedComponents.contains(componentId)) {
         completeSkippedItemProgress(exportWorker, componentId, QStringLiteral("No 3D model or format selected"));
+        delete exportWorker;
+        return;
+    }
+
+    const auto preflightError = m_preflightErrors.constFind(componentId);
+    if (preflightError != m_preflightErrors.cend()) {
+        completeItemProgress(exportWorker, componentId, false, preflightError.value());
         delete exportWorker;
         return;
     }
