@@ -23,11 +23,13 @@ constexpr quint32 kMiniStreamCutoff = 4096;
 constexpr int kDirectoryEntrySize = 128;
 constexpr int kMaxDirectoryDepth = 4096;
 
+// 从 OLE 缓冲区按小端序读取无符号十六位字段。
 quint16 readU16(const QByteArray& data, qsizetype offset) {
     return static_cast<quint16>(static_cast<unsigned char>(data.at(offset))) |
            (static_cast<quint16>(static_cast<unsigned char>(data.at(offset + 1))) << 8);
 }
 
+// 从 OLE 缓冲区按小端序读取无符号三十二位字段。
 quint32 readU32(const QByteArray& data, qsizetype offset) {
     return static_cast<quint32>(static_cast<unsigned char>(data.at(offset))) |
            (static_cast<quint32>(static_cast<unsigned char>(data.at(offset + 1))) << 8) |
@@ -35,6 +37,7 @@ quint32 readU32(const QByteArray& data, qsizetype offset) {
            (static_cast<quint32>(static_cast<unsigned char>(data.at(offset + 3))) << 24);
 }
 
+// 从 OLE 缓冲区按小端序读取无符号六十四位字段。
 quint64 readU64(const QByteArray& data, qsizetype offset) {
     quint64 value = 0;
     for (int i = 0; i < 8; ++i)
@@ -58,18 +61,21 @@ OLECompoundReader::OLECompoundReader() = default;
 
 OLECompoundReader::~OLECompoundReader() = default;
 
+// 清除上一次打开操作产生的状态和流索引。
 void OLECompoundReader::clear() {
     m_opened = false;
     m_errorMessage.clear();
     m_streams.clear();
 }
 
+// 记录解析失败并将部分构建结果回滚到关闭状态。
 bool OLECompoundReader::fail(const QString& message) {
     clear();
     m_errorMessage = message;
     return false;
 }
 
+// 打开并校验 OLE 容器，然后建立可按路径读取的流索引。
 bool OLECompoundReader::open(const QString& filePath) {
     clear();
 
@@ -294,24 +300,29 @@ bool OLECompoundReader::open(const QString& filePath) {
     return true;
 }
 
+// 判断当前容器是否记录了解析错误。
 bool OLECompoundReader::hasError() const {
     return !m_errorMessage.isEmpty();
 }
 
+// 返回当前容器的解析错误信息。
 QString OLECompoundReader::errorString() const {
     return m_errorMessage;
 }
 
+// 返回排序后的流路径，便于调用方稳定遍历容器内容。
 QStringList OLECompoundReader::streamPaths() const {
     QStringList paths = m_streams.keys();
     paths.sort(Qt::CaseSensitive);
     return paths;
 }
 
+// 判断指定路径的流是否已经建立索引。
 bool OLECompoundReader::containsStream(const QString& streamPath) const {
     return m_streams.contains(streamPath);
 }
 
+// 复制指定路径的流内容，并拒绝不存在或无效的输出参数。
 bool OLECompoundReader::readStream(const QString& streamPath, QByteArray* data) const {
     if (data == nullptr)
         return false;
