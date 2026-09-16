@@ -586,17 +586,20 @@ void ParallelExportService::onExportTypeCompleted(const QString& typeName,
                                                   int successCount,
                                                   int failedCount,
                                                   int skippedCount) {
+    Q_UNUSED(successCount);
+    Q_UNUSED(failedCount);
+    Q_UNUSED(skippedCount);
     {
         QMutexLocker locker(&m_progressMutex);
 
         ExportTypeProgress typeProgress = m_progress.exportTypeProgress.value(typeName);
         typeProgress.typeName = typeName;
         typeProgress.totalCount = m_componentIds.size();
-        typeProgress.successCount = successCount;
-        typeProgress.failedCount = failedCount;
-        typeProgress.skippedCount = skippedCount;
-        typeProgress.completedCount = successCount + failedCount + skippedCount;
         typeProgress.inProgressCount = 0;
+
+        // 完成信号的阶段计数只覆盖实际启动的任务，必须保留预加载失败项的逐项状态。
+        // 以 itemStatus 重新计算，确保统计与界面逐项结果保持一致。
+        ExportWorkerHelpers::recomputeTypeProgressCounts(typeProgress);
 
         m_progress.exportTypeProgress[typeName] = typeProgress;
 

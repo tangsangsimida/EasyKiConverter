@@ -21,6 +21,43 @@ class TestParallelExportCancellation : public QObject {
 
 private slots:
 
+    // 验证阶段完成统计不会覆盖预加载失败项的逐项状态。
+    void testStageCompletionPreservesPreloadFailures() {
+        ParallelExportService service;
+
+        ExportItemStatus preloadFailure;
+        preloadFailure.status = ExportItemStatus::Status::Failed;
+        preloadFailure.errorMessage = QStringLiteral("Component preload data missing");
+        QVERIFY(QMetaObject::invokeMethod(&service,
+                                          "onExportItemStatusChanged",
+                                          Qt::DirectConnection,
+                                          Q_ARG(QString, QStringLiteral("C90005")),
+                                          Q_ARG(QString, QStringLiteral("Model3D")),
+                                          Q_ARG(ExportItemStatus, preloadFailure)));
+
+        ExportItemStatus exported;
+        exported.status = ExportItemStatus::Status::Success;
+        QVERIFY(QMetaObject::invokeMethod(&service,
+                                          "onExportItemStatusChanged",
+                                          Qt::DirectConnection,
+                                          Q_ARG(QString, QStringLiteral("C90006")),
+                                          Q_ARG(QString, QStringLiteral("Model3D")),
+                                          Q_ARG(ExportItemStatus, exported)));
+
+        QVERIFY(QMetaObject::invokeMethod(&service,
+                                          "onExportTypeCompleted",
+                                          Qt::DirectConnection,
+                                          Q_ARG(QString, QStringLiteral("Model3D")),
+                                          Q_ARG(int, 1),
+                                          Q_ARG(int, 0),
+                                          Q_ARG(int, 0)));
+
+        const ExportTypeProgress progress = service.getTypeProgress(QStringLiteral("Model3D"));
+        QCOMPARE(progress.successCount, 1);
+        QCOMPARE(progress.failedCount, 1);
+        QCOMPARE(progress.completedCount, 2);
+    }
+
     // 注册跨线程测试所需的 Qt 元类型。
     void initTestCase() {
         qRegisterMetaType<ExportOverallProgress>();
