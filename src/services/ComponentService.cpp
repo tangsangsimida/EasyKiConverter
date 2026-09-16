@@ -798,12 +798,23 @@ void ComponentService::handlePreviewImageError(const QString& componentId, const
 void ComponentService::handleAllImagesReady(const QString& componentId, const QStringList& imagePaths) {
     qDebug() << "All images ready for component:" << componentId << "paths:" << imagePaths.size();
 
+    uint64_t gen = 0;
+    {
+        QMutexLocker locker(&m_fetchingComponentsMutex);
+        const auto it = m_fetchingComponents.find(componentId.toUpper());
+        if (it == m_fetchingComponents.end()) {
+            qDebug() << "ComponentService: Discarding all-images callback without active request for" << componentId;
+            return;
+        }
+        gen = it->cacheGeneration;
+    }
+
     // 注意：预览图已由 LcscImageService::handleDownloadResponse 在下载时保存到磁盘
     // 这里不需要再次保存，避免重复 I/O
 
     // 使用 QtConcurrent 在后台线程执行文件读取和 Base64 编码，避免阻塞 UI
     // 然后在主线程发送信号
-    QFuture<QStringList> future = QtConcurrent::run([this, componentId, imagePaths]() {
+    QFuture<QStringList> future = QtConcurrent::run([this, componentId, imagePaths, gen]() {
         QStringList encodedImages(3);
         QList<QByteArray> imageDataList;
         imageDataList.resize(3);
@@ -826,8 +837,9 @@ void ComponentService::handleAllImagesReady(const QString& componentId, const QS
         // 在后台线程更新 m_fetchingComponents（使用锁保护）
         {
             QMutexLocker locker(&m_fetchingComponentsMutex);
-            if (m_fetchingComponents.contains(componentId)) {
-                FetchingComponent& fetchingComponent = m_fetchingComponents[componentId];
+            const auto it = m_fetchingComponents.find(componentId.toUpper());
+            if (it != m_fetchingComponents.end() && it->cacheGeneration == gen) {
+                FetchingComponent& fetchingComponent = it.value();
                 fetchingComponent.data.setPreviewImageData(imageDataList);
                 qDebug() << "All image data updated in ComponentData for component:" << componentId
                          << "count:" << imageDataList.size();
@@ -839,9 +851,22 @@ void ComponentService::handleAllImagesReady(const QString& componentId, const QS
 
     // 使用 QFutureWatcher 在主线程接收结果并发送信号
     auto* watcher = new QFutureWatcher<QStringList>(this);
-    connect(watcher, &QFutureWatcher<QStringList>::finished, this, [this, watcher, componentId, imagePaths]() {
+    connect(watcher, &QFutureWatcher<QStringList>::finished, this, [this, watcher, componentId, imagePaths, gen]() {
         QStringList encodedImages = watcher->result();
         watcher->deleteLater();
+
+        if (ComponentCacheService::instance()->currentGeneration() != gen) {
+            qDebug() << "ComponentService: Discarding stale all-images result for" << componentId;
+            return;
+        }
+        {
+            QMutexLocker locker(&m_fetchingComponentsMutex);
+            const auto it = m_fetchingComponents.find(componentId.toUpper());
+            if (it == m_fetchingComponents.end() || it->cacheGeneration != gen) {
+                qDebug() << "ComponentService: Discarding all-images result for replaced request" << componentId;
+                return;
+            }
+        }
         emit previewImagesReady(componentId, encodedImages);
         emit allImagesReady(componentId, imagePaths);
     });
