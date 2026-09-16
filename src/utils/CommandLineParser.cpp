@@ -66,6 +66,7 @@ CommandLineParser::CommandLineParser(int argc, char* argv[])
     m_argv = argv;
 }
 
+// 注册通用应用选项。
 void CommandLineParser::setupOptions() {
     // 所有自定义选项（帮助和版本选项已在构造函数中通过 addHelpOption 和 addVersionOption 添加）
     m_parser.addOption(m_debugOption);
@@ -80,6 +81,7 @@ void CommandLineParser::setupOptions() {
     m_parser.addOption(m_diskCacheLimitOption);
 }
 
+// 注册 CLI 转换相关选项。
 void CommandLineParser::setupCliOptions() {
     m_parser.addOption(m_inputOption);
     m_parser.addOption(m_outputOption);
@@ -102,6 +104,7 @@ void CommandLineParser::setupCliOptions() {
     m_parser.addOption(m_targetFormatOption);
 }
 
+// 解析保存的命令行参数并识别转换子命令。
 bool CommandLineParser::parse() {
     // 重要：使用存储的 argv 而非 QCoreApplication::arguments()
     // 因为此函数可能在 QCoreApplication 创建前被调用
@@ -146,78 +149,96 @@ bool CommandLineParser::parse() {
     return result;
 }
 
+// 返回是否启用了调试模式选项。
 bool CommandLineParser::isDebugMode() const {
     return m_parser.isSet(m_debugOption);
 }
 
+// 返回规范化后的日志级别。
 QString CommandLineParser::logLevel() const {
     return m_parser.value(m_logLevelOption).toLower();
 }
 
+// 返回日志文件路径。
 QString CommandLineParser::logFile() const {
     return m_parser.value(m_logFileOption);
 }
 
+// 返回配置文件路径。
 QString CommandLineParser::configFile() const {
     return m_parser.value(m_configOption);
 }
 
+// 返回命令行指定的语言。
 QString CommandLineParser::language() const {
     return m_parser.value(m_languageOption);
 }
 
+// 返回规范化后的主题名称。
 QString CommandLineParser::theme() const {
     return m_parser.value(m_themeOption).toLower();
 }
 
+// 判断是否显式设置了主题。
 bool CommandLineParser::isThemeSet() const {
     return m_parser.isSet(m_themeOption);
 }
 
+// 判断是否启用了便携模式。
 bool CommandLineParser::isPortableMode() const {
     return m_parser.isSet(m_portableOption);
 }
 
+// 判断是否启用了同步日志。
 bool CommandLineParser::isSyncLogging() const {
     return m_parser.isSet(m_syncLoggingOption);
 }
 
+// 判断是否显式设置了缓存目录。
 bool CommandLineParser::isCacheDirSet() const {
     return m_parser.isSet(m_cacheDirOption);
 }
 
+// 返回命令行指定的缓存目录。
 QString CommandLineParser::cacheDir() const {
     return m_parser.value(m_cacheDirOption);
 }
 
+// 判断是否显式设置了磁盘缓存上限。
 bool CommandLineParser::isDiskCacheLimitSet() const {
     return m_parser.isSet(m_diskCacheLimitOption);
 }
 
+// 返回磁盘缓存上限，单位为 MB。
 int CommandLineParser::diskCacheLimitMB() const {
     return m_parser.value(m_diskCacheLimitOption).toInt();
 }
 
+// 返回通用命令行帮助文本。
 QString CommandLineParser::helpText() const {
     return m_parser.helpText();
 }
 
+// 判断是否请求显示帮助。
 bool CommandLineParser::isHelpRequested() const {
     // QCommandLineParser 的 addHelpOption() 会添加一个帮助选项
     // 我们需要检查该选项是否被设置
     return m_parser.isSet("help");
 }
 
+// 判断是否请求显示版本。
 bool CommandLineParser::isVersionRequested() const {
     // QCommandLineParser 的 addVersionOption() 会添加一个版本选项
     // 我们需要检查该选项是否被设置
     return m_parser.isSet("version");
 }
 
+// 返回未被选项消费的位置参数。
 QStringList CommandLineParser::positionalArguments() const {
     return m_parser.positionalArguments();
 }
 
+// 校验通用选项和 CLI 转换选项的组合是否合法。
 bool CommandLineParser::validate() const {
     // 验证日志级别
     if (m_parser.isSet(m_logLevelOption)) {
@@ -297,6 +318,7 @@ bool CommandLineParser::validate() const {
     return true;
 }
 
+// 汇总命令行参数校验错误，供 CLI 调用方展示。
 QString CommandLineParser::validationError() const {
     QStringList errors;
 
@@ -390,94 +412,116 @@ QString CommandLineParser::validationError() const {
 
 // ========== CLI 模式相关方法实现 ==========
 
+// 判断当前是否进入 CLI 转换模式。
 bool CommandLineParser::isCliMode() const {
     return m_cliMode != CliMode::None;
 }
 
+// 返回已识别的 CLI 转换模式。
 CommandLineParser::CliMode CommandLineParser::cliMode() const {
     return m_cliMode;
 }
 
+// 返回 CLI 输入文件路径。
 QString CommandLineParser::inputFile() const {
     return m_parser.value(m_inputOption);
 }
 
+// 返回 CLI 输出目录路径。
 QString CommandLineParser::outputDir() const {
     return m_parser.value(m_outputOption);
 }
 
+// 返回 CLI 导出库名称。
 QString CommandLineParser::libName() const {
     return m_parser.value(m_libNameOption);
 }
 
+// 返回 CLI 指定的元器件编号。
 QString CommandLineParser::componentId() const {
     return m_parser.value(m_componentOption);
 }
 
+// 返回符号导出开关，未设置时默认开启。
 bool CommandLineParser::exportSymbol() const {
     // 默认为 true，除非显式设置为 false
     return !m_parser.isSet(m_symbolOption) || m_parser.value(m_symbolOption).toLower() != "false";
 }
 
+// 返回封装导出开关，未设置时默认开启。
 bool CommandLineParser::exportFootprint() const {
     // 默认为 true，除非显式设置为 false
     return !m_parser.isSet(m_footprintOption) || m_parser.value(m_footprintOption).toLower() != "false";
 }
 
+// 返回三维模型导出开关。
 bool CommandLineParser::export3DModel() const {
     // --3d-model 是 flag 选项，默认 false（未设置则不导出 3D 模型）
     return m_parser.isSet(m_3dModelOption);
 }
 
+// 返回规范化后的三维模型格式。
 QString CommandLineParser::model3DFormat() const {
     return m_parser.value(m_3dModelFormatOption).toLower();
 }
 
+// 返回数据手册导出开关。
 bool CommandLineParser::exportDatasheet() const {
     return m_parser.isSet(m_datasheetOption);
 }
 
+// 返回预览图导出开关。
 bool CommandLineParser::exportPreview() const {
     return m_parser.isSet(m_previewOption);
 }
 
+// 返回进度显示开关。
 bool CommandLineParser::showProgress() const {
     return m_parser.isSet(m_progressOption);
 }
 
+// 返回安静模式开关。
 bool CommandLineParser::isQuietMode() const {
     return m_parser.isSet(m_quietOption);
 }
 
+// 返回弱网络适配开关。
 bool CommandLineParser::weakNetworkSupport() const {
     return m_parser.isSet(m_weakNetworkOption);
 }
 
+// 返回更新导出模式开关。
 bool CommandLineParser::updateMode() const {
     return m_parser.isSet(m_updateModeOption);
 }
 
+// 返回规范化后的三维模型路径模式。
 QString CommandLineParser::model3DPathMode() const {
     return m_parser.value(m_3dPathModeOption).toLower();
 }
 
+// 返回是否允许覆盖已有文件。
 bool CommandLineParser::overwriteExistingFiles() const {
     // 默认 true，--no-overwrite 禁用
     return !m_parser.isSet(m_overwriteOption);
 }
 
+// 返回符号库描述文本。
 QString CommandLineParser::symbolDescription() const {
     return m_parser.value(m_symbolDescriptionOption);
 }
 
+// 返回封装库描述文本。
 QString CommandLineParser::footprintDescription() const {
     return m_parser.value(m_footprintDescriptionOption);
 }
 
+// 返回规范化后的目标 EDA 格式。
 QString CommandLineParser::targetFormat() const {
     return m_parser.value(m_targetFormatOption).toLower();
 }
 
+// 生成 CLI 子命令、选项和示例的帮助文本。
 QString CommandLineParser::cliHelpText() const {
     QString help;
     QTextStream stream(&help);
@@ -543,22 +587,27 @@ QString CommandLineParser::cliHelpText() const {
 
 // ========== 补全相关方法实现 ==========
 
+// 判断是否请求生成补全脚本。
 bool CommandLineParser::isCompletionRequested() const {
     return m_parser.isSet(m_completionOption);
 }
 
+// 返回规范化后的补全 Shell 类型。
 QString CommandLineParser::completionShell() const {
     return m_parser.value(m_completionOption).toLower();
 }
 
+// 判断是否请求执行补全查询。
 bool CommandLineParser::isCompleteRequested() const {
     return m_parser.isSet(m_completeOption);
 }
 
+// 返回补全查询类型。
 QString CommandLineParser::completeType() const {
     return m_parser.value(m_completeOption).toLower();
 }
 
+// 判断命令行是否包含 convert 主命令。
 bool CommandLineParser::hasConvertCommand() const {
     return m_hasConvertCommand;
 }
