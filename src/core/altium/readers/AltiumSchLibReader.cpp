@@ -12,12 +12,14 @@ namespace EasyKiConverter {
 
 namespace {
 
+// 读取整数参数，缺失或格式错误时返回调用方提供的回退值。
 int parameterInt(const QMap<QString, QString>& parameters, const QString& name, int fallback) {
     bool ok = false;
     const int value = parameters.value(name).toInt(&ok);
     return ok ? value : fallback;
 }
 
+// 读取可选整数参数，并区分缺失字段与格式错误。
 bool readOptionalParameterInt(const QMap<QString, QString>& parameters, const QString& name, int fallback, int* value) {
     if (value == nullptr)
         return false;
@@ -33,6 +35,7 @@ bool readOptionalParameterInt(const QMap<QString, QString>& parameters, const QS
     return true;
 }
 
+// 按 SchLib 记录类型校验图元几何参数、边界和枚举范围。
 bool validateGraphicParameters(const QMap<QString, QString>& parameters, int recordType, QString* error) {
     const auto readInt = [&parameters](const QString& name, bool required, int fallback, int* value) {
         if (value == nullptr)
@@ -177,6 +180,7 @@ bool validateGraphicParameters(const QMap<QString, QString>& parameters, int rec
     return true;
 }
 
+// 从二进制引脚或图元记录头部读取类型、部件归属和显示模式。
 bool readBinaryRecordMetadata(const QByteArray& payload,
                               int* recordType,
                               int* ownerPartId,
@@ -209,6 +213,7 @@ bool readBinaryRecordMetadata(const QByteArray& payload,
 
 constexpr qint64 kMaxImageDecompressedSize = 512LL * 1024LL * 1024LL;
 
+// 校验图片 Storage 的 zlib 数据，并限制解压后的最大尺寸。
 bool isValidZlibPayload(const QByteArray& compressedData) {
     if (compressedData.isEmpty())
         return false;
@@ -240,6 +245,7 @@ bool isValidZlibPayload(const QByteArray& compressedData) {
 
 }  // namespace
 
+// 清理已读取内容并记录 SchLib 解析失败原因。
 bool AltiumSchLibReader::fail(const QString& message) {
     m_components.clear();
     m_headerParameters.clear();
@@ -248,6 +254,7 @@ bool AltiumSchLibReader::fail(const QString& message) {
     return false;
 }
 
+// 打开 SchLib 容器，解析文件头、字体表、组件目录和存储键。
 bool AltiumSchLibReader::open(const QString& filePath) {
     m_components.clear();
     m_headerParameters.clear();
@@ -361,6 +368,7 @@ bool AltiumSchLibReader::open(const QString& filePath) {
     return true;
 }
 
+// 返回当前库中解析出的组件目录信息。
 QVector<AltiumSchLibReader::ComponentInfo> AltiumSchLibReader::components() const {
     return m_components;
 }
@@ -369,10 +377,12 @@ QMap<QString, QString> AltiumSchLibReader::headerParameters() const {
     return m_headerParameters;
 }
 
+// 返回 FileHeader 声明的字体表。
 QVector<AltiumSchLibReader::FontInfo> AltiumSchLibReader::fonts() const {
     return m_fonts;
 }
 
+// 按组件名称查找其在库目录中的索引。
 int AltiumSchLibReader::componentIndex(const QString& componentName) const {
     for (int i = 0; i < m_components.size(); ++i) {
         if (m_components.at(i).name == componentName)
@@ -381,16 +391,19 @@ int AltiumSchLibReader::componentIndex(const QString& componentName) const {
     return -1;
 }
 
+// 按组件索引读取其 Data 流的原始内容。
 bool AltiumSchLibReader::readComponentData(int componentIndexValue, QByteArray* data) const {
     if (data == nullptr || componentIndexValue < 0 || componentIndexValue >= m_components.size())
         return false;
     return m_oleReader.readStream(m_components.at(componentIndexValue).sectionKey + QStringLiteral("/Data"), data);
 }
 
+// 按组件名称读取其 Data 流的原始内容。
 bool AltiumSchLibReader::readComponentData(const QString& componentName, QByteArray* data) const {
     return readComponentData(componentIndex(componentName), data);
 }
 
+// 解析组件 Data 流中的参数记录和二进制记录，并校验索引连续性。
 bool AltiumSchLibReader::readComponentRecords(int componentIndexValue, QVector<Record>* records) const {
     if (records == nullptr) {
         m_errorMessage = QStringLiteral("读取 SchLib 记录时输出容器为空");
@@ -537,10 +550,12 @@ bool AltiumSchLibReader::readComponentRecords(int componentIndexValue, QVector<R
     return true;
 }
 
+// 按组件名称解析其全部原始记录。
 bool AltiumSchLibReader::readComponentRecords(const QString& componentName, QVector<Record>* records) const {
     return readComponentRecords(componentIndex(componentName), records);
 }
 
+// 读取并校验 SchLib 公共图片 Storage 中的压缩图片条目。
 bool AltiumSchLibReader::readImageStorage(QVector<ImageStorageEntry>* entries) const {
     if (entries == nullptr) {
         m_errorMessage = QStringLiteral("读取 SchLib 图片 Storage 时输出容器为空");
@@ -635,10 +650,12 @@ bool AltiumSchLibReader::readImageStorage(QVector<ImageStorageEntry>* entries) c
     return true;
 }
 
+// 返回最近一次 SchLib 读取错误。
 QString AltiumSchLibReader::errorString() const {
     return m_errorMessage;
 }
 
+// 判断 SchLib 读取器是否处于错误状态。
 bool AltiumSchLibReader::hasError() const {
     return !m_errorMessage.isEmpty();
 }
