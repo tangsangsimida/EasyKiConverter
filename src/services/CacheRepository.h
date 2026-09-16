@@ -26,6 +26,14 @@ public:
                                 QAtomicInt* cancelled,
                                 bool weakNetwork,
                                 const MediaFetchCallback& onComplete) {
+        if (imageIndex < 0 || imageIndex >= 3) {
+            ComponentExportStatus::NetworkDiagnostics diag;
+            diag.url = imageUrl;
+            diag.errorString = QStringLiteral("Invalid preview image index");
+            onComplete(QByteArray(), diag);
+            return;
+        }
+
         ComponentCacheService* cache = ComponentCacheService::instance();
         if (!cache) {
             ComponentExportStatus::NetworkDiagnostics diag;

@@ -1,3 +1,4 @@
+#include "services/CacheRepository.h"
 #include "services/ComponentCacheService.h"
 
 #include <QAtomicInt>
@@ -132,6 +133,30 @@ private slots:
             QStringLiteral("C54326"), QStringLiteral("https://example.com/preview.jpg"), 3, nullptr, &cancelled);
 
         QVERIFY(data.isEmpty());
+    }
+
+    // 验证异步预览图入口会在网络请求前拒绝超出范围的索引。
+    void testAsyncPreviewRejectsOutOfRangeIndex() {
+        QAtomicInt cancelled(0);
+        bool callbackCalled = false;
+        QByteArray callbackData;
+        ComponentExportStatus::NetworkDiagnostics callbackDiag;
+
+        CacheRepository::instance()->fetchPreviewImageAsync(
+            QStringLiteral("C54328"),
+            QStringLiteral("https://example.com/preview.jpg"),
+            3,
+            &cancelled,
+            false,
+            [&](const QByteArray& data, const ComponentExportStatus::NetworkDiagnostics& diag) {
+                callbackCalled = true;
+                callbackData = data;
+                callbackDiag = diag;
+            });
+
+        QVERIFY(callbackCalled);
+        QVERIFY(callbackData.isEmpty());
+        QCOMPARE(callbackDiag.errorString, QStringLiteral("Invalid preview image index"));
     }
 
     // 验证缓存自愈会清理非空但格式无效的媒体和三维文件。
