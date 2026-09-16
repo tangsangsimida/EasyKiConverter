@@ -58,14 +58,20 @@ void Model3DExportStage::start(const QStringList& componentIds,
 
     const auto hasModel3DUuid = [&cachedData](const QString& componentId) {
         auto it = cachedData.constFind(componentId);
-        if (it != cachedData.constEnd() && it.value() && it.value()->model3DData() &&
-            !it.value()->model3DData()->uuid().isEmpty()) {
-            return true;
+        if (it != cachedData.constEnd() && it.value()) {
+            if (it.value()->model3DData() && !it.value()->model3DData()->uuid().isEmpty())
+                return true;
+            if (it.value()->footprintData() && !it.value()->footprintData()->model3D().uuid().isEmpty())
+                return true;
         }
 
         QSharedPointer<ComponentData> cachedComponent =
             ComponentCacheService::instance()->loadComponentData(componentId);
-        return cachedComponent && cachedComponent->model3DData() && !cachedComponent->model3DData()->uuid().isEmpty();
+        if (!cachedComponent)
+            return false;
+        if (cachedComponent->model3DData() && !cachedComponent->model3DData()->uuid().isEmpty())
+            return true;
+        return cachedComponent->footprintData() && !cachedComponent->footprintData()->model3D().uuid().isEmpty();
     };
 
     m_componentPaths.clear();

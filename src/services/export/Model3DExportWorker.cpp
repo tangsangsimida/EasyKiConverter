@@ -29,10 +29,12 @@ void Model3DExportWorker::setData(const QString& componentId,
     m_options = options;
 }
 
+// 更新 Worker 使用的三维导出选项。
 void Model3DExportWorker::setOptions(const struct ExportOptions& options) {
     m_options = options;
 }
 
+// 从组件数据或缓存解析模型并完成选定格式的导出。
 void Model3DExportWorker::run() {
     if (m_cancelled.load()) {
         emit completed(m_componentId, false, QStringLiteral("Cancelled"));
@@ -47,15 +49,26 @@ void Model3DExportWorker::run() {
 
     qDebug() << "Model3DExportWorker: Exporting" << m_componentId;
 
-    QString uuid;
-    if (m_data->model3DData()) {
-        uuid = m_data->model3DData()->uuid();
+    Model3DData sourceModel;
+    if (m_data->model3DData())
+        sourceModel = *m_data->model3DData();
+    if (sourceModel.uuid().isEmpty() && m_data->footprintData()) {
+        const Model3DData footprintModel = m_data->footprintData()->model3D();
+        if (!footprintModel.uuid().isEmpty())
+            sourceModel = footprintModel;
     }
+
+    QString uuid = sourceModel.uuid();
     if (uuid.isEmpty()) {
         QSharedPointer<ComponentData> cachedComponent =
             ComponentCacheService::instance()->loadComponentData(m_componentId);
-        if (cachedComponent && cachedComponent->model3DData()) {
-            uuid = cachedComponent->model3DData()->uuid();
+        if (cachedComponent) {
+            if (cachedComponent->model3DData()) {
+                sourceModel = *cachedComponent->model3DData();
+            } else if (cachedComponent->footprintData()) {
+                sourceModel = cachedComponent->footprintData()->model3D();
+            }
+            uuid = sourceModel.uuid();
         }
     }
     if (uuid.isEmpty()) {
@@ -85,10 +98,7 @@ void Model3DExportWorker::run() {
     Exporter3DModel exporter;
 
     // 获取模型名称用于命名文件（仅在需要时）
-    QString modelName;
-    if (m_data && m_data->model3DData()) {
-        modelName = m_data->model3DData()->name();
-    }
+    QString modelName = sourceModel.name();
     if (modelName.isEmpty()) {
         modelName = m_componentId;
     } else {
@@ -147,14 +157,12 @@ void Model3DExportWorker::run() {
     // 只有在没有 OBJ 且不能下载时才复用 WRL 缓存，封装阶段会按该 WRL 的实际几何计算 STEP 偏移。
     // STEP 文件保持服务器原始坐标系，不使用派生缓存。
 
-    auto buildModelData = [this, &uuid]() {
+    auto buildModelData = [&uuid, &sourceModel]() {
         Model3DData modelData;
         modelData.setUuid(uuid);
-        if (m_data && m_data->model3DData()) {
-            modelData.setName(m_data->model3DData()->name());
-            modelData.setTranslation(m_data->model3DData()->translation());
-            modelData.setRotation(m_data->model3DData()->rotation());
-        }
+        modelData.setName(sourceModel.name());
+        modelData.setTranslation(sourceModel.translation());
+        modelData.setRotation(sourceModel.rotation());
         return modelData;
     };
 
@@ -242,11 +250,13 @@ void Model3DExportWorker::run() {
     emit completed(m_componentId, false, error);
 }
 
+// 将下载错误转换为统一的 Worker 完成失败信号。
 void Model3DExportWorker::onDownloadError(const QString& error) {
     qCritical("%s", qPrintable(QString("Model3DExportWorker: Download error: %1").arg(error)));
     emit completed(m_componentId, false, error);
 }
 
+// 设置取消标志，让正在执行的模型任务尽快停止。
 void Model3DExportWorker::cancel() {
     m_cancelled.store(true);
 }

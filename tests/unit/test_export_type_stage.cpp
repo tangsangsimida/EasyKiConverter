@@ -543,6 +543,43 @@ private slots:
         QVERIFY(itemSpy.count() >= 2);
     }
 
+    // 验证封装数据中的 3D UUID 也能驱动独立三维导出阶段。
+    void model3DUuidFromFootprintIsExported() {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        Model3DExportStage stage;
+        ExportOptions options;
+        options.outputPath = tempDir.path();
+        options.libName = QStringLiteral("FootprintModels");
+        options.exportModel3DFormat = ExportOptions::MODEL_3D_FORMAT_WRL;
+        options.overwriteExistingFiles = true;
+        stage.setOptions(options);
+
+        auto footprint = QSharedPointer<FootprintData>::create();
+        Model3DData model;
+        model.setUuid(QStringLiteral("footprint-model-123"));
+        model.setName(QStringLiteral("FOOTPRINT_MODEL"));
+        footprint->setModel3D(model);
+        auto component = QSharedPointer<ComponentData>::create();
+        component->setFootprintData(footprint);
+        component->setModel3DObjRaw(QByteArrayLiteral("v 0 0 0\nv 1 0 0\nv 0 1 0\nf 1 2 3\n"));
+
+        QMap<QString, QSharedPointer<ComponentData>> cachedData;
+        cachedData[QStringLiteral("C_FOOTPRINT_MODEL")] = component;
+
+        QSignalSpy completedSpy(&stage, &ExportTypeStage::completed);
+        stage.start({QStringLiteral("C_FOOTPRINT_MODEL")}, cachedData);
+
+        if (completedSpy.count() == 0)
+            QVERIFY2(completedSpy.wait(3000), "Footprint model export should complete");
+        QCOMPARE(completedSpy.count(), 1);
+        QCOMPARE(completedSpy.at(0).at(0).toInt(), 1);
+        QCOMPARE(completedSpy.at(0).at(1).toInt(), 0);
+        QCOMPARE(completedSpy.at(0).at(2).toInt(), 0);
+        QVERIFY(QFile::exists(tempDir.filePath(QStringLiteral("FootprintModels.3dmodels/C_FOOTPRINT_MODEL.wrl"))));
+    }
+
     // 验证运行中的阶段会拒绝重复启动请求。
     void duplicateStartWhileRunningIsIgnored() {
         DeferredStage stage;
