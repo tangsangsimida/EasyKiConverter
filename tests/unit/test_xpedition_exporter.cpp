@@ -262,6 +262,30 @@ private slots:
         QVERIFY(data.contains("ORIGIN_GEOMETRY_Cell.hkp"));
         QVERIFY(data.contains("...XY (-226.3780, 118.1102)"));
     }
+
+    // 验证旋转矩形按旋转后的顶点写入 Cell，而不是退化为未旋转矩形。
+    void rotatedRectangleUsesRotatedVertices() {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        IR::FootprintComponentIR footprint;
+        footprint.name = QStringLiteral("ROTATED_RECTANGLE");
+        IR::FootprintRectangleIR rectangle;
+        rectangle.bounds = QRectF(-1.0, -2.0, 2.0, 4.0);
+        rectangle.rotation = 90.0;
+        rectangle.layer = IR::LayerType::TopSilk;
+        footprint.rectangles.append(rectangle);
+
+        const QString outputPath = tempDir.filePath(QStringLiteral("rotated-rectangle.zip"));
+        ExporterXpeditionFootprint exporter;
+        QVERIFY(exporter.exportFootprintLibrary({footprint}, QStringLiteral("Library"), outputPath));
+
+        QFile output(outputPath);
+        QVERIFY(output.open(QIODevice::ReadOnly));
+        const QByteArray data = output.readAll();
+        QVERIFY(data.contains("ROTATED_RECTANGLE_Cell.hkp"));
+        QVERIFY(data.contains("....XY (78.7402, 39.3701)"));
+    }
 };
 
 QTEST_GUILESS_MAIN(TestXpeditionExporter)

@@ -97,6 +97,31 @@ struct LayerSection {
 };
 
 /**
+ * @brief 生成考虑旋转角度的矩形闭合点列。
+ * @param rectangle IR 中的矩形图元。
+ * @return 按顺时针方向排列并重复首点的矩形顶点。
+ */
+QList<QPointF> rectanglePoints(const IR::FootprintRectangleIR& rectangle) {
+    const QPointF center = rectangle.bounds.center();
+    const double angle = qDegreesToRadians(rectangle.rotation);
+    const double cosine = std::cos(angle);
+    const double sine = std::sin(angle);
+    const QList<QPointF> corners = {rectangle.bounds.topLeft(),
+                                    rectangle.bounds.topRight(),
+                                    rectangle.bounds.bottomRight(),
+                                    rectangle.bounds.bottomLeft()};
+    QList<QPointF> points;
+    points.reserve(corners.size() + 1);
+    for (const QPointF& corner : corners) {
+        const QPointF relative = corner - center;
+        points.append(
+            center + QPointF(relative.x() * cosine - relative.y() * sine, relative.x() * sine + relative.y() * cosine));
+    }
+    points.append(points.first());
+    return points;
+}
+
+/**
  * @brief 将统一表示的图层映射为目标格式的段名和安装面。
  * @param layer 统一表示中的图层。
  * @return 目标格式段名与面向信息；不支持的图层返回空值。
@@ -188,12 +213,6 @@ QRectF footprintBounds(const IR::FootprintComponentIR& footprint) {
         maxX = qMax(maxX, point.x());
         maxY = qMax(maxY, point.y());
     };
-    const auto addRectangle = [&](const QRectF& rectangle) {
-        addPoint(rectangle.topLeft());
-        addPoint(rectangle.topRight());
-        addPoint(rectangle.bottomRight());
-        addPoint(rectangle.bottomLeft());
-    };
     for (const auto& pad : footprint.pads) {
         addPoint(pad.position - QPointF(pad.size.width() / 2.0, pad.size.height() / 2.0));
         addPoint(pad.position + QPointF(pad.size.width() / 2.0, pad.size.height() / 2.0));
@@ -202,8 +221,10 @@ QRectF footprintBounds(const IR::FootprintComponentIR& footprint) {
         addPoint(circle.center - QPointF(circle.radius, circle.radius));
         addPoint(circle.center + QPointF(circle.radius, circle.radius));
     }
-    for (const auto& rect : footprint.rectangles)
-        addRectangle(rect.bounds);
+    for (const auto& rect : footprint.rectangles) {
+        for (const QPointF& point : rectanglePoints(rect))
+            addPoint(point);
+    }
     for (const auto& arc : footprint.arcs) {
         // 用完整圆弧外接框参与原点计算，保证任意圆弧不会被遗漏；不会改变实际写出的弧段。
         addPoint(arc.center - QPointF(arc.radius, arc.radius));
@@ -424,14 +445,8 @@ QByteArray ExporterXpeditionFootprint::cellFile(const IR::FootprintComponentIR& 
         appendPolyline(layerSection(outline.layer), outline.points, outline.strokeWidth, false);
     for (const auto& track : footprint.tracks)
         appendPolyline(layerSection(track.layer), track.points, track.width, false);
-    for (const auto& rect : footprint.rectangles) {
-        QList<QPointF> points{rect.bounds.topLeft(),
-                              rect.bounds.topRight(),
-                              rect.bounds.bottomRight(),
-                              rect.bounds.bottomLeft(),
-                              rect.bounds.topLeft()};
-        appendPolyline(layerSection(rect.layer), points, rect.strokeWidth, false);
-    }
+    for (const auto& rect : footprint.rectangles)
+        appendPolyline(layerSection(rect.layer), rectanglePoints(rect), rect.strokeWidth, false);
     for (const auto& circle : footprint.circles) {
         const LayerSection layer = layerSection(circle.layer);
         if (layer.name.isEmpty())
