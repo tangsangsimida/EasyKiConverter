@@ -1,4 +1,5 @@
 #include "core/easyeda/EasyedaFootprintImporter.h"
+#include "core/ir/FootprintDataConverter.h"
 #include "core/ir/Model3DDataConverter.h"
 #include "core/ir/SymbolDataConverter.h"
 #include "core/kicad/Exporter3DModel.h"
@@ -29,6 +30,18 @@ private slots:
 
     // 清理模型测试套件。
     void cleanupTestCase() {}
+
+    // 验证没有三维模型的封装不会在 IR 中生成空模型条目。
+    void testEmptyFootprintModelIsNotConverted() {
+        FootprintData footprint;
+        FootprintInfo info;
+        info.name = QStringLiteral("NO_MODEL");
+        footprint.setInfo(info);
+
+        const IR::FootprintComponentIR converted = IR::toFootprintIR(footprint);
+
+        QVERIFY(converted.models3d.isEmpty());
+    }
 
     // 验证符号数据的 JSON 往返序列化。
     void testSymbolDataRoundTrip() {

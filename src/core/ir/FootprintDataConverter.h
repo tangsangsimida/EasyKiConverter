@@ -334,8 +334,10 @@ inline FootprintComponentIR toFootprintIR(const FootprintData& data) {
         ir.outlines.append(oir);
     }
 
-    // 转换 3D 模型
-    ir.models3d.append(toModel3DIR(data.model3D()));
+    // 仅转换带有模型标识的有效三维数据，避免空模型污染目标格式的诊断和统计。
+    const Model3DData model3D = data.model3D();
+    if (model3D.isValid())
+        ir.models3d.append(toModel3DIR(model3D));
 
     // 设置 courtyard 生成标志：当原始 bbox 有有效尺寸时生成
     const auto& bbox = data.bbox();
