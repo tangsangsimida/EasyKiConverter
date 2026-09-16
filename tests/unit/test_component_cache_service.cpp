@@ -66,6 +66,34 @@ private slots:
         QCOMPARE(loadedData->previewImages().value(0), QStringLiteral("https://image.lceda.cn/components/c.jpg"));
     }
 
+    // 验证仅由封装数据携带的 3D 模型也能完整写入并恢复缓存元数据。
+    void testFootprintModel3DMetadataRoundTrip() {
+        const QString componentId = QStringLiteral("C54321");
+        ComponentData data;
+        data.setLcscId(componentId);
+        data.setName(QStringLiteral("Footprint Model Component"));
+
+        auto footprint = QSharedPointer<FootprintData>::create();
+        Model3DData model;
+        model.setUuid(QStringLiteral("footprint-only-model"));
+        model.setName(QStringLiteral("FOOTPRINT_ONLY"));
+        model.setTranslation(Model3DBase(1.0, 2.0, 3.0));
+        model.setRotation(Model3DBase(4.0, 5.0, 6.0));
+        footprint->setModel3D(model);
+        data.setFootprintData(footprint);
+
+        m_cache->saveComponentMetadata(componentId, data, 0, true);
+
+        const QJsonObject metadata = m_cache->loadMetadataFromMemory(componentId);
+        QCOMPARE(metadata.value(QStringLiteral("model3duuid")).toString(), QStringLiteral("footprint-only-model"));
+        const QSharedPointer<ComponentData> loadedData = m_cache->loadComponentData(componentId);
+        QVERIFY(loadedData != nullptr);
+        QVERIFY(loadedData->model3DData() != nullptr);
+        QCOMPARE(loadedData->model3DData()->uuid(), QStringLiteral("footprint-only-model"));
+        QCOMPARE(loadedData->model3DData()->translation().z, 3.0);
+        QCOMPARE(loadedData->model3DData()->rotation().x, 4.0);
+    }
+
     // 回归测试：removeCache tombstone 阻止旧写入，但 clearTombstone 后允许新写入
     void testRemoveCacheTombstoneBlocksStaleWrites() {
         const QString componentId = QStringLiteral("C99999");

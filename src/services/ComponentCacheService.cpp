@@ -26,6 +26,23 @@ namespace EasyKiConverter {
 
 namespace {
 
+/**
+ * @brief 获取元器件可用于缓存的三维模型信息。
+ * @param data 元器件数据。
+ * @return 优先使用独立模型字段，缺失 UUID 时回退到封装模型字段。
+ */
+Model3DData effectiveModel3D(const ComponentData& data) {
+    Model3DData model;
+    if (data.model3DData())
+        model = *data.model3DData();
+    if (model.uuid().isEmpty() && data.footprintData()) {
+        const Model3DData footprintModel = data.footprintData()->model3D();
+        if (!footprintModel.uuid().isEmpty())
+            model = footprintModel;
+    }
+    return model;
+}
+
 bool hasValidModel3DMetadata(const QJsonObject& metadata) {
     if (!metadata.contains(QStringLiteral("model3duuid")))
         return true;
@@ -482,6 +499,7 @@ QSharedPointer<ComponentData> ComponentCacheService::loadComponentData(const QSt
     return componentData;
 }
 
+// 合并并持久化元器件元数据，同时保留有效的三维模型关联。
 void ComponentCacheService::saveComponentMetadata(const QString& componentId,
                                                   const ComponentData& data,
                                                   uint64_t expectedGeneration,
@@ -507,7 +525,8 @@ void ComponentCacheService::saveComponentMetadata(const QString& componentId,
 
         const QJsonObject existingMetadata = loadMetadata(componentId);
         metadata = mergeMetadata(existingMetadata, metadata);
-        if (replaceModel3DMetadata && (!data.model3DData() || data.model3DData()->uuid().isEmpty())) {
+        const Model3DData model3D = effectiveModel3D(data);
+        if (replaceModel3DMetadata && model3D.uuid().isEmpty()) {
             metadata.remove(QStringLiteral("model3duuid"));
             metadata.remove(QStringLiteral("model3dName"));
             metadata.remove(QStringLiteral("model3dTranslation"));
@@ -1415,6 +1434,7 @@ void ComponentCacheService::saveMetadata(const QString& lcscId, const QJsonObjec
     }
 }
 
+// 从元器件及其封装数据构建可持久化的缓存元数据。
 QJsonObject ComponentCacheService::buildMetadata(const QString& componentId, const ComponentData& data) const {
     QJsonObject metadata;
     metadata["lcscId"] = componentId;
@@ -1436,11 +1456,12 @@ QJsonObject ComponentCacheService::buildMetadata(const QString& componentId, con
     }
     metadata["previewImages"] = previewUrls;
 
-    if (data.model3DData() && !data.model3DData()->uuid().isEmpty()) {
-        metadata["model3duuid"] = data.model3DData()->uuid();
-        metadata["model3dName"] = data.model3DData()->name();
-        metadata["model3dTranslation"] = data.model3DData()->translation().toJson();
-        metadata["model3dRotation"] = data.model3DData()->rotation().toJson();
+    const Model3DData model3D = effectiveModel3D(data);
+    if (!model3D.uuid().isEmpty()) {
+        metadata["model3duuid"] = model3D.uuid();
+        metadata["model3dName"] = model3D.name();
+        metadata["model3dTranslation"] = model3D.translation().toJson();
+        metadata["model3dRotation"] = model3D.rotation().toJson();
     }
 
     return metadata;
