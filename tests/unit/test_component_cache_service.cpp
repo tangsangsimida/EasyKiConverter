@@ -535,6 +535,17 @@ private slots:
         QVERIFY(!m_cache->hasModel3DCached(uuid, QStringLiteral("txt")));
     }
 
+    // 验证三维缓存扩展名大小写不同仍能命中同一个缓存文件。
+    void testModel3DNormalizesExtensionCase() {
+        const QString uuid = QStringLiteral("case-normalized-model-13579");
+        const QByteArray stepData = QByteArrayLiteral("ISO-10303-21;\nDATA;\nENDSEC;\nEND-ISO-10303-21;\n");
+
+        m_cache->saveModel3D(uuid, stepData, QStringLiteral("STEP"));
+
+        QVERIFY(m_cache->hasModel3DCached(uuid, QStringLiteral("step")));
+        QCOMPARE(m_cache->loadModel3D(uuid, QStringLiteral("step")), stepData);
+    }
+
     // 验证权威 CAD 元数据移除模型后会清理旧三维关联。
     void testAuthoritativeCadMetadataClearsRemovedModel3D() {
         const QString componentId = QStringLiteral("C24681");

@@ -1768,13 +1768,14 @@ QString ComponentCacheService::model3DPath(const QString& uuid, const QString& e
         qWarning() << "model3DPath: invalid uuid, rejecting:" << uuid;
         return QString();
     }
-    // 校验 extension：仅允许字母数字
+    // 校验 extension：仅允许字母数字，并统一为小写以保证缓存键大小写一致。
+    const QString normalizedExtension = extension.toLower();
     static const QRegularExpression extRe(QStringLiteral("^[A-Za-z0-9]+$"));
-    if (extension.isEmpty() || !extRe.match(extension).hasMatch()) {
+    if (normalizedExtension.isEmpty() || !extRe.match(normalizedExtension).hasMatch()) {
         qWarning() << "model3DPath: invalid extension, rejecting:" << extension;
         return QString();
     }
-    return cacheDir() + "/model3d/" + uuid + "." + extension;
+    return cacheDir() + "/model3d/" + uuid + "." + normalizedExtension;
 }
 
 }  // namespace EasyKiConverter
