@@ -11,7 +11,9 @@ namespace EasyKiConverter {
 
 namespace {
 
+// 返回每种 PcbLib 图元对应的子块数量。
 int primitiveBlockCount(quint8 objectId) {
+    // 不同图元的块布局固定，焊盘和文本包含额外的字符串或扩展块。
     switch (objectId) {
         case AltiumConstants::PCB_OBJECT_ARC:
         case AltiumConstants::PCB_OBJECT_VIA:
@@ -29,6 +31,7 @@ int primitiveBlockCount(quint8 objectId) {
     }
 }
 
+// 解析不含长度字段的字符串子块载荷。
 bool readStringBlockPayload(const QByteArray& payload, QString* value) {
     AltiumBinaryReader reader(payload);
     uint8_t stringSize = 0;
@@ -40,10 +43,12 @@ bool readStringBlockPayload(const QByteArray& payload, QString* value) {
     return true;
 }
 
+// 判断载荷是否符合字符串子块的长度和边界约束。
 bool isStringBlockPayload(const QByteArray& payload) {
     return readStringBlockPayload(payload, nullptr);
 }
 
+// 读取 WideStrings 参数块中的连续文本索引。
 bool readWideStringIndices(const QByteArray& data, QSet<quint32>* indices) {
     if (indices == nullptr)
         return false;
@@ -71,6 +76,7 @@ bool readWideStringIndices(const QByteArray& data, QSet<quint32>* indices) {
     return true;
 }
 
+// 读取所有 PcbLib 图元共享的层号、标志和保留字段。
 bool readCommonPrimitiveHeader(AltiumBinaryReader& reader, quint8* layer, quint16* flags) {
     if (layer == nullptr || flags == nullptr)
         return false;
@@ -79,11 +85,13 @@ bool readCommonPrimitiveHeader(AltiumBinaryReader& reader, quint8* layer, quint1
     return reader.readUInt8(layer) && reader.readUInt16(flags) && reader.readBytes(10, &objectIndexes);
 }
 
+// 从独立载荷创建读取器并解析公共图元头部。
 bool readCommonPrimitiveHeader(const QByteArray& payload, quint8* layer, quint16* flags) {
     AltiumBinaryReader reader(payload);
     return readCommonPrimitiveHeader(reader, layer, flags);
 }
 
+// 解析走线图元的坐标、宽度和连接索引字段。
 bool parseTrackFields(const QByteArray& payload, AltiumPcbLibReader::TrackFields* fields) {
     if (fields == nullptr)
         return false;
@@ -96,6 +104,7 @@ bool parseTrackFields(const QByteArray& payload, AltiumPcbLibReader::TrackFields
            reader.readUInt8(&fields->componentIndex);
 }
 
+// 解析弧线图元的圆心、半径、角度和线宽字段。
 bool parseArcFields(const QByteArray& payload, AltiumPcbLibReader::ArcFields* fields) {
     if (fields == nullptr)
         return false;
@@ -108,6 +117,7 @@ bool parseArcFields(const QByteArray& payload, AltiumPcbLibReader::ArcFields* fi
            reader.readInt32(&fields->width);
 }
 
+// 解析焊盘主块中的尺寸、形状、孔和扩展属性字段。
 bool parsePadMainFields(const QByteArray& payload, AltiumPcbLibReader::PadFields* fields) {
     if (fields == nullptr)
         return false;
@@ -134,6 +144,7 @@ bool parsePadMainFields(const QByteArray& payload, AltiumPcbLibReader::PadFields
            reader.readBytes(2, &reserved);
 }
 
+// 解析焊盘扩展块中的各层覆盖、孔型和圆角属性。
 bool parsePadExtendedFields(const QByteArray& payload, AltiumPcbLibReader::PadFields* fields) {
     if (fields == nullptr)
         return false;
@@ -173,6 +184,7 @@ bool parsePadExtendedFields(const QByteArray& payload, AltiumPcbLibReader::PadFi
     return true;
 }
 
+// 读取带数量前缀的二维顶点列表，并拒绝尾部未消费数据。
 bool readVertexList(AltiumBinaryReader& reader, QVector<QPointF>* vertices) {
     if (vertices == nullptr)
         return false;
@@ -191,6 +203,7 @@ bool readVertexList(AltiumBinaryReader& reader, QVector<QPointF>* vertices) {
     return reader.remaining() == 0;
 }
 
+// 解析填充图元的边界、旋转、层标识和掩膜属性。
 bool parseFillFields(const QByteArray& payload, AltiumPcbLibReader::FillFields* fields) {
     if (fields == nullptr)
         return false;
@@ -206,6 +219,7 @@ bool parseFillFields(const QByteArray& payload, AltiumPcbLibReader::FillFields* 
            reader.readBytes(3, &reserved) && reader.remaining() == 0;
 }
 
+// 解析区域图元的参数块和轮廓顶点。
 bool parseRegionFields(const QByteArray& payload, AltiumPcbLibReader::RegionFields* fields) {
     if (fields == nullptr)
         return false;
@@ -217,6 +231,7 @@ bool parseRegionFields(const QByteArray& payload, AltiumPcbLibReader::RegionFiel
            readVertexList(reader, &fields->vertices);
 }
 
+// 解析三维元件体的参数块和外形轮廓。
 bool parseComponentBodyFields(const QByteArray& payload, AltiumPcbLibReader::ComponentBodyFields* fields) {
     if (fields == nullptr)
         return false;
@@ -228,6 +243,7 @@ bool parseComponentBodyFields(const QByteArray& payload, AltiumPcbLibReader::Com
            readVertexList(reader, &fields->outline);
 }
 
+// 解析文本图元的排版、字体、旋转和宽字符串索引。
 bool parseTextFields(const QByteArray& payload, AltiumPcbLibReader::TextFields* fields) {
     if (fields == nullptr)
         return false;
@@ -246,6 +262,7 @@ bool parseTextFields(const QByteArray& payload, AltiumPcbLibReader::TextFields* 
            reader.readUInt32(&fields->v7LayerId);
 }
 
+// 校验已解析图元的层号、几何尺寸、枚举值和数值范围。
 bool validatePrimitiveFields(const AltiumPcbLibReader::PrimitiveRecord& object, QString* error) {
     auto reject = [error](const QString& message) {
         if (error != nullptr)
@@ -328,6 +345,7 @@ bool validatePrimitiveFields(const AltiumPcbLibReader::PrimitiveRecord& object, 
 
 }  // namespace
 
+// 清理已读取内容并记录 PcbLib 解析失败原因。
 bool AltiumPcbLibReader::fail(const QString& message) {
     m_components.clear();
     m_fileVersion.clear();
@@ -336,6 +354,7 @@ bool AltiumPcbLibReader::fail(const QString& message) {
     return false;
 }
 
+// 打开 PcbLib 容器，读取库头、封装名称和存储键映射。
 bool AltiumPcbLibReader::open(const QString& filePath) {
     m_components.clear();
     m_fileVersion.clear();
@@ -430,18 +449,22 @@ bool AltiumPcbLibReader::open(const QString& filePath) {
     return true;
 }
 
+// 返回当前库中按文件顺序解析出的封装信息。
 QVector<AltiumPcbLibReader::ComponentInfo> AltiumPcbLibReader::components() const {
     return m_components;
 }
 
+// 返回 PcbLib 文件头声明的版本字符串。
 QString AltiumPcbLibReader::fileVersion() const {
     return m_fileVersion;
 }
 
+// 返回 Library/Data 流中的原始库元数据。
 QByteArray AltiumPcbLibReader::libraryMetadata() const {
     return m_libraryMetadata;
 }
 
+// 按封装名称查找其在库组件列表中的索引。
 int AltiumPcbLibReader::componentIndex(const QString& componentName) const {
     for (int i = 0; i < m_components.size(); ++i) {
         if (m_components.at(i).name == componentName)
@@ -450,6 +473,7 @@ int AltiumPcbLibReader::componentIndex(const QString& componentName) const {
     return -1;
 }
 
+// 按封装索引读取其指定名称的 OLE 流。
 bool AltiumPcbLibReader::readFootprintStream(int componentIndexValue,
                                              const QString& streamName,
                                              QByteArray* data) const {
@@ -459,12 +483,14 @@ bool AltiumPcbLibReader::readFootprintStream(int componentIndexValue,
     return m_oleReader.readStream(m_components.at(componentIndexValue).sectionKey + "/" + streamName, data);
 }
 
+// 按封装名称读取其指定名称的 OLE 流。
 bool AltiumPcbLibReader::readFootprintStream(const QString& componentName,
                                              const QString& streamName,
                                              QByteArray* data) const {
     return readFootprintStream(componentIndex(componentName), streamName, data);
 }
 
+// 解析指定封装 Data 流中的图元块，并保留原始编码供后续导出使用。
 bool AltiumPcbLibReader::readFootprintObjects(int componentIndexValue, QVector<PrimitiveRecord>* objects) const {
     if (objects == nullptr) {
         m_errorMessage = QStringLiteral("读取 PcbLib 图元时输出容器为空");
@@ -589,14 +615,17 @@ bool AltiumPcbLibReader::readFootprintObjects(int componentIndexValue, QVector<P
     return true;
 }
 
+// 按封装名称解析其 Data 流中的全部图元。
 bool AltiumPcbLibReader::readFootprintObjects(const QString& componentName, QVector<PrimitiveRecord>* objects) const {
     return readFootprintObjects(componentIndex(componentName), objects);
 }
 
+// 返回最近一次 PcbLib 读取错误。
 QString AltiumPcbLibReader::errorString() const {
     return m_errorMessage;
 }
 
+// 判断 PcbLib 读取器是否处于错误状态。
 bool AltiumPcbLibReader::hasError() const {
     return !m_errorMessage.isEmpty();
 }
