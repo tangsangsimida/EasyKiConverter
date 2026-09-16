@@ -412,18 +412,39 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
                     if (objData.isEmpty() && data->model3DData()) {
                         objData = data->model3DData()->rawObj().toUtf8();
                     }
+                    if (!objData.isEmpty() && !Exporter3DModel::hasUsableObjGeometry(objData)) {
+                        qWarning() << "FootprintExportStage: Ignoring malformed OBJ data for" << componentId << "uuid"
+                                   << model3D.uuid();
+                        objData.clear();
+                    }
                     if (objData.isEmpty()) {
                         objData = ComponentCacheService::instance()->loadModel3D(model3D.uuid(), QStringLiteral("obj"));
+                    }
+                    if (!objData.isEmpty() && !Exporter3DModel::hasUsableObjGeometry(objData)) {
+                        qWarning() << "FootprintExportStage: Ignoring malformed cached OBJ for" << componentId << "uuid"
+                                   << model3D.uuid();
+                        objData.clear();
                     }
                     QByteArray wrlData;
                     if (objData.isEmpty()) {
                         wrlData = ComponentCacheService::instance()->loadModel3D(model3D.uuid(), QStringLiteral("wrl"));
                     }
+                    if (!wrlData.isEmpty() && !Exporter3DModel::hasUsableWrlGeometry(wrlData)) {
+                        qWarning() << "FootprintExportStage: Ignoring malformed cached WRL for" << componentId << "uuid"
+                                   << model3D.uuid();
+                        wrlData.clear();
+                    }
                     if (objData.isEmpty() && wrlData.isEmpty()) {
                         Exporter3DModel modelExporter;
                         if (modelExporter.downloadObjDataSync(model3D.uuid(), &objData) && !objData.isEmpty()) {
-                            ComponentCacheService::instance()->saveModel3D(
-                                model3D.uuid(), objData, QStringLiteral("obj"), gen);
+                            if (!Exporter3DModel::hasUsableObjGeometry(objData)) {
+                                qWarning() << "FootprintExportStage: Rejecting invalid downloaded OBJ for"
+                                           << componentId << "uuid" << model3D.uuid();
+                                objData.clear();
+                            } else {
+                                ComponentCacheService::instance()->saveModel3D(
+                                    model3D.uuid(), objData, QStringLiteral("obj"), gen);
+                            }
                         }
                     }
 

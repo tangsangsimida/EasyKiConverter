@@ -380,13 +380,20 @@ private slots:
         const QString modelUuid = QStringLiteral("cached-step-model");
         const QByteArray stepData = QByteArrayLiteral("ISO-10303-21;\nDATA;\nENDSEC;\nEND-ISO-10303-21;\n");
         cache->saveModel3D(modelUuid, stepData, QStringLiteral("step"));
+        cache->saveModel3D(modelUuid, QByteArrayLiteral("<html>cached error</html>"), QStringLiteral("obj"));
+        cache->saveModel3D(
+            modelUuid,
+            QByteArrayLiteral("#VRML V2.0 utf8\n"
+                              "Shape { geometry IndexedFaceSet { coord Coordinate { point [0 0 0, 1 0 0, 0 1 0] } "
+                              "coordIndex [0 1 2 -1] } }\n"),
+            QStringLiteral("wrl"));
 
         auto component = makeFootprintComponent(componentId, QStringLiteral("CACHED_PKG"), QStringLiteral("CACHED"));
         Model3DData model = component->footprintData()->model3D();
         model.setUuid(modelUuid);
         component->footprintData()->setModel3D(model);
         auto componentModel = QSharedPointer<Model3DData>::create(model);
-        componentModel->setRawObj(QStringLiteral("v 0 0 0\nv 1 0 0\nv 0 1 0\nf 1 2 3\n"));
+        componentModel->setRawObj(QStringLiteral("<html>component error</html>"));
         component->setModel3DData(componentModel);
 
         FootprintExportStage stage;
