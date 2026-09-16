@@ -94,8 +94,11 @@ Rectangle {
         }
     }
     // 缓存搜索正则以优化性能
+    // 缓存最近一次参与匹配的搜索文本。
     property string cachedSearchText: ""
+    // 缓存根据搜索文本生成的高亮正则。
     property var cachedRegex: null
+    // 将后端返回的图片数据转换为 QML 图片源。
     function previewImageSource(imageData) {
         if (!imageData || imageData === "")
             return "";
@@ -111,6 +114,7 @@ Rectangle {
             return "data:image/webp;base64," + imageData;
         return "data:image/png;base64," + imageData;
     }
+    // 收集当前元件可显示的预览图源。
     function previewImageSources() {
         var result = [];
         if (!itemData || !itemData.previewImages)
@@ -127,6 +131,7 @@ Rectangle {
         interval: 100
         onTriggered: updateCachedRegex()
     }
+    // 在搜索文本变化后更新高亮正则缓存。
     function updateCachedRegex() {
         if (searchText !== cachedSearchText) {
             cachedSearchText = searchText;
@@ -426,6 +431,7 @@ Rectangle {
                 hoverEnabled: true
                 cursorShape: (itemData && itemData.previewImageCount > 0) ? Qt.PointingHandCursor : Qt.ArrowCursor
                 acceptedButtons: Qt.LeftButton
+                // Ctrl+点击预览图时打开对应元件的详情页面。
                 onClicked: function (mouse) {
                     if (mouse.modifiers & Qt.ControlModifier) {
                         if (itemData && itemData.componentId) {
