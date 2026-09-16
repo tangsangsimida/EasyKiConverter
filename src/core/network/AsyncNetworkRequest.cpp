@@ -7,6 +7,7 @@
 #include <QElapsedTimer>
 #include <QNetworkReply>
 #include <QNetworkRequest>
+#include <QRegularExpression>
 #include <QThread>
 #include <QTimer>
 
@@ -15,6 +16,53 @@ namespace EasyKiConverter {
 // Static member initialization
 const QList<QNetworkReply*> AsyncNetworkRequest::s_emptyReplies;
 
+namespace {
+
+constexpr int kResponseSummaryLimit = 512;
+
+// 读取并限制响应头长度，避免把控制字符或异常长值带入诊断日志。
+QString boundedHeaderValue(QNetworkReply* reply, const QByteArray& name) {
+    if (!reply) {
+        return QString();
+    }
+    QString value = QString::fromLatin1(reply->rawHeader(name)).trimmed();
+    value.replace(QRegularExpression(QStringLiteral("[\\r\\n]")), QString());
+    return value.left(256);
+}
+
+// 从错误响应中提取可用于判断访问策略和限流状态的非敏感摘要。
+void captureErrorResponseDiagnostics(QNetworkReply* reply, NetworkResult& result) {
+    if (!reply) {
+        return;
+    }
+
+    result.diagnostic.responseContentType = boundedHeaderValue(reply, "Content-Type");
+    result.diagnostic.retryAfter = boundedHeaderValue(reply, "Retry-After");
+    result.diagnostic.rateLimitRemaining = boundedHeaderValue(reply, "X-RateLimit-Remaining");
+    result.diagnostic.rateLimitReset = boundedHeaderValue(reply, "X-RateLimit-Reset");
+    result.diagnostic.hasRateLimitHint = !result.diagnostic.retryAfter.isEmpty() ||
+                                         !result.diagnostic.rateLimitRemaining.isEmpty() ||
+                                         !result.diagnostic.rateLimitReset.isEmpty();
+
+    const QString contentType = result.diagnostic.responseContentType.toLower();
+    const bool isTextResponse = contentType.startsWith(QStringLiteral("text/")) ||
+                                contentType.contains(QStringLiteral("json")) ||
+                                contentType.contains(QStringLiteral("xml"));
+    if (!isTextResponse) {
+        return;
+    }
+
+    const QByteArray body = reply->read(kResponseSummaryLimit);
+    QString summary = QString::fromUtf8(body).simplified();
+    if (summary.size() > kResponseSummaryLimit) {
+        summary = summary.left(kResponseSummaryLimit) + QStringLiteral("...");
+    }
+    result.diagnostic.responseSummary = summary;
+}
+
+}  // namespace
+
+// 创建已经完成的请求对象，供同步结果和测试场景复用。
 AsyncNetworkRequest* AsyncNetworkRequest::createFinished(const NetworkResult& result, QObject* parent) {
     auto* request =
         new AsyncNetworkRequest(QUrl(), nullptr, result.diagnostic.resourceType, RetryPolicy(), QByteArray(), parent);
@@ -35,6 +83,7 @@ AsyncNetworkRequest* AsyncNetworkRequest::createFinished(const NetworkResult& re
     return request;
 }
 
+// 初始化请求状态、网络策略和诊断上下文。
 AsyncNetworkRequest::AsyncNetworkRequest(const QUrl& url,
                                          QNetworkAccessManager* networkManager,
                                          ResourceType resourceType,
@@ -88,6 +137,7 @@ AsyncNetworkRequest::~AsyncNetworkRequest() {
     }
 }
 
+// 在所属线程中中止当前请求并发布取消结果。
 void AsyncNetworkRequest::cancel() {
     if (thread() != QThread::currentThread()) {
         QMetaObject::invokeMethod(this, &AsyncNetworkRequest::cancel, Qt::QueuedConnection);
@@ -114,27 +164,33 @@ void AsyncNetworkRequest::cancel() {
     completeWithResult(cancelledResult());
 }
 
+// 返回请求是否已经进入取消状态。
 bool AsyncNetworkRequest::isCancelled() const {
     return m_cancelled.loadRelaxed() != 0;
 }
 
+// 返回请求是否已经产生最终结果。
 bool AsyncNetworkRequest::isFinished() const {
     return m_finished.loadRelaxed() != 0;
 }
 
+// 在线程安全地读取请求结果。
 NetworkResult AsyncNetworkRequest::result() const {
     QMutexLocker locker(&m_resultMutex);
     return m_result;
 }
 
+// 设置后续请求尝试使用的超时时间。
 void AsyncNetworkRequest::setTimeoutMs(int ms) {
     m_timeoutMs = ms;
 }
 
+// 返回已经执行的重试次数。
 int AsyncNetworkRequest::currentRetryCount() const {
     return m_currentRetryCount;
 }
 
+// 从第一次尝试开始执行请求生命周期。
 void AsyncNetworkRequest::start() {
     if (isCancelled() || isFinished()) {
         return;
@@ -149,6 +205,7 @@ void AsyncNetworkRequest::start() {
     startAttempt(0);
 }
 
+// 启动一次网络请求，并安装超时、进度和完成处理器。
 void AsyncNetworkRequest::startAttempt(int attemptNumber) {
     if (isCancelled() || isFinished()) {
         return;
@@ -216,6 +273,7 @@ void AsyncNetworkRequest::startAttempt(int attemptNumber) {
     qDebug() << "AsyncNetworkRequest: Attempt" << attemptNumber << "started for" << m_url;
 }
 
+// 过滤过期回复并处理当前网络尝试的最终信号。
 void AsyncNetworkRequest::handleAttemptFinished() {
     if (isCancelled() || isFinished()) {
         return;
@@ -244,6 +302,7 @@ void AsyncNetworkRequest::handleAttemptFinished() {
     processResponse(reply);
 }
 
+// 标记当前尝试超时并中止底层回复。
 void AsyncNetworkRequest::handleTimeout() {
     if (isCancelled() || isFinished()) {
         return;
@@ -261,6 +320,7 @@ void AsyncNetworkRequest::handleTimeout() {
     }
 }
 
+// 转发下载进度并在响应过大时提前终止请求。
 void AsyncNetworkRequest::handleDownloadProgress(qint64 bytesReceived, qint64 bytesTotal) {
     if (isCancelled() || isFinished()) {
         return;
@@ -290,6 +350,7 @@ void AsyncNetworkRequest::handleDownloadProgress(qint64 bytesReceived, qint64 by
     }
 }
 
+// 将网络回复转换为统一结果并提取错误诊断。
 void AsyncNetworkRequest::processResponse(QNetworkReply* reply) {
     NetworkResult result;
     {
@@ -327,11 +388,14 @@ void AsyncNetworkRequest::processResponse(QNetworkReply* reply) {
         }
 
         // Final error
-        result.error = errorString;
+        captureErrorResponseDiagnostics(reply, result);
+        result.error =
+            result.statusCode > 0 ? QStringLiteral("HTTP %1: %2").arg(result.statusCode).arg(errorString) : errorString;
         result.success = false;
         result.wasCancelled = false;
         result.diagnostic.errorMessage = result.error;
 
+        // 依据底层网络错误和 HTTP 状态码生成统一分类。
         switch (reply->error()) {
             case QNetworkReply::TimeoutError:
                 result.diagnostic.errorType = NetworkErrorType::Timeout;
@@ -448,6 +512,7 @@ void AsyncNetworkRequest::processResponse(QNetworkReply* reply) {
     completeWithResult(result);
 }
 
+// 按退避策略安排下一次请求尝试。
 void AsyncNetworkRequest::scheduleRetry(int retryCount) {
     if (isCancelled() || isFinished()) {
         return;
@@ -475,6 +540,7 @@ void AsyncNetworkRequest::scheduleRetry(int retryCount) {
     });
 }
 
+// 计算带抖动的指数退避等待时间。
 int AsyncNetworkRequest::calculateRetryDelay(int retryCount) const {
     if (retryCount >= static_cast<int>(m_policy.delays.size())) {
         return m_policy.delays.back();
@@ -487,6 +553,7 @@ int AsyncNetworkRequest::calculateRetryDelay(int retryCount) const {
     return baseDelay + jitter;
 }
 
+// 判断当前错误是否允许再次请求。
 bool AsyncNetworkRequest::shouldRetryInternal(int statusCode, QNetworkReply::NetworkError error, int retryCount) const {
     if (retryCount >= m_policy.maxRetries) {
         return false;
@@ -496,6 +563,7 @@ bool AsyncNetworkRequest::shouldRetryInternal(int statusCode, QNetworkReply::Net
         return true;
     }
 
+    // 网络层瞬时错误可重试，明确的业务拒绝不重试。
     switch (error) {
         case QNetworkReply::TimeoutError:
         case QNetworkReply::TemporaryNetworkFailureError:
@@ -511,6 +579,7 @@ bool AsyncNetworkRequest::shouldRetryInternal(int statusCode, QNetworkReply::Net
     }
 }
 
+// 释放当前回复和计时器，为下一次尝试清理状态。
 void AsyncNetworkRequest::cleanupAttempt() {
     QMutexLocker locker(&m_repliesMutex);
 
@@ -532,6 +601,7 @@ void AsyncNetworkRequest::cleanupAttempt() {
     m_currentAttemptTimedOut.storeRelease(0);
 }
 
+// 只允许第一个完成结果写入状态并发出信号。
 bool AsyncNetworkRequest::completeWithResult(const NetworkResult& result) {
     if (!m_finished.testAndSetOrdered(0, 1)) {
         return false;
@@ -546,6 +616,7 @@ bool AsyncNetworkRequest::completeWithResult(const NetworkResult& result) {
     return true;
 }
 
+// 构造保留原始诊断上下文的取消结果。
 NetworkResult AsyncNetworkRequest::cancelledResult(const QString& errorMessage) const {
     NetworkResult result;
     {
@@ -563,6 +634,7 @@ NetworkResult AsyncNetworkRequest::cancelledResult(const QString& errorMessage) 
     return result;
 }
 
+// 构造保留原始诊断上下文的超时结果。
 NetworkResult AsyncNetworkRequest::timeoutResult() const {
     NetworkResult result;
     {
@@ -579,11 +651,13 @@ NetworkResult AsyncNetworkRequest::timeoutResult() const {
     return result;
 }
 
+// 检查当前是否仍有未完成的网络回复。
 bool AsyncNetworkRequest::hasActiveReply() const {
     QMutexLocker locker(&m_repliesMutex);
     return m_currentReply && !m_currentReply->isFinished();
 }
 
+// 延迟发布结果，保证异步调用方有机会连接完成信号。
 void AsyncNetworkRequest::completeWithResultDelayed(const NetworkResult& result, int delayMs) {
     if (delayMs <= 0) {
         QTimer::singleShot(0, this, [this, result]() { completeWithResult(result); });

@@ -252,6 +252,7 @@ struct RequestProfiles {
     }
 
     static RequestProfile fromType(ResourceType type) {
+        // 将资源类型映射到对应的超时、并发和响应大小策略。
         switch (type) {
             case ResourceType::ComponentInfo:
                 return componentInfo();
@@ -307,12 +308,18 @@ struct NetworkDiagnostic {
     int statusCode = 0;
     NetworkErrorType errorType = NetworkErrorType::None;
     QString errorMessage;
+    QString responseContentType;  ///< 错误响应的内容类型。
+    QString retryAfter;  ///< 服务端建议的重试等待时间。
+    QString rateLimitRemaining;  ///< 服务端返回的剩余请求数提示。
+    QString rateLimitReset;  ///< 服务端返回的限流重置时间提示。
+    QString responseSummary;  ///< 限长后的文本响应摘要。
 
     int retryCount = 0;
     qint64 latencyMs = 0;
     qint64 totalElapsedMs = 0;
 
     bool wasRateLimited = false;
+    bool hasRateLimitHint = false;  ///< 是否出现限流相关响应头。
     bool wasCanceled = false;
     bool usedCache = false;
 
@@ -331,6 +338,7 @@ struct NetworkDiagnostic {
      * @brief 将错误类型转换为字符串（用于日志）
      */
     static QString errorTypeToString(NetworkErrorType type) {
+        // 将诊断枚举转换为稳定的日志字段。
         switch (type) {
             case NetworkErrorType::None:
                 return "None";
