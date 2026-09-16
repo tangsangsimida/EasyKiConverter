@@ -54,7 +54,8 @@ void PreviewImagesExportWorker::run() {
         for (int i = 0; i < 3; ++i) {  // 最多尝试加载3张预览图
             QByteArray imageData = cache->loadPreviewImage(m_componentId, i);
             if (imageData.isEmpty()) {
-                break;
+                // 缓存允许单张图片下载失败，不能因前一个索引缺失而跳过后续图片。
+                continue;
             }
             previewDataList.append(imageData);
         }

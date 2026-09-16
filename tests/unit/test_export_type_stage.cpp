@@ -4,10 +4,13 @@
 #include "services/export/FootprintExportStage.h"
 #include "services/export/Model3DExportStage.h"
 #include "services/export/Model3DExportWorker.h"
+#include "services/export/PreviewImagesExportWorker.h"
 #include "services/export/SymbolExportStage.h"
 
+#include <QBuffer>
 #include <QDir>
 #include <QFile>
+#include <QImage>
 #include <QSet>
 #include <QSignalSpy>
 #include <QTemporaryDir>
@@ -102,6 +105,48 @@ class TestExportTypeStage : public QObject {
     Q_OBJECT
 
 private slots:
+
+    /** @brief 验证预览图缓存缺少前置索引时仍会导出后续图片。 */
+    void previewImageExportLoadsNonContiguousCacheEntries() {
+        QTemporaryDir outputDir;
+        QTemporaryDir cacheDir;
+        QVERIFY(outputDir.isValid());
+        QVERIFY(cacheDir.isValid());
+
+        ComponentCacheService* cache = ComponentCacheService::instance();
+        const QString previousCacheDir = cache->cacheDir();
+        cache->setCacheDir(cacheDir.path());
+        cache->clearAllCache();
+
+        QImage image(2, 2, QImage::Format_RGB32);
+        image.fill(Qt::green);
+        QBuffer buffer;
+        QVERIFY(buffer.open(QIODevice::WriteOnly));
+        QVERIFY(image.save(&buffer, "PNG"));
+        cache->savePreviewImage(QStringLiteral("C45001"), buffer.data(), 1);
+
+        auto component = QSharedPointer<ComponentData>::create();
+        component->setLcscId(QStringLiteral("C45001"));
+
+        ExportOptions options;
+        options.outputPath = outputDir.path();
+        options.libName = QStringLiteral("NonContiguousPreview");
+        options.overwriteExistingFiles = true;
+
+        PreviewImagesExportWorker worker;
+        QSignalSpy completedSpy(&worker, &PreviewImagesExportWorker::completed);
+        worker.setData(QStringLiteral("C45001"), component, options);
+        worker.run();
+
+        QCOMPARE(completedSpy.count(), 1);
+        QVERIFY(completedSpy.at(0).at(1).toBool());
+        const QString exportedPath = outputDir.path() + QDir::separator() +
+                                     QStringLiteral("NonContiguousPreview.preview") + QDir::separator() +
+                                     QStringLiteral("C45001_preview_1.png");
+        QVERIFY(QFileInfo::exists(exportedPath));
+
+        cache->setCacheDir(previousCacheDir);
+    }
 
     // 验证每个组件都能收到开始和完成状态。
     void emitsItemStatusForEveryComponentIncludingLast() {

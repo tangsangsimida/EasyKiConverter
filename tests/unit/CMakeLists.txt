@@ -129,6 +129,7 @@ add_test(NAME test_component_service COMMAND test_component_service)
 add_executable(test_export_type_stage test_export_type_stage.cpp)
 target_link_libraries(test_export_type_stage PRIVATE
     Qt6::Test
+    Qt6::Gui
     Qt6::Network
     EasyKiConverterLib
 )
