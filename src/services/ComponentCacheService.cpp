@@ -166,40 +166,42 @@ void ComponentCacheService::setCacheDir(const QString& cacheDir, bool migrateExi
     }
 
     const bool cacheDirChanged = oldCacheDir != newCacheDir;
-    QMutexLocker diskLocker(&m_diskWriteMutex);
-    if (cacheDirChanged) {
-        // 先使切换前排队的异步写入失效，再进行目录迁移，避免旧请求污染新目录。
-        m_cacheGeneration.fetch_add(1);
-        QMutexLocker tombstoneLocker(&m_tombstoneMutex);
-        m_allTombstoned = false;
-        m_tombstones.clear();
-    }
-
-    // 迁移期间持有磁盘写锁，避免异步写入与目录迁移交错。
-    if (migrateExistingCache && !oldCacheDir.isEmpty() && cacheDirChanged) {
-        migrateCacheDirectory(oldCacheDir, newCacheDir);
-    }
-
-    // 目录创建也在锁外（mkpath 是线程安全的）
-    QDir dir;
-    if (!dir.exists(newCacheDir)) {
-        dir.mkpath(newCacheDir);
-    }
-    const QString model3dDir = newCacheDir + "/model3d";
-    if (!dir.exists(model3dDir)) {
-        dir.mkpath(model3dDir);
-    }
-
-    // 原子切换缓存目录指针
     {
-        QMutexLocker locker(&m_cacheDirMutex);
-        m_cacheDir = newCacheDir;
-    }
-    if (cacheDirChanged) {
-        // L1 数据没有目录归属信息，切换 L2 目录后必须全部失效，避免
-        // 同一元件 ID 从旧目录泄漏到新目录。
-        QMutexLocker locker(&m_mutex);
-        m_memoryCache.clear();
+        QMutexLocker diskLocker(&m_diskWriteMutex);
+        if (cacheDirChanged) {
+            // 先使切换前排队的异步写入失效，再进行目录迁移，避免旧请求污染新目录。
+            m_cacheGeneration.fetch_add(1);
+            QMutexLocker tombstoneLocker(&m_tombstoneMutex);
+            m_allTombstoned = false;
+            m_tombstones.clear();
+        }
+
+        // 迁移期间持有磁盘写锁，避免异步写入与目录迁移交错。
+        if (migrateExistingCache && !oldCacheDir.isEmpty() && cacheDirChanged) {
+            migrateCacheDirectory(oldCacheDir, newCacheDir);
+        }
+
+        // 目录创建也在锁内，确保切换期间读写使用完整的目录结构。
+        QDir dir;
+        if (!dir.exists(newCacheDir)) {
+            dir.mkpath(newCacheDir);
+        }
+        const QString model3dDir = newCacheDir + "/model3d";
+        if (!dir.exists(model3dDir)) {
+            dir.mkpath(model3dDir);
+        }
+
+        // 原子切换缓存目录指针。
+        {
+            QMutexLocker locker(&m_cacheDirMutex);
+            m_cacheDir = newCacheDir;
+        }
+        if (cacheDirChanged) {
+            // L1 数据没有目录归属信息，切换 L2 目录后必须全部失效，避免
+            // 同一元件 ID 从旧目录泄漏到新目录。
+            QMutexLocker locker(&m_mutex);
+            m_memoryCache.clear();
+        }
     }
     if (cacheDirChanged)
         emit memoryCacheSizeChanged(0);

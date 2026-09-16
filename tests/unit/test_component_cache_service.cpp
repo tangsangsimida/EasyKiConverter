@@ -162,6 +162,26 @@ private slots:
         QCOMPARE(callbackSize, 0);
     }
 
+    // 验证切换缓存目录时的内存缓存信号回调可以安全查询磁盘占用。
+    void testCacheDirChangeSignalAllowsReentrantSizeQuery() {
+        QTemporaryDir newCacheDir;
+        QVERIFY(newCacheDir.isValid());
+
+        bool callbackCompleted = false;
+        qint64 callbackSize = -1;
+        const QMetaObject::Connection connection =
+            connect(m_cache, &ComponentCacheService::memoryCacheSizeChanged, this, [&](qint64) {
+                callbackSize = m_cache->getCacheSize();
+                callbackCompleted = true;
+            });
+
+        m_cache->setCacheDir(newCacheDir.path(), false);
+
+        disconnect(connection);
+        QVERIFY(callbackCompleted);
+        QCOMPARE(callbackSize, 0);
+    }
+
     // 验证升级前的小写缓存目录仍可读取并通过规范化编号删除。
     void testLegacyLowercaseComponentCacheRemainsAccessible() {
         const QString componentId = QStringLiteral("C54329");
