@@ -73,6 +73,12 @@ public:
             diag.statusCode = result.statusCode;
             diag.retryCount = result.retryCount;
             diag.wasRateLimited = result.diagnostic.wasRateLimited;
+            diag.responseContentType = result.diagnostic.responseContentType;
+            diag.retryAfter = result.diagnostic.retryAfter;
+            diag.rateLimitRemaining = result.diagnostic.rateLimitRemaining;
+            diag.rateLimitReset = result.diagnostic.rateLimitReset;
+            diag.responseSummary = result.diagnostic.responseSummary;
+            diag.hasRateLimitHint = result.diagnostic.hasRateLimitHint;
             diag.latencyMs = result.elapsedMs;
 
             if ((cancelled && cancelled->loadRelaxed()) || result.wasCancelled) {
@@ -141,6 +147,12 @@ public:
             diag.statusCode = result.statusCode;
             diag.retryCount = result.retryCount;
             diag.wasRateLimited = result.diagnostic.wasRateLimited;
+            diag.responseContentType = result.diagnostic.responseContentType;
+            diag.retryAfter = result.diagnostic.retryAfter;
+            diag.rateLimitRemaining = result.diagnostic.rateLimitRemaining;
+            diag.rateLimitReset = result.diagnostic.rateLimitReset;
+            diag.responseSummary = result.diagnostic.responseSummary;
+            diag.hasRateLimitHint = result.diagnostic.hasRateLimitHint;
             diag.latencyMs = result.elapsedMs;
 
             if ((cancelled && cancelled->loadRelaxed()) || result.wasCancelled) {

@@ -981,9 +981,15 @@ QByteArray ComponentCacheService::downloadPreviewImage(const QString& lcscId,
                         diag->url = imageUrl;
                         diag->statusCode = 200;
                         diag->errorString = "";
+                        diag->responseContentType.clear();
+                        diag->retryAfter.clear();
+                        diag->rateLimitRemaining.clear();
+                        diag->rateLimitReset.clear();
+                        diag->responseSummary.clear();
                         diag->retryCount = 0;
                         diag->latencyMs = timer.elapsed();
                         diag->wasRateLimited = false;
+                        diag->hasRateLimitHint = false;
                     }
                     return data;
                 }
@@ -1026,9 +1032,15 @@ QByteArray ComponentCacheService::downloadPreviewImage(const QString& lcscId,
         diag->url = imageUrl;
         diag->statusCode = statusCode;
         diag->errorString = errorString;
+        diag->responseContentType = result.diagnostic.responseContentType;
+        diag->retryAfter = result.diagnostic.retryAfter;
+        diag->rateLimitRemaining = result.diagnostic.rateLimitRemaining;
+        diag->rateLimitReset = result.diagnostic.rateLimitReset;
+        diag->responseSummary = result.diagnostic.responseSummary;
         diag->retryCount = retryCount;
         diag->latencyMs = timer.elapsed();
         diag->wasRateLimited = wasRateLimited;
+        diag->hasRateLimitHint = result.diagnostic.hasRateLimitHint;
     }
 
     if (errorString.isEmpty() && !data.isEmpty()) {
@@ -1165,9 +1177,15 @@ QByteArray ComponentCacheService::downloadDatasheet(const QString& lcscId,
                         diag->url = datasheetUrl;
                         diag->statusCode = 200;
                         diag->errorString = "";
+                        diag->responseContentType.clear();
+                        diag->retryAfter.clear();
+                        diag->rateLimitRemaining.clear();
+                        diag->rateLimitReset.clear();
+                        diag->responseSummary.clear();
                         diag->retryCount = 0;
                         diag->latencyMs = timer.elapsed();
                         diag->wasRateLimited = false;
+                        diag->hasRateLimitHint = false;
                     }
                     if (format) {
                         *format = cachedFormat;
@@ -1217,9 +1235,15 @@ QByteArray ComponentCacheService::downloadDatasheet(const QString& lcscId,
         diag->url = datasheetUrl;
         diag->statusCode = statusCode;
         diag->errorString = errorString;
+        diag->responseContentType = result.diagnostic.responseContentType;
+        diag->retryAfter = result.diagnostic.retryAfter;
+        diag->rateLimitRemaining = result.diagnostic.rateLimitRemaining;
+        diag->rateLimitReset = result.diagnostic.rateLimitReset;
+        diag->responseSummary = result.diagnostic.responseSummary;
         diag->retryCount = retryCount;
         diag->latencyMs = timer.elapsed();
         diag->wasRateLimited = wasRateLimited;
+        diag->hasRateLimitHint = result.diagnostic.hasRateLimitHint;
     }
 
     if (errorString.isEmpty() && !data.isEmpty()) {

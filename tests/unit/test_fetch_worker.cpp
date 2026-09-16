@@ -14,6 +14,7 @@ class TestFetchWorker : public QObject {
 
 private slots:
 
+    // 验证注入的网络客户端能够获取并保存组件信息。
     void runFetchesComponentInfoWithInjectedNetworkClient() {
         MockNetworkClient mock;
         const QString componentId = QStringLiteral("C23186");
@@ -39,6 +40,7 @@ private slots:
         QCOMPARE(status->networkDiagnostics.first().statusCode, 200);
     }
 
+    // 验证 API 错误响应能够进入获取失败状态。
     void runReportsApiErrorResponse() {
         MockNetworkClient mock;
         const QString componentId = QStringLiteral("C404");
@@ -59,6 +61,27 @@ private slots:
         QCOMPARE(status->networkDiagnostics.first().statusCode, 404);
     }
 
+    // 验证 403 访问拒绝会传递到导出状态且不会被标记为限流。
+    void runPropagatesForbiddenDiagnostics() {
+        MockNetworkClient mock;
+        const QString componentId = QStringLiteral("C403");
+        const QString url = componentInfoUrl(componentId);
+        mock.addErrorResponse(url, QStringLiteral("Access denied"), 403);
+
+        FetchWorker worker(componentId, false, false, QString(), &mock);
+        QSharedPointer<ComponentExportStatus> status = runWorker(worker);
+
+        QVERIFY(status);
+        QVERIFY(!status->fetchSuccess);
+        QCOMPARE(status->networkDiagnostics.size(), 1);
+        const auto& diagnostic = status->networkDiagnostics.first();
+        QCOMPARE(diagnostic.statusCode, 403);
+        QCOMPARE(diagnostic.errorString, QStringLiteral("Access denied"));
+        QVERIFY(!diagnostic.wasRateLimited);
+        QVERIFY(!diagnostic.hasRateLimitHint);
+    }
+
+    // 验证仅获取三维模型时会记录两个模型请求。
     void runFetchesExisting3DModelOnly() {
         MockNetworkClient mock;
         const QString uuid = QStringLiteral("uuid-123");
@@ -82,6 +105,7 @@ private slots:
         QCOMPARE(status->networkDiagnostics.at(1).url, stepUrl);
     }
 
+    // 验证任务开始前取消会发布取消状态。
     void abortBeforeRunEmitsCancelledStatus() {
         MockNetworkClient mock;
         FetchWorker worker(QStringLiteral("C_CANCEL"), false, false, QString(), &mock);
@@ -97,6 +121,7 @@ private slots:
     }
 
 private:
+    // 同步执行 Worker 并捕获完成信号中的状态对象。
     QSharedPointer<ComponentExportStatus> runWorker(FetchWorker& worker) const {
         QSharedPointer<ComponentExportStatus> captured;
         QObject::connect(
@@ -109,10 +134,12 @@ private:
         return captured;
     }
 
+    // 构造组件信息请求地址。
     QString componentInfoUrl(const QString& componentId) const {
         return QStringLiteral("https://easyeda.com/api/products/%1/components?version=6.5.51").arg(componentId);
     }
 
+    // 从项目夹具加载可用于测试的成功响应。
     QJsonObject successfulComponentResponse() const {
         QString error;
         const QByteArray fixture =

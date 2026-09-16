@@ -96,17 +96,25 @@ struct ComponentExportStatus {
         QString url;
         int statusCode = 0;
         QString errorString;
+        QString responseContentType;  ///< 错误响应的内容类型。
+        QString retryAfter;  ///< 服务端建议的重试等待时间。
+        QString rateLimitRemaining;  ///< 服务端返回的剩余请求数提示。
+        QString rateLimitReset;  ///< 服务端返回的限流重置时间提示。
+        QString responseSummary;  ///< 限长后的文本响应摘要。
         int retryCount = 0;
         qint64 latencyMs = 0;
-        bool wasRateLimited = false;
+        bool wasRateLimited = false;  ///< 是否被明确识别为限流响应。
+        bool hasRateLimitHint = false;  ///< 是否出现限流相关响应头。
     };
 
     QList<NetworkDiagnostics> networkDiagnostics;
 
+    // 判断获取、解析和写入三个阶段是否全部成功。
     bool isCompleteSuccess() const {
         return fetchSuccess && processSuccess && writeSuccess;
     }
 
+    // 返回第一个失败的流水线阶段名称。
     QString getFailedStage() const {
         if (!fetchSuccess)
             return "Fetch";
@@ -117,6 +125,7 @@ struct ComponentExportStatus {
         return "";
     }
 
+    // 返回第一个失败阶段的错误原因。
     QString getFailureReason() const {
         if (!fetchSuccess)
             return fetchMessage;
@@ -127,10 +136,12 @@ struct ComponentExportStatus {
         return "";
     }
 
+    // 汇总获取、解析和写入阶段耗时。
     qint64 getTotalDurationMs() const {
         return fetchDurationMs + processDurationMs + writeDurationMs;
     }
 
+    // 在线程安全的条件下追加调试日志。
     void addDebugLog(const QString& message) {
         QMutexLocker locker(&m_mutex);
         debugLog.append(message);
@@ -225,14 +236,17 @@ struct ComponentExportStatus {
  */
 class ScopedDataClearer {
 public:
+    // 保存待清理状态的弱引用，避免改变状态对象生命周期。
     explicit ScopedDataClearer(QSharedPointer<ComponentExportStatus> status) : m_status(status) {}
 
+    // 析构时清理仍然存活的状态对象中间数据。
     ~ScopedDataClearer() {
         if (auto status = m_status.toStrongRef()) {  // 尝试获取强引用
             status->clearIntermediateData(false);
         }
     }
 
+    // 释放清理责任，保留状态对象中的数据。
     void release() {
         m_status.clear();
     }
@@ -270,10 +284,12 @@ struct ExportStatistics {
     // 内存统计 (v3.0.5)
     qint64 peakMemoryUsage = 0;
 
+    // 计算所有导出项的成功百分比。
     double getSuccessRate() const {
         return total > 0 ? (success * 100.0 / total) : 0.0;
     }
 
+    // 生成统计摘要文本供日志和界面展示。
     QString getSummary() const {
         return QString(
                    "Total: %1, Success: %2, Failed: %3, Symbol: %4, Footprint: %5, 3D: %6, Preview: %7, Datasheet: %8")
