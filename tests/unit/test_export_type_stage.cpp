@@ -378,13 +378,7 @@ private slots:
 
         const QString componentId = QStringLiteral("C12345");
         const QString modelUuid = QStringLiteral("cached-step-model");
-        const QByteArray stepData = QByteArrayLiteral(
-            "ISO-10303-21;\n"
-            "DATA;\n"
-            "#1=CARTESIAN_POINT('',(0.,0.,0.));\n"
-            "#2=VERTEX_POINT('',#1);\n"
-            "ENDSEC;\n"
-            "END-ISO-10303-21;\n");
+        const QByteArray stepData = QByteArrayLiteral("ISO-10303-21;\nDATA;\nENDSEC;\nEND-ISO-10303-21;\n");
         cache->saveModel3D(modelUuid, stepData, QStringLiteral("step"));
 
         auto component = makeFootprintComponent(componentId, QStringLiteral("CACHED_PKG"), QStringLiteral("CACHED"));
