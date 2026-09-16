@@ -23,6 +23,7 @@ void ParallelFetchContext::start(int totalCount) {
         m_isAllDone = totalCount == 0;
         m_collectedData.clear();
         m_failedComponents.clear();
+        m_finishedComponents.clear();
         shouldEmit = m_isAllDone;
     }
     if (shouldEmit) {
@@ -32,9 +33,14 @@ void ParallelFetchContext::start(int totalCount) {
 
 // 记录一个成功结果并检查批量任务是否完成。
 void ParallelFetchContext::markCompleted(const QString& componentId, const ComponentData& data) {
+    const QString normalizedId = componentId.toUpper();
     {
         QMutexLocker locker(&m_mutex);
-        m_collectedData.insert(componentId, data);
+        if (m_finishedComponents.contains(normalizedId)) {
+            return;
+        }
+        m_finishedComponents.insert(normalizedId);
+        m_collectedData.insert(normalizedId, data);
         ++m_completedCount;
     }
     checkCompletion();
@@ -42,9 +48,14 @@ void ParallelFetchContext::markCompleted(const QString& componentId, const Compo
 
 // 记录一个失败原因并检查批量任务是否完成。
 void ParallelFetchContext::markFailed(const QString& componentId, const QString& error) {
+    const QString normalizedId = componentId.toUpper();
     {
         QMutexLocker locker(&m_mutex);
-        m_failedComponents.insert(componentId, error);
+        if (m_finishedComponents.contains(normalizedId)) {
+            return;
+        }
+        m_finishedComponents.insert(normalizedId);
+        m_failedComponents.insert(normalizedId, error);
         ++m_completedCount;
     }
     checkCompletion();

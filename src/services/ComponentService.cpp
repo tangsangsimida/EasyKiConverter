@@ -21,6 +21,7 @@
 #include <QProcess>
 #include <QQueue>
 #include <QRegularExpression>
+#include <QSet>
 #include <QTextStream>
 #include <QThread>
 #include <QTimer>
@@ -1027,7 +1028,17 @@ void ComponentService::fetchMultipleComponentsData(const QStringList& componentI
         m_queueManager->setMaxConcurrentRequests(m_maxConcurrentRequests);
     }
 
-    qDebug() << "Fetching data for" << componentIds.size()
+    QStringList normalizedComponentIds;
+    QSet<QString> seenComponentIds;
+    for (const QString& componentId : componentIds) {
+        const QString normalizedId = componentId.toUpper();
+        if (!normalizedId.isEmpty() && !seenComponentIds.contains(normalizedId)) {
+            seenComponentIds.insert(normalizedId);
+            normalizedComponentIds.append(normalizedId);
+        }
+    }
+
+    qDebug() << "Fetching data for" << normalizedComponentIds.size()
              << "components with async queue (max concurrent:" << m_maxConcurrentRequests << ")";
 
     // 防止重复启动批量处理，避免队列状态混乱
@@ -1045,12 +1056,12 @@ void ComponentService::fetchMultipleComponentsData(const QStringList& componentI
         m_activeRequestCount = 0;
         resetQueueState();
     });
-    m_parallelContext->start(componentIds.size());
+    m_parallelContext->start(normalizedComponentIds.size());
     m_activeRequestCount = 0;
     m_batchFetch3DModel = fetch3DModel;
 
     // 使用 ComponentQueueManager 管理队列
-    m_queueManager->start(componentIds);
+    m_queueManager->start(normalizedComponentIds);
 }
 
 /** @brief 处理并行请求中的单个元器件完成事件。 */

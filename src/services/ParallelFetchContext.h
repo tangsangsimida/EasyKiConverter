@@ -1,9 +1,11 @@
 #ifndef PARALLELFETCHCONTEXT_H
 #define PARALLELFETCHCONTEXT_H
 
+#include <QList>
 #include <QMap>
 #include <QMutex>
 #include <QObject>
+#include <QSet>
 #include <QString>
 
 namespace EasyKiConverter {
@@ -35,6 +37,7 @@ private:
 private:
     QMap<QString, ComponentData> m_collectedData;
     QMap<QString, QString> m_failedComponents;
+    QSet<QString> m_finishedComponents;
     int m_totalCount;
     int m_completedCount;
     bool m_isAllDone;

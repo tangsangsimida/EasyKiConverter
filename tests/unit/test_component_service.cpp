@@ -94,6 +94,21 @@ private slots:
         QCOMPARE(imageSpy.count(), 0);
     }
 
+    /** @brief 验证并行上下文不会重复计算同一元器件的完成回调。 */
+    void testParallelContextDeduplicatesFinishedComponents() {
+        ParallelFetchContext context;
+        QSignalSpy completedSpy(&context, &ParallelFetchContext::allCompleted);
+        ComponentData data;
+
+        context.start(1);
+        context.markCompleted(QStringLiteral("c54334"), data);
+        context.markCompleted(QStringLiteral("C54334"), data);
+
+        QCOMPARE(completedSpy.count(), 1);
+        QCOMPARE(context.completedCount(), 1);
+        QCOMPARE(context.collectedData().size(), 1);
+    }
+
     /** @brief 验证取消缓存加载后不会重新创建获取状态。 */
     void testCancelledCacheLoadDoesNotRecreateFetchingEntry() {
         const QString componentId = QStringLiteral("C34567");
