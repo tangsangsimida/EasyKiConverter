@@ -251,10 +251,19 @@ void Model3DExportWorker::run() {
     }
     // STEP 文件保持服务器原始坐标系，优先使用磁盘缓存
     if (error.isEmpty() && needStep && !m_cancelled.load()) {
-        QByteArray stepData;
+        QByteArray stepData = sourceModel.step();
+        if (!stepData.isEmpty() && !Exporter3DModel::hasUsableStepData(stepData)) {
+            qWarning() << "Model3DExportWorker: Ignoring malformed preloaded STEP for" << m_componentId << "uuid"
+                       << uuid;
+            stepData.clear();
+        }
+        if (!stepData.isEmpty()) {
+            // 预加载阶段已经取得有效 STEP 时写入公共缓存，避免后续导出重复下载。
+            cache->saveModel3D(uuid, stepData, QStringLiteral("step"), gen);
+        }
 
         bool stepCacheHit = false;
-        {
+        if (stepData.isEmpty()) {
             QMutexLocker downloadLocker(&modelDownloadMutex());
             const QByteArray cachedStep = cache->loadModel3D(uuid, QStringLiteral("step"));
             if (!cachedStep.isEmpty() && Exporter3DModel::hasUsableStepData(cachedStep)) {

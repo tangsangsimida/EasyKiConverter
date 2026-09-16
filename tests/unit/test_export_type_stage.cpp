@@ -467,6 +467,47 @@ private slots:
         cache->setCacheDir(previousCacheDir);
     }
 
+    // 验证预加载的有效 STEP 会被直接导出并写入公共三维缓存。
+    void model3DWorkerCachesPreloadedStep() {
+        QTemporaryDir outputDir;
+        QTemporaryDir cacheDir;
+        QVERIFY(outputDir.isValid());
+        QVERIFY(cacheDir.isValid());
+
+        ComponentCacheService* cache = ComponentCacheService::instance();
+        const QString previousCacheDir = cache->cacheDir();
+        cache->setCacheDir(cacheDir.path());
+        cache->clearAllCache();
+
+        const QString componentId = QStringLiteral("C12347");
+        const QString modelUuid = QStringLiteral("preloaded-step-model");
+        const QByteArray stepData = QByteArrayLiteral("ISO-10303-21;\nDATA;\nENDSEC;\nEND-ISO-10303-21;\n");
+        auto component = QSharedPointer<ComponentData>::create();
+        component->setLcscId(componentId);
+        auto model = QSharedPointer<Model3DData>::create();
+        model->setUuid(modelUuid);
+        model->setName(QStringLiteral("PRELOADED_STEP"));
+        model->setStep(stepData);
+        component->setModel3DData(model);
+
+        ExportOptions options;
+        options.outputPath = outputDir.path();
+        options.exportModel3D = true;
+        options.exportModel3DFormat = ExportOptions::MODEL_3D_FORMAT_STEP;
+        options.overwriteExistingFiles = true;
+
+        Model3DExportWorker worker;
+        QSignalSpy completedSpy(&worker, &Model3DExportWorker::completed);
+        worker.setData(componentId, component, options);
+        worker.run();
+
+        QCOMPARE(completedSpy.count(), 1);
+        QVERIFY(completedSpy.at(0).at(1).toBool());
+        QCOMPARE(cache->loadModel3D(modelUuid, QStringLiteral("step")), stepData);
+
+        cache->setCacheDir(previousCacheDir);
+    }
+
     // 验证 Altium 封装提前失败时仍会结束对应的 3D 统计状态。
     void altiumMissingFootprintReportsEmbeddedModelFailure() {
         QTemporaryDir tempDir;
