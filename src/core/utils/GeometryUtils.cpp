@@ -60,6 +60,7 @@ QPointF GeometryUtils::getArcCenter(double startX,
     return QPointF(centerX, centerY);
 }
 
+// 根据终点横坐标和大圆弧标志计算圆弧终止角。
 double GeometryUtils::getArcAngleEnd(double centerX, double endX, double radius, bool flagLargeArc) {
     // 计算相对于圆心的角度
     double dx = endX - centerX;
@@ -73,14 +74,17 @@ double GeometryUtils::getArcAngleEnd(double centerX, double endX, double radius,
     return angle;
 }
 
+// 将 EasyEDA 像素单位换算为 mil。
 int GeometryUtils::pxToMil(double dim) {
     return static_cast<int>(10.0 * dim);
 }
 
+// 将 EasyEDA 像素单位换算为毫米。
 double GeometryUtils::pxToMm(double dim) {
     return 10.0 * dim * 0.0254;
 }
 
+// 将输入尺寸换算为毫米并拦截非有限值和异常大值。
 double GeometryUtils::convertToMm(double dim) {
     // 检查输入是否有
     if (std::isnan(dim)) {
@@ -109,20 +113,24 @@ double GeometryUtils::convertToMm(double dim) {
     return result;
 }
 
+// 计算两个平面点之间的欧氏距离。
 double GeometryUtils::distance(double x1, double y1, double x2, double y2) {
     double dx = x2 - x1;
     double dy = y2 - y1;
     return std::sqrt(dx * dx + dy * dy);
 }
 
+// 将角度值转换为弧度值。
 double GeometryUtils::degreesToRadians(double degrees) {
     return degrees * M_PI / 180.0;
 }
 
+// 将弧度值转换为角度值。
 double GeometryUtils::radiansToDegrees(double radians) {
     return radians * 180.0 / M_PI;
 }
 
+// 将弧度角规范化到 [0, 2π) 范围。
 double GeometryUtils::normalizeAngle(double angle) {
     // 将角度规范化[0, 2π) 范围
     while (angle < 0.0) {
@@ -347,6 +355,7 @@ GeometryUtils::SvgArcResult GeometryUtils::solveSvgArc(const QString& param) {
     return res;
 }
 
+// 计算两个向量之间带方向的夹角。
 double GeometryUtils::getAngle(double x1, double y1, double x2, double y2) {
     // angle = arccos( (U dot V) / (|U|*|V|) )
     double factor = (x1 * y2 - y1 * x2 > 0) ? 1.0 : -1.0;
@@ -363,6 +372,7 @@ double GeometryUtils::getAngle(double x1, double y1, double x2, double y2) {
     return factor * std::acos(ratio);
 }
 
+// 根据椭圆弧参数计算采样起点和终点。
 GeometryUtils::SvgArcEndpoints GeometryUtils::calcSvgArc(const SvgArcResult& arc) {
     SvgArcEndpoints res;
 
@@ -382,10 +392,11 @@ GeometryUtils::SvgArcEndpoints GeometryUtils::calcSvgArc(const SvgArcResult& arc
     return res;
 }
 
+// 将椭圆弧按固定角度步长离散为路径点。
 QList<GeometryUtils::SvgPoint> GeometryUtils::arcToPath(const SvgArcResult& arc, bool includeStart) {
     QList<SvgPoint> res;
 
-    const int splitCount = 32;  // 与 lckiconverter 保持一致
+    const int splitCount = 32;  // 将整圆划分为 32 段以控制圆弧采样精度。
     double step = 360.0 / splitCount;
 
     double startAngle = arc.startAngle;
@@ -417,6 +428,7 @@ QList<GeometryUtils::SvgPoint> GeometryUtils::arcToPath(const SvgArcResult& arc,
     return res;
 }
 
+// 解析 SVG 路径并转换为 GeometryUtils 的点结构。
 QList<GeometryUtils::SvgPoint> GeometryUtils::parseSvgPath(const QString& path) {
     QList<SvgPoint> res;
 
@@ -431,13 +443,15 @@ QList<GeometryUtils::SvgPoint> GeometryUtils::parseSvgPath(const QString& path) 
     return res;
 }
 
+// 将像素单位换算为保留两位小数且向下取整的毫米值。
 double GeometryUtils::pxToMmFloor(double px) {
-    // 使用 floor 而非 round，与 lckiconverter 保持一
-    // 1 unit = 10 mil = 0.254 mm
+    // 使用 floor 而非 round，保持单位换算结果向下取整。
+    // 1 unit = 10 mil = 0.254 mm。
     double mm = px * 0.254;
     return std::floor(mm * 100.0) / 100.0;  // 保留2位小
 }
 
+// 判断字符串是否只包含 ASCII 字符。
 bool GeometryUtils::isASCII(const QString& str) {
     for (int i = 0; i < str.length(); ++i) {
         if (str[i].unicode() > 127) {
