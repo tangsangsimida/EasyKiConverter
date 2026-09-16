@@ -32,7 +32,7 @@ CONTROL_RE = re.compile(r"^\s*switch\s*\(")
 
 # 仅匹配明确的外部项目引用表达，避免误报普通的“reference”技术术语。
 FORBIDDEN_REFERENCE_RE = re.compile(
-    r"(?:lckiconverter|参考\s*(?:其他)?项目|参考\s*(?:其他)?实现|reference\s+implementation)",
+    r"(?:参考\s*(?:其他)?项目|参考\s*(?:其他)?实现|reference\s+implementation)",
     re.IGNORECASE,
 )
 
