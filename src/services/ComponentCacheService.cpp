@@ -1456,26 +1456,28 @@ bool ComponentCacheService::isTombstoned(const QString& lcscId) const {
 void ComponentCacheService::clearAllCache() {
     // 递增代次，使所有正在排队的异步写入任务失效
     m_cacheGeneration.fetch_add(1);
-    // 锁顺序：先 disk，后 tombstone（与 save 方法一致，避免死锁）
-    QMutexLocker diskLocker(&m_diskWriteMutex);
-    // 全局 tombstone：阻止所有旧回调写入
     {
-        QMutexLocker tombLocker(&m_tombstoneMutex);
-        m_allTombstoned = true;
-    }
-    // 先清空L2磁盘缓存（不需要锁），同时删除根目录下的遗留文件。
-    {
-        QDir dir(cacheDir());
-        if (dir.exists()) {
-            const QFileInfoList entries = dir.entryInfoList(QDir::NoDotAndDotDot | QDir::AllEntries);
-            for (const QFileInfo& entry : entries) {
-                if (entry.isDir()) {
-                    QDir(entry.absoluteFilePath()).removeRecursively();
-                } else {
-                    QFile::remove(entry.absoluteFilePath());
+        // 锁顺序：先 disk，后 tombstone（与 save 方法一致，避免死锁）
+        QMutexLocker diskLocker(&m_diskWriteMutex);
+        // 全局 tombstone：阻止所有旧回调写入
+        {
+            QMutexLocker tombLocker(&m_tombstoneMutex);
+            m_allTombstoned = true;
+        }
+        // 先清空L2磁盘缓存（不需要锁），同时删除根目录下的遗留文件。
+        {
+            QDir dir(cacheDir());
+            if (dir.exists()) {
+                const QFileInfoList entries = dir.entryInfoList(QDir::NoDotAndDotDot | QDir::AllEntries);
+                for (const QFileInfo& entry : entries) {
+                    if (entry.isDir()) {
+                        QDir(entry.absoluteFilePath()).removeRecursively();
+                    } else {
+                        QFile::remove(entry.absoluteFilePath());
+                    }
                 }
+                LOG_DEBUG(LogModule::Core, "Cleared all disk cache");
             }
-            LOG_DEBUG(LogModule::Core, "Cleared all disk cache");
         }
     }
 
@@ -1574,9 +1576,12 @@ qint64 ComponentCacheService::calculateDirSize(const QString& dirPath) const {
 // 将磁盘缓存裁剪到指定大小以内。
 void ComponentCacheService::pruneCache(qint64 targetSizeBytes) {
     // 手动清理必须与目录迁移串行化，避免清理旧目录或新目录中的部分内容。
-    QMutexLocker diskLocker(&m_diskWriteMutex);
-    CachePruner pruner(cacheDir());
-    qint64 newSize = pruner.pruneTo(targetSizeBytes);
+    qint64 newSize = 0;
+    {
+        QMutexLocker diskLocker(&m_diskWriteMutex);
+        CachePruner pruner(cacheDir());
+        newSize = pruner.pruneTo(targetSizeBytes);
+    }
     emit cacheSizeChanged(newSize);
 }
 

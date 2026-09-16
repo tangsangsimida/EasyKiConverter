@@ -145,6 +145,23 @@ private slots:
         QCOMPARE(cacheSizeSpy.last().at(0).toLongLong(), m_cache->getCacheSize());
     }
 
+    // 验证缓存大小信号回调中可以安全查询当前磁盘占用。
+    void testCacheSizeSignalAllowsReentrantSizeQuery() {
+        bool callbackCompleted = false;
+        qint64 callbackSize = -1;
+        const QMetaObject::Connection connection =
+            connect(m_cache, &ComponentCacheService::cacheSizeChanged, this, [&]() {
+                callbackSize = m_cache->getCacheSize();
+                callbackCompleted = true;
+            });
+
+        m_cache->clearAllCache();
+
+        disconnect(connection);
+        QVERIFY(callbackCompleted);
+        QCOMPARE(callbackSize, 0);
+    }
+
     // 验证升级前的小写缓存目录仍可读取并通过规范化编号删除。
     void testLegacyLowercaseComponentCacheRemainsAccessible() {
         const QString componentId = QStringLiteral("C54329");
