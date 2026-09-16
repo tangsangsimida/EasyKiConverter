@@ -356,164 +356,204 @@ public:
         return m_info;
     }
 
+    /** @brief 设置符号元数据。 */
     void setInfo(const SymbolInfo& info) {
         m_info = info;
     }
 
+    /** @brief 返回符号边界框。 */
     SymbolBBox bbox() const {
         return m_bbox;
     }
 
+    /** @brief 设置符号边界框。 */
     void setBbox(const SymbolBBox& bbox) {
         m_bbox = bbox;
     }
 
     // 单部分符号的兼容接口（向后兼容）
+    /** @brief 返回单部分兼容接口中的全部引脚。 */
     QList<SymbolPin> pins() const {
         return m_pins;
     }
 
+    /** @brief 批量设置单部分兼容接口中的引脚。 */
     void setPins(const QList<SymbolPin>& pins) {
         m_pins = pins;
     }
 
+    /** @brief 追加一个单部分兼容接口引脚。 */
     void addPin(const SymbolPin& pin) {
         m_pins.append(pin);
     }
 
+    /** @brief 返回全部矩形图元。 */
     QList<SymbolRectangle> rectangles() const {
         return m_rectangles;
     }
 
+    /** @brief 批量设置矩形图元。 */
     void setRectangles(const QList<SymbolRectangle>& rectangles) {
         m_rectangles = rectangles;
     }
 
+    /** @brief 追加一个矩形图元。 */
     void addRectangle(const SymbolRectangle& rect) {
         m_rectangles.append(rect);
     }
 
+    /** @brief 返回全部圆形图元。 */
     QList<SymbolCircle> circles() const {
         return m_circles;
     }
 
+    /** @brief 批量设置圆形图元。 */
     void setCircles(const QList<SymbolCircle>& circles) {
         m_circles = circles;
     }
 
+    /** @brief 追加一个圆形图元。 */
     void addCircle(const SymbolCircle& circle) {
         m_circles.append(circle);
     }
 
+    /** @brief 返回全部圆弧图元。 */
     QList<SymbolArc> arcs() const {
         return m_arcs;
     }
 
+    /** @brief 批量设置圆弧图元。 */
     void setArcs(const QList<SymbolArc>& arcs) {
         m_arcs = arcs;
     }
 
+    /** @brief 追加一个圆弧图元。 */
     void addArc(const SymbolArc& arc) {
         m_arcs.append(arc);
     }
 
+    /** @brief 返回全部椭圆图元。 */
     QList<SymbolEllipse> ellipses() const {
         return m_ellipses;
     }
 
+    /** @brief 批量设置椭圆图元。 */
     void setEllipses(const QList<SymbolEllipse>& ellipses) {
         m_ellipses = ellipses;
     }
 
+    /** @brief 追加一个椭圆图元。 */
     void addEllipse(const SymbolEllipse& ellipse) {
         m_ellipses.append(ellipse);
     }
 
+    /** @brief 返回全部折线图元。 */
     QList<SymbolPolyline> polylines() const {
         return m_polylines;
     }
 
+    /** @brief 批量设置折线图元。 */
     void setPolylines(const QList<SymbolPolyline>& polylines) {
         m_polylines = polylines;
     }
 
+    /** @brief 追加一个折线图元。 */
     void addPolyline(const SymbolPolyline& polyline) {
         m_polylines.append(polyline);
     }
 
+    /** @brief 返回全部多边形图元。 */
     QList<SymbolPolygon> polygons() const {
         return m_polygons;
     }
 
+    /** @brief 批量设置多边形图元。 */
     void setPolygons(const QList<SymbolPolygon>& polygons) {
         m_polygons = polygons;
     }
 
+    /** @brief 追加一个多边形图元。 */
     void addPolygon(const SymbolPolygon& polygon) {
         m_polygons.append(polygon);
     }
 
+    /** @brief 返回全部路径图元。 */
     QList<SymbolPath> paths() const {
         return m_paths;
     }
 
+    /** @brief 批量设置路径图元。 */
     void setPaths(const QList<SymbolPath>& paths) {
         m_paths = paths;
     }
 
+    /** @brief 追加一个路径图元。 */
     void addPath(const SymbolPath& path) {
         m_paths.append(path);
     }
 
+    /** @brief 返回全部图片图元。 */
     QList<SymbolImage> images() const {
         return m_images;
     }
 
+    /** @brief 批量设置图片图元。 */
     void setImages(const QList<SymbolImage>& images) {
         m_images = images;
     }
 
+    /** @brief 追加一个图片图元。 */
     void addImage(const SymbolImage& image) {
         m_images.append(image);
     }
 
+    /** @brief 返回全部文本图元。 */
     QList<SymbolText> texts() const {
         return m_texts;
     }
 
+    /** @brief 批量设置文本图元。 */
     void setTexts(const QList<SymbolText>& texts) {
         m_texts = texts;
     }
 
+    /** @brief 追加一个文本图元。 */
     void addText(const SymbolText& text) {
         m_texts.append(text);
     }
 
+    /** @brief 返回符号图元的绘制顺序。 */
     QList<SymbolGraphicOrder> graphicOrder() const {
         return m_graphicOrder;
     }
 
+    /** @brief 设置符号图元的绘制顺序。 */
     void setGraphicOrder(const QList<SymbolGraphicOrder>& order) {
         m_graphicOrder = order;
     }
 
+    /** @brief 追加一个绘制顺序引用。 */
     void addGraphicOrder(const SymbolGraphicOrder& order) {
         m_graphicOrder.append(order);
     }
 
     // 多部分符号接
+    /** @brief 返回多部分符号的全部部分。 */
     QList<SymbolPart> parts() const {
         return m_parts;
     }
 
+    /** @brief 批量设置多部分符号的部分。 */
     void setParts(const QList<SymbolPart>& parts) {
         m_parts = parts;
     }
 
+    /** @brief 追加一个多部分符号部分。 */
     void addPart(const SymbolPart& part) {
         m_parts.append(part);
     }
 
+    /** @brief 判断符号是否包含多个部分。 */
     bool isMultiPart() const {
         return m_parts.size() > 1;
     }
