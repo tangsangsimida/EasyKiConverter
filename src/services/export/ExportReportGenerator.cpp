@@ -12,6 +12,7 @@
 
 namespace EasyKiConverter {
 
+// 记录网络运行时统计，帮助导出报告关联网络阶段行为。
 void ExportReportGenerator::logNetworkStats(const QString& context) {
     const QString snapshot = NetworkClient::instance().formatRuntimeStats();
     qInfo().noquote() << QStringLiteral("ParallelExportService network runtime stats [%1]\n%2").arg(context, snapshot);

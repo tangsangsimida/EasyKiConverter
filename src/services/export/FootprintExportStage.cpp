@@ -33,6 +33,7 @@ constexpr double EASYEDA_UNIT_TO_MM = 0.254;  // 逆向转换用，正向请用 
 constexpr double EASYEDA_Z_OFFSET_BIAS = 0.000001;  // 避免对齐到精确零值导致 KiCad 忽略偏移
 constexpr auto FP_TYPE_SMD = "smd";
 
+// 从 STEP 顶点计算模型包围盒中心，并以最低 Z 作为对齐基准。
 bool calculateStepGeometryCenter(const QByteArray& stepData, Model3DBase* center) {
     if (stepData.isEmpty() || center == nullptr) {
         return false;
@@ -119,6 +120,7 @@ bool calculateStepGeometryCenter(const QByteArray& stepData, Model3DBase* center
     return true;
 }
 
+// 根据 WRL 和 STEP 的最低 Z 坐标计算模型对齐偏移。
 double calculateStepZOffset(double wrlDisplayMinZ, double stepMinZ) {
     if (wrlDisplayMinZ == std::numeric_limits<double>::max()) {
         return stepMinZ > MODEL_Z_OFFSET_EPSILON_MM ? -stepMinZ : 0.0;
@@ -128,6 +130,7 @@ double calculateStepZOffset(double wrlDisplayMinZ, double stepMinZ) {
     return qAbs(offset) < MODEL_Z_OFFSET_EPSILON_MM ? 0.0 : offset;
 }
 
+// 从 CAD 原始 JSON 中读取指定三维模型的源 Z 坐标并换算为毫米。
 bool readModelSourceZMm(const QByteArray& cadJsonRaw, const QString& modelUuid, double* zMm) {
     if (cadJsonRaw.isEmpty() || modelUuid.isEmpty() || zMm == nullptr) {
         return false;
@@ -188,6 +191,7 @@ bool readModelSourceZMm(const QByteArray& cadJsonRaw, const QString& modelUuid, 
     return false;
 }
 
+// 计算贴片封装 WRL 显示坐标与源模型坐标之间的基础偏移。
 double calculateWrlBaseZOffset(const QString& fpType, double wrlDisplayMinZ, double sourceZMm) {
     if (fpType != QLatin1String(FP_TYPE_SMD) || wrlDisplayMinZ == std::numeric_limits<double>::max()) {
         return 0.0;
@@ -197,13 +201,16 @@ double calculateWrlBaseZOffset(const QString& fpType, double wrlDisplayMinZ, dou
     return offset > MODEL_Z_OFFSET_EPSILON_MM ? offset : 0.0;
 }
 
+// 将毫米偏移按 EasyEDA 单位和偏置规则转换为导出值。
 double zOffsetMmToEasyEdaUnits(double zOffsetMm) {
     const double roundedOffset = std::round(zOffsetMm * 100.0) / 100.0;
     return -(roundedOffset - EASYEDA_Z_OFFSET_BIAS) / EASYEDA_UNIT_TO_MM;
 }
 }  // namespace
 
+// 初始化封装导出阶段，限制并发以保证库级写入顺序稳定。
 FootprintExportStage::FootprintExportStage(QObject* parent)
+    // 使用单并发写入，避免同一库文件的并发修改。
     : ExportTypeStage("Footprint", 1, parent) {  // maxConcurrent=1 因为是库级别导出
 }
 
@@ -211,6 +218,7 @@ FootprintExportStage::~FootprintExportStage() {
     waitForWorkerThread(m_workerThread, 30000);
 }
 
+// 初始化封装导出进度并启动库级导出线程。
 void FootprintExportStage::start(const QStringList& componentIds,
                                  const QMap<QString, QSharedPointer<ComponentData>>& cachedData) {
     if (m_isExporting.load()) {
@@ -255,6 +263,7 @@ void FootprintExportStage::start(const QStringList& componentIds,
     m_workerThread->start();
 }
 
+// 请求取消封装导出并回滚尚未提交的临时文件。
 void FootprintExportStage::cancel() {
     if (!m_isExporting.load()) {
         return;
@@ -269,6 +278,7 @@ void FootprintExportStage::cancel() {
     qDebug() << "FootprintExportStage: Cancelled";
 }
 
+// 等待封装导出线程结束，并同步阶段运行状态。
 bool FootprintExportStage::waitForFinished(int timeoutMs) {
     const bool finished = waitForWorkerThread(m_workerThread, timeoutMs);
     if (finished) {
