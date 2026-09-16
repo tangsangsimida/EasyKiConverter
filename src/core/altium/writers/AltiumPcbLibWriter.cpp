@@ -43,6 +43,7 @@ uint32_t AltiumPcbLibWriter::toV7LayerId(uint8_t layer) const {
     return AltiumLayerMap::toV7LayerId(layer);
 }
 
+// 将非有限浮点值回退为可写入数值，并记录诊断信息。
 double AltiumPcbLibWriter::normalizeFiniteValue(double value, double fallback, const QString& context) {
     if (std::isfinite(value))
         return value;
@@ -54,6 +55,7 @@ double AltiumPcbLibWriter::normalizeFiniteValue(double value, double fallback, c
     return fallback;
 }
 
+// 校验封装名称、图元结构和输出路径，阻止无效数据进入 OLE 写入阶段。
 bool AltiumPcbLibWriter::validateComponents(const QList<AltiumPcbComponent>& components, const QString& filePath) {
     auto reject = [this](const QString& diagnostic) {
         m_diagnostics.append(diagnostic);
@@ -439,6 +441,7 @@ void AltiumPcbLibWriter::writeLibraryData(QByteArray& buffer,
     }
 }
 
+// 构建 Library/Data 流使用的参数元数据，并清理参数分隔符。
 QString AltiumPcbLibWriter::buildLibraryMetadata(const QString& filePath) const {
     auto safeValue = [](QString value) {
         value.replace('|', ' ');
