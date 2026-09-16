@@ -11,9 +11,24 @@
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
+#include <QMutex>
+#include <QMutexLocker>
 #include <QtConcurrent>
 
 namespace EasyKiConverter {
+
+namespace {
+
+/**
+ * @brief 返回模型下载临界区，避免相同 UUID 并发穿透缓存。
+ * @return 进程内共享的模型下载互斥量。
+ */
+QMutex& modelDownloadMutex() {
+    static QMutex mutex;
+    return mutex;
+}
+
+}  // namespace
 
 Model3DExportWorker::Model3DExportWorker(QObject* parent) : QObject(parent) {
     setAutoDelete(false);
@@ -170,23 +185,31 @@ void Model3DExportWorker::run() {
     // 只在需要 WRL 时导出
     if (needWrl) {
         QByteArray objData;
+        bool usedWrlCache = false;
         if (m_data && !m_data->model3DObjRaw().isEmpty()) {
             objData = m_data->model3DObjRaw();
         }
         if (objData.isEmpty()) {
+            QMutexLocker downloadLocker(&modelDownloadMutex());
             objData = cache->loadModel3D(uuid, QStringLiteral("obj"));
-        }
-        if (objData.isEmpty() && cache->hasModel3DCached(uuid, QStringLiteral("wrl")) &&
-            cache->copyModel3DToFile(uuid, QStringLiteral("wrl"), wrlWritePath)) {
-            qDebug() << "Model3DExportWorker: WRL cache fallback for" << uuid;
-        } else if (objData.isEmpty() && !exporter.downloadObjDataSync(uuid, &objData, &error)) {
-            if (error.isEmpty()) {
-                error = QStringLiteral("Failed to download OBJ data for WRL export");
+            if (objData.isEmpty() && cache->hasModel3DCached(uuid, QStringLiteral("wrl")) &&
+                cache->copyModel3DToFile(uuid, QStringLiteral("wrl"), wrlWritePath)) {
+                usedWrlCache = true;
+                qDebug() << "Model3DExportWorker: WRL cache fallback for" << uuid;
+            } else if (objData.isEmpty() && !exporter.downloadObjDataSync(uuid, &objData, &error)) {
+                if (error.isEmpty()) {
+                    error = QStringLiteral("Failed to download OBJ data for WRL export");
+                }
             }
+            if (!objData.isEmpty()) {
+                cache->saveModel3D(uuid, objData, QStringLiteral("obj"), gen);
+            }
+        }
+        if (usedWrlCache) {
+            // 已复制缓存中的 WRL，无需再次转换 OBJ。
         } else if (objData.isEmpty()) {
             error = QStringLiteral("OBJ data is empty for WRL export");
         } else {
-            cache->saveModel3D(uuid, objData, QStringLiteral("obj"), gen);
             Model3DData modelData = buildModelData();
             modelData.setRawObj(QString::fromUtf8(objData));
             IR::Model3DIR modelIR = IR::toModel3DIR(modelData);
@@ -205,25 +228,27 @@ void Model3DExportWorker::run() {
     if (error.isEmpty() && needStep && !m_cancelled.load()) {
         QByteArray stepData;
 
-        if (cache->copyModel3DToFile(uuid, QStringLiteral("step"), stepWritePath)) {
-            qDebug() << "Model3DExportWorker: STEP cache hit for" << m_componentId << "uuid" << uuid;
-        } else if (!m_cancelled.load()) {
-            if (!exporter.downloadStepDataSync(uuid, &stepData, &error)) {
-                if (error.isEmpty()) {
+        bool stepCacheHit = false;
+        {
+            QMutexLocker downloadLocker(&modelDownloadMutex());
+            stepCacheHit = cache->copyModel3DToFile(uuid, QStringLiteral("step"), stepWritePath);
+            if (!stepCacheHit && !m_cancelled.load()) {
+                if (!exporter.downloadStepDataSync(uuid, &stepData, &error) && error.isEmpty()) {
                     error = QStringLiteral("Failed to download STEP data");
                 }
-            }
-
-            if (!stepData.isEmpty()) {
-                Model3DData modelData = buildModelData();
-                modelData.setStep(stepData);
-                IR::Model3DIR modelIR = IR::toModel3DIR(modelData);
-                if (!exporter.exportToStep(modelIR, stepWritePath)) {
-                    error = QStringLiteral("Failed to write STEP file");
-                } else {
+                if (!stepData.isEmpty())
                     cache->saveModel3D(uuid, stepData, QStringLiteral("step"), gen);
-                    qDebug() << "Model3DExportWorker: Saved STEP to cache for" << m_componentId << "uuid" << uuid;
-                }
+            }
+        }
+
+        if (stepCacheHit) {
+            qDebug() << "Model3DExportWorker: STEP cache hit for" << m_componentId << "uuid" << uuid;
+        } else if (!stepData.isEmpty()) {
+            Model3DData modelData = buildModelData();
+            modelData.setStep(stepData);
+            IR::Model3DIR modelIR = IR::toModel3DIR(modelData);
+            if (!exporter.exportToStep(modelIR, stepWritePath)) {
+                error = QStringLiteral("Failed to write STEP file");
             }
         }
     }
