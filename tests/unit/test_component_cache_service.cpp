@@ -168,6 +168,25 @@ private slots:
         QVERIFY(!QFileInfo::exists(legacyDir));
     }
 
+    // 验证大小写目录并存时缓存枚举不会返回重复的元器件编号。
+    void testCachedComponentIdsDeduplicateCaseVariants() {
+        const QString componentId = QStringLiteral("C54330");
+        for (const QString& directoryName : {QStringLiteral("C54330"), QStringLiteral("c54330")}) {
+            const QString directoryPath = m_tempDir.filePath(directoryName);
+            QVERIFY(QDir().mkpath(directoryPath));
+            QJsonObject metadata;
+            metadata.insert(QStringLiteral("lcscId"), componentId);
+            metadata.insert(QStringLiteral("name"), QStringLiteral("Duplicate variant"));
+            QFile metadataFile(QDir(directoryPath).filePath(QStringLiteral("component.json")));
+            QVERIFY(metadataFile.open(QIODevice::WriteOnly));
+            QVERIFY(metadataFile.write(QJsonDocument(metadata).toJson(QJsonDocument::Compact)) > 0);
+            metadataFile.close();
+        }
+
+        const QStringList cachedIds = m_cache->getCachedComponentIds();
+        QCOMPARE(cachedIds.count(componentId), 1);
+    }
+
     // 验证数据手册下载不会直接返回格式无效的磁盘缓存。
     void testDownloadDatasheetRemovesInvalidCachedData() {
         const QString componentId = QStringLiteral("C54325");

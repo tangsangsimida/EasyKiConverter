@@ -1488,6 +1488,7 @@ QStringList ComponentCacheService::getCachedComponentIds() const {
     QMutexLocker diskLocker(&m_diskWriteMutex);
 
     QStringList result;
+    QSet<QString> seenIds;
     QDir dir(cacheDir());
     if (!dir.exists()) {
         return result;
@@ -1495,9 +1496,11 @@ QStringList ComponentCacheService::getCachedComponentIds() const {
 
     for (const QString& entry : dir.entryList(QDir::Dirs)) {
         if (entry != "." && entry != ".." && entry != "model3d") {
-            // 检查是否是有效的缓存目录（有component.json）。
-            if (QFileInfo::exists(metadataPath(entry))) {
-                result.append(entry.toUpper());
+            // 检查是否是有效的缓存目录（有component.json），并过滤大小写变体重复项。
+            const QString normalizedId = entry.toUpper();
+            if (QFileInfo::exists(metadataPath(entry)) && !seenIds.contains(normalizedId)) {
+                result.append(normalizedId);
+                seenIds.insert(normalizedId);
             }
         }
     }
