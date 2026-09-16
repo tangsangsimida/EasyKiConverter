@@ -29,9 +29,9 @@ struct SvgPathSegment {
 };
 
 /**
- * @brief SVG路径解析
-     *
- * 参考lckiconverter的实现，用于解析SVG路径字符串并转换为点列表
+ * @brief SVG 路径解析。
+ *
+ * 用于解析 SVG 路径字符串并转换为点列表。
  */
 class SvgPathParser {
 public:

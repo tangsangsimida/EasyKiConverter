@@ -22,6 +22,7 @@ private slots:
         QTest::newRow("both") << static_cast<int>(ExportOptions::MODEL_3D_FORMAT_BOTH) << true << true;
     }
 
+    // 验证三维模型格式位掩码对应的 WRL 和 STEP 需求。
     void exportOptionsModel3DFormatBitmask() {
         QFETCH(int, format);
         QFETCH(bool, wrl);
@@ -33,6 +34,7 @@ private slots:
         QCOMPARE(options.needsModel3DStep(), step);
     }
 
+    // 验证 Altium 目标启用三维模型时始终需要内嵌 STEP。
     void altiumAlwaysRequiresEmbeddedStep() {
         ExportOptions options;
         options.targetFormat = TargetEdaFormat::Altium;
@@ -45,6 +47,7 @@ private slots:
         QVERIFY(!options.needsEmbeddedModel3DStep());
     }
 
+    // 验证禁用三维模型时不会请求内嵌数据。
     void model3DIsNotRequestedWhenDisabled() {
         ExportOptions options;
         options.targetFormat = TargetEdaFormat::KiCad;
@@ -54,6 +57,7 @@ private slots:
         QVERIFY(!options.needsEmbeddedModel3DStep());
     }
 
+    // 验证 Xpedition 目标不会请求内嵌三维模型。
     void xpeditionDoesNotRequestEmbeddedModel3D() {
         ExportOptions options;
         options.targetFormat = TargetEdaFormat::Xpedition;
@@ -63,6 +67,7 @@ private slots:
         QVERIFY(!options.needsEmbeddedModel3DStep());
     }
 
+    // 提供三维模型路径模式的规范化测试数据。
     void exportOptionsNormalizePathMode_data() {
         QTest::addColumn<int>("input");
         QTest::addColumn<int>("expected");
@@ -73,6 +78,7 @@ private slots:
         QTest::newRow("negative") << -1 << 0;
     }
 
+    // 验证三维模型路径模式会收敛到有效取值。
     void exportOptionsNormalizePathMode() {
         QFETCH(int, input);
         QFETCH(int, expected);
@@ -92,6 +98,7 @@ private slots:
         QTest::newRow("Skipped") << ExportItemStatus::Status::Skipped << true;
     }
 
+    // 验证导出条目状态的完成判断。
     void itemStatusIsComplete() {
         QFETCH(ExportItemStatus::Status, status);
         QFETCH(bool, expected);
@@ -101,6 +108,7 @@ private slots:
         QCOMPARE(item.isComplete(), expected);
     }
 
+    // 验证导出条目成功状态的判断。
     void itemStatusIsSuccess() {
         ExportItemStatus item;
         item.status = ExportItemStatus::Status::Success;
@@ -113,6 +121,7 @@ private slots:
         QVERIFY(!item.isSuccess());
     }
 
+    // 验证导出条目持续时间的计算和无效时间处理。
     void itemStatusDurationMs() {
         ExportItemStatus item;
 
@@ -130,6 +139,7 @@ private slots:
         QCOMPARE(item2.durationMs(), 0);
     }
 
+    // 提供导出条目字节进度百分比的测试数据。
     void itemStatusPercentage_data() {
         QTest::addColumn<qint64>("processed");
         QTest::addColumn<qint64>("total");
@@ -141,6 +151,7 @@ private slots:
         QTest::newRow("not-started") << qint64(0) << qint64(100) << 0;
     }
 
+    // 验证导出条目字节进度百分比计算。
     void itemStatusPercentage() {
         QFETCH(qint64, processed);
         QFETCH(qint64, total);
@@ -154,6 +165,7 @@ private slots:
 
     // === ExportTypeProgress 测试 ===
 
+    // 验证导出类型进度百分比计算。
     void typeProgressPercentage() {
         ExportTypeProgress progress;
         QCOMPARE(progress.percentage(), 0);
@@ -166,6 +178,7 @@ private slots:
         QCOMPARE(progress.percentage(), 100);
     }
 
+    // 验证导出类型在完成数量达到总数后结束。
     void typeProgressIsComplete() {
         ExportTypeProgress progress;
         QVERIFY(progress.isComplete());  // 0 >= 0
@@ -191,6 +204,7 @@ private slots:
         QCOMPARE(progress.percentage(), 25);
     }
 
+    // 验证预加载进度在完成数量达到总数后结束。
     void preloadProgressIsComplete() {
         PreloadProgress progress;
         QVERIFY(progress.isComplete());  // 0 >= 0
@@ -204,18 +218,21 @@ private slots:
 
     // === ExportOverallProgress 测试 ===
 
+    // 验证空闲阶段的整体进度为零。
     void overallProgressIdleReturnsZero() {
         ExportOverallProgress progress;
         progress.currentStage = ExportOverallProgress::Stage::Idle;
         QCOMPARE(progress.overallPercentage(), 0);
     }
 
+    // 验证完成阶段的整体进度为百分之百。
     void overallProgressCompletedReturns100() {
         ExportOverallProgress progress;
         progress.currentStage = ExportOverallProgress::Stage::Completed;
         QCOMPARE(progress.overallPercentage(), 100);
     }
 
+    // 验证取消和失败阶段的整体进度为零。
     void overallProgressCancelledFailedReturnsZero() {
         ExportOverallProgress progress;
 
@@ -226,6 +243,7 @@ private slots:
         QCOMPARE(progress.overallPercentage(), 0);
     }
 
+    // 验证预加载阶段的整体进度取自预加载进度。
     void overallProgressPreloadingReturnsPreloadPercentage() {
         ExportOverallProgress progress;
         progress.currentStage = ExportOverallProgress::Stage::Preloading;
@@ -234,6 +252,7 @@ private slots:
         QCOMPARE(progress.overallPercentage(), 40);
     }
 
+    // 验证导出阶段按全部导出类型聚合整体进度。
     void overallProgressExportingAggregatesTypes() {
         ExportOverallProgress progress;
         progress.currentStage = ExportOverallProgress::Stage::Exporting;
@@ -252,12 +271,14 @@ private slots:
         QCOMPARE(progress.overallPercentage(), 75);
     }
 
+    // 验证没有导出类型时整体进度为零。
     void overallProgressExportingEmptyReturnsZero() {
         ExportOverallProgress progress;
         progress.currentStage = ExportOverallProgress::Stage::Exporting;
         QCOMPARE(progress.overallPercentage(), 0);
     }
 
+    // 提供整体阶段完成判断的测试数据。
     void overallProgressIsComplete_data() {
         QTest::addColumn<ExportOverallProgress::Stage>("stage");
         QTest::addColumn<bool>("expected");
@@ -268,6 +289,7 @@ private slots:
         QTest::newRow("Failed") << ExportOverallProgress::Stage::Failed << true;
     }
 
+    // 验证非导出阶段的整体完成判断。
     void overallProgressIsComplete() {
         QFETCH(ExportOverallProgress::Stage, stage);
         QFETCH(bool, expected);
@@ -277,6 +299,7 @@ private slots:
         QCOMPARE(progress.isComplete(), expected);
     }
 
+    // 验证空预加载任务立即视为完成。
     void overallProgressPreloadingCompleteWhenEmpty() {
         ExportOverallProgress progress;
         progress.currentStage = ExportOverallProgress::Stage::Preloading;
@@ -284,6 +307,7 @@ private slots:
         QVERIFY(progress.isComplete());
     }
 
+    // 验证仍有预加载项目时整体任务未完成。
     void overallProgressPreloadingNotCompleteWhenPending() {
         ExportOverallProgress progress;
         progress.currentStage = ExportOverallProgress::Stage::Preloading;
@@ -292,6 +316,7 @@ private slots:
         QVERIFY(!progress.isComplete());
     }
 
+    // 验证空导出类型集合视为完成。
     void overallProgressExportingCompleteWhenEmpty() {
         ExportOverallProgress progress;
         progress.currentStage = ExportOverallProgress::Stage::Exporting;
@@ -299,6 +324,7 @@ private slots:
         QVERIFY(progress.isComplete());
     }
 
+    // 验证所有导出类型完成后整体任务完成。
     void overallProgressIsCompleteWhenAllTypesDone() {
         ExportOverallProgress progress;
         progress.currentStage = ExportOverallProgress::Stage::Exporting;
@@ -316,6 +342,7 @@ private slots:
         QVERIFY(progress.isComplete());
     }
 
+    // 验证任一导出类型未完成时整体任务仍未完成。
     void overallProgressIsNotCompleteWhenAnyTypePending() {
         ExportOverallProgress progress;
         progress.currentStage = ExportOverallProgress::Stage::Exporting;
@@ -333,6 +360,7 @@ private slots:
         QVERIFY(!progress.isComplete());
     }
 
+    // 验证整体成功数和失败数汇总逻辑。
     void overallProgressTotalSuccessAndFailedCounts() {
         ExportOverallProgress progress;
 
@@ -350,6 +378,7 @@ private slots:
         QCOMPARE(progress.totalFailedCount(), 2);
     }
 
+    // 验证没有导出类型时成功数和失败数均为零。
     void overallProgressEmptyTypesReturnsZeroCounts() {
         ExportOverallProgress progress;
         QCOMPARE(progress.totalSuccessCount(), 0);

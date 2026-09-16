@@ -12,6 +12,7 @@ class TestSvgPathParser : public QObject {
 
 private slots:
 
+    // 验证绝对移动、水平线、垂直线、直线和闭合命令。
     void parsesMoveLineHorizontalVerticalAndClose() {
         const QList<QPointF> points = SvgPathParser::parsePath(QStringLiteral("M 0 0 H 10 V 5 L 0 5 Z"));
 
@@ -23,6 +24,7 @@ private slots:
         QCOMPARE(points.at(4), QPointF(0, 0));
     }
 
+    // 验证相对路径命令会基于当前点计算坐标。
     void parsesRelativeCommands() {
         const QList<QPointF> points = SvgPathParser::parsePath(QStringLiteral("M 10 10 l 5 0 h 5 v 5"));
 
@@ -33,6 +35,7 @@ private slots:
         QCOMPARE(points.at(3), QPointF(20, 15));
     }
 
+    // 验证重复参数组会生成连续的线段、曲线和圆弧。
     void parsesRepeatedParameterGroups() {
         const QList<QPointF> linePoints = SvgPathParser::parsePath(QStringLiteral("M 0 0 L 10 0 10 10 0 10 Z"));
         QCOMPARE(linePoints.size(), 5);
@@ -49,6 +52,7 @@ private slots:
         QCOMPARE(arcPoints.last(), QPointF(20, 0));
     }
 
+    // 验证坐标解析保留科学计数法表示的数值。
     void preservesScientificNotationInCoordinates() {
         const QList<QPointF> points = SvgPathParser::parsePath(QStringLiteral("M 0 0 L 1e-3 2e-3"));
 
@@ -57,6 +61,7 @@ private slots:
         QVERIFY(qAbs(points.last().y() - 0.002) < 1e-12);
     }
 
+    // 验证平滑曲线会保留反射控制点的几何关系。
     void smoothCurvesPreserveReflectedControlPoints() {
         const QList<QPointF> cubicPoints =
             SvgPathParser::parsePath(QStringLiteral("M 0 0 C 0 10 10 10 10 0 S 20 -10 20 0"));
@@ -66,6 +71,7 @@ private slots:
         QCOMPARE(quadraticPoints.at(24), QPointF(30, -10));
     }
 
+    // 验证三次贝塞尔曲线会生成包含终点的折线。
     void cubicBezierProducesPolylineIncludingEndpoint() {
         const QList<QPointF> points = SvgPathParser::parsePath(QStringLiteral("M 0 0 C 0 10 10 10 10 0"));
 
@@ -74,6 +80,7 @@ private slots:
         QCOMPARE(points.last(), QPointF(10, 0));
     }
 
+    // 验证圆弧会生成中间采样点并保留终点。
     void arcProducesIntermediatePointsAndEndpoint() {
         const QList<QPointF> points = SvgPathParser::parsePath(QStringLiteral("M 0 0 A 10 10 0 0 1 10 10"));
 
@@ -82,6 +89,7 @@ private slots:
         QCOMPARE(points.last(), QPointF(10, 10));
     }
 
+    // 验证圆弧起点和终点重合时不会产生非数值坐标。
     void coincidentArcEndpointsDoNotProduceNaN() {
         const QList<QPointF> points = SvgPathParser::parsePath(QStringLiteral("M 0 0 A 10 10 0 0 1 0 0"));
 
@@ -92,6 +100,7 @@ private slots:
         }
     }
 
+    // 验证归一化圆弧只会使用几何坐标而不会引入标志位。
     void normalizedArcUsesOnlyGeometryCoordinates() {
         const QList<QPointF> points = IR::GeometryNormalizer::parseSimpleSvgPath(
             QStringLiteral("M 0 0 A 10 10 0 0 1 10 10 A 10 10 0 0 1 20 0 Z"));
@@ -104,6 +113,7 @@ private slots:
         QCOMPARE(points.first(), points.last());
     }
 
+    // 验证归一化二次曲线会生成正确的终点。
     void normalizedQuadraticProducesEndpoint() {
         const QList<QPointF> points = IR::GeometryNormalizer::parseSimpleSvgPath(QStringLiteral("M 0 0 Q 10 20 20 0"));
 
@@ -113,6 +123,7 @@ private slots:
         QVERIFY(points.at(points.size() / 2).y() > 2.0);
     }
 
+    // 验证连续的平滑曲线会生成有效的起点和终点。
     void smoothCurvesProduceValidEndpoints() {
         const QList<QPointF> points =
             SvgPathParser::parsePath(QStringLiteral("M 0 0 C 0 10 10 10 10 0 S 20 -10 20 0 Q 30 10 40 0 T 60 0"));
@@ -122,6 +133,7 @@ private slots:
         QCOMPARE(points.last(), QPointF(60, 0));
     }
 
+    // 验证原生直线、三次曲线和二次曲线段会保留类型及控制点。
     void preservesNativeLineAndCubicSegments() {
         const QList<SvgPathSegment> segments =
             SvgPathParser::parseSegments(QStringLiteral("M 0 0 C 0 10 10 10 10 0 L 20 0 Q 25 10 30 0 Z"));
@@ -141,6 +153,7 @@ private slots:
         QCOMPARE(segments.at(3).end, QPointF(0, 0));
     }
 
+    // 验证二次曲线和平滑二次曲线段会保留控制点和终点。
     void preservesQuadraticAndSmoothQuadraticSegments() {
         const QList<SvgPathSegment> segments =
             SvgPathParser::parseSegments(QStringLiteral("M 0 0 Q 10 20 20 0 T 40 0 q 10 -20 20 0"));
@@ -157,6 +170,7 @@ private slots:
         QCOMPARE(segments.at(2).end, QPointF(60, 0));
     }
 
+    // 验证圆弧、椭圆弧及旋转椭圆弧的分段类型和坐标。
     void preservesCircularArcSegmentsAndEllipsesAndFallsBackForRotatedEllipses() {
         const QList<SvgPathSegment> circular =
             SvgPathParser::parseSegments(QStringLiteral("M 0 0 A 10 10 0 0 1 10 10"));
@@ -189,6 +203,7 @@ private slots:
             QCOMPARE(segment.type, SvgPathSegment::Type::CubicBezier);
     }
 
+    // 验证空路径、缺少参数和溢出坐标会返回空结果。
     void invalidOrEmptyPathsReturnNoPoints() {
         QVERIFY(SvgPathParser::parsePath(QString()).isEmpty());
         QVERIFY(SvgPathParser::parsePath(QStringLiteral("Q 1 2")).isEmpty());

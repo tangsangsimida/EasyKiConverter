@@ -35,6 +35,7 @@ CliContext::~CliContext() {
     }
 }
 
+// 将命令行参数转换为导出服务使用的完整选项。
 ExportOptions CliContext::createExportOptions() const {
     ExportOptions options;
 

@@ -15,10 +15,12 @@ class TestExportReportGenerator : public QObject {
 
 private slots:
 
+    // 清理网络客户端单例，避免影响其他测试。
     void cleanupTestCase() {
         NetworkClient::destroyInstance();
     }
 
+    // 验证关闭调试模式时不生成详细报告。
     void debugModeDisabledDoesNotWriteReport() {
         QTemporaryDir tempDir;
         QVERIFY(tempDir.isValid());
@@ -31,6 +33,7 @@ private slots:
         QVERIFY(!QFile::exists(reportPath(tempDir.path())));
     }
 
+    // 验证输出目录为空时不生成详细报告。
     void emptyOutputPathDoesNotWriteReport() {
         ExportOptions options = makeOptions(QString());
         options.debugMode = true;
@@ -40,6 +43,7 @@ private slots:
         QVERIFY(options.outputPath.isEmpty());
     }
 
+    // 验证详细报告会创建目录并写入导出进度快照。
     void detailedReportCreatesOutputDirectoryAndWritesProgressSnapshot() {
         QTemporaryDir tempDir;
         QVERIFY(tempDir.isValid());

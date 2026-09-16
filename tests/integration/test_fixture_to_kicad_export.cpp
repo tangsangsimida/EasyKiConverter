@@ -21,6 +21,7 @@ class TestFixtureToKiCadExport : public QObject {
 
 private slots:
 
+    // 验证 EasyEDA 符号和封装夹具能够完整导出为 KiCad 文件。
     void testFixtureDataExportsKiCadFiles() {
         QString error;
         const QJsonObject symbolFixture =

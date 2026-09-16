@@ -12,6 +12,7 @@ class TestPathSecurity : public QObject {
 
 private slots:
 
+    // 验证路径组件会拒绝空值、遍历片段和非法字符。
     void validatesPathComponents() {
         QVERIFY(PathSecurity::isValidPathComponent(QStringLiteral("R0603")));
         QVERIFY(!PathSecurity::isValidPathComponent(QString()));
@@ -30,6 +31,7 @@ private slots:
         QVERIFY(!PathSecurity::isValidPathComponent(QStringLiteral("zero%1width").arg(QChar(0x200B))));
     }
 
+    // 验证目标路径检查能够阻止离开基准目录的访问。
     void detectsPathsOutsideBaseDirectory() {
         QTemporaryDir baseDir;
         QTemporaryDir outsideDir;
@@ -46,6 +48,7 @@ private slots:
         QVERIFY(!PathSecurity::isSafePath(QString(), baseDir.path()));
     }
 
+    // 验证文件名清洗会替换非法字符并处理保留名称。
     void sanitizesFilenames() {
         QCOMPARE(PathSecurity::sanitizeFilename(QStringLiteral("foo/bar:baz*?.kicad_mod")),
                  QStringLiteral("foo_bar_baz__.kicad_mod"));
@@ -55,6 +58,7 @@ private slots:
                  QStringLiteral("zerowidth"));
     }
 
+    // 验证递归删除会遵守文件数量上限并清理目标目录。
     void safeRemoveRecursivelyHonorsFileLimit() {
         QTemporaryDir tempDir;
         QVERIFY(tempDir.isValid());

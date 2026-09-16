@@ -24,10 +24,13 @@ class TestModels : public QObject {
 
 private slots:
 
+    // 初始化模型测试套件。
     void initTestCase() {}
 
+    // 清理模型测试套件。
     void cleanupTestCase() {}
 
+    // 验证符号数据的 JSON 往返序列化。
     void testSymbolDataRoundTrip() {
         SymbolData original;
 
@@ -69,6 +72,7 @@ private slots:
         QCOMPARE(restored.graphicOrder().first().index, 0);
     }
 
+    // 验证符号校验会报告全部几何问题。
     void testSymbolValidationReportsAllGeometryIssues() {
         SymbolData symbol;
         SymbolInfo info;
@@ -103,6 +107,7 @@ private slots:
         QCOMPARE(symbol.validate(), errors.first());
     }
 
+    // 验证多部分符号中的几何问题也会被检查。
     void testSymbolValidationChecksMultipartGeometry() {
         SymbolData symbol;
         SymbolInfo info;
@@ -126,6 +131,7 @@ private slots:
         QVERIFY(errors.contains(QStringLiteral("Part 0 Image 0 has invalid bounds or rotation")));
     }
 
+    // 验证符号引脚位置的有限性校验。
     void testSymbolValidationChecksPinGeometry() {
         SymbolData symbol;
         SymbolInfo info;
@@ -143,6 +149,7 @@ private slots:
         QVERIFY(!symbol.isValid());
     }
 
+    // 验证公共部分往返序列化以及 IR 映射关系。
     void testCommonPartRoundTripAndIrMapping() {
         SymbolData symbol;
         SymbolInfo info;
@@ -209,6 +216,7 @@ private slots:
         QCOMPARE(ir.graphicOrder.at(1).partIndex, 0);
     }
 
+    // 验证符号文本的位置、尺寸和锚点校验。
     void testSymbolValidationChecksTextGeometry() {
         SymbolData symbol;
         SymbolInfo info;
@@ -231,6 +239,7 @@ private slots:
         QVERIFY(!symbol.isValid());
     }
 
+    // 验证符号路径命令和参数的完整性校验。
     void testSymbolValidationChecksPathCommands() {
         SymbolData symbol;
         SymbolInfo info;
@@ -282,6 +291,7 @@ private slots:
         QVERIFY(errors.contains(QStringLiteral("Path 7 contains a non-finite numeric parameter")));
     }
 
+    // 验证符号图元绘制顺序引用的重复和越界检查。
     void testSymbolValidationChecksGraphicOrderReferences() {
         SymbolData symbol;
         SymbolInfo info;
@@ -304,6 +314,7 @@ private slots:
         QVERIFY(errors.contains(QStringLiteral("Graphic order 3 has unknown type UNKNOWN")));
     }
 
+    // 验证以原点为边界起点的符号数据可以通过校验。
     void testSymbolValidationAcceptsOriginBasedBoundingBox() {
         SymbolData symbol;
         SymbolInfo info;
@@ -315,6 +326,7 @@ private slots:
         QVERIFY(symbol.isValid());
     }
 
+    // 验证封装数据的 JSON 往返序列化。
     void testFootprintDataRoundTrip() {
         FootprintData original;
 
@@ -348,6 +360,7 @@ private slots:
         QCOMPARE(restored.pads().at(0).shape, original.pads().at(0).shape);
     }
 
+    // 验证绝对三维模型原点的导入坐标。
     void testModel3DAbsoluteOriginImport() {
         EasyedaFootprintImporter importer;
         const QJsonObject cadData = makeCadDataWithModelOrigin(QStringLiteral("3998.803,2982.7698"));
@@ -359,6 +372,7 @@ private slots:
         QCOMPARE(footprint->model3D().translation().y, 2982.7698);
     }
 
+    // 验证相对三维模型原点的导入坐标。
     void testModel3DRelativeOriginImport() {
         EasyedaFootprintImporter importer;
         const QJsonObject cadData = makeCadDataWithModelOrigin(QStringLiteral("1.5,-2"));
@@ -370,6 +384,7 @@ private slots:
         QCOMPARE(footprint->model3D().translation().y, 2980.35);
     }
 
+    // 验证无关原点会回退到封装中心坐标。
     void testModel3DUnrelatedOriginFallsBackToFootprintCenter() {
         EasyedaFootprintImporter importer;
         const QJsonObject cadData = makeCadDataWithModelOrigin(QStringLiteral("400,300"));
@@ -381,6 +396,7 @@ private slots:
         QCOMPARE(footprint->model3D().translation().y, 2982.35);
     }
 
+    // 验证三维模型解析失败时不会部分覆盖已有状态。
     void testModel3DRejectsMalformedJsonAtomically() {
         Model3DData model;
         model.setName(QStringLiteral("cached-model"));
@@ -404,6 +420,7 @@ private slots:
         QCOMPARE(model.translation().z, 3.0);
     }
 
+    // 验证 STEP 导出保留装配结构中的关键记录。
     void testStepExportPreservesStepAssemblyStructure() {
         Model3DData modelData;
         modelData.setStep(
@@ -436,6 +453,7 @@ private slots:
         QVERIFY(content.contains(QStringLiteral("#6=DIRECTION('',(0.,0.,1.));")));
     }
 
+    // 验证 OBJ 最低 Z 与 WRL 归一化坐标计算保持一致。
     void testObjMinZMatchesExportedWrlNormalization() {
         const QByteArray positiveObj(
             "v 0 0 2.54\n"
@@ -465,6 +483,7 @@ private slots:
         QCOMPARE(Exporter3DModel::calculateWrlDisplayMinZ(wrlData), -1.27);
     }
 
+    // 验证符号基础几何图元的序列化和恢复。
     void testSymbolGeometrySerialization() {
         SymbolData original;
 
@@ -496,6 +515,7 @@ private slots:
     }
 
 private:
+    // 构造带指定三维模型原点的 CAD 测试数据。
     QJsonObject makeCadDataWithModelOrigin(const QString& origin) const {
         QJsonObject cadData;
         cadData.insert(QStringLiteral("SMT"), true);

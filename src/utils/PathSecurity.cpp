@@ -6,6 +6,7 @@
 
 namespace EasyKiConverter {
 
+// 校验单个文件名或目录名是否符合跨平台安全规则。
 bool PathSecurity::isValidPathComponent(const QString& name) {
     if (name.isEmpty() || name == QStringLiteral(".") || name == QStringLiteral(".."))
         return false;
@@ -49,6 +50,7 @@ bool PathSecurity::isValidPathComponent(const QString& name) {
     return true;
 }
 
+// 使用规范化字符串前缀检查目标路径是否位于基准目录内。
 bool PathSecurity::isSafePath(const QString& fullPath, const QString& baseDir) {
     if (fullPath.isEmpty() || baseDir.isEmpty()) {
         qWarning() << "isSafePath: received empty path";
@@ -119,6 +121,7 @@ bool PathSecurity::isSafePath(const QString& fullPath, const QString& baseDir) {
     return isSafe;
 }
 
+// 解析符号链接后检查目标路径是否安全地位于基准目录内。
 bool PathSecurity::isSafePathCanonical(const QString& fullPath, const QString& baseDir) {
     if (fullPath.isEmpty() || baseDir.isEmpty()) {
         qWarning() << "isSafePathCanonical: received empty path";
@@ -164,6 +167,7 @@ bool PathSecurity::isSafePathCanonical(const QString& fullPath, const QString& b
     return isSafe;
 }
 
+// 获取路径的 canonical 形式，并为不存在的路径拼接最近存在父目录。
 QString PathSecurity::canonicalizePath(const QString& path) {
     QFileInfo info(path);
 
@@ -204,6 +208,7 @@ QString PathSecurity::canonicalizePath(const QString& path) {
     return QDir::fromNativeSeparators(canonCurrent + "/" + remaining);
 }
 
+// 清洗文件名中的非法字符、控制字符和系统保留名称。
 QString PathSecurity::sanitizeFilename(const QString& name) {
     QString safeName = name;
 
@@ -240,6 +245,7 @@ QString PathSecurity::sanitizeFilename(const QString& name) {
     return safeName;
 }
 
+// 在文件数量上限保护下安全递归删除目录。
 bool PathSecurity::safeRemoveRecursively(const QString& path, int maxFileCount) {
     QDir dir(path);
     if (!dir.exists())
@@ -256,6 +262,7 @@ bool PathSecurity::safeRemoveRecursively(const QString& path, int maxFileCount) 
     return dir.removeRecursively();
 }
 
+// 递归统计目录项数量，并在达到上限时提前停止。
 int PathSecurity::countFilesRecursively(const QString& path, int limit, int currentCount) {
     if (currentCount >= limit)
         return currentCount;

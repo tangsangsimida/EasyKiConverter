@@ -1268,6 +1268,7 @@ private slots:
         QVERIFY(foundRectangle);
     }
 
+    // 验证嵌入图片的存储名称和二进制内容均符合复合文档要求。
     void validatesEmbeddedImageStorageNamesAndPayloads() {
         QTemporaryDir tempDir;
         QVERIFY(tempDir.isValid());

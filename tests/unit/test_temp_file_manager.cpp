@@ -18,6 +18,7 @@ class TestTempFileManager : public QObject {
 
 private slots:
 
+    // 验证符号临时文件提交后会移动到目标位置并注销临时文件。
     void symbolTempFileCommitMovesFileAndUnregistersIt() {
         QTemporaryDir tempDir;
         QVERIFY(tempDir.isValid());
@@ -43,6 +44,7 @@ private slots:
         QVERIFY(manager.registeredTempFiles().isEmpty());
     }
 
+    // 验证一个管理器提交时不会删除其他管理器仍在使用的临时目录。
     void sharedTempDirectorySurvivesOtherManagerCommit() {
         QTemporaryDir tempDir;
         QVERIFY(tempDir.isValid());
@@ -66,6 +68,7 @@ private slots:
         QVERIFY(QDir(firstManager.tempDirectory()).exists());
     }
 
+    // 验证临时目录提交会替换已有目标目录。
     void tempDirectoryCommitMovesDirectoryAndReplacesExistingTarget() {
         QTemporaryDir tempDir;
         QVERIFY(tempDir.isValid());
@@ -91,6 +94,7 @@ private slots:
         QVERIFY(manager.registeredTempFiles().isEmpty());
     }
 
+    // 验证文件提交会备份已有目标文件。
     void fileCommitBacksUpExistingTarget() {
         QTemporaryDir tempDir;
         QVERIFY(tempDir.isValid());
@@ -114,6 +118,7 @@ private slots:
         QDir(QFileInfo(backupPath).absoluteDir().absolutePath()).removeRecursively();
     }
 
+    // 验证目录提交会备份已有目标目录。
     void directoryCommitBacksUpExistingTarget() {
         QTemporaryDir tempDir;
         QVERIFY(tempDir.isValid());
@@ -138,6 +143,7 @@ private slots:
         QDir(QFileInfo(backupPath).absoluteDir().absolutePath()).removeRecursively();
     }
 
+    // 验证未完成事务恢复时会还原缺失的最终文件。
     void recoverIncompleteTransactionRestoresMissingFinalFile() {
         QTemporaryDir tempDir;
         QVERIFY(tempDir.isValid());
@@ -174,6 +180,7 @@ private slots:
         QDir(backupDir).removeRecursively();
     }
 
+    // 验证回滚会删除已登记的文件、目录和临时目录。
     void rollbackAllDeletesRegisteredFilesAndDirectories() {
         QTemporaryDir tempDir;
         QVERIFY(tempDir.isValid());
@@ -200,6 +207,7 @@ private slots:
         QVERIFY(manager.registeredTempFiles().isEmpty());
     }
 
+    // 验证清理临时目录会删除未登记文件并移除空目录。
     void cleanupTempDirectoryDeletesUntrackedFilesAndRemovesEmptyDirectory() {
         QTemporaryDir tempDir;
         QVERIFY(tempDir.isValid());
@@ -219,6 +227,7 @@ private slots:
         QVERIFY(!QDir(tempDirectory).exists());
     }
 
+    // 验证孤立临时文件清理会保留隐藏文件。
     void cleanupOrphanedTempFilesKeepsHiddenFiles() {
         QTemporaryDir tempDir;
         QVERIFY(tempDir.isValid());

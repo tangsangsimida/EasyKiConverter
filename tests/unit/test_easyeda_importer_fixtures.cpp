@@ -21,6 +21,7 @@ using namespace EasyKiConverter::Test;
 
 namespace {
 
+// 为压缩数据恢复 Qt 解压所需的原始长度头。
 QByteArray restoreQtCompressionHeader(const QByteArray& compressed, int uncompressedSize) {
     QByteArray withHeader;
     withHeader.reserve(compressed.size() + 4);
@@ -39,6 +40,7 @@ class TestEasyedaImporterFixtures : public QObject {
 
 private slots:
 
+    // 验证符号夹具能够导入元数据和几何图元。
     void testSymbolFixtureImportsMetadataAndGeometry() {
         QString error;
         const QJsonObject fixture = loadFixtureObject(QStringLiteral("easyeda/symbol_basic.json"), &error);
@@ -569,6 +571,7 @@ private slots:
             QVERIFY(contentIndexes.at(i) > contentIndexes.at(i - 1));
     }
 
+    // 验证封装夹具能够导入元数据和几何图元。
     void testFootprintFixtureImportsMetadataAndGeometry() {
         QString error;
         const QJsonObject fixture = loadFixtureObject(QStringLiteral("easyeda/footprint_basic.json"), &error);
@@ -603,6 +606,7 @@ private slots:
         QCOMPARE(footprint->objectVisibilities().size(), 2);
     }
 
+    // 验证不支持的封装图形会产生诊断并保留序列化信息。
     void testUnsupportedFootprintShapeIsReportedAndSerialized() {
         QString error;
         QJsonObject fixture = loadFixtureObject(QStringLiteral("easyeda/footprint_basic.json"), &error);
@@ -626,6 +630,7 @@ private slots:
         QVERIFY(restored.validationErrors().join('\n').contains(QStringLiteral("UNSUPPORTED_SHAPE")));
     }
 
+    // 验证封装夹具能够通过完整 Altium 导出链路生成结果。
     void testFootprintFixtureExportsThroughCompleteAltiumChain() {
         QString error;
         const QJsonObject fixture = loadFixtureObject(QStringLiteral("easyeda/footprint_basic.json"), &error);
@@ -674,6 +679,7 @@ private slots:
         QVERIFY(foundFill);
     }
 
+    // 验证几何规范化器接受不同类型的空白分隔符。
     void testGeometryNormalizerAcceptsAllWhitespaceSeparators() {
         const QList<QPointF> flatPoints =
             IR::GeometryNormalizer::parseFlatPointString(QStringLiteral(" 0\t0\n10 20\r\n30\t40 "), 1.0);
@@ -684,6 +690,7 @@ private slots:
         QCOMPARE(commaPoints, QList<QPointF>({QPointF(0.0, 0.0), QPointF(10.0, 20.0), QPointF(30.0, 40.0)}));
     }
 
+    // 验证包含三维数据的 CAD 夹具能够导入符号和封装。
     void testRealCadFixtureWith3DImportsSymbolAndFootprint() {
         QString error;
         const QJsonObject fixture = loadFixtureObject(QStringLiteral("easyeda/cad_basic.json"), &error);
@@ -712,6 +719,7 @@ private slots:
         QVERIFY(footprint->outlines().size() >= 1);
     }
 
+    // 验证缺少三维 UUID 时仍能从轮廓数据导入模型信息。
     void testRealCadFixtureWithoutUuid3DStillImportsOutlineModel() {
         QString error;
         const QJsonObject fixture = loadFixtureObject(QStringLiteral("easyeda/cad_no_3d.json"), &error);
@@ -737,6 +745,7 @@ private slots:
         QVERIFY(footprint->outlines().size() >= 1);
     }
 
+    // 验证真实三维模型夹具被识别为 OBJ 数据。
     void testRealModel3DFixtureIsObjData() {
         QString error;
         const QByteArray modelData =
@@ -749,6 +758,7 @@ private slots:
     }
 
 private:
+    // 读取并解析测试夹具中的 JSON 对象。
     QJsonObject loadFixtureObject(const QString& relativePath, QString* errorMessage) const {
         const QByteArray bytes = TestPaths::readBytes(TestPaths::fixturePath(relativePath), errorMessage);
         if (errorMessage != nullptr && !errorMessage->isEmpty()) {
