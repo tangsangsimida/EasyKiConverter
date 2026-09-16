@@ -820,8 +820,10 @@ void ComponentService::handlePreviewImageError(const QString& componentId, const
     const QString normalizedId = componentId.toUpper();
     {
         QMutexLocker locker(&m_fetchingComponentsMutex);
-        if (!m_fetchingComponents.contains(normalizedId)) {
-            qDebug() << "ComponentService: Discarding preview error without active request for" << componentId;
+        const auto it = m_fetchingComponents.find(normalizedId);
+        if (it == m_fetchingComponents.end() ||
+            it->cacheGeneration != ComponentCacheService::instance()->currentGeneration()) {
+            qDebug() << "ComponentService: Discarding stale preview error for" << componentId;
             return;
         }
     }

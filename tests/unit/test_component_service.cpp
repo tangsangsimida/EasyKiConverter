@@ -110,6 +110,24 @@ private slots:
         QCOMPARE(infoSpy.count(), 0);
     }
 
+    /** @brief 验证缓存代次变化后不会转发过期的预览图错误。 */
+    void testPreviewImageErrorFromStaleGenerationIsDiscarded() {
+        const QString componentId = QStringLiteral("C54336");
+        ComponentService service;
+        service.testSetFetchingState(componentId, componentId, false, true);
+        QSignalSpy errorSpy(&service, &ComponentService::previewImageFailed);
+
+        m_cache->clearMemoryCache();
+
+        QVERIFY(QMetaObject::invokeMethod(&service,
+                                          "handlePreviewImageError",
+                                          Qt::DirectConnection,
+                                          Q_ARG(QString, componentId),
+                                          Q_ARG(QString, QStringLiteral("Image blocked (403), please retry"))));
+
+        QCOMPARE(errorSpy.count(), 0);
+    }
+
     /** @brief 验证并行上下文不会重复计算同一元器件的完成回调。 */
     void testParallelContextDeduplicatesFinishedComponents() {
         ParallelFetchContext context;
