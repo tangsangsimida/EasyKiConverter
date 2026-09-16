@@ -1,5 +1,7 @@
 #include "CacheHealthManager.h"
 
+#include "ComponentCacheService.h"
+#include "core/kicad/Exporter3DModel.h"
 #include "models/Model3DData.h"
 
 #include <QDateTime>
@@ -237,9 +239,15 @@ bool CacheHealthManager::repairComponentCache(const QString& lcscId) {
     for (int index = 0; index < 3; ++index) {
         const QString previewPath = previewImagePath(lcscId, index);
         const QFileInfo previewInfo(previewPath);
-        if (previewInfo.exists() && previewInfo.size() <= 0) {
-            QFile::remove(previewPath);
-            qWarning().noquote() << "Removed empty preview cache file:" << previewPath;
+        if (previewInfo.exists()) {
+            QFile previewFile(previewPath);
+            const bool valid = previewFile.open(QIODevice::ReadOnly) &&
+                               ComponentCacheService::isValidPreviewImageData(previewFile.readAll());
+            previewFile.close();
+            if (!valid) {
+                QFile::remove(previewPath);
+                qWarning().noquote() << "Removed invalid preview cache file:" << previewPath;
+            }
         }
     }
 
@@ -247,21 +255,26 @@ bool CacheHealthManager::repairComponentCache(const QString& lcscId) {
     if (QFileInfo::exists(legacyDatasheetPath)) {
         QFile legacyDatasheet(legacyDatasheetPath);
         if (legacyDatasheet.open(QIODevice::ReadOnly)) {
-            const QByteArray legacyData = legacyDatasheet.read(8);
+            const QByteArray legacyData = legacyDatasheet.readAll();
             legacyDatasheet.close();
 
             const QString format = legacyData.startsWith("%PDF-") ? QStringLiteral("pdf") : QStringLiteral("html");
-            const QString targetPath = resolveDatasheetPath(lcscId, format, true);
-            if (QFile::exists(targetPath)) {
-                QFile::remove(targetPath);
-            }
-            if (legacyDatasheet.rename(legacyDatasheetPath, targetPath)) {
-                metadata["datasheetFormat"] = format;
-                metadataChanged = true;
-                qInfo().noquote() << "Migrated legacy datasheet cache file:" << targetPath;
-            } else {
+            if (!ComponentCacheService::isValidDatasheetData(legacyData, format)) {
                 QFile::remove(legacyDatasheetPath);
-                qWarning().noquote() << "Removed unreadable legacy datasheet cache file:" << legacyDatasheetPath;
+                qWarning().noquote() << "Removed invalid legacy datasheet cache file:" << legacyDatasheetPath;
+            } else {
+                const QString targetPath = resolveDatasheetPath(lcscId, format, true);
+                if (QFile::exists(targetPath)) {
+                    QFile::remove(targetPath);
+                }
+                if (legacyDatasheet.rename(legacyDatasheetPath, targetPath)) {
+                    metadata["datasheetFormat"] = format;
+                    metadataChanged = true;
+                    qInfo().noquote() << "Migrated legacy datasheet cache file:" << targetPath;
+                } else {
+                    QFile::remove(legacyDatasheetPath);
+                    qWarning().noquote() << "Removed unreadable legacy datasheet cache file:" << legacyDatasheetPath;
+                }
             }
         } else {
             QFile::remove(legacyDatasheetPath);
@@ -273,9 +286,16 @@ bool CacheHealthManager::repairComponentCache(const QString& lcscId) {
     const QString resolvedDatasheetPath = resolveDatasheetPath(lcscId, datasheetFormat, false);
     if (QFileInfo::exists(resolvedDatasheetPath)) {
         const QFileInfo datasheetInfo(resolvedDatasheetPath);
-        if (datasheetInfo.size() <= 0) {
+        QFile datasheetFile(resolvedDatasheetPath);
+        const QString format = resolvedDatasheetPath.endsWith(QStringLiteral(".pdf"), Qt::CaseInsensitive)
+                                   ? QStringLiteral("pdf")
+                                   : QStringLiteral("html");
+        const bool valid = datasheetFile.open(QIODevice::ReadOnly) &&
+                           ComponentCacheService::isValidDatasheetData(datasheetFile.readAll(), format);
+        datasheetFile.close();
+        if (datasheetInfo.size() <= 0 || !valid) {
             QFile::remove(resolvedDatasheetPath);
-            qWarning().noquote() << "Removed empty datasheet cache file:" << resolvedDatasheetPath;
+            qWarning().noquote() << "Removed invalid datasheet cache file:" << resolvedDatasheetPath;
         } else if (datasheetFormat.isEmpty()) {
             metadata["datasheetFormat"] =
                 resolvedDatasheetPath.endsWith(".html") ? QStringLiteral("html") : QStringLiteral("pdf");
@@ -313,8 +333,22 @@ void CacheHealthManager::repairModel3DCache() {
     const QFileInfoList files = dir.entryInfoList(QDir::Files | QDir::NoDotAndDotDot, QDir::Name);
     for (const QFileInfo& fileInfo : files) {
         const QString suffix = fileInfo.suffix().toLower();
+        bool validContent = false;
+        if (validSuffixes.contains(suffix) && fileInfo.size() > 0) {
+            QFile modelFile(fileInfo.absoluteFilePath());
+            if (modelFile.open(QIODevice::ReadOnly)) {
+                const QByteArray data = modelFile.readAll();
+                if (suffix == QStringLiteral("obj")) {
+                    validContent = Exporter3DModel::hasUsableObjGeometry(data);
+                } else if (suffix == QStringLiteral("step")) {
+                    validContent = Exporter3DModel::hasUsableStepData(data);
+                } else {
+                    validContent = Exporter3DModel::hasUsableWrlGeometry(data);
+                }
+            }
+        }
         const bool removable =
-            fileInfo.size() <= 0 || !validSuffixes.contains(suffix) || fileInfo.fileName().startsWith(".tmp");
+            !validContent || !validSuffixes.contains(suffix) || fileInfo.fileName().startsWith(".tmp");
         if (removable) {
             QFile::remove(fileInfo.absoluteFilePath());
             qWarning().noquote() << "Removed broken 3D cache file:" << fileInfo.absoluteFilePath();

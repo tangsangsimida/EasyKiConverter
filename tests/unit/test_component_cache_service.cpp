@@ -1,6 +1,7 @@
 #include "services/ComponentCacheService.h"
 
 #include <QBuffer>
+#include <QFile>
 #include <QImage>
 #include <QJsonArray>
 #include <QJsonObject>
@@ -85,6 +86,36 @@ private slots:
         const QString componentId = QStringLiteral("C54323");
         m_cache->saveDatasheet(componentId, QByteArrayLiteral("not-a-datasheet"), QStringLiteral("pdf"));
         QVERIFY(m_cache->loadDatasheet(componentId).isEmpty());
+    }
+
+    // 验证缓存自愈会清理非空但格式无效的媒体和三维文件。
+    void testCacheHealthRemovesInvalidNonEmptyFiles() {
+        const QString componentId = QStringLiteral("C54324");
+        const QString modelUuid = QStringLiteral("health-invalid-model");
+        ComponentData metadata;
+        metadata.setLcscId(componentId);
+        metadata.setName(QStringLiteral("Health Check Component"));
+        m_cache->saveComponentMetadata(componentId, metadata);
+
+        const QString componentDir = m_tempDir.filePath(componentId);
+        QFile previewFile(QDir(componentDir).filePath(QStringLiteral("preview_0.jpg")));
+        QVERIFY(previewFile.open(QIODevice::WriteOnly));
+        QVERIFY(previewFile.write(QByteArrayLiteral("<html>403</html>")) > 0);
+        previewFile.close();
+
+        QFile datasheetFile(QDir(componentDir).filePath(QStringLiteral("datasheet.pdf")));
+        QVERIFY(datasheetFile.open(QIODevice::WriteOnly));
+        QVERIFY(datasheetFile.write(QByteArrayLiteral("not-a-pdf")) > 0);
+        datasheetFile.close();
+
+        m_cache->saveModel3D(modelUuid, QByteArrayLiteral("not-an-obj"), QStringLiteral("obj"));
+        QVERIFY(!m_cache->loadModel3D(modelUuid, QStringLiteral("obj")).isEmpty());
+
+        m_cache->setCacheDir(m_tempDir.path(), false);
+
+        QVERIFY(!QFileInfo::exists(previewFile.fileName()));
+        QVERIFY(!QFileInfo::exists(datasheetFile.fileName()));
+        QVERIFY(m_cache->loadModel3D(modelUuid, QStringLiteral("obj")).isEmpty());
     }
 
     // 验证仅由封装数据携带的 3D 模型也能完整写入并恢复缓存元数据。
