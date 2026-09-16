@@ -1327,16 +1327,16 @@ void ComponentCacheService::clearAllCache() {
         QMutexLocker tombLocker(&m_tombstoneMutex);
         m_allTombstoned = true;
     }
-    // 先清空L2磁盘缓存（不需要锁）
+    // 先清空L2磁盘缓存（不需要锁），同时删除根目录下的遗留文件。
     {
         QDir dir(cacheDir());
         if (dir.exists()) {
-            // 删除所有元器件缓存目录
-            for (const QString& subDir : dir.entryList(QDir::Dirs)) {
-                if (subDir != "." && subDir != "..") {
-                    // 使用 QDir::filePath 确保跨平台路径正确
-                    QDir subDirToRemove(dir.filePath(subDir));
-                    subDirToRemove.removeRecursively();
+            const QFileInfoList entries = dir.entryInfoList(QDir::NoDotAndDotDot | QDir::AllEntries);
+            for (const QFileInfo& entry : entries) {
+                if (entry.isDir()) {
+                    QDir(entry.absoluteFilePath()).removeRecursively();
+                } else {
+                    QFile::remove(entry.absoluteFilePath());
                 }
             }
             LOG_DEBUG(LogModule::Core, "Cleared all disk cache");

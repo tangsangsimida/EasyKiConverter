@@ -156,6 +156,20 @@ private slots:
         QCOMPARE(loaded->name(), QStringLiteral("Global Tombstone Test"));
     }
 
+    // 验证清空全部缓存时会删除根目录下的遗留文件。
+    void testClearAllCacheRemovesRootFiles() {
+        const QString rootFilePath = QDir(m_cache->cacheDir()).filePath(QStringLiteral("legacy-cache.json"));
+        QFile rootFile(rootFilePath);
+        QVERIFY(rootFile.open(QIODevice::WriteOnly));
+        QVERIFY(rootFile.write(QByteArrayLiteral("legacy")) > 0);
+        rootFile.close();
+        QVERIFY(QFileInfo::exists(rootFilePath));
+
+        m_cache->clearAllCache();
+
+        QVERIFY(!QFileInfo::exists(rootFilePath));
+    }
+
     // 回归测试：generation 不匹配时写入被丢弃
     void testStaleGenerationBlocksWrite() {
         const QString componentId = QStringLiteral("C77777");
