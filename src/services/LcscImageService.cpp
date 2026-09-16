@@ -459,6 +459,12 @@ void LcscImageService::performDownload(const QString& componentId, const QString
                     return;
                 }
 
+                // 缓存代次变化表示该请求已经过期，不能再通知当前组件状态。
+                if (ComponentCacheService::instance()->currentGeneration() != gen) {
+                    request->deleteLater();
+                    return;
+                }
+
                 // 检查组件是否已被取消
                 if (!m_requestedComponents.contains(componentId)) {
                     request->deleteLater();
@@ -546,6 +552,12 @@ void LcscImageService::performDatasheetDownload(const QString& componentId, cons
                 untrackAsyncRequest(request);
 
                 if (m_isCancelled) {
+                    request->deleteLater();
+                    return;
+                }
+
+                // 缓存代次变化表示该请求已经过期，不能再通知当前组件状态。
+                if (ComponentCacheService::instance()->currentGeneration() != gen) {
                     request->deleteLater();
                     return;
                 }
