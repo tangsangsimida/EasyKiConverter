@@ -1497,7 +1497,7 @@ QStringList ComponentCacheService::getCachedComponentIds() const {
         if (entry != "." && entry != ".." && entry != "model3d") {
             // 检查是否是有效的缓存目录（有component.json）。
             if (QFileInfo::exists(metadataPath(entry))) {
-                result.append(entry);
+                result.append(entry.toUpper());
             }
         }
     }

@@ -162,6 +162,7 @@ private slots:
         const QSharedPointer<ComponentData> loaded = m_cache->loadComponentData(componentId);
         QVERIFY(loaded != nullptr);
         QCOMPARE(loaded->name(), QStringLiteral("Legacy component"));
+        QVERIFY(m_cache->getCachedComponentIds().contains(componentId));
 
         m_cache->removeCache(componentId);
         QVERIFY(!QFileInfo::exists(legacyDir));
