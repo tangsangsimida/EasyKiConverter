@@ -123,17 +123,20 @@ private:
     void startPreviewImageDownloads(const QString& componentId, const QStringList& imageUrls, quint64 requestToken);
     void performApiSearch(const QString& componentId, quint64 requestToken);
     void performDownload(const QString& componentId, const QString& imageUrl, int imageIndex, quint64 requestToken);
-    void performDatasheetDownload(const QString& componentId, const QString& datasheetUrl);
+    void performDatasheetDownload(const QString& componentId, const QString& datasheetUrl, quint64 requestToken);
     void checkDownloadCompletion(const QString& componentId, quint64 requestToken);
     void emitAllImagesReady(const QString& componentId, quint64 requestToken);
     quint64 beginRequest(const QString& componentId);
     bool isCurrentRequest(const QString& componentId, quint64 requestToken) const;
+    quint64 beginDatasheetRequest(const QString& componentId);
+    bool isCurrentDatasheetRequest(const QString& componentId, quint64 requestToken) const;
     void trackAsyncRequest(AsyncNetworkRequest* request);
     void untrackAsyncRequest(AsyncNetworkRequest* request);
 
     QThreadPool* m_cacheThreadPool;  // 缓存加载专用线程池
     QSet<QString> m_requestedComponents;  // 已经请求过的组件（防止重复请求）
     QMap<QString, quint64> m_requestTokens;  // componentId -> 当前请求令牌
+    QMap<QString, quint64> m_datasheetTokens;  // componentId -> 当前数据手册请求令牌
     quint64 m_nextRequestToken = 0;  // 单调递增的请求令牌
 
     // 跟踪下载状态（只存计数，不存实际数据）

@@ -170,6 +170,7 @@ void LcscImageService::clearCache() {
 
     m_requestedComponents.clear();
     m_requestTokens.clear();
+    m_datasheetTokens.clear();
     m_downloadCounts.clear();
     m_expectedCounts.clear();
 
@@ -183,6 +184,7 @@ void LcscImageService::cancelAll() {
     m_isCancelled = 1;
     m_requestedComponents.clear();
     m_requestTokens.clear();
+    m_datasheetTokens.clear();
     m_downloadCounts.clear();
     m_expectedCounts.clear();
 
@@ -203,6 +205,7 @@ void LcscImageService::cancelRequestForComponent(const QString& componentId) {
     // 从请求组件列表中移除
     const QString normalizedId = componentId.toUpper();
     m_requestTokens.remove(normalizedId);
+    m_datasheetTokens.remove(normalizedId);
     m_requestedComponents.remove(normalizedId);
     m_downloadCounts.remove(normalizedId);
     m_expectedCounts.remove(normalizedId);
@@ -223,8 +226,10 @@ void LcscImageService::fetchDatasheet(const QString& componentId, const QString&
 
     m_isCancelled = 0;
 
-    qDebug() << "LcscImageService: fetchDatasheet called for" << componentId;
-    performDatasheetDownload(componentId, datasheetUrl);
+    const QString normalizedId = componentId.toUpper();
+    const quint64 requestToken = beginDatasheetRequest(normalizedId);
+    qDebug() << "LcscImageService: fetchDatasheet called for" << normalizedId;
+    performDatasheetDownload(normalizedId, datasheetUrl, requestToken);
 }
 
 // 检查指定元器件是否存在预览图缓存，并安排异步读取。
@@ -581,7 +586,9 @@ void LcscImageService::emitAllImagesReady(const QString& componentId, quint64 re
 }
 
 // 下载数据手册并将有效内容写入缓存。
-void LcscImageService::performDatasheetDownload(const QString& componentId, const QString& datasheetUrl) {
+void LcscImageService::performDatasheetDownload(const QString& componentId,
+                                                const QString& datasheetUrl,
+                                                quint64 requestToken) {
     if (m_isCancelled) {
         return;
     }
@@ -595,7 +602,7 @@ void LcscImageService::performDatasheetDownload(const QString& componentId, cons
     connect(request,
             &AsyncNetworkRequest::finished,
             this,
-            [this, request, componentId, datasheetUrl, gen](const NetworkResult& result) {
+            [this, request, componentId, datasheetUrl, gen, requestToken](const NetworkResult& result) {
                 untrackAsyncRequest(request);
 
                 if (m_isCancelled) {
@@ -609,8 +616,14 @@ void LcscImageService::performDatasheetDownload(const QString& componentId, cons
                     return;
                 }
 
+                if (!isCurrentDatasheetRequest(componentId, requestToken)) {
+                    request->deleteLater();
+                    return;
+                }
+
                 if (!result.success) {
                     emit error(componentId, QString("Datasheet download failed: %1").arg(result.error));
+                    m_datasheetTokens.remove(componentId);
                     request->deleteLater();
                     return;
                 }
@@ -621,8 +634,10 @@ void LcscImageService::performDatasheetDownload(const QString& componentId, cons
                     ComponentCacheService::instance()->saveDatasheet(componentId, datasheetData, format, gen);
                     QByteArray savedData = ComponentCacheService::instance()->loadDatasheet(componentId);
                     emit datasheetReady(componentId, savedData);
+                    m_datasheetTokens.remove(componentId);
                 } else {
                     emit error(componentId, "Failed to read datasheet data");
+                    m_datasheetTokens.remove(componentId);
                 }
 
                 request->deleteLater();
@@ -652,6 +667,18 @@ quint64 LcscImageService::beginRequest(const QString& componentId) {
 // 判断异步回调是否仍属于当前组件请求。
 bool LcscImageService::isCurrentRequest(const QString& componentId, quint64 requestToken) const {
     return m_requestTokens.value(componentId, 0) == requestToken && m_requestedComponents.contains(componentId);
+}
+
+// 为新的数据手册请求分配单调递增令牌。
+quint64 LcscImageService::beginDatasheetRequest(const QString& componentId) {
+    const quint64 requestToken = ++m_nextRequestToken;
+    m_datasheetTokens[componentId] = requestToken;
+    return requestToken;
+}
+
+// 判断数据手册异步回调是否仍属于当前请求。
+bool LcscImageService::isCurrentDatasheetRequest(const QString& componentId, quint64 requestToken) const {
+    return m_datasheetTokens.value(componentId, 0) == requestToken;
 }
 
 }  // namespace EasyKiConverter
