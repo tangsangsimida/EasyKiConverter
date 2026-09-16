@@ -573,25 +573,40 @@ void ComponentService::fetchBatchPreviewImages(const QStringList& componentIds) 
 /** @brief 处理单张预览图下载完成事件。 */
 void ComponentService::handleImageReady(const QString& componentId, const QByteArray& imageData, int imageIndex) {
     QImage image = QImage::fromData(imageData);
-    if (!image.isNull()) {
-        emit previewImageReady(componentId, image, imageIndex);
-        emit previewImageDataReady(componentId, imageData, imageIndex);
-        QMutexLocker locker(&m_fetchingComponentsMutex);
-        if (m_fetchingComponents.contains(componentId)) {
-            FetchingComponent& fetchingComponent = m_fetchingComponents[componentId];
-            fetchingComponent.data.addPreviewImageData(imageData, imageIndex);
-
-            // 更新缓存中的预览图数据
-            {
-                QMutexLocker cacheLocker(&m_componentCacheMutex);
-                if (m_componentCache.contains(componentId)) {
-                    m_componentCache[componentId] = fetchingComponent.data;
-                }
-            }
-        }
-    } else {
+    if (image.isNull()) {
         qWarning() << "Failed to load image from data for component:" << componentId << "index:" << imageIndex
                    << "data size:" << imageData.size();
+        return;
+    }
+
+    const QString normalizedId = componentId.toUpper();
+    ComponentData updatedData;
+    bool hasValidUpdate = false;
+    uint64_t gen = 0;
+    {
+        QMutexLocker locker(&m_fetchingComponentsMutex);
+        const auto it = m_fetchingComponents.find(normalizedId);
+        if (it == m_fetchingComponents.end() ||
+            it->cacheGeneration != ComponentCacheService::instance()->currentGeneration()) {
+            qDebug() << "ComponentService: Discarding stale image callback for" << componentId;
+            return;
+        }
+        it->data.addPreviewImageData(imageData, imageIndex);
+        updatedData = it->data;
+        gen = it->cacheGeneration;
+        hasValidUpdate = true;
+    }
+
+    if (hasValidUpdate) {
+        emit previewImageReady(normalizedId, image, imageIndex);
+        emit previewImageDataReady(normalizedId, imageData, imageIndex);
+        if (ComponentCacheService::instance()->currentGeneration() != gen) {
+            return;
+        }
+        QMutexLocker cacheLocker(&m_componentCacheMutex);
+        if (m_componentCache.contains(normalizedId)) {
+            m_componentCache[normalizedId] = updatedData;
+        }
     }
 }
 
@@ -611,10 +626,15 @@ void ComponentService::handleLcscDataReady(const QString& componentId,
     // 加锁保护共享数据的访问
     {
         QMutexLocker locker(&m_fetchingComponentsMutex);
+        const QString normalizedId = componentId.toUpper();
 
         // 更新 m_fetchingComponents 中的数据
-        if (m_fetchingComponents.contains(componentId)) {
-            FetchingComponent& fetchingComponent = m_fetchingComponents[componentId];
+        if (m_fetchingComponents.contains(normalizedId)) {
+            FetchingComponent& fetchingComponent = m_fetchingComponents[normalizedId];
+            if (fetchingComponent.cacheGeneration != ComponentCacheService::instance()->currentGeneration()) {
+                qDebug() << "ComponentService: Discarding stale LCSC data callback for" << componentId;
+                return;
+            }
 
             // 保存制造商部件号
             if (!manufacturerPart.isEmpty()) {
@@ -660,14 +680,18 @@ void ComponentService::handleLcscDataReady(const QString& componentId,
 
     // 锁外发送信号和保存缓存（避免信号槽死锁和锁顺序问题）
     if (hasValidUpdate) {
+        if (ComponentCacheService::instance()->currentGeneration() != gen) {
+            qDebug() << "ComponentService: Discarding stale LCSC data update for" << componentId;
+            return;
+        }
         // 发送 LCSC 数据更新信号，以便 ComponentListViewModel 可以更新缓存的 ComponentData
-        emit lcscDataUpdated(componentId, manufacturerPart, datasheetUrl, imageUrls);
+        emit lcscDataUpdated(componentId.toUpper(), manufacturerPart, datasheetUrl, imageUrls);
 
         // 保存到磁盘缓存（异步，不阻塞UI）
-        ComponentCacheService::instance()->saveComponentMetadataAsync(componentId, updatedData, gen);
+        ComponentCacheService::instance()->saveComponentMetadataAsync(componentId.toUpper(), updatedData, gen);
 
         // 更新内存缓存，确保 startPreload 时能获取到最新数据
-        updateComponentCache(componentId, updatedData);
+        updateComponentCache(componentId.toUpper(), updatedData);
     }
 }
 
@@ -680,14 +704,21 @@ void ComponentService::handleDatasheetReady(const QString& componentId, const QB
     bool hasValidUpdate = false;
     bool shouldMarkCompleted = false;
     ComponentData completedData;
+    uint64_t gen = 0;
+    const QString normalizedId = componentId.toUpper();
 
     // 加锁保护共享数据的访问
     {
         QMutexLocker locker(&m_fetchingComponentsMutex);
 
         // 更新 m_fetchingComponents 中的数据
-        if (m_fetchingComponents.contains(componentId)) {
-            FetchingComponent& fetchingComponent = m_fetchingComponents[componentId];
+        if (m_fetchingComponents.contains(normalizedId)) {
+            FetchingComponent& fetchingComponent = m_fetchingComponents[normalizedId];
+            gen = fetchingComponent.cacheGeneration;
+            if (gen != ComponentCacheService::instance()->currentGeneration()) {
+                qDebug() << "ComponentService: Discarding stale datasheet callback for" << componentId;
+                return;
+            }
             fetchingComponent.data.setDatasheetData(datasheetData);
 
             // 检测数据手册格式（基于内容）
@@ -720,17 +751,21 @@ void ComponentService::handleDatasheetReady(const QString& componentId, const QB
 
     // 如果所有异步下载都完成了，标记组件完成
     if (shouldMarkCompleted) {
+        if (ComponentCacheService::instance()->currentGeneration() != gen) {
+            qDebug() << "ComponentService: Discarding stale datasheet completion for" << componentId;
+            return;
+        }
         ParallelFetchContext* parallelContext = nullptr;
         {
             QMutexLocker locker(&m_parallelContextMutex);
             parallelContext = m_parallelContext;
         }
         if (parallelContext != nullptr) {
-            parallelContext->markCompleted(componentId, completedData);
+            parallelContext->markCompleted(normalizedId, completedData);
         }
 
         if (m_queueManager != nullptr) {
-            m_queueManager->requestCompleted(componentId);
+            m_queueManager->requestCompleted(normalizedId);
         }
     }
 
@@ -741,37 +776,23 @@ void ComponentService::handleDatasheetReady(const QString& componentId, const QB
         bool hasDataCopy = false;
         {
             QMutexLocker fetchLocker(&m_fetchingComponentsMutex);
-            if (m_fetchingComponents.contains(componentId)) {
-                dataCopy = m_fetchingComponents[componentId].data;
+            if (m_fetchingComponents.contains(normalizedId) &&
+                m_fetchingComponents[normalizedId].cacheGeneration == gen) {
+                dataCopy = m_fetchingComponents[normalizedId].data;
                 hasDataCopy = true;
             }
         }
 
         if (hasDataCopy) {
             QMutexLocker cacheLocker(&m_componentCacheMutex);
-            if (m_componentCache.contains(componentId)) {
-                m_componentCache[componentId] = dataCopy;
-                qDebug() << "ComponentService: Updated cache with datasheet data for" << componentId;
+            if (m_componentCache.contains(normalizedId)) {
+                m_componentCache[normalizedId] = dataCopy;
+                qDebug() << "ComponentService: Updated cache with datasheet data for" << normalizedId;
             }
         }
     } else {
-        // 组件不在 m_fetchingComponents 中（可能在批处理模式下已移除）
-        // 直接更新内存缓存
-        QMutexLocker cacheLocker(&m_componentCacheMutex);
-        if (m_componentCache.contains(componentId)) {
-            m_componentCache[componentId].setDatasheetData(datasheetData);
-            // 检测数据手册格式
-            format = m_componentCache[componentId].datasheetFormat();
-            if (format.isEmpty()) {
-                format = "pdf";
-            }
-            if (format == "pdf" && !isPDF(datasheetData)) {
-                format = "html";
-            }
-            m_componentCache[componentId].setDatasheetFormat(format);
-            qDebug() << "ComponentService: Updated cache directly for" << componentId;
-            hasValidUpdate = true;
-        }
+        // 没有活动请求时无法确认回调归属，禁止将其写入内存缓存。
+        qDebug() << "ComponentService: Discarding datasheet callback without active request for" << componentId;
     }
 
     // 锁外发送信号（避免信号槽死锁）
@@ -783,6 +804,15 @@ void ComponentService::handleDatasheetReady(const QString& componentId, const QB
 
 /** @brief 处理预览图下载失败事件。 */
 void ComponentService::handlePreviewImageError(const QString& componentId, const QString& error) {
+    const QString normalizedId = componentId.toUpper();
+    {
+        QMutexLocker locker(&m_fetchingComponentsMutex);
+        if (!m_fetchingComponents.contains(normalizedId)) {
+            qDebug() << "ComponentService: Discarding preview error without active request for" << componentId;
+            return;
+        }
+    }
+
     if (error == QLatin1String("Image not found") || error == QLatin1String("Preview image URL not found") ||
         error == QLatin1String("No images downloaded") || error == QLatin1String("No preview image URLs available")) {
         qDebug() << "Preview image unavailable for component:" << componentId << "error:" << error;
@@ -791,7 +821,7 @@ void ComponentService::handlePreviewImageError(const QString& componentId, const
     }
 
     // 发送预览图失败信号
-    emit previewImageFailed(componentId, error);
+    emit previewImageFailed(normalizedId, error);
 }
 
 /** @brief 处理全部预览图下载完成事件。 */
