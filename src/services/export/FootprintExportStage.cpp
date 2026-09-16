@@ -33,12 +33,6 @@ constexpr double EASYEDA_UNIT_TO_MM = 0.254;  // 逆向转换用，正向请用 
 constexpr double EASYEDA_Z_OFFSET_BIAS = 0.000001;  // 避免对齐到精确零值导致 KiCad 忽略偏移
 constexpr auto FP_TYPE_SMD = "smd";
 
-// 检查 STEP 文件是否具有可接受的交换文件外层结构。
-bool isLikelyValidStepData(const QByteArray& stepData) {
-    const QByteArray normalized = stepData.trimmed().toUpper();
-    return normalized.startsWith("ISO-10303-21;") && normalized.contains("END-ISO-10303-21;");
-}
-
 // 从 STEP 顶点计算模型包围盒中心，并以最低 Z 作为对齐基准。
 bool calculateStepGeometryCenter(const QByteArray& stepData, Model3DBase* center) {
     if (stepData.isEmpty() || center == nullptr) {
@@ -383,7 +377,7 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
                 if (stepData.isEmpty()) {
                     stepData = ComponentCacheService::instance()->loadModel3D(model3D.uuid(), QStringLiteral("step"));
                 }
-                if (!stepData.isEmpty() && !isLikelyValidStepData(stepData)) {
+                if (!stepData.isEmpty() && !Exporter3DModel::hasUsableStepData(stepData)) {
                     qWarning() << "FootprintExportStage: Ignoring malformed cached STEP for" << componentId << "uuid"
                                << model3D.uuid();
                     stepData.clear();
@@ -391,11 +385,13 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
                 if (stepData.isEmpty()) {
                     Exporter3DModel modelExporter;
                     if (modelExporter.downloadStepDataSync(model3D.uuid(), &stepData) && !stepData.isEmpty()) {
-                        ComponentCacheService::instance()->saveModel3D(
-                            model3D.uuid(), stepData, QStringLiteral("step"), gen);
+                        if (Exporter3DModel::hasUsableStepData(stepData)) {
+                            ComponentCacheService::instance()->saveModel3D(
+                                model3D.uuid(), stepData, QStringLiteral("step"), gen);
+                        }
                     }
                 }
-                if (!stepData.isEmpty() && !isLikelyValidStepData(stepData)) {
+                if (!stepData.isEmpty() && !Exporter3DModel::hasUsableStepData(stepData)) {
                     qWarning() << "FootprintExportStage: Rejecting invalid downloaded STEP for" << componentId << "uuid"
                                << model3D.uuid();
                     stepData.clear();

@@ -224,6 +224,12 @@ bool Exporter3DModel::hasUsableWrlGeometry(const QByteArray& wrlData) {
     return coordinateCount >= 9 && indexData.contains(QStringLiteral("-1"));
 }
 
+// 检查 STEP 是否包含完整交换文件的起始和结束标记。
+bool Exporter3DModel::hasUsableStepData(const QByteArray& stepData) {
+    const QByteArray normalized = stepData.trimmed().toUpper();
+    return normalized.startsWith("ISO-10303-21;") && normalized.contains("END-ISO-10303-21;");
+}
+
 // 解析 WRL 坐标点并计算 KiCad 显示单位下的最小 Z 坐标。
 double Exporter3DModel::calculateWrlDisplayMinZ(const QByteArray& wrlData) {
     if (wrlData.isEmpty()) {

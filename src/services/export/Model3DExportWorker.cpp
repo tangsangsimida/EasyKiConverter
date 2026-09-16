@@ -252,13 +252,26 @@ void Model3DExportWorker::run() {
         bool stepCacheHit = false;
         {
             QMutexLocker downloadLocker(&modelDownloadMutex());
-            stepCacheHit = cache->copyModel3DToFile(uuid, QStringLiteral("step"), stepWritePath);
+            const QByteArray cachedStep = cache->loadModel3D(uuid, QStringLiteral("step"));
+            if (!cachedStep.isEmpty() && Exporter3DModel::hasUsableStepData(cachedStep)) {
+                stepCacheHit = cache->copyModel3DToFile(uuid, QStringLiteral("step"), stepWritePath);
+            } else if (!cachedStep.isEmpty()) {
+                qWarning() << "Model3DExportWorker: Ignoring malformed cached STEP for" << m_componentId << "uuid"
+                           << uuid;
+            }
             if (!stepCacheHit && !m_cancelled.load()) {
                 if (!exporter.downloadStepDataSync(uuid, &stepData, &error) && error.isEmpty()) {
                     error = QStringLiteral("Failed to download STEP data");
                 }
-                if (!stepData.isEmpty())
+                if (!stepData.isEmpty() && !Exporter3DModel::hasUsableStepData(stepData)) {
+                    qWarning() << "Model3DExportWorker: Rejecting invalid downloaded STEP for" << m_componentId
+                               << "uuid" << uuid;
+                    stepData.clear();
+                    error = QStringLiteral("Downloaded STEP data has invalid structure");
+                }
+                if (!stepData.isEmpty()) {
                     cache->saveModel3D(uuid, stepData, QStringLiteral("step"), gen);
+                }
             }
         }
 

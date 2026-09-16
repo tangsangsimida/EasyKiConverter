@@ -91,6 +91,18 @@ private slots:
         QVERIFY(!Exporter3DModel::hasUsableWrlGeometry(QByteArrayLiteral("#VRML V2.0 utf8\nShape {}\n")));
     }
 
+    /** @brief 验证 STEP 结构校验接受完整交换文件。 */
+    void hasUsableStepDataAcceptsValidModel() {
+        QVERIFY(Exporter3DModel::hasUsableStepData(
+            QByteArrayLiteral("ISO-10303-21;\nDATA;\nENDSEC;\nEND-ISO-10303-21;\n")));
+    }
+
+    /** @brief 验证 STEP 结构校验拒绝错误响应和截断文件。 */
+    void hasUsableStepDataRejectsInvalidModel() {
+        QVERIFY(!Exporter3DModel::hasUsableStepData(QByteArrayLiteral("<html>access denied</html>")));
+        QVERIFY(!Exporter3DModel::hasUsableStepData(QByteArrayLiteral("ISO-10303-21;\nDATA;\n")));
+    }
+
     // === calculateWrlDisplayMinZ 测试 ===
 
     /** @brief 验证空 WRL 的最小 Z 返回无穷大哨兵值。 */
