@@ -1,6 +1,7 @@
 #include "services/ComponentService.h"
 #include "tests/common/TestPaths.hpp"
 
+#include <QBuffer>
 #include <QSignalSpy>
 #include <QTemporaryDir>
 #include <QtTest>
@@ -71,6 +72,26 @@ private slots:
 
         const ComponentData loadedData = service.getComponentData(QStringLiteral("C54330"));
         QCOMPARE(loadedData.name(), QStringLiteral("Case normalized component"));
+    }
+
+    /** @brief 验证没有活动请求时不会转发过期的图片回调。 */
+    void testImageCallbackWithoutActiveRequestIsDiscarded() {
+        QImage image(2, 2, QImage::Format_RGB32);
+        image.fill(Qt::red);
+        QBuffer buffer;
+        QVERIFY(buffer.open(QIODevice::WriteOnly));
+        QVERIFY(image.save(&buffer, "PNG"));
+
+        ComponentService service;
+        QSignalSpy imageSpy(&service, &ComponentService::previewImageReady);
+        QVERIFY(QMetaObject::invokeMethod(&service,
+                                          "handleImageReady",
+                                          Qt::DirectConnection,
+                                          Q_ARG(QString, QStringLiteral("c54333")),
+                                          Q_ARG(QByteArray, buffer.data()),
+                                          Q_ARG(int, 0)));
+
+        QCOMPARE(imageSpy.count(), 0);
     }
 
     /** @brief 验证取消缓存加载后不会重新创建获取状态。 */
