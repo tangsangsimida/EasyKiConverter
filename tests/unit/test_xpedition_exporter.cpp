@@ -334,6 +334,22 @@ private slots:
         QVERIFY(data.contains("ROTATED_RECTANGLE_Cell.hkp"));
         QVERIFY(data.contains("....XY (78.7402, 39.3701)"));
     }
+
+    // 验证单封装入口收到三维模型路径时会明确报告未建立关联。
+    void singleFootprintModelPathProducesDiagnostic() {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        IR::FootprintComponentIR footprint;
+        footprint.name = QStringLiteral("MODEL_DIAGNOSTIC");
+
+        const QString outputPath = tempDir.filePath(QStringLiteral("model-diagnostic.zip"));
+        ExporterXpeditionFootprint exporter;
+        QVERIFY(exporter.exportFootprint(footprint, outputPath, QStringLiteral("model.step")));
+
+        const QString diagnosticText = exporter.diagnostics().join(QStringLiteral("\n"));
+        QVERIFY(diagnosticText.contains(QStringLiteral("未写入 3D 模型关联")));
+    }
 };
 
 QTEST_GUILESS_MAIN(TestXpeditionExporter)

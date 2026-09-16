@@ -555,9 +555,12 @@ QByteArray ExporterXpeditionFootprint::cellFile(const IR::FootprintComponentIR& 
 // 单个封装入口沿用批量导出实现，以保持诊断和命名规则一致。
 bool ExporterXpeditionFootprint::exportFootprint(const IR::FootprintComponentIR& footprint,
                                                  const QString& filePath,
-                                                 const QString&) {
+                                                 const QString& model3DPath) {
     // 单个封装复用批量路径，确保命名、诊断和 ZIP 写入行为保持一致。
-    return exportFootprintLibrary({footprint}, footprint.name, filePath);
+    const bool success = exportFootprintLibrary({footprint}, footprint.name, filePath);
+    if (!model3DPath.trimmed().isEmpty() && footprint.models3d.isEmpty())
+        m_diagnostics.append(QStringLiteral("Xpedition 封装 %1 未写入 3D 模型关联").arg(footprint.name));
+    return success;
 }
 
 // 批量入口负责去重名称、收集诊断并提交最终 ZIP 文件。
