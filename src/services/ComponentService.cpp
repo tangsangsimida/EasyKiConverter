@@ -32,6 +32,7 @@
 namespace EasyKiConverter {
 
 namespace {
+/** @brief 从预览图路径中解析图片序号。 */
 int previewImageIndexFromPath(const QString& path) {
     static const QRegularExpression re(QStringLiteral("preview_(\\d+)\\.jpg$"),
                                        QRegularExpression::CaseInsensitiveOption);
@@ -43,6 +44,29 @@ int previewImageIndexFromPath(const QString& path) {
     bool ok = false;
     const int index = match.captured(1).toInt(&ok);
     return ok ? index : -1;
+}
+
+/**
+ * @brief 在缓存组件缺少独立模型时，从已解析封装补齐三维模型信息。
+ * @param component 待补齐的组件数据。
+ * @param footprint 已解析的封装数据。
+ */
+void restoreModel3DFromFootprint(ComponentData& component, const QSharedPointer<FootprintData>& footprint) {
+    if (!footprint)
+        return;
+
+    const Model3DData footprintModel = footprint->model3D();
+    if (footprintModel.uuid().isEmpty())
+        return;
+    if (component.model3DData() && !component.model3DData()->uuid().isEmpty())
+        return;
+
+    auto model3DData = QSharedPointer<Model3DData>::create();
+    model3DData->setUuid(footprintModel.uuid());
+    model3DData->setName(footprintModel.name());
+    model3DData->setTranslation(footprintModel.translation());
+    model3DData->setRotation(footprintModel.rotation());
+    component.setModel3DData(model3DData);
 }
 }  // namespace
 
@@ -113,6 +137,7 @@ ComponentService::ComponentService(EasyedaApi* api, QObject* parent)
     qDebug() << "ComponentService (Injected API): Initialized successfully.";
 }
 
+/** @brief 连接网络服务与组件服务的异步信号。 */
 void ComponentService::initializeApiConnections() {
     // 连接图片服务信号
     if (m_imageService) {
@@ -137,6 +162,7 @@ void ComponentService::initializeApiConnections() {
 
 ComponentService::~ComponentService() {}
 
+/** @brief 请求单个元器件的完整数据。 */
 void ComponentService::fetchComponentData(const QString& componentId, bool fetch3DModel) {
     fetchComponentDataInternal(componentId, fetch3DModel);
 }
@@ -155,6 +181,7 @@ void ComponentService::initializeFetchingComponent(FetchingComponent& fetchingCo
     fetchingComponent.cacheGeneration = ComponentCacheService::instance()->currentGeneration();
 }
 
+/** @brief 执行单个元器件数据请求的内部流程。 */
 void ComponentService::fetchComponentDataInternal(const QString& componentId, bool fetch3DModel) {
     qDebug() << "Fetching component data (internal) for:" << componentId << "Fetch 3D:" << fetch3DModel
              << "at:" << QDateTime::currentDateTime().toString("hh:mm:ss.zzz");
@@ -348,6 +375,9 @@ void ComponentService::loadComponentDataFromCacheAsync(const QString& normalized
             }
         }
 
+        // 先补齐封装中的模型 UUID，后续 OBJ 预加载才能命中对应缓存文件。
+        restoreModel3DFromFootprint(*cachedData, result.footprintData);
+
         if (!result.symbolData || !result.footprintData) {
             qWarning() << "Cache load incomplete for" << normalizedId << "- symbol:" << (result.symbolData != nullptr)
                        << "footprint:" << (result.footprintData != nullptr);
@@ -470,15 +500,7 @@ void ComponentService::loadComponentDataFromCacheAsync(const QString& normalized
             }
             if (result.footprintData) {
                 result.cachedData->setFootprintData(result.footprintData);
-                const Model3DData parsedModel3D = result.footprintData->model3D();
-                if (!parsedModel3D.uuid().isEmpty()) {
-                    auto model3DData = QSharedPointer<Model3DData>::create();
-                    model3DData->setUuid(parsedModel3D.uuid());
-                    model3DData->setName(parsedModel3D.name());
-                    model3DData->setTranslation(parsedModel3D.translation());
-                    model3DData->setRotation(parsedModel3D.rotation());
-                    result.cachedData->setModel3DData(model3DData);
-                }
+                restoreModel3DFromFootprint(*result.cachedData, result.footprintData);
             }
 
             // 更新 m_fetchingComponents
@@ -530,16 +552,19 @@ void ComponentService::loadComponentDataFromCacheAsync(const QString& normalized
     watcher->setFuture(future);
 }
 
+/** @brief 请求元器件预览图。 */
 void ComponentService::fetchLcscPreviewImage(const QString& componentId) {
     qDebug() << "ComponentService: Fetching LCSC preview image for component:" << componentId;
     m_imageService->fetchPreviewImages(componentId);
 }
 
+/** @brief 批量请求元器件预览图。 */
 void ComponentService::fetchBatchPreviewImages(const QStringList& componentIds) {
     qDebug() << "ComponentService: Fetching batch preview images for" << componentIds.count() << "components";
     m_imageService->fetchBatchPreviewImages(componentIds);
 }
 
+/** @brief 处理单张预览图下载完成事件。 */
 void ComponentService::handleImageReady(const QString& componentId, const QByteArray& imageData, int imageIndex) {
     QImage image = QImage::fromData(imageData);
     if (!image.isNull()) {
@@ -640,6 +665,7 @@ void ComponentService::handleLcscDataReady(const QString& componentId,
     }
 }
 
+/** @brief 处理数据手册下载完成事件。 */
 void ComponentService::handleDatasheetReady(const QString& componentId, const QByteArray& datasheetData) {
     qDebug() << "Datasheet downloaded for component:" << componentId << "size:" << datasheetData.size() << "bytes";
 
@@ -749,6 +775,7 @@ void ComponentService::handleDatasheetReady(const QString& componentId, const QB
     }
 }
 
+/** @brief 处理预览图下载失败事件。 */
 void ComponentService::handlePreviewImageError(const QString& componentId, const QString& error) {
     if (error == QLatin1String("Image not found") || error == QLatin1String("Preview image URL not found") ||
         error == QLatin1String("No images downloaded") || error == QLatin1String("No preview image URLs available")) {
@@ -761,6 +788,7 @@ void ComponentService::handlePreviewImageError(const QString& componentId, const
     emit previewImageFailed(componentId, error);
 }
 
+/** @brief 处理全部预览图下载完成事件。 */
 void ComponentService::handleAllImagesReady(const QString& componentId, const QStringList& imagePaths) {
     qDebug() << "All images ready for component:" << componentId << "paths:" << imagePaths.size();
 
@@ -814,6 +842,7 @@ void ComponentService::handleAllImagesReady(const QString& componentId, const QS
     watcher->setFuture(future);
 }
 
+/** @brief 处理元器件基础信息响应。 */
 void ComponentService::handleComponentInfoFetched(const QString& componentId, const QJsonObject& data) {
     // 解析组件信息
     ComponentData componentData;
@@ -840,6 +869,7 @@ void ComponentService::handleComponentInfoFetched(const QString& componentId, co
     emit componentInfoReady(componentId, componentData);
 }
 
+/** @brief 处理 CAD 数据响应并启动解析流程。 */
 void ComponentService::handleCadDataFetched(const QString& componentId, const QJsonObject& data) {
     // 从 FetchingComponent 读取请求创建时的 generation，而非当前值
     uint64_t gen = 0;
@@ -893,10 +923,12 @@ void ComponentService::handleCadDataFetched(const QString& componentId, const QJ
     watcher->setFuture(future);
 }
 
+/** @brief 处理未携带元器件编号的请求错误。 */
 void ComponentService::handleFetchError(const QString& errorMessage) {
     emitFetchErrorAndClearState(m_currentComponentId, errorMessage);
 }
 
+/** @brief 处理携带元器件编号或模型 UUID 的请求错误。 */
 void ComponentService::handleFetchErrorWithId(const QString& idOrUuid, const QString& error) {
     QString componentId = idOrUuid;
 
@@ -916,14 +948,17 @@ void ComponentService::handleFetchErrorWithId(const QString& idOrUuid, const QSt
     emitFetchErrorAndClearState(componentId, error);
 }
 
+/** @brief 设置导出输出目录。 */
 void ComponentService::setOutputPath(const QString& path) {
     m_outputPath = path;
 }
 
+/** @brief 返回当前导出输出目录。 */
 QString ComponentService::getOutputPath() const {
     return m_outputPath;
 }
 
+/** @brief 启动多个元器件的并行数据请求。 */
 void ComponentService::fetchMultipleComponentsData(const QStringList& componentIds, bool fetch3DModel) {
     m_maxConcurrentRequests = ConfigService::instance()->getValidationConcurrentCount();
     if (m_queueManager != nullptr) {
@@ -954,6 +989,7 @@ void ComponentService::fetchMultipleComponentsData(const QStringList& componentI
     m_queueManager->start(componentIds);
 }
 
+/** @brief 处理并行请求中的单个元器件完成事件。 */
 void ComponentService::handleParallelDataCollected(const QString& componentId, const ComponentData& data) {
     Q_UNUSED(data);
     qDebug() << "Parallel data collected for:" << componentId;
@@ -981,6 +1017,7 @@ void ComponentService::handleParallelDataCollected(const QString& componentId, c
     }
 }
 
+/** @brief 处理并行请求中的单个元器件失败事件。 */
 void ComponentService::handleParallelFetchError(const QString& componentId, const QString& error) {
     qDebug() << "Parallel fetch error for:" << componentId << error;
 
@@ -999,10 +1036,12 @@ void ComponentService::handleParallelFetchError(const QString& componentId, cons
     }
 }
 
+/** @brief 校验元器件编号格式。 */
 bool ComponentService::validateComponentId(const QString& componentId) const {
     return BomParser::validateId(componentId);
 }
 
+/** @brief 从文本中提取元器件编号。 */
 QStringList ComponentService::extractComponentIdFromText(const QString& text) const {
     // 依然保留简单的提取逻辑，或者可以进一步整合进 BomParser
     QStringList extractedIds;
@@ -1019,22 +1058,26 @@ QStringList ComponentService::extractComponentIdFromText(const QString& text) co
     return extractedIds;
 }
 
+/** @brief 解析 BOM 文件中的元器件编号。 */
 QStringList ComponentService::parseBomFile(const QString& filePath) {
     BomParser parser;
     return parser.parse(filePath);
 }
 
+/** @brief 从内存缓存中读取元器件数据。 */
 ComponentData ComponentService::getComponentData(const QString& componentId) const {
     QMutexLocker locker(&m_componentCacheMutex);
     return m_componentCache.value(componentId, ComponentData());
 }
 
+/** @brief 更新内存中的元器件缓存。 */
 void ComponentService::updateComponentCache(const QString& componentId, const ComponentData& data) {
     QMutexLocker locker(&m_componentCacheMutex);
     m_componentCache[componentId] = data;
     qDebug() << "ComponentService: Updated cache for" << componentId;
 }
 
+/** @brief 更新缓存元器件的描述字段。 */
 void ComponentService::updateComponentDescription(const QString& componentId, const QString& description) {
     QMutexLocker locker(&m_componentCacheMutex);
     auto it = m_componentCache.find(componentId);
@@ -1053,6 +1096,7 @@ void ComponentService::updateComponentDescription(const QString& componentId, co
     }
 }
 
+/** @brief 清理元器件及其预览图缓存。 */
 void ComponentService::clearCache() {
     m_componentCache.clear();
 
@@ -1067,6 +1111,7 @@ void ComponentService::clearCache() {
     qDebug() << "Component cache cleared (including LCSC image service and memory cache)";
 }
 
+/** @brief 取消全部预览图请求。 */
 void ComponentService::cancelAllPreviewImageFetches() {
     qDebug() << "ComponentService: Cancelling all preview image fetches";
     if (m_imageService) {
@@ -1074,6 +1119,7 @@ void ComponentService::cancelAllPreviewImageFetches() {
     }
 }
 
+/** @brief 取消全部未完成的元器件请求。 */
 void ComponentService::cancelAllPendingRequests() {
     qDebug() << "ComponentService: Cancelling all pending component data requests";
 
@@ -1093,6 +1139,7 @@ void ComponentService::cancelAllPendingRequests() {
     qDebug() << "ComponentService: All pending requests cancelled";
 }
 
+/** @brief 取消指定元器件的请求。 */
 void ComponentService::cancelRequestForComponent(const QString& componentId) {
     QString normalizedId = componentId.toUpper();
     qDebug() << "ComponentService: Cancelling request for component" << normalizedId;
@@ -1111,6 +1158,7 @@ void ComponentService::cancelRequestForComponent(const QString& componentId) {
     qDebug() << "ComponentService: Request cancelled for component" << normalizedId;
 }
 
+/** @brief 清理失败请求状态并发送错误信号。 */
 void ComponentService::emitFetchErrorAndClearState(const QString& componentId, const QString& error) {
     qWarning() << "Fetch error for component" << componentId << ":" << error;
 
@@ -1132,6 +1180,7 @@ void ComponentService::emitFetchErrorAndClearState(const QString& componentId, c
     emit fetchError(componentId, error);
 }
 
+/** @brief 判断数据是否具有 PDF 文件签名。 */
 bool ComponentService::isPDF(const QByteArray& data) const {
     // PDF 文件以 %PDF- 开头
     if (data.size() < 5) {
@@ -1143,6 +1192,7 @@ bool ComponentService::isPDF(const QByteArray& data) const {
 // 异步队列管理方法实现
 // 使用 ComponentQueueManager 管理队列
 
+/** @brief 处理批量请求队列超时。 */
 void ComponentService::handleQueueTimeout() {
     qWarning() << "Queue timeout reached";
 
@@ -1160,6 +1210,7 @@ void ComponentService::handleQueueTimeout() {
     }
 }
 
+/** @brief 中止当前批量请求并清理状态。 */
 void ComponentService::abortBatchFetch() {
     // 取消所有网络请求（包括预览图、数据手册、CAD数据）
     cancelAllPendingRequests();
@@ -1168,6 +1219,7 @@ void ComponentService::abortBatchFetch() {
     qDebug() << "ComponentService: Batch fetch aborted, all state cleared";
 }
 
+/** @brief 重置批量请求队列及并行上下文。 */
 void ComponentService::resetQueueState() {
     m_queueManager->stop();
     m_activeRequestCount = 0;
