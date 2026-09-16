@@ -124,6 +124,24 @@ private slots:
         QVERIFY(!QFileInfo::exists(m_tempDir.filePath(componentId + QStringLiteral("/datasheet.html"))));
     }
 
+    // 验证大小写不同的元器件编号使用同一缓存目录和内存键，并可被完整删除。
+    void testComponentCacheNormalizesIdCaseForRemoval() {
+        const QString componentId = QStringLiteral("c54328");
+        ComponentData data;
+        data.setLcscId(componentId);
+        data.setName(QStringLiteral("Case normalized component"));
+
+        m_cache->saveComponentMetadata(componentId, data);
+
+        QVERIFY(m_cache->hasCache(componentId));
+        QVERIFY(QFileInfo::exists(m_tempDir.filePath(QStringLiteral("C54328/component.json"))));
+        m_cache->removeCache(componentId);
+
+        QVERIFY(!m_cache->hasCache(componentId));
+        QVERIFY(m_cache->loadComponentData(componentId) == nullptr);
+        QVERIFY(!QFileInfo::exists(m_tempDir.filePath(QStringLiteral("C54328"))));
+    }
+
     // 验证数据手册下载不会直接返回格式无效的磁盘缓存。
     void testDownloadDatasheetRemovesInvalidCachedData() {
         const QString componentId = QStringLiteral("C54325");

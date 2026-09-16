@@ -309,8 +309,9 @@ QString ComponentCacheService::componentCacheDir(const QString& lcscId) const {
         qWarning() << "componentCacheDir: invalid lcscId, rejecting:" << lcscId;
         return QString();
     }
+    const QString normalizedId = lcscId.toUpper();
     QMutexLocker locker(&m_cacheDirMutex);
-    return QDir::cleanPath(m_cacheDir + "/" + lcscId);
+    return QDir::cleanPath(m_cacheDir + "/" + normalizedId);
 }
 
 // 确保指定元器件的缓存目录存在。
@@ -342,7 +343,7 @@ QString ComponentCacheService::ensureModel3DCacheDir() const {
 
 // 构造内存缓存使用的复合键。
 QString ComponentCacheService::makeMemoryKey(const QString& lcscId, const QString& type) const {
-    return lcscId + ":" + type;
+    return lcscId.toUpper() + ":" + type;
 }
 
 // 判断元器件是否具有可用的完整磁盘缓存。
