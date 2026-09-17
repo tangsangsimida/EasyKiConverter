@@ -23,6 +23,7 @@
 class CacheHealthManager;
 class ComponentCacheMetadataWriter;
 class ComponentCacheCadDataWriter;
+class DatasheetCacheFileStore;
 
 namespace EasyKiConverter {
 
@@ -500,6 +501,7 @@ private:
     friend class ComponentCacheMetadataWriter;
     friend class ComponentCachePreviewImageWriter;
     friend class ComponentCacheQuotaEnforcer;
+    friend class DatasheetCacheFileStore;
 
     /**
      * @brief 私有构造函数（单例模式）

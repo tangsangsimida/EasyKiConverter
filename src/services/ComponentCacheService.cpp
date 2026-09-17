@@ -14,6 +14,7 @@
 #include "ComponentCacheQuotaEnforcer.h"
 #include "ComponentCacheWritePolicy.h"
 #include "ConfigService.h"
+#include "DatasheetCacheFileStore.h"
 #include "Model3DCacheFileStore.h"
 #include "core/kicad/Exporter3DModel.h"
 #include "core/network/NetworkClient.h"
@@ -576,28 +577,7 @@ QByteArray ComponentCacheService::downloadPreviewImage(const QString& lcscId,
 
 // 从二级磁盘缓存读取数据手册。
 QByteArray ComponentCacheService::loadDatasheet(const QString& lcscId) const {
-    // 数据手册路径和文件读取必须与目录迁移串行化。
-    QMutexLocker diskLocker(&m_diskWriteMutex);
-    const QString preferredFormat = CacheMetadataStore::read(metadataPath(lcscId)).value("datasheetFormat").toString();
-    const QString datasheetFilePath = resolveDatasheetPath(lcscId, preferredFormat, false);
-    if (!QFileInfo::exists(datasheetFilePath)) {
-        return QByteArray();
-    }
-
-    QFile file(datasheetFilePath);
-    if (file.open(QIODevice::ReadOnly)) {
-        QByteArray data = file.readAll();
-        file.close();
-        const QString format = datasheetFilePath.endsWith(QStringLiteral(".pdf"), Qt::CaseInsensitive)
-                                   ? QStringLiteral("pdf")
-                                   : QStringLiteral("html");
-        if (CacheDataValidator::isValidDatasheet(data, format)) {
-            return data;
-        }
-        QFile::remove(datasheetFilePath);
-    }
-
-    return QByteArray();
+    return DatasheetCacheFileStore::load(*this, lcscId);
 }
 
 // 校验 PDF 签名或 HTML 文档标记，拒绝被错误响应污染的数据手册缓存。
@@ -609,48 +589,8 @@ void ComponentCacheService::saveDatasheet(const QString& lcscId,
                                           const QByteArray& datasheetData,
                                           const QString& format,
                                           uint64_t expectedGeneration) {
-    QString effectiveFormat = format.toLower();
-    if (effectiveFormat != QStringLiteral("pdf") && effectiveFormat != QStringLiteral("html")) {
-        return;
-    }
-    if (effectiveFormat == QStringLiteral("pdf") && !datasheetData.startsWith("%PDF-")) {
-        effectiveFormat = QStringLiteral("html");
-    }
-    if (!CacheDataValidator::isValidDatasheet(datasheetData, effectiveFormat)) {
-        return;
-    }
-
-    QMutexLocker diskLocker(&m_diskWriteMutex);
-    if (expectedGeneration != 0) {
-        if (m_cacheGeneration.load() != expectedGeneration) {
-            return;
-        }
-        if (isTombstoned(lcscId)) {
-            return;
-        }
-    }
-    QString actualPath;
-    {
-        QMutexLocker locker(&m_mutex);
-        if (ensureComponentDir(lcscId).isEmpty()) {
-            return;
-        }
-        actualPath = resolveDatasheetPath(lcscId, effectiveFormat, true);
-        const QString alternatePath = actualPath.endsWith(".pdf")
-                                          ? resolveDatasheetPath(lcscId, QStringLiteral("html"), true)
-                                          : resolveDatasheetPath(lcscId, QStringLiteral("pdf"), true);
-        if (alternatePath != actualPath && QFile::exists(alternatePath)) {
-            QFile::remove(alternatePath);
-        }
-    }
-
-    if (CacheMetadataStore::writeAtomically(actualPath, datasheetData)) {
-        LOG_DEBUG(LogModule::Core, "Saved datasheet to disk: {}", actualPath);
-        enforceDiskCacheLimit();
-    } else {
-        LOG_WARN(LogModule::Core, "Failed to write datasheet: {}", actualPath);
-    }
-    // 注意：数据手册不存入L1内存缓存，因为数据量大
+    DatasheetCacheFileStore fileStore(*this);
+    fileStore.save(lcscId, datasheetData, format, expectedGeneration);
 }
 
 QByteArray ComponentCacheService::downloadDatasheet(const QString& lcscId,

@@ -50,6 +50,8 @@ add_library(EasyKiConverterServices STATIC
     PreviewImageDataEncoder.h
     Model3DCacheFileStore.cpp
     Model3DCacheFileStore.h
+    DatasheetCacheFileStore.cpp
+    DatasheetCacheFileStore.h
     DatasheetExporter.cpp
 )
 
