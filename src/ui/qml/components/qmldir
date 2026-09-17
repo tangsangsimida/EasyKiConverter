@@ -10,6 +10,7 @@ HeaderSection 1.0 HeaderSection.qml
 ComponentInputCard 1.0 ComponentInputCard.qml
 BomImportCard 1.0 BomImportCard.qml
 ComponentListCard 1.0 ComponentListCard.qml
+ComponentPreviewPopup 1.0 ComponentPreviewPopup.qml
 ExportSettingsCard 1.0 ExportSettingsCard.qml
 ExportSettingsBaseCard 1.0 ExportSettingsBaseCard.qml
 KiCadSettingsCard 1.0 KiCadSettingsCard.qml
