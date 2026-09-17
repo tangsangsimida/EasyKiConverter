@@ -6,6 +6,7 @@
 #include "ui/viewmodels/ComponentListIndex.h"
 #include "ui/viewmodels/ComponentListPreviewUpdateBuffer.h"
 #include "ui/viewmodels/ComponentListStateTracker.h"
+#include "ui/viewmodels/ComponentValidationQueue.h"
 #include "ui/viewmodels/PreviewImageEncodeRunnable.h"
 
 #include <QAbstractListModel>
@@ -192,8 +193,7 @@ private:
     ComponentListStateTracker m_stateTracker;
     bool m_isScrolling = false;
 
-    QStringList m_validationQueue;
-    QSet<QString> m_inFlightComponentIds;  // 追踪正在处理中的组件，避免重复调度
+    ComponentValidationQueue m_validationQueue;
     int m_validationPendingCount = 0;
     int m_validationCompletedCount = 0;
     int m_validationTotalCount = 0;

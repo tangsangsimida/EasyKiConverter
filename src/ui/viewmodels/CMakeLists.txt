@@ -8,6 +8,8 @@ add_library(EasyKiConverterViewModels STATIC
     ComponentListStateTracker.h
     ComponentListPreviewUpdateBuffer.cpp
     ComponentListPreviewUpdateBuffer.h
+    ComponentValidationQueue.cpp
+    ComponentValidationQueue.h
     PreviewImageEncodeRunnable.cpp
     PreviewImageEncodeRunnable.h
     ExportSettingsViewModel.cpp

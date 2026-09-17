@@ -1,3 +1,4 @@
+#include "ui/viewmodels/ComponentValidationQueue.h"
 #include "ui/viewmodels/ValidationStateManager.h"
 
 #include <QCoreApplication>
@@ -102,6 +103,7 @@ private slots:
         // checkAndNotifyCompletion 只在 isAllDone() && m_previewFetchEnabled 时触发
     }
 
+    // 验证成功和失败混合时只报告实际验证成功的元件编号。
     void testMixedSuccessAndFailure_CompletesWithValidIds() {
         ValidationStateManager manager;
 
@@ -118,6 +120,42 @@ private slots:
         const QList<QVariant> arguments = spy.takeFirst();
         const QStringList validatedIds = arguments.at(0).toStringList();
         QCOMPARE(validatedIds, QStringList({"C1", "C3"}));
+    }
+
+    // 验证元件验证队列不会重复添加同一个编号。
+    void testComponentValidationQueueDeduplicatesIds() {
+        ComponentValidationQueue queue;
+
+        QVERIFY(queue.enqueue(QStringLiteral("C12345")));
+        QVERIFY(!queue.enqueue(QStringLiteral("C12345")));
+        QCOMPARE(queue.size(), 1);
+    }
+
+    // 验证请求取出后会进入飞行中状态，并可在完成后清理。
+    void testComponentValidationQueueTracksInFlightState() {
+        ComponentValidationQueue queue;
+        queue.enqueue(QStringLiteral("C12345"));
+
+        QCOMPARE(queue.takeNext(), QStringLiteral("C12345"));
+        QVERIFY(queue.isEmpty());
+        QVERIFY(queue.isInFlight(QStringLiteral("C12345")));
+
+        queue.complete(QStringLiteral("C12345"));
+        QVERIFY(!queue.hasInFlight());
+        QVERIFY(!queue.contains(QStringLiteral("C12345")));
+    }
+
+    // 验证删除请求会同时清理排队和飞行中的编号。
+    void testComponentValidationQueueRemovesPendingAndInFlightIds() {
+        ComponentValidationQueue queue;
+        queue.enqueue(QStringLiteral("C12345"));
+        queue.enqueue(QStringLiteral("C12346"));
+        QCOMPARE(queue.takeNext(), QStringLiteral("C12345"));
+
+        queue.remove(QStringLiteral("C12345"));
+        queue.remove(QStringLiteral("C12346"));
+        QVERIFY(queue.isEmpty());
+        QVERIFY(!queue.hasInFlight());
     }
 };
 

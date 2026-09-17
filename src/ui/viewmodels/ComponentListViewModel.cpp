@@ -14,8 +14,10 @@
 
 namespace EasyKiConverter {
 
+// 创建元件列表视图模型并初始化异步更新资源。
 /** @brief 创建元件列表视图模型并初始化异步更新资源。 */
 ComponentListViewModel::ComponentListViewModel(ComponentService* service, QObject* parent)
+    // 初始化 Qt 模型父对象和组件服务引用。
     : QAbstractListModel(parent), m_service(service) {
     /** @brief 创建验证状态管理器，统一维护列表验证进度和完成通知。 */
     m_validationStateManager = new ValidationStateManager(this);
@@ -315,11 +317,10 @@ void ComponentListViewModel::removeComponent(int index) {
     }
 
     // 检查元器件是否已经在飞行中（已 dispatch）
-    bool wasInFlight = m_inFlightComponentIds.contains(removedId);
+    const bool wasInFlight = m_validationQueue.isInFlight(removedId);
 
     // 从验证队列和飞行中列表中移除
-    m_validationQueue.removeAll(removedId);
-    m_inFlightComponentIds.remove(removedId);
+    m_validationQueue.remove(removedId);
 
     // 检查是否正在获取中（锁外操作，因为 m_pendingValidationCount 有自己的逻辑）
     if (item->isFetching()) {
@@ -515,7 +516,7 @@ void ComponentListViewModel::processNextBatchAdd() {
 
         if (validationCount > 0) {
             if (m_validationStateManager->pendingCount() > 0 || !m_validationQueue.isEmpty() ||
-                !m_inFlightComponentIds.isEmpty()) {
+                m_validationQueue.hasInFlight()) {
                 m_validationStateManager->addValidation(validationCount);
             } else {
                 m_validationStateManager->startValidation(validationCount);
@@ -543,9 +544,7 @@ void ComponentListViewModel::startValidationQueue() {
         if (item->isFetching() && !item->isValid()) {
             QString componentId = item->componentId();
             // 检查是否已经在队列中或正在处理中（飞行中），避免重复添加
-            if (!m_validationQueue.contains(componentId) && !m_inFlightComponentIds.contains(componentId)) {
-                m_validationQueue.append(componentId);
-            }
+            m_validationQueue.enqueue(componentId);
         }
     }
 
@@ -557,14 +556,13 @@ void ComponentListViewModel::startValidationQueue() {
     // 如果 m_validationTotalCount 为 0，说明是首次启动，设置总数
     // 否则说明是延续之前的处理，不需要额外设置（已在 pending 中）
     if (m_validationTotalCount == 0) {
-        m_validationTotalCount = m_validationQueue.count();
+        m_validationTotalCount = m_validationQueue.size();
     }
 
     // 启动并发验证 worker（如果当前没有活跃的 worker）
-    int initialCount = qMin(CONCURRENT_WORKERS, m_validationQueue.count());
+    int initialCount = qMin(CONCURRENT_WORKERS, m_validationQueue.size());
     for (int i = 0; i < initialCount; ++i) {
-        QString componentId = m_validationQueue.takeFirst();
-        m_inFlightComponentIds.insert(componentId);  // 标记为飞行中
+        const QString componentId = m_validationQueue.takeNext();
         m_service->fetchComponentData(componentId, false);
         m_validationPendingCount++;
     }
@@ -576,8 +574,7 @@ void ComponentListViewModel::processNextValidation() {
         return;
     }
 
-    QString componentId = m_validationQueue.takeFirst();
-    m_inFlightComponentIds.insert(componentId);  // 标记为飞行中
+    const QString componentId = m_validationQueue.takeNext();
     m_service->fetchComponentData(componentId, false);
     m_validationPendingCount++;
 }
@@ -585,7 +582,7 @@ void ComponentListViewModel::processNextValidation() {
 /** @brief 处理单个元件验证完成并推进验证队列。 */
 void ComponentListViewModel::onValidationComplete(const QString& componentId) {
     m_validationCompletedCount++;
-    m_inFlightComponentIds.remove(componentId);  // 从飞行中移除
+    m_validationQueue.complete(componentId);
 
     if (m_validationPendingCount > 0) {
         m_validationPendingCount--;
