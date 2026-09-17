@@ -11,6 +11,7 @@
 #include "ComponentCacheMetadataWriter.h"
 #include "ComponentCacheWritePolicy.h"
 #include "ConfigService.h"
+#include "Model3DCacheFileStore.h"
 #include "core/kicad/Exporter3DModel.h"
 #include "core/network/NetworkClient.h"
 #include "core/utils/UrlUtils.h"
@@ -51,8 +52,11 @@ bool hasValidCadDataFile(const QString& path) {
 
 std::unique_ptr<ComponentCacheService> ComponentCacheService::s_instance;
 
+/** @brief 初始化默认容量、缓存目录和缓存生命周期计时器。 */
 ComponentCacheService::ComponentCacheService(QObject* parent) /* 初始化默认容量和缓存目录。 */
+    // 初始化 Qt 对象和 L1 缓存容量。
     : QObject(parent), m_diskCacheLimitMB(ConfigService::DEFAULT_DISK_CACHE_LIMIT_MB), m_memoryCache(50 * 1024 * 1024) {
+    // 启动磁盘配额检查的冷却计时器，避免频繁写入时重复扫描缓存目录。
     m_lastEnforceTimer.start();
     setCacheDir(ConfigService::defaultCacheDir());
 }
@@ -860,16 +864,7 @@ bool ComponentCacheService::hasModel3DCached(const QString& uuid, const QString&
     QMutexLocker diskLocker(&m_diskWriteMutex);
     QMutexLocker locker(&m_mutex);
     const QString path = model3DPath(uuid, extension);
-    QFile file(path);
-    if (!file.open(QIODevice::ReadOnly))
-        return false;
-    const QByteArray data = file.readAll();
-    file.close();
-    if (!CacheDataValidator::isUsableModel3D(data, extension)) {
-        QFile::remove(path);
-        return false;
-    }
-    return true;
+    return !Model3DCacheFileStore::read(path, extension).isEmpty();
 }
 
 // 从公共三维模型缓存读取指定格式的数据。
@@ -883,18 +878,7 @@ QByteArray ComponentCacheService::loadModel3D(const QString& uuid, const QString
         return QByteArray();
     }
 
-    QFile file(path);
-    if (file.open(QIODevice::ReadOnly)) {
-        QByteArray data = file.readAll();
-        file.close();
-        if (!CacheDataValidator::isUsableModel3D(data, extension)) {
-            QFile::remove(path);
-            return QByteArray();
-        }
-        return data;
-    }
-
-    return QByteArray();
+    return Model3DCacheFileStore::read(path, extension);
 }
 
 void ComponentCacheService::saveModel3D(const QString& uuid,
@@ -919,7 +903,7 @@ void ComponentCacheService::saveModel3D(const QString& uuid,
         }
     }
 
-    if (CacheMetadataStore::writeAtomically(path, data)) {
+    if (Model3DCacheFileStore::write(path, data, extension)) {
         LOG_DEBUG(LogModule::Core, "Saved 3D model to disk: {}", path);
         enforceDiskCacheLimit();
     } else {
@@ -938,45 +922,16 @@ bool ComponentCacheService::copyModel3DToFile(const QString& uuid,
     // 保证源文件在复制期间不会被缓存目录迁移或写入操作替换。
     QMutexLocker diskLocker(&m_diskWriteMutex);
     QString sourcePath = model3DPath(uuid, extension);
-    const QFileInfo sourceInfo(sourcePath);
-    if (!sourceInfo.exists() || !sourceInfo.isFile() || sourceInfo.size() <= 0) {
+    if (sourcePath.isEmpty()) {
         LOG_WARN(LogModule::Core, "copyModel3DToFile: Source file does not exist: {}", sourcePath);
         return false;
     }
-    QFile sourceFile(sourcePath);
-    if (!sourceFile.open(QIODevice::ReadOnly)) {
-        return false;
-    }
-    const QByteArray sourceData = sourceFile.readAll();
-    sourceFile.close();
-    if (!CacheDataValidator::isUsableModel3D(sourceData, extension)) {
-        QFile::remove(sourcePath);
-        return false;
-    }
-
-    // 确保目标目录存在
-    QFileInfo destInfo(destinationPath);
-    QDir destDir = destInfo.dir();
-    if (!destDir.exists()) {
-        if (!destDir.mkpath(destDir.path())) {
-            LOG_WARN(LogModule::Core, "copyModel3DToFile: Failed to create destination directory: {}", destDir.path());
-            return false;
-        }
-    }
-
-    // 直接拷贝文件，不经过内存
-    if (QFile::exists(destinationPath)) {
-        QFile::remove(destinationPath);
-    }
-
-    if (QFile::copy(sourcePath, destinationPath) && QFileInfo(destinationPath).size() > 0) {
+    if (Model3DCacheFileStore::copy(sourcePath, destinationPath, extension)) {
         LOG_DEBUG(LogModule::Core, "Copied 3D model from cache to: {}", destinationPath);
         return true;
-    } else {
-        QFile::remove(destinationPath);
-        LOG_WARN(LogModule::Core, "copyModel3DToFile: Failed to copy {} -> {}", sourcePath, destinationPath);
-        return false;
     }
+    LOG_WARN(LogModule::Core, "copyModel3DToFile: Failed to copy {} -> {}", sourcePath, destinationPath);
+    return false;
 }
 
 // ==================== 缓存管理 ====================

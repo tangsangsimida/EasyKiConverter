@@ -42,6 +42,8 @@ add_library(EasyKiConverterServices STATIC
     PreviewImageExporter.cpp
     PreviewImageDataEncoder.cpp
     PreviewImageDataEncoder.h
+    Model3DCacheFileStore.cpp
+    Model3DCacheFileStore.h
     DatasheetExporter.cpp
 )
 
