@@ -1,5 +1,6 @@
 #include "services/CacheRepository.h"
 #include "services/ComponentCacheService.h"
+#include "services/ComponentCacheWritePolicy.h"
 #include "services/LcscImageService.h"
 
 #include <QAtomicInt>
@@ -83,6 +84,21 @@ private slots:
         m_cache->savePreviewImage(componentId, QByteArrayLiteral("<html>403</html>"), 0);
         QVERIFY(m_cache->loadPreviewImage(componentId, 0).isEmpty());
         QVERIFY(!QFileInfo::exists(m_cache->previewImagePath(componentId, 0)));
+    }
+
+    // 验证缓存写入策略同时拒绝过期代次和 tombstone 请求。
+    void testCacheWritePolicyRejectsStaleRequests() {
+        CacheTombstoneRegistry tombstones;
+        const QString componentId = QStringLiteral("C13579");
+
+        QVERIFY(ComponentCacheWritePolicy::isAllowed(7, 0, tombstones, componentId));
+        QVERIFY(ComponentCacheWritePolicy::isAllowed(7, 7, tombstones, componentId));
+        QVERIFY(!ComponentCacheWritePolicy::isAllowed(8, 7, tombstones, componentId));
+
+        tombstones.blockComponent(componentId);
+        QVERIFY(!ComponentCacheWritePolicy::isAllowed(7, 7, tombstones, componentId));
+        tombstones.clearComponent(componentId);
+        QVERIFY(ComponentCacheWritePolicy::isAllowed(7, 7, tombstones, componentId));
     }
 
     // 验证图片服务不会把损坏的缓存文件报告为可用预览图。

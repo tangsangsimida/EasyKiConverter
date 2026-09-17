@@ -8,6 +8,7 @@
 #include "CacheMetadataStore.h"
 #include "CachePruner.h"
 #include "ComponentCacheBinaryFileStore.h"
+#include "ComponentCacheWritePolicy.h"
 #include "ConfigService.h"
 #include "core/kicad/Exporter3DModel.h"
 #include "core/network/NetworkClient.h"
@@ -374,13 +375,8 @@ void ComponentCacheService::saveSymbolData(const QString& lcscId, const QByteArr
     }
 
     QMutexLocker diskLocker(&m_diskWriteMutex);
-    if (expectedGeneration != 0) {
-        if (m_cacheGeneration.load() != expectedGeneration) {
-            return;
-        }
-        if (isTombstoned(lcscId)) {
-            return;
-        }
+    if (!ComponentCacheWritePolicy::isAllowed(m_cacheGeneration.load(), expectedGeneration, m_tombstones, lcscId)) {
+        return;
     }
     QString symbolPath;
     {
@@ -426,13 +422,8 @@ void ComponentCacheService::saveFootprintData(const QString& lcscId,
     }
 
     QMutexLocker diskLocker(&m_diskWriteMutex);
-    if (expectedGeneration != 0) {
-        if (m_cacheGeneration.load() != expectedGeneration) {
-            return;
-        }
-        if (isTombstoned(lcscId)) {
-            return;
-        }
+    if (!ComponentCacheWritePolicy::isAllowed(m_cacheGeneration.load(), expectedGeneration, m_tombstones, lcscId)) {
+        return;
     }
     QString footprintPath;
     {
@@ -478,13 +469,8 @@ void ComponentCacheService::saveCadDataJson(const QString& lcscId,
     }
 
     QMutexLocker diskLocker(&m_diskWriteMutex);
-    if (expectedGeneration != 0) {
-        if (m_cacheGeneration.load() != expectedGeneration) {
-            return;
-        }
-        if (isTombstoned(lcscId)) {
-            return;
-        }
+    if (!ComponentCacheWritePolicy::isAllowed(m_cacheGeneration.load(), expectedGeneration, m_tombstones, lcscId)) {
+        return;
     }
     QString cadDataPath;
     {
@@ -573,13 +559,8 @@ void ComponentCacheService::savePreviewImage(const QString& lcscId,
     }
 
     QMutexLocker diskLocker(&m_diskWriteMutex);
-    if (expectedGeneration != 0) {
-        if (m_cacheGeneration.load() != expectedGeneration) {
-            return;
-        }
-        if (isTombstoned(lcscId)) {
-            return;
-        }
+    if (!ComponentCacheWritePolicy::isAllowed(m_cacheGeneration.load(), expectedGeneration, m_tombstones, lcscId)) {
+        return;
     }
     QString previewPath;
     {
