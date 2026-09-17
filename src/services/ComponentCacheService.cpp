@@ -9,6 +9,7 @@
 #include "CachePruner.h"
 #include "ComponentCacheBinaryFileStore.h"
 #include "ComponentCacheCadDataWriter.h"
+#include "ComponentCacheMaintenance.h"
 #include "ComponentCacheMetadataWriter.h"
 #include "ComponentCachePreviewImageWriter.h"
 #include "ComponentCacheQuotaEnforcer.h"
@@ -33,7 +34,6 @@
 #include <QJsonObject>
 #include <QRegularExpression>
 #include <QSaveFile>
-#include <QSet>
 #include <QUrl>
 #include <QtConcurrent>
 
@@ -789,47 +789,8 @@ bool ComponentCacheService::copyModel3DToFile(const QString& uuid,
 // ==================== 缓存管理 ====================
 
 void ComponentCacheService::removeCache(const QString& lcscId) {
-    const QString normalizedId = lcscId.toUpper();
-    if (!BomParser::validateId(normalizedId)) {
-        qWarning() << "removeCache: invalid lcscId, ignoring:" << lcscId;
-        return;
-    }
-
-    // 递增代次，使删除前排队的异步写入即使在解除 tombstone 后也无法恢复旧数据。
-    m_cacheGeneration.fetch_add(1);
-    {
-        // 锁顺序：先 disk，后 tombstone（与其他方法一致）
-        QMutexLocker diskLocker(&m_diskWriteMutex);
-        // 标记为 tombstone，阻止旧回调写回
-        { m_tombstones.blockComponent(normalizedId); }
-        // 先删除L2磁盘缓存
-        const QString dirPath = componentCacheDir(normalizedId);
-        if (dirPath.isEmpty()) {
-            return;
-        }
-        {
-            QDir dir(dirPath);
-            if (dir.exists()) {
-                dir.removeRecursively();
-                LOG_DEBUG(LogModule::Core, "Removed disk cache for: {}", normalizedId);
-            }
-        }
-    }
-
-    // 再删除L1内存缓存（需要锁）
-    qint64 sizeAfterUpdate = 0;
-    {
-        QMutexLocker locker(&m_mutex);
-
-        QString metadataKey = makeMemoryKey(lcscId, "metadata");
-        QString symbolKey = makeMemoryKey(lcscId, "symbol");
-        QString footprintKey = makeMemoryKey(lcscId, "footprint");
-
-        sizeAfterUpdate = m_memoryCache.remove({metadataKey, symbolKey, footprintKey});
-    }
-    // 锁外发送信号
-    emit memoryCacheSizeChanged(sizeAfterUpdate);
-    emit cacheSizeChanged(getCacheSize());
+    ComponentCacheMaintenance maintenance(*this);
+    maintenance.remove(lcscId);
 }
 
 // 清除指定元器件的旧请求屏蔽标记。
@@ -849,90 +810,24 @@ bool ComponentCacheService::isTombstoned(const QString& lcscId) const {
 
 // 清空一级和二级缓存，并使旧异步写入失效。
 void ComponentCacheService::clearAllCache() {
-    // 递增代次，使所有正在排队的异步写入任务失效
-    m_cacheGeneration.fetch_add(1);
-    {
-        // 锁顺序：先 disk，后 tombstone（与 save 方法一致，避免死锁）
-        QMutexLocker diskLocker(&m_diskWriteMutex);
-        // 全局 tombstone：阻止所有旧回调写入
-        m_tombstones.blockAll();
-        // 先清空L2磁盘缓存（不需要锁），同时删除根目录下的遗留文件。
-        {
-            QDir dir(cacheDir());
-            if (dir.exists()) {
-                const QFileInfoList entries = dir.entryInfoList(QDir::NoDotAndDotDot | QDir::AllEntries);
-                for (const QFileInfo& entry : entries) {
-                    if (entry.isDir()) {
-                        QDir(entry.absoluteFilePath()).removeRecursively();
-                    } else {
-                        QFile::remove(entry.absoluteFilePath());
-                    }
-                }
-                LOG_DEBUG(LogModule::Core, "Cleared all disk cache");
-            }
-        }
-    }
-
-    // 再清空L1内存缓存（不重置 tombstone）
-    clearMemoryCacheInternal();
-
-    emit memoryCacheSizeChanged(0);
-    emit cacheSizeChanged(0);
-}
-
-// 清空一级内存缓存的内部实现。
-void ComponentCacheService::clearMemoryCacheInternal() {
-    m_memoryCache.clear();
+    ComponentCacheMaintenance maintenance(*this);
+    maintenance.clearAll();
 }
 
 // 清空一级内存缓存并使清理前创建的异步写入失效。
 void ComponentCacheService::clearMemoryCache() {
-    // 内存缓存清理也会影响正在运行的请求，必须递增代次隔离旧回调。
-    m_cacheGeneration.fetch_add(1);
-    m_tombstones.reset();
-    clearMemoryCacheInternal();
-    LOG_DEBUG(LogModule::Core, "Cleared memory cache");
-    emit memoryCacheSizeChanged(0);
+    ComponentCacheMaintenance maintenance(*this);
+    maintenance.clearMemory();
 }
 
 // 枚举当前缓存目录中具有有效元数据的元器件编号。
 QStringList ComponentCacheService::getCachedComponentIds() const {
-    // 目录枚举和元数据检查必须与目录迁移串行化。
-    QMutexLocker diskLocker(&m_diskWriteMutex);
-
-    QStringList result;
-    QSet<QString> seenIds;
-    QDir dir(cacheDir());
-    if (!dir.exists()) {
-        return result;
-    }
-
-    for (const QString& entry : dir.entryList(QDir::Dirs)) {
-        if (entry != "." && entry != ".." && entry != "model3d") {
-            // 解析元数据并校验三维字段，避免仅凭文件存在把损坏目录列为有效缓存。
-            const QString normalizedId = entry.toUpper();
-            const QJsonObject metadata = CacheMetadataStore::read(metadataPath(entry));
-            const QJsonValue metadataId = metadata.value(QStringLiteral("lcscId"));
-            const bool matchesEntry =
-                !metadata.contains(QStringLiteral("lcscId")) ||
-                (metadataId.isString() &&
-                 (metadataId.toString().isEmpty() || metadataId.toString().compare(entry, Qt::CaseInsensitive) == 0));
-            if (!metadata.isEmpty() && matchesEntry && CacheMetadataStore::hasValidModel3D(metadata) &&
-                !seenIds.contains(normalizedId)) {
-                result.append(normalizedId);
-                seenIds.insert(normalizedId);
-            }
-        }
-    }
-
-    return result;
+    return ComponentCacheMaintenance::cachedComponentIds(*this);
 }
 
 // 统计当前缓存目录的磁盘占用大小。
 qint64 ComponentCacheService::getCacheSize() const {
-    // 目录大小统计必须与目录迁移串行化，避免返回混合目录的大小。
-    QMutexLocker diskLocker(&m_diskWriteMutex);
-    return calculateDirSize(cacheDir());
+    return ComponentCacheMaintenance::cacheSize(*this);
 }
 
 // 返回一级内存缓存的当前占用大小。

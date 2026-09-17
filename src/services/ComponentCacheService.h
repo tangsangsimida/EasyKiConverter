@@ -24,6 +24,7 @@ class CacheHealthManager;
 class ComponentCacheMetadataWriter;
 class ComponentCacheCadDataWriter;
 class DatasheetCacheFileStore;
+class ComponentCacheMaintenance;
 
 namespace EasyKiConverter {
 
@@ -425,11 +426,6 @@ public:
     void clearMemoryCache();
 
     /**
-     * @brief 清空L1内存缓存（不重置 tombstone，供 clearAllCache 内部使用）
-     */
-    void clearMemoryCacheInternal();
-
-    /**
      * @brief 获取所有缓存的元器件ID列表
      * @return QStringList 元器件ID列表
      */
@@ -502,6 +498,7 @@ private:
     friend class ComponentCachePreviewImageWriter;
     friend class ComponentCacheQuotaEnforcer;
     friend class DatasheetCacheFileStore;
+    friend class ComponentCacheMaintenance;
 
     /**
      * @brief 私有构造函数（单例模式）

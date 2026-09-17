@@ -52,6 +52,8 @@ add_library(EasyKiConverterServices STATIC
     Model3DCacheFileStore.h
     DatasheetCacheFileStore.cpp
     DatasheetCacheFileStore.h
+    ComponentCacheMaintenance.cpp
+    ComponentCacheMaintenance.h
     DatasheetExporter.cpp
 )
 
