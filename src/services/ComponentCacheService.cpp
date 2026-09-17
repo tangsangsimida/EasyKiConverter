@@ -1,5 +1,6 @@
 #include "ComponentCacheService.h"
 
+#include "CacheComponentDataReader.h"
 #include "CacheDataValidator.h"
 #include "CacheDirectoryMigrator.h"
 #include "CacheFileLayout.h"
@@ -295,50 +296,9 @@ QSharedPointer<ComponentData> ComponentCacheService::loadComponentData(const QSt
         return nullptr;
     }
 
-    auto componentData = QSharedPointer<ComponentData>::create();
-
-    // 基本信息
-    componentData->setLcscId(lcscId);
-    componentData->setName(metadata.value("name").toString());
-    componentData->setPrefix(metadata.value("prefix").toString());
-    componentData->setPackage(metadata.value("package").toString());
-    componentData->setManufacturer(metadata.value("manufacturer").toString());
-    componentData->setManufacturerPart(metadata.value("manufacturerPart").toString());
-    componentData->setDatasheet(metadata.value("datasheet").toString());
-    componentData->setDatasheetFormat(metadata.value("datasheetFormat").toString());
-
-    // 预览图URL列表
-    QJsonArray previewUrls = metadata.value("previewImages").toArray();
-    QStringList urlList;
-    for (const QJsonValue& val : previewUrls) {
-        const QString normalizedUrl = UrlUtils::normalizePreviewImageUrl(val.toString());
-        if (!normalizedUrl.isEmpty()) {
-            urlList.append(normalizedUrl);
-        }
-    }
-    componentData->setPreviewImages(urlList);
-
-    // 注意：预览图数据不再加载到 ComponentData，只保留 URL
-    // 预览图文件通过 loadPreviewImage 直接读取
-
-    // 3D模型UUID
-    if (metadata.contains("model3duuid")) {
-        auto model3DData = QSharedPointer<Model3DData>::create();
-        model3DData->setUuid(metadata.value("model3duuid").toString());
-        model3DData->setName(metadata.value("model3dName").toString());
-        if (metadata.contains("model3dTranslation") && metadata.value("model3dTranslation").isObject()) {
-            Model3DBase translation;
-            if (!translation.fromJson(metadata.value("model3dTranslation").toObject()))
-                return nullptr;
-            model3DData->setTranslation(translation);
-        }
-        if (metadata.contains("model3dRotation") && metadata.value("model3dRotation").isObject()) {
-            Model3DBase rotation;
-            if (!rotation.fromJson(metadata.value("model3dRotation").toObject()))
-                return nullptr;
-            model3DData->setRotation(rotation);
-        }
-        componentData->setModel3DData(model3DData);
+    auto componentData = CacheComponentDataReader::read(lcscId, metadata);
+    if (!componentData) {
+        return nullptr;
     }
 
     LOG_DEBUG(LogModule::Core, "Loaded component data from disk cache: {}", lcscId);
