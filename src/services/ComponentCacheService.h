@@ -498,6 +498,7 @@ signals:
 private:
     friend class ComponentCacheCadDataWriter;
     friend class ComponentCacheMetadataWriter;
+    friend class ComponentCachePreviewImageWriter;
 
     /**
      * @brief 私有构造函数（单例模式）

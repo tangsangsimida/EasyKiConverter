@@ -10,6 +10,7 @@
 #include "ComponentCacheBinaryFileStore.h"
 #include "ComponentCacheCadDataWriter.h"
 #include "ComponentCacheMetadataWriter.h"
+#include "ComponentCachePreviewImageWriter.h"
 #include "ComponentCacheWritePolicy.h"
 #include "ConfigService.h"
 #include "Model3DCacheFileStore.h"
@@ -466,30 +467,8 @@ void ComponentCacheService::savePreviewImage(const QString& lcscId,
                                              const QByteArray& imageData,
                                              int imageIndex,
                                              uint64_t expectedGeneration) {
-    if (imageIndex < 0 || imageIndex >= 3 || !CacheDataValidator::isValidPreviewImage(imageData)) {
-        return;
-    }
-
-    QMutexLocker diskLocker(&m_diskWriteMutex);
-    if (!ComponentCacheWritePolicy::isAllowed(m_cacheGeneration.load(), expectedGeneration, m_tombstones, lcscId)) {
-        return;
-    }
-    QString previewPath;
-    {
-        QMutexLocker locker(&m_mutex);
-        if (ensureComponentDir(lcscId).isEmpty()) {
-            return;
-        }
-        previewPath = previewImagePath(lcscId, imageIndex);
-    }
-
-    if (CacheMetadataStore::writeAtomically(previewPath, imageData)) {
-        LOG_DEBUG(LogModule::Core, "Saved preview image to disk: {}", previewPath);
-        enforceDiskCacheLimit();
-    } else {
-        LOG_WARN(LogModule::Core, "Failed to write preview image: {}", previewPath);
-    }
-    // 注意：预览图不存入L1内存缓存，因为数据量大
+    ComponentCachePreviewImageWriter imageWriter(*this);
+    imageWriter.write(lcscId, imageData, imageIndex, expectedGeneration);
 }
 
 QByteArray ComponentCacheService::downloadPreviewImage(const QString& lcscId,
