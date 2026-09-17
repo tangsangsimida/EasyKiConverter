@@ -1,5 +1,6 @@
 #include "services/export/TempFileManager.h"
 
+#include <QCoreApplication>
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
@@ -17,11 +18,6 @@ class TestTempFileManager : public QObject {
     Q_OBJECT
 
 private slots:
-
-    // 使用 Qt 测试专用的应用数据目录，避免备份事务污染开发机或 CI 环境。
-    void initTestCase() {
-        QStandardPaths::setTestModeEnabled(true);
-    }
 
     // 验证符号临时文件提交后会移动到目标位置并注销临时文件。
     void symbolTempFileCommitMovesFileAndUnregistersIt() {
@@ -306,5 +302,12 @@ private:
     }
 };
 
-QTEST_GUILESS_MAIN(TestTempFileManager)
+// 在创建 QCoreApplication 前启用测试路径，避免 Windows 测试读取真实用户数据目录。
+int main(int argc, char* argv[]) {
+    QStandardPaths::setTestModeEnabled(true);
+    QCoreApplication app(argc, argv);
+    TestTempFileManager testObject;
+    return QTest::qExec(&testObject, argc, argv);
+}
+
 #include "test_temp_file_manager.moc"
