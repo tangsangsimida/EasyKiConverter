@@ -48,15 +48,7 @@ ComponentService::ComponentService(QObject* parent)
             m_api->setWeakNetworkSupport(ConfigService::instance()->getWeakNetworkSupport());
         }
         m_imageService = new LcscImageService(this);
-
-        m_queueManager = new ComponentQueueManager(m_maxConcurrentRequests, this);
-        connect(m_queueManager, &ComponentQueueManager::requestReady, this, [this](const QString& componentId) {
-            fetchComponentDataInternal(componentId, m_batchFetch3DModel);
-        });
-        connect(m_queueManager, &ComponentQueueManager::queueEmpty, this, [this]() {
-            qDebug() << "ComponentService: Queue empty signal received";
-        });
-        connect(m_queueManager, &ComponentQueueManager::timeout, this, [this]() { handleQueueTimeout(); });
+        initializeQueueManager();
     } catch (const std::bad_alloc& e) {
         qCritical() << "ComponentService: Memory allocation failed:" << e.what();
         std::terminate();
@@ -84,7 +76,14 @@ ComponentService::ComponentService(EasyedaApi* api, QObject* parent)
     }
 
     m_imageService = new LcscImageService(this);
+    initializeQueueManager();
 
+    initializeApiConnections();
+    qDebug() << "ComponentService (Injected API): Initialized successfully.";
+}
+
+/** @brief 创建队列管理器并连接请求、空队列和超时信号。 */
+void ComponentService::initializeQueueManager() {
     m_queueManager = new ComponentQueueManager(m_maxConcurrentRequests, this);
     connect(m_queueManager, &ComponentQueueManager::requestReady, this, [this](const QString& componentId) {
         fetchComponentDataInternal(componentId, m_batchFetch3DModel);
@@ -93,9 +92,6 @@ ComponentService::ComponentService(EasyedaApi* api, QObject* parent)
         qDebug() << "ComponentService: Queue empty signal received";
     });
     connect(m_queueManager, &ComponentQueueManager::timeout, this, [this]() { handleQueueTimeout(); });
-
-    initializeApiConnections();
-    qDebug() << "ComponentService (Injected API): Initialized successfully.";
 }
 
 /** @brief 连接网络服务与组件服务的异步信号。 */

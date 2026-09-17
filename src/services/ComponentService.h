@@ -355,6 +355,13 @@ private slots:
 
 private:
     /**
+     * @brief 创建并配置异步元件请求队列。
+     *
+     * 两种构造方式共享同一套队列信号连接，集中初始化可避免行为漂移。
+     */
+    void initializeQueueManager();
+
+    /**
      * @brief 初始化API连接
      */
     void initializeApiConnections();
