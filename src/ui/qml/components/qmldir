@@ -11,6 +11,7 @@ ComponentInputCard 1.0 ComponentInputCard.qml
 BomImportCard 1.0 BomImportCard.qml
 ComponentListCard 1.0 ComponentListCard.qml
 ComponentToolbar 1.0 ComponentToolbar.qml
+ComponentListView 1.0 ComponentListView.qml
 ComponentPreviewPopup 1.0 ComponentPreviewPopup.qml
 ExportSettingsCard 1.0 ExportSettingsCard.qml
 ExportSettingsBaseCard 1.0 ExportSettingsBaseCard.qml

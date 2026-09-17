@@ -32,7 +32,7 @@ Card {
         Timer {
             id: filterUpdateDebounceTimer
             interval: 120
-            onTriggered: visualModel.updateFilter()
+            onTriggered: componentListView.updateFilter()
         },
         Timer {
             id: previewPrefetchTimer
@@ -112,98 +112,6 @@ Card {
             function onIsExportingChanged() {
                 if (componentListCard.exportProgressController && componentListCard.exportProgressController.isExporting && componentListCard.componentListController) {
                     componentListCard.componentListController.dismissAttentionHints();
-                }
-            }
-        },
-        // 搜索过滤模型 (作为资源定义，不参与布局)
-        DelegateModel {
-            id: visualModel
-            model: componentListCard.componentListController ?? null
-            groups: [
-                DelegateModelGroup {
-                    id: displayGroup
-                    includeByDefault: true
-                    name: "display"
-                },
-                DelegateModelGroup {
-                    id: filterGroup
-                    name: "filter"
-                }
-            ]
-            filterOnGroup: "display"
-            delegate: Item {
-                width: componentList.cellWidth
-                height: componentList.cellHeight
-                // 别名：供 requestVisiblePreviewImages 通过 itemAtIndex 访问
-                property alias itemData: delegateItem.itemData
-                ComponentListItem {
-                    id: delegateItem
-                    width: parent.width - AppStyle.spacing.md
-                    height: parent.height - AppStyle.spacing.md
-                    anchors.centerIn: parent
-                    // 绑定数据和搜索词
-                    // 注意：QAbstractListModel 暴露的角色名为 "itemData"
-                    itemData: model.itemData
-                    searchText: componentToolbar.searchText // 传递搜索词用于高亮
-                    // 绑定导出状态（由 ComponentListCard 维护的查找表）
-                    exportStatus: {
-                        var id = itemData ? itemData.componentId : "";
-                        return id && componentListCard.exportStatusMap[id] ? componentListCard.exportStatusMap[id] : null;
-                    }
-                    onDeleteClicked: {
-                        if (itemData) {
-                            componentListCard.componentListController.removeComponentById(itemData.componentId);
-                        }
-                    }
-                    onRetryClicked: {
-                        if (itemData) {
-                            componentListCard.componentListController.refreshComponentInfo(index);
-                        }
-                    }
-                    // 打开元件描述编辑对话框并记录当前元件。
-                    onDescriptionEditRequested: function (componentId, description) {
-                        componentListCard.editingDescriptionComponentId = componentId;
-                        descriptionDialog.descriptionText = description;
-                        descriptionDialog.open();
-                    }
-                }
-            }
-
-            // 过滤函数
-            // 根据筛选模式和搜索文本更新委托的显示状态。
-            function updateFilter() {
-                // 移除所有空格，实现更宽容的搜索 (例如 "C 2040" -> "c2040")
-                var searchTerm = componentToolbar.searchText.toLowerCase().replace(/\s+/g, '');
-                var filterMode = componentListCard.componentListController ? componentListCard.componentListController.filterMode : "all";
-                // 遍历所有项进行处理
-                for (var i = 0; i < items.count; i++) {
-                    var item = items.get(i);
-                    // 获取数据对象
-                    var dataObj = item.model.itemData;
-                    var idStr = dataObj && dataObj.componentId !== undefined ? dataObj.componentId : "";
-                    var validationPhase = dataObj && dataObj.validationPhase !== undefined ? dataObj.validationPhase : "idle";
-                    // 验证状态筛选（使用 validationPhase）
-                    var passFilter = false;
-                    if (filterMode === "all") {
-                        passFilter = true;
-                    } else if (filterMode === "validating") {
-                        // 验证中：仅表示 CAD 验证尚未完成
-                        passFilter = (validationPhase === "validating");
-                    } else if (filterMode === "valid") {
-                        // 有效：验证已完成或正在获取预览图的项目都属于"有效"
-                        passFilter = (validationPhase === "completed" || validationPhase === "fetching_preview");
-                    } else if (filterMode === "invalid") {
-                        passFilter = (validationPhase === "failed");
-                    }
-
-                    // 搜索词筛选
-                    var passSearch = true;
-                    if (searchTerm !== "" && idStr.toLowerCase().indexOf(searchTerm) === -1) {
-                        passSearch = false;
-                    }
-
-                    // 同时满足筛选和搜索条件才显示
-                    item.inDisplay = passFilter && passSearch;
                 }
             }
         },
@@ -447,73 +355,17 @@ Card {
         _previewPopup.scheduleHide();
     }
 
-    ColumnLayout {
-        width: parent.width
-        // 元件列表视图（自适应网格）
-        GridView {
-            id: componentList
-            Layout.fillWidth: true
-            Layout.preferredHeight: ResponsiveHelper.isShortWindow ? 200 : ResponsiveHelper.responsive(240, 300, 360, 400)
-            Layout.topMargin: AppStyle.spacing.md
-            clip: true
-            // 启用虚拟化，缓存上下各一屏的项
-            cacheBuffer: 500
-            // 启用 Item 回收，减少创建/销毁开销
-            reuseItems: true
-            cellWidth: {
-                var w = width - AppStyle.spacing.md;
-                var minCellW = ResponsiveHelper.responsive(180, 220, 230, 250);
-                var c = Math.max(1, Math.floor(w / minCellW));
-                // 向下取整，确保所有列的总宽度不超过可用宽度。
-                return Math.max(1, Math.floor(w / c));
-            }
-            cellHeight: ResponsiveHelper.isShortWindow ? 60 : 76
-            flow: GridView.FlowLeftToRight
-            layoutDirection: Qt.LeftToRight
-            // 使用 DelegateModel
-            model: visualModel
-            // 监听滚动状态
-            onMovingChanged: {
-                if (componentListCard.componentListController) {
-                    componentListCard.componentListController.setScrolling(moving);
-                }
-            }
-
-            // 请求当前可见区域及缓冲区域内元件的预览图。
-            function requestVisiblePreviewImages() {
-                if (!componentListCard.componentListController) {
-                    return;
-                }
-
-                var ids = [];
-                var top = componentList.contentY;
-                var bottom = top + componentList.height;
-                var prefetchMargin = componentList.cellHeight;
-                for (var i = 0; i < componentList.count; ++i) {
-                    var delegate = componentList.itemAtIndex(i);
-                    if (!delegate || !delegate.itemData || !delegate.itemData.componentId) {
-                        continue;
-                    }
-
-                    var itemTop = delegate.y;
-                    var itemBottom = delegate.y + delegate.height;
-                    if (itemBottom < top - prefetchMargin || itemTop > bottom + prefetchMargin) {
-                        continue;
-                    }
-
-                    if (!delegate.itemData.previewImageCount || delegate.itemData.previewImageCount === 0) {
-                        ids.push(delegate.itemData.componentId);
-                    }
-                }
-
-                if (ids.length > 0) {
-                    componentListCard.componentListController.fetchPreviewImages(ids);
-                }
-            }
-
-            ScrollBar.vertical: ScrollBar {
-                policy: ScrollBar.AsNeeded
-            }
+    ComponentListView {
+        id: componentListView
+        Layout.fillWidth: true
+        componentListController: componentListCard.componentListController
+        exportStatusMap: componentListCard.exportStatusMap
+        searchText: componentToolbar.searchText
+        // 接收列表项的描述编辑请求，并交给宿主对话框处理。
+        onDescriptionEditRequested: function (componentId, description) {
+            componentListCard.editingDescriptionComponentId = componentId;
+            descriptionDialog.descriptionText = description;
+            descriptionDialog.open();
         }
     }
 }
