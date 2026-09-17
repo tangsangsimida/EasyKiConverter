@@ -23,6 +23,8 @@ target_sources(EasyKiConverterAltium
         writers/AltiumSchTextRecordWriter.cpp
         writers/AltiumSchImageRecordWriter.h
         writers/AltiumSchImageRecordWriter.cpp
+        writers/AltiumSchPinRecordWriter.h
+        writers/AltiumSchPinRecordWriter.cpp
         writers/AltiumPcbLibWriter.h
         writers/AltiumPcbLibWriter.cpp
 

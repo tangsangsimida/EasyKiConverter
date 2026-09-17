@@ -3,6 +3,7 @@
 #include "AltiumSchGraphicOrderWriter.h"
 #include "AltiumSchImageRecordWriter.h"
 #include "AltiumSchImageStorageEncoder.h"
+#include "AltiumSchPinRecordWriter.h"
 #include "AltiumSchTextRecordWriter.h"
 #include "utils/AltiumConstants.h"
 #include "utils/AltiumCoord.h"
@@ -1089,68 +1090,8 @@ void AltiumSchLibWriter::writeComponentRecord(AltiumBinaryWriter& writer, const 
  * @brief 写入引脚记录 (RECORD=2, 二进制格式)
  */
 void AltiumSchLibWriter::writePinRecord(AltiumBinaryWriter& writer, const AltiumSchPin& pin) {
-    writer.beginBlock(AltiumConstants::SCH_BLOCK_FLAG_BINARY_PIN);
-
-    writer.writeInt32(2);  // Record type = 2
-    writer.writeUInt8(0);  // Unknown
-    writer.writeInt16(static_cast<int16_t>(normalizeOwnerPartId(pin.ownerPartId, QStringLiteral("引脚"))));
-    // OwnerPartId 为 -1 表示公共 Part Zero。
-    // 当前每个符号只有一个显示模式；与文本图元的 OWNERPARTDISPLAYMODE=1 保持一致。
-    writer.writeUInt8(1);  // OwnerPartDisplayMode
-
-    // Symbol edges / IEEE 装饰。四个字节必须位于描述字符串之前。
-    writer.writeUInt8(pin.symbolInnerEdge);
-    writer.writeUInt8(pin.symbolOuterEdge);
-    writer.writeUInt8(pin.symbolInside);
-    writer.writeUInt8(pin.symbolOutside);
-
-    // Description (空 Pascal 短字符串)
-    writer.writePascalShortString("");
-
-    // FormalType=1 表示普通的有效引脚。值为 0 时，Altium 仍可能绘制
-    // 引脚名称/编号，但不会将该记录作为可连接的 Pin 对象处理。
-    writer.writeUInt8(1);  // FormalType: normal pin
-    writer.writeUInt8(static_cast<uint8_t>(pin.electricalType));  // ElectricalType
-
-    // PinConglomerate 字节
-    uint8_t conglomerate = static_cast<uint8_t>(pin.orientation);  // Bit 0-1: orientation
-    if (pin.isHidden)
-        conglomerate |= 0x04;  // Bit 2: hidden
-    if (pin.showName)
-        conglomerate |= 0x08;  // Bit 3: show name
-    if (pin.showDesignator)
-        conglomerate |= 0x10;  // Bit 4: show designator
-    writer.writeUInt8(conglomerate);
-
-    // PinLength (DXP 整数单位)
-    int16_t lengthDxp = AltiumCoord::toDxpInt(pin.length);
-    writer.writeInt16(lengthDxp);
-
-    // Location (DXP 整数单位)
-    writer.writeInt16(AltiumCoord::toDxpInt(pin.locationX));
-    writer.writeInt16(AltiumCoord::toDxpInt(pin.locationY));
-
-    // Color
-    writer.writeUInt32(pin.color);
-
-    // Name (Pascal 短字符串)
-    writer.writePascalShortString(pin.name);
-
-    // Designator (Pascal 短字符串)
-    writer.writePascalShortString(pin.designator);
-
-    // SwapIdGroup (空 Pascal 短字符串)
-    writer.writePascalShortString("");
-
-    // PartAndSequence (空 Pascal 短字符串)
-    writer.writePascalShortString("");
-
-    // DefaultValue (空 Pascal 短字符串)
-    writer.writePascalShortString("");
-
-    writer.endBlock();
-    // 二进制引脚没有文本形式的 IndexInSheet，但仍占用共享内容记录序号。
-    ++m_nextIndexInSheet;
+    AltiumSchPinRecordWriter pinWriter(*this);
+    pinWriter.write(writer, pin);
 }
 
 /**
