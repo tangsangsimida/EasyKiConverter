@@ -4,6 +4,7 @@
 #include "AltiumSchGraphicOrderWriter.h"
 #include "AltiumSchImageRecordWriter.h"
 #include "AltiumSchImageStorageEncoder.h"
+#include "AltiumSchLibraryHeaderWriter.h"
 #include "AltiumSchPinRecordWriter.h"
 #include "AltiumSchPrimitiveRecordWriter.h"
 #include "AltiumSchTextRecordWriter.h"
@@ -237,11 +238,10 @@ bool AltiumSchLibWriter::write(const QList<AltiumSchComponent>& components,
     }
     const QStringList sectionKeys = AltiumWriterUtils::makeUniqueSectionKeys(names);
 
-    // 写入 FileHeader
-    writeFileHeader(ole, components);
+    AltiumSchLibraryHeaderWriter headerWriter(*this);
+    headerWriter.writeFileHeader(ole, components);
 
-    // 写入 SectionKeys（如果需要）
-    writeSectionKeys(ole, components, sectionKeys);
+    headerWriter.writeSectionKeys(ole, components, sectionKeys);
 
     // 写入每个元件的存储
     for (int i = 0; i < components.size(); ++i) {
@@ -258,105 +258,18 @@ bool AltiumSchLibWriter::write(const QList<AltiumSchComponent>& components,
     return ole.saveToFile(filePath);
 }
 
-/**
- * @brief 写入 FileHeader 流
- */
+/** @brief 兼容旧内部调用入口，并委托文件级头部写入器。 */
 void AltiumSchLibWriter::writeFileHeader(OLECompoundWriter& ole, const QList<AltiumSchComponent>& components) {
-    QMap<QString, QString> params;
-    params["HEADER"] = "Protel for Windows - Schematic Library Editor Binary File Version 5.0";
-    int totalWeight = 0;
-    for (const AltiumSchComponent& component : components) {
-        totalWeight += componentRecordCount(component);
-    }
-    params["WEIGHT"] = QString::number(totalWeight);
-    params["MINORVERSION"] = "2";
-
-    // 生成 8 字符随机 UniqueID
-    QString uid;
-    for (int i = 0; i < 8; ++i) {
-        uid += QChar('A' + QRandomGenerator::global()->bounded(26));
-    }
-    params["UniqueID"] = uid;
-
-    // 字体表
-    const QList<AltiumModels::FontEntry>& fonts = m_fontRegistry.entries();
-    params["FontIdCount"] = QString::number(fonts.size());
-    for (int i = 0; i < fonts.size(); ++i) {
-        int idx = i + 1;
-        params[QString("FontName%1").arg(idx)] = fonts[i].name;
-        params[QString("Size%1").arg(idx)] = QString::number(fonts[i].size);
-        if (fonts[i].bold)
-            params[QString("Bold%1").arg(idx)] = "T";
-        if (fonts[i].italic)
-            params[QString("Italic%1").arg(idx)] = "T";
-        if (fonts[i].underline)
-            params[QString("Underline%1").arg(idx)] = "T";
-    }
-
-    params["UseMBCS"] = "T";
-    params["IsBOC"] = "T";
-    params["SheetStyle"] = "9";
-    params["BorderOn"] = "T";
-    params["Display_Unit"] = "0";
-    params["SYSTEMFONT"] = "1";
-    params["SHEETNUMBERSPACESIZE"] = "12";
-    params["AREACOLOR"] = "16317695";
-    params["SNAPGRIDON"] = "T";
-    params["SNAPGRIDSIZE"] = "10";
-    params["VISIBLEGRIDON"] = "T";
-    params["VISIBLEGRIDSIZE"] = "10";
-    params["COMPCOUNT"] = QString::number(components.size());
-    for (int i = 0; i < components.size(); ++i) {
-        const AltiumSchComponent& component = components[i];
-        params[QString("LIBREF%1").arg(i)] = component.name;
-        params[QString("COMPDESCR%1").arg(i)] = component.description;
-        // 磁盘格式把公共 Part 0 计入总数，IR 的 partCount 只表示用户可见部件。
-        params[QString("PARTCOUNT%1").arg(i)] = QString::number(qMax(1, component.partCount) + 1);
-    }
-
-    // 序列化
-    QByteArray headerData;
-    AltiumBinaryWriter writer(headerData);
-
-    // Header 中的库索引同样允许非 ASCII 名称/描述，统一用 ANSI fallback + %UTF8% 扩展。
-    writer.writeCStringParameterBlockUtf8(params);
-
-    // 写入元件数量
-    writer.writeInt32(static_cast<int32_t>(components.size()));
-
-    // 写入每个元件名称
-    for (const AltiumSchComponent& comp : components) {
-        writer.writeStringBlock(comp.name);
-    }
-
-    ole.writeStream("FileHeader", headerData);
+    AltiumSchLibraryHeaderWriter headerWriter(*this);
+    headerWriter.writeFileHeader(ole, components);
 }
 
-/**
- * @brief 写入 SectionKeys 流
- */
+/** @brief 兼容旧内部调用入口，并委托 SectionKeys 写入器。 */
 void AltiumSchLibWriter::writeSectionKeys(OLECompoundWriter& ole,
                                           const QList<AltiumSchComponent>& components,
                                           const QStringList& sectionKeys) {
-    QMap<QString, QString> params;
-    int keyCount = 0;
-
-    for (int i = 0; i < components.size(); ++i) {
-        const QString& sectionKey = sectionKeys[i];
-        if (sectionKey != components[i].name) {
-            params[QString("LibRef%1").arg(keyCount)] = components[i].name;
-            params[QString("SectionKey%1").arg(keyCount)] = sectionKey;
-            keyCount++;
-        }
-    }
-
-    if (keyCount > 0) {
-        params["KeyCount"] = QString::number(keyCount);
-        QByteArray data;
-        AltiumBinaryWriter writer(data);
-        writer.writeCStringParameterBlockUtf8(params);
-        ole.writeStream("SectionKeys", data);
-    }
+    AltiumSchLibraryHeaderWriter headerWriter(*this);
+    headerWriter.writeSectionKeys(ole, components, sectionKeys);
 }
 
 /**
