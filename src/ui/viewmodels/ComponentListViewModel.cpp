@@ -23,18 +23,25 @@ ComponentListViewModel::ComponentListViewModel(ComponentService* service, QObjec
     /** @brief 创建验证状态管理器，统一维护列表验证进度和完成通知。 */
     m_validationStateManager = new ValidationStateManager(this);
 
-    // 缓存预览图批量更新定时器。
-    // 这里用固定时间窗而不是每次来图都重启，保证预览图可以分批渐进显示。
+    initializeTimers();
+    initializeServiceConnections();
+}
+
+/** @brief 创建批处理、预览和延迟调度所需的定时器。 */
+void ComponentListViewModel::initializeTimers() {
+    // 缓存预览图使用固定时间窗批量更新，保证图片可以渐进显示。
     m_cachePreviewImageTimer = new QTimer(this);
     m_cachePreviewImageTimer->setSingleShot(true);
     m_cachePreviewImageTimer->setInterval(120);
     connect(m_cachePreviewImageTimer, &QTimer::timeout, this, &ComponentListViewModel::processCachePreviewImages);
 
+    // 普通添加模式和 BOM 导入模式共用添加批处理定时器。
     m_batchAddTimer = new QTimer(this);
     m_batchAddTimer->setSingleShot(false);
-    m_batchAddTimer->setInterval(50);  // 普通模式使用 50ms 间隔，BOM 导入模式使用单独的计时器
+    m_batchAddTimer->setInterval(50);
     connect(m_batchAddTimer, &QTimer::timeout, this, &ComponentListViewModel::processNextBatchAdd);
 
+    // 聚合列表项属性通知，避免每个异步基础信息响应都刷新界面。
     m_batchUpdateTimer = new QTimer(this);
     m_batchUpdateTimer->setSingleShot(true);
     m_batchUpdateTimer->setInterval(100);
@@ -47,7 +54,7 @@ ComponentListViewModel::ComponentListViewModel(ComponentService* service, QObjec
         }
     });
 
-    // 列表更新批处理定时器（更短的间隔，减少批量操作时的延迟）
+    // 列表统计更新使用较短批处理窗口，减少批量操作时的界面抖动。
     m_batchListUpdateTimer = new QTimer(this);
     m_batchListUpdateTimer->setSingleShot(true);
     m_batchListUpdateTimer->setInterval(150);
@@ -60,28 +67,29 @@ ComponentListViewModel::ComponentListViewModel(ComponentService* service, QObjec
         emit filteredCountChanged();
     });
 
-    // BOM 导入模式定时器（降低 UI 更新频率）
+    // BOM 导入模式使用更长的窗口，集中处理累积的验证完成通知。
     m_bomImportUpdateTimer = new QTimer(this);
     m_bomImportUpdateTimer->setSingleShot(true);
     m_bomImportUpdateTimer->setInterval(300);
     connect(m_bomImportUpdateTimer, &QTimer::timeout, this, [this]() {
-        // BOM 导入模式结束，恢复正常更新
         m_bomImportMode = false;
         m_listUpdatePending = false;
-        // 处理累积的验证完成计数
         if (m_bomImportPendingUpdates > 0) {
             m_bomImportPendingUpdates = 0;
             scheduleListUpdate();
         }
     });
 
-    // 延迟获取预览图定时器（给验证留出时间完成）
+    // 延迟获取预览图，给验证完成信号和列表状态更新留出时间。
     m_delayedFetchPreviewTimer = new QTimer(this);
     m_delayedFetchPreviewTimer->setSingleShot(true);
-    m_delayedFetchPreviewTimer->setInterval(100);  // 100ms 延迟
+    m_delayedFetchPreviewTimer->setInterval(100);
     connect(m_delayedFetchPreviewTimer, &QTimer::timeout, this, &ComponentListViewModel::delayedFetchPreviewImages);
+}
 
-    // 监听验证完成信号，等待所有元器件验证完成后才开始获取预览图
+/** @brief 连接验证完成、组件数据和预览图相关的异步服务信号。 */
+void ComponentListViewModel::initializeServiceConnections() {
+    // 所有元件验证完成后再请求预览图，避免验证和媒体请求同时争抢资源。
     connect(m_validationStateManager,
             &ValidationStateManager::validationCompleted,
             this,
@@ -125,15 +133,11 @@ ComponentListViewModel::ComponentListViewModel(ComponentService* service, QObjec
             &ComponentService::previewImageFailed,
             this,
             [this](const QString& componentId, const QString& error) {
-                // 预览图获取失败不影响验证状态，只记录日志
-                // 元件仍然保持验证成功状态，避免误导用户
+                // 预览图获取失败不影响验证状态，只记录日志并结束预览请求状态。
                 auto item = findItemData(componentId);
-                if (item && item->isValid()) {
-                    // 预览图失败也应该标记为 completed（不影响验证）
-                    if (item->validationPhase() == "fetching_preview") {
-                        item->setValidationPhase("completed");
-                        scheduleListUpdate();
-                    }
+                if (item && item->isValid() && item->validationPhase() == "fetching_preview") {
+                    item->setValidationPhase("completed");
+                    scheduleListUpdate();
                 }
                 markPreviewFetchCompleted(componentId);
             });
@@ -141,7 +145,7 @@ ComponentListViewModel::ComponentListViewModel(ComponentService* service, QObjec
             &ComponentService::previewImagesReady,
             this,
             [this](const QString& componentId, const QStringList& encodedImages) {
-                // 收集到待处理列表，使用防抖避免频繁 UI 更新
+                // 收集到待处理列表，使用防抖避免频繁 UI 更新。
                 m_previewUpdateBuffer.addComplete(componentId, encodedImages);
                 if (!m_cachePreviewImageTimer->isActive()) {
                     m_cachePreviewImageTimer->start();

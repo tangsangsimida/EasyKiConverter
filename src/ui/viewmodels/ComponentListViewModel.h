@@ -154,6 +154,16 @@ private slots:
     void handleDatasheetReady(const QString& componentId, const QByteArray& datasheetData);
 
 private:
+    /**
+     * @brief 创建批处理、预览和延迟调度所需的定时器。
+     */
+    void initializeTimers();
+
+    /**
+     * @brief 连接验证服务和组件服务的异步信号。
+     */
+    void initializeServiceConnections();
+
     bool componentExists(const QString& componentId) const;
     bool validateComponentId(const QString& componentId) const;
     QStringList extractComponentIdFromText(const QString& text) const;
