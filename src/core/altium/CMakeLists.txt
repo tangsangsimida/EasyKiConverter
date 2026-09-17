@@ -19,6 +19,8 @@ target_sources(EasyKiConverterAltium
         writers/AltiumSchLibWriter.cpp
         writers/AltiumSchGraphicOrderWriter.h
         writers/AltiumSchGraphicOrderWriter.cpp
+        writers/AltiumSchTextRecordWriter.h
+        writers/AltiumSchTextRecordWriter.cpp
         writers/AltiumPcbLibWriter.h
         writers/AltiumPcbLibWriter.cpp
 

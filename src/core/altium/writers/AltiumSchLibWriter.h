@@ -49,6 +49,7 @@ public:
 
 private:
     friend class AltiumSchGraphicOrderWriter;
+    friend class AltiumSchTextRecordWriter;
 
     // ---- 文件级写入 ----
     void writeFileHeader(OLECompoundWriter& ole, const QList<AltiumSchComponent>& components);

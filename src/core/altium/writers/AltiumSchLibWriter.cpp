@@ -2,6 +2,7 @@
 
 #include "AltiumSchGraphicOrderWriter.h"
 #include "AltiumSchImageStorageEncoder.h"
+#include "AltiumSchTextRecordWriter.h"
 #include "utils/AltiumConstants.h"
 #include "utils/AltiumCoord.h"
 #include "utils/AltiumWriterUtils.h"
@@ -1451,131 +1452,16 @@ void AltiumSchLibWriter::writeIeeeRecord(AltiumBinaryWriter& writer, const Altiu
     writer.writeCStringParameterBlock(params);
 }
 
-/**
- * @brief 写入文本记录 (RECORD=4, Label)
- */
+/** @brief 将文本记录委托给专用协作者，保持写入器对外行为不变。 */
 void AltiumSchLibWriter::writeTextRecord(AltiumBinaryWriter& writer, const AltiumSchText& text) {
-    QMap<QString, QString> params;
-    params["RECORD"] = "4";
-    addOwnerParams(params, text.ownerPartId);
-    addCoordParam(params, "Location.X", text.locationX);
-    addCoordParam(params, "Location.Y", text.locationY);
-
-    if (text.text.trimmed().isEmpty()) {
-        const QString diagnostic = QStringLiteral("Altium SchLib 文本内容为空，仍保留记录以维持记录计数");
-        m_diagnostics.append(diagnostic);
-        qWarning() << "AltiumSchLibWriter:" << diagnostic;
-    }
-
-    const bool hasValidFontSize = std::isfinite(text.fontSizeMm) && text.fontSizeMm > 0.0;
-    if (text.fontSizeMm != 0.0 && !hasValidFontSize) {
-        const QString diagnostic = QStringLiteral("Altium SchLib 文本字体大小无效，已回退为默认字体大小");
-        m_diagnostics.append(diagnostic);
-        qWarning() << "AltiumSchLibWriter:" << diagnostic;
-    }
-    if (text.fontName.isEmpty() && !hasValidFontSize && (text.fontId < 1 || text.fontId > m_fontRegistry.size())) {
-        const QString diagnostic = QStringLiteral("Altium SchLib 文本字体 ID 无效，已回退为默认字体");
-        m_diagnostics.append(diagnostic);
-        qWarning() << "AltiumSchLibWriter:" << diagnostic;
-    }
-
-    if (text.orientation != 0)
-        params["Orientation"] = QString::number(text.orientation);
-    addColorParam(params, "Color", text.color);
-    int fontId = text.fontId;
-    if (!text.fontName.isEmpty() || hasValidFontSize || fontId <= 0) {
-        constexpr double MILLIMETERS_PER_POINT = 25.4 / 72.0;
-        const QString fontName = text.fontName.isEmpty() ? QStringLiteral("Times New Roman") : text.fontName;
-        const int fontSize = hasValidFontSize ? qMax(1, qRound(text.fontSizeMm / MILLIMETERS_PER_POINT)) : 10;
-        fontId = m_fontRegistry.getOrAdd(fontName, fontSize, text.bold, text.italic);
-    } else if (fontId < 1 || fontId > m_fontRegistry.size())
-        fontId = 1;
-    params["FontID"] = QString::number(fontId);
-    params["Text"] = text.text;
-    if (text.isHidden || !text.isDisplayed)
-        params["IsHidden"] = "T";
-    const QString normalizedAnchor = text.anchor.trimmed().toLower();
-    if (!normalizedAnchor.isEmpty()) {
-        if (!QStringList{QStringLiteral("start"), QStringLiteral("middle"), QStringLiteral("end")}.contains(
-                normalizedAnchor)) {
-            const QString diagnostic =
-                QStringLiteral("Altium SchLib 文本对齐锚点无效: %1，已回退为 middle").arg(text.anchor);
-            m_diagnostics.append(diagnostic);
-            qWarning() << "AltiumSchLibWriter:" << diagnostic;
-            params["TextAnchor"] = QStringLiteral("middle");
-        } else {
-            params["TextAnchor"] = normalizedAnchor;
-        }
-    }
-    if (hasValidFontSize)
-        params["FontSize"] = QString::number(text.fontSizeMm, 'f', 4);
-
-    addUniqueID(params);
-    writer.writeCStringParameterBlockUtf8(params);
+    AltiumSchTextRecordWriter textWriter(*this);
+    textWriter.writeText(writer, text);
 }
 
-/**
- * @brief 写入文本框记录 (RECORD=28)
- */
+/** @brief 将文本框记录委托给专用协作者，保持写入器对外行为不变。 */
 void AltiumSchLibWriter::writeTextFrameRecord(AltiumBinaryWriter& writer, const AltiumSchTextFrame& frame) {
-    QMap<QString, QString> params;
-    params["RECORD"] = "28";
-    addOwnerParams(params, frame.ownerPartId);
-    addCoordParam(params, "Location.X", frame.locationX);
-    addCoordParam(params, "Location.Y", frame.locationY);
-    addCoordParam(params, "Corner.X", frame.cornerX);
-    addCoordParam(params, "Corner.Y", frame.cornerY);
-    if (frame.lineWidth != 0)
-        params["LineWidth"] = QString::number(frame.lineWidth);
-    if (frame.lineStyle != 0)
-        params["LineStyle"] = QString::number(frame.lineStyle);
-    addColorParam(params, "Color", frame.color);
-    params["AreaColor"] = QString::number(frame.areaColor);
-    addColorParam(params, "TextColor", frame.textColor);
-    const bool hasValidFontSize = std::isfinite(frame.fontSizeMm) && frame.fontSizeMm > 0.0;
-    if (frame.fontSizeMm != 0.0 && !hasValidFontSize) {
-        const QString diagnostic = QStringLiteral("Altium SchLib 文本框字体大小无效，已回退为默认字体大小");
-        m_diagnostics.append(diagnostic);
-        qWarning() << "AltiumSchLibWriter:" << diagnostic;
-    }
-    int fontId = frame.fontId;
-    if (!frame.fontName.isEmpty() || hasValidFontSize || fontId <= 0) {
-        constexpr double MILLIMETERS_PER_POINT = 25.4 / 72.0;
-        const QString fontName = frame.fontName.isEmpty() ? QStringLiteral("Times New Roman") : frame.fontName;
-        const int fontSize = hasValidFontSize ? qMax(1, qRound(frame.fontSizeMm / MILLIMETERS_PER_POINT)) : 10;
-        fontId = m_fontRegistry.getOrAdd(fontName, fontSize, frame.bold, frame.italic);
-    }
-    if (frame.fontName.isEmpty() && !hasValidFontSize && (fontId < 1 || fontId > m_fontRegistry.size())) {
-        const QString diagnostic = QStringLiteral("Altium SchLib 文本框字体 ID 无效，已回退为默认字体");
-        m_diagnostics.append(diagnostic);
-        qWarning() << "AltiumSchLibWriter:" << diagnostic;
-    }
-    params["FontID"] = QString::number(fontId >= 1 && fontId <= m_fontRegistry.size() ? fontId : 1);
-    if (hasValidFontSize)
-        params["FontSize"] = QString::number(frame.fontSizeMm, 'f', 4);
-    if (frame.text.trimmed().isEmpty()) {
-        const QString diagnostic = QStringLiteral("Altium SchLib 文本框内容为空，仍保留记录以维持记录计数");
-        m_diagnostics.append(diagnostic);
-        qWarning() << "AltiumSchLibWriter:" << diagnostic;
-    }
-    if (frame.isSolid)
-        params["IsSolid"] = "T";
-    if (frame.showBorder)
-        params["ShowBorder"] = "T";
-    if (frame.orientation != 0)
-        params["Orientation"] = QString::number(frame.orientation);
-    if (frame.alignment != 0)
-        params["Alignment"] = QString::number(frame.alignment);
-    if (frame.wordWrap)
-        params["WordWrap"] = "T";
-    if (frame.clipToRect)
-        params["ClipToRect"] = "T";
-    params["Text"] = frame.text;
-    addCoordParam(params, "TextMargin", frame.textMargin);
-    if (frame.transparent)
-        params["Transparent"] = "T";
-    addUniqueID(params);
-    writer.writeCStringParameterBlockUtf8(params);
+    AltiumSchTextRecordWriter textWriter(*this);
+    textWriter.writeTextFrame(writer, frame);
 }
 
 /**
