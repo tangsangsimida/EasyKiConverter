@@ -3,6 +3,7 @@
 #include "BomParser.h"
 #include "CadDataLoader.h"
 #include "ComponentCacheLoadWorker.h"
+#include "ComponentCadFetchCoordinator.h"
 #include "ComponentInfoParser.h"
 #include "ComponentParallelFetchCoordinator.h"
 #include "ComponentQueueManager.h"
@@ -713,76 +714,12 @@ void ComponentService::handleComponentInfoFetched(const QString& componentId, co
 
 /** @brief 处理 CAD 数据响应并启动解析流程。 */
 void ComponentService::handleCadDataFetched(const QString& componentId, const QJsonObject& data) {
-    // 从 FetchingComponent 读取请求创建时的 generation，而非当前值
-    uint64_t gen = 0;
-    {
-        QMutexLocker locker(&m_fetchingComponentsMutex);
-        auto it = m_fetchingComponents.find(componentId.toUpper());
-        if (it != m_fetchingComponents.end()) {
-            gen = it->cacheGeneration;
-        }
-    }
-    if (gen == 0) {
-        // 找不到 FetchingComponent，说明是已过期的孤儿回调，直接丢弃
-        qDebug() << "handleCadDataFetched: No FetchingComponent for" << componentId << ", discarding stale callback";
-        return;
-    }
-    auto future =
-        QtConcurrent::run([componentId, data]() { return CadDataLoader::parseCadPayload(componentId, data); });
-    auto* watcher = new QFutureWatcher<CadParseResult>(this);
-    connect(watcher, &QFutureWatcher<CadParseResult>::finished, this, [this, watcher, gen]() {
-        const CadParseResult parsed = watcher->result();
-        watcher->deleteLater();
-
-        CadFetchTaskResult result;
-        result.componentId = parsed.componentId;
-        result.parsed = parsed;
-        result.errorMessage = parsed.errorMessage;
-        result.success = parsed.success;
-        handleCadFetchResult(result, gen);
-    });
-    watcher->setFuture(future);
+    ComponentCadFetchCoordinator::handleDataFetched(*this, componentId, data);
 }
 
 /** @brief 统一处理 CAD 获取结果，避免网络、重试和直接解析路径出现行为漂移。 */
 void ComponentService::handleCadFetchResult(const CadFetchTaskResult& result, uint64_t expectedGeneration) {
-    {
-        QMutexLocker locker(&m_fetchingComponentsMutex);
-        const auto it = m_fetchingComponents.find(result.componentId);
-        if (it == m_fetchingComponents.end() || it->cacheGeneration != expectedGeneration) {
-            qDebug() << "ComponentService: Discarding stale CAD result for" << result.componentId;
-            return;
-        }
-    }
-
-    if (!result.success) {
-        emitFetchErrorAndClearState(result.componentId, result.errorMessage, expectedGeneration);
-        return;
-    }
-
-    {
-        QMutexLocker locker(&m_fetchingComponentsMutex);
-        auto it = m_fetchingComponents.find(result.componentId);
-        if (it == m_fetchingComponents.end() || it->cacheGeneration != expectedGeneration) {
-            qDebug() << "ComponentService: Discarding stale CAD result for" << result.componentId;
-            return;
-        }
-        it->data = result.parsed.componentData;
-        it->hasCadData = true;
-        it->requestActive = false;
-    }
-
-    updateComponentCache(result.componentId, result.parsed.componentData);
-    emit cadDataReady(result.componentId, result.parsed.componentData);
-    // 使用异步保存，不阻塞 UI。
-    ComponentCacheService::instance()->saveComponentMetadataAsync(
-        result.componentId, result.parsed.componentData, expectedGeneration, /*replaceModel3DMetadata=*/true);
-    ComponentCacheService::instance()->saveCadDataJson(
-        result.componentId, QJsonDocument(result.parsed.resultData).toJson(QJsonDocument::Compact), expectedGeneration);
-
-    if (m_parallelContext != nullptr) {
-        handleParallelDataCollected(result.componentId, result.parsed.componentData);
-    }
+    ComponentCadFetchCoordinator::handleFetchResult(*this, result, expectedGeneration);
 }
 
 /** @brief 处理未携带元器件编号的请求错误。 */
