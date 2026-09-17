@@ -85,9 +85,7 @@ void ComponentCacheService::setCacheDir(const QString& cacheDir, bool migrateExi
         if (cacheDirChanged) {
             // 先使切换前排队的异步写入失效，再进行目录迁移，避免旧请求污染新目录。
             m_cacheGeneration.fetch_add(1);
-            QMutexLocker tombstoneLocker(&m_tombstoneMutex);
-            m_allTombstoned = false;
-            m_tombstones.clear();
+            m_tombstones.reset();
         }
 
         // 迁移期间持有磁盘写锁，避免异步写入与目录迁移交错。
@@ -1191,10 +1189,7 @@ void ComponentCacheService::removeCache(const QString& lcscId) {
         // 锁顺序：先 disk，后 tombstone（与其他方法一致）
         QMutexLocker diskLocker(&m_diskWriteMutex);
         // 标记为 tombstone，阻止旧回调写回
-        {
-            QMutexLocker tombLocker(&m_tombstoneMutex);
-            m_tombstones.insert(normalizedId);
-        }
+        { m_tombstones.blockComponent(normalizedId); }
         // 先删除L2磁盘缓存
         const QString dirPath = componentCacheDir(normalizedId);
         if (dirPath.isEmpty()) {
@@ -1232,20 +1227,17 @@ void ComponentCacheService::removeCache(const QString& lcscId) {
 
 // 清除指定元器件的旧请求屏蔽标记。
 void ComponentCacheService::clearTombstone(const QString& lcscId) {
-    QMutexLocker tombLocker(&m_tombstoneMutex);
-    m_tombstones.remove(lcscId.toUpper());
+    m_tombstones.clearComponent(lcscId);
 }
 
 // 清除全局旧请求屏蔽标记。
 void ComponentCacheService::clearGlobalTombstone() {
-    QMutexLocker tombLocker(&m_tombstoneMutex);
-    m_allTombstoned = false;
+    m_tombstones.clearGlobal();
 }
 
 // 判断元器件是否仍被旧请求屏蔽。
 bool ComponentCacheService::isTombstoned(const QString& lcscId) const {
-    QMutexLocker tombLocker(&m_tombstoneMutex);
-    return m_allTombstoned || m_tombstones.contains(lcscId.toUpper());
+    return m_tombstones.isBlocked(lcscId);
 }
 
 // 清空一级和二级缓存，并使旧异步写入失效。
@@ -1256,10 +1248,7 @@ void ComponentCacheService::clearAllCache() {
         // 锁顺序：先 disk，后 tombstone（与 save 方法一致，避免死锁）
         QMutexLocker diskLocker(&m_diskWriteMutex);
         // 全局 tombstone：阻止所有旧回调写入
-        {
-            QMutexLocker tombLocker(&m_tombstoneMutex);
-            m_allTombstoned = true;
-        }
+        m_tombstones.blockAll();
         // 先清空L2磁盘缓存（不需要锁），同时删除根目录下的遗留文件。
         {
             QDir dir(cacheDir());
@@ -1294,11 +1283,7 @@ void ComponentCacheService::clearMemoryCacheInternal() {
 void ComponentCacheService::clearMemoryCache() {
     // 内存缓存清理也会影响正在运行的请求，必须递增代次隔离旧回调。
     m_cacheGeneration.fetch_add(1);
-    {
-        QMutexLocker tombLocker(&m_tombstoneMutex);
-        m_allTombstoned = false;
-        m_tombstones.clear();
-    }
+    m_tombstones.reset();
     clearMemoryCacheInternal();
     LOG_DEBUG(LogModule::Core, "Cleared memory cache");
     emit memoryCacheSizeChanged(0);

@@ -1,6 +1,7 @@
 #ifndef COMPONENTCACHESERVICE_H
 #define COMPONENTCACHESERVICE_H
 
+#include "CacheTombstoneRegistry.h"
 #include "core/network/AsyncNetworkRequest.h"
 #include "core/network/NetworkClient.h"
 #include "models/ComponentData.h"
@@ -12,7 +13,6 @@
 #include <QJsonObject>
 #include <QMutex>
 #include <QObject>
-#include <QSet>
 #include <QSharedPointer>
 #include <QString>
 
@@ -575,9 +575,7 @@ private:
     // 缓存代次：clearAllCache 时递增，异步写入前检查，防止清空后旧任务写回
     std::atomic<uint64_t> m_cacheGeneration{1};
     // Per-component tombstone：removeCache 后阻止旧回调写回
-    mutable QMutex m_tombstoneMutex;
-    QSet<QString> m_tombstones;
-    bool m_allTombstoned = false;
+    CacheTombstoneRegistry m_tombstones;
 };
 
 }  // namespace EasyKiConverter
