@@ -79,7 +79,7 @@ constexpr int lineWidthToIndex(int rawWidth) {
  * @param mm 线宽（mm）
  * @return Altium SchLib 线宽索引 (0-3)
  */
-constexpr int lineWidthMmToIndex(double mm) {
+inline int lineWidthMmToIndex(double mm) {
     double mils = mm / 0.0254;
     if (!std::isfinite(mils))
         return 0;
