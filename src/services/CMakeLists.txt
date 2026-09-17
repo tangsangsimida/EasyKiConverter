@@ -23,6 +23,8 @@ add_library(EasyKiConverterServices STATIC
     ComponentDataMemoryStore.h
     ComponentCacheBinaryFileStore.cpp
     ComponentCacheBinaryFileStore.h
+    ComponentCacheLoadWorker.cpp
+    ComponentCacheLoadWorker.h
     ComponentCacheWritePolicy.cpp
     ComponentCacheWritePolicy.h
     ComponentInfoParser.cpp

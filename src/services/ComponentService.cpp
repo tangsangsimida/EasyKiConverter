@@ -2,12 +2,11 @@
 
 #include "BomParser.h"
 #include "CadDataLoader.h"
+#include "ComponentCacheLoadWorker.h"
 #include "ComponentInfoParser.h"
 #include "ComponentQueueManager.h"
 #include "ConfigService.h"
 #include "core/easyeda/EasyedaApi.h"
-#include "core/easyeda/EasyedaFootprintImporter.h"
-#include "core/easyeda/EasyedaSymbolImporter.h"
 #include "core/network/NetworkClient.h"
 #include "core/utils/UrlUtils.h"
 
@@ -48,28 +47,6 @@ int previewImageIndexFromPath(const QString& path) {
     return ok ? index : -1;
 }
 
-/**
- * @brief 在缓存组件缺少独立模型时，从已解析封装补齐三维模型信息。
- * @param component 待补齐的组件数据。
- * @param footprint 已解析的封装数据。
- */
-void restoreModel3DFromFootprint(ComponentData& component, const QSharedPointer<FootprintData>& footprint) {
-    if (!footprint)
-        return;
-
-    const Model3DData footprintModel = footprint->model3D();
-    if (footprintModel.uuid().isEmpty())
-        return;
-    if (component.model3DData() && !component.model3DData()->uuid().isEmpty())
-        return;
-
-    auto model3DData = QSharedPointer<Model3DData>::create();
-    model3DData->setUuid(footprintModel.uuid());
-    model3DData->setName(footprintModel.name());
-    model3DData->setTranslation(footprintModel.translation());
-    model3DData->setRotation(footprintModel.rotation());
-    component.setModel3DData(model3DData);
-}
 }  // namespace
 
 ComponentService::ComponentService(QObject* parent)
@@ -339,93 +316,18 @@ void ComponentService::loadComponentDataFromCacheAsync(const QString& normalized
         return;
     }
     // 在后台线程执行缓存加载（I/O 密集型）
-    QFuture<CacheLoadResult> future = QtConcurrent::run([normalizedId, fetch3DModel, cache]() -> CacheLoadResult {
-        CacheLoadResult result;
-        result.componentId = normalizedId;
-        result.success = false;
-
-        QSharedPointer<ComponentData> cachedData = cache->loadComponentData(normalizedId);
-        if (!cachedData) {
-            return result;
-        }
-
-        // 从缓存加载CAD数据并重新导入符号和封装
-        QByteArray cadJsonData = cache->loadCadDataJson(normalizedId);
-        if (!cadJsonData.isEmpty()) {
-            QJsonParseError parseError;
-            QJsonDocument cadDoc = QJsonDocument::fromJson(cadJsonData, &parseError);
-            if (parseError.error == QJsonParseError::NoError && cadDoc.isObject()) {
-                QJsonObject cadDataObj = cadDoc.object();
-                // 在后台线程创建 importer 并解析符号和封装数据
-                EasyedaSymbolImporter symbolImporter;
-                result.symbolData = symbolImporter.importSymbolData(cadDataObj);
-                EasyedaFootprintImporter footprintImporter;
-                result.footprintData = footprintImporter.importFootprintData(cadDataObj);
-            }
-        }
-
-        // 从 metadata.json 恢复 model3DData
-        // 注意：loadComponentData 已经加载了 model3DData（包含 name、translation、rotation）
-        // 这里只在没有 model3DData 或 UUID 缺失时进行补充，不要覆盖已有数据
-        QJsonObject metadata = cache->loadMetadata(normalizedId);
-        if (metadata.contains("model3duuid")) {
-            const QString uuid = metadata.value("model3duuid").toString();
-            if (!uuid.isEmpty()) {
-                if (!cachedData->model3DData()) {
-                    auto model3DData = QSharedPointer<Model3DData>::create();
-                    model3DData->setUuid(uuid);
-                    cachedData->setModel3DData(model3DData);
-                } else if (cachedData->model3DData()->uuid().isEmpty()) {
-                    cachedData->model3DData()->setUuid(uuid);
-                }
-            }
-        }
-
-        // 先补齐封装中的模型 UUID，后续 OBJ 预加载才能命中对应缓存文件。
-        restoreModel3DFromFootprint(*cachedData, result.footprintData);
-
-        if (!result.symbolData || !result.footprintData) {
-            qWarning() << "Cache load incomplete for" << normalizedId << "- symbol:" << (result.symbolData != nullptr)
-                       << "footprint:" << (result.footprintData != nullptr);
-            result.success = false;
-            return result;
-        }
-
-        result.cachedData = cachedData;
-        result.success = true;
-
-        // 加载预览图数据（返回字节数据，在主线程创建 QImage）
-        result.encodedPreviewImages = QStringList(3);
-        for (int i = 0; i < 3; ++i) {
-            QByteArray imageData = cache->loadPreviewImage(normalizedId, i);
-            if (!imageData.isEmpty()) {
-                result.previewImageData.append({i, imageData});
-                result.encodedPreviewImages[i] = QString::fromLatin1(imageData.toBase64());
-            }
-        }
-
-        // 加载数据手册
-        QByteArray datasheetData = cache->loadDatasheet(normalizedId);
-        if (!datasheetData.isEmpty()) {
-            result.datasheetData = datasheetData;
-        }
-
-        // 预加载 OBJ 数据，避免导出阶段重复磁盘 I/O
-        if (fetch3DModel && cachedData->model3DData() && !cachedData->model3DData()->uuid().isEmpty()) {
-            QByteArray objData = cache->loadModel3D(cachedData->model3DData()->uuid(), QStringLiteral("obj"));
-            if (!objData.isEmpty()) {
-                cachedData->setModel3DObjRaw(objData);
-            }
-        }
-
-        return result;
+    QFuture<ComponentCacheLoadResult> future = QtConcurrent::run([normalizedId, fetch3DModel, cache]() {
+        return ComponentCacheLoadWorker::load(normalizedId, fetch3DModel, cache);
     });
 
     // 等待后台任务完成并在主线程处理结果
-    QFutureWatcher<CacheLoadResult>* watcher = new QFutureWatcher<CacheLoadResult>(this);
+    QFutureWatcher<ComponentCacheLoadResult>* watcher = new QFutureWatcher<ComponentCacheLoadResult>(this);
     connect(
-        watcher, &QFutureWatcher<CacheLoadResult>::finished, this, [this, watcher, normalizedId, fetch3DModel, gen]() {
-            CacheLoadResult result = watcher->result();
+        watcher,
+        &QFutureWatcher<ComponentCacheLoadResult>::finished,
+        this,
+        [this, watcher, normalizedId, fetch3DModel, gen]() {
+            ComponentCacheLoadResult result = watcher->result();
             watcher->deleteLater();
 
             // 缓存读取可能跨越取消和重试，先校验请求代次，避免旧结果进入新请求。
@@ -520,7 +422,7 @@ void ComponentService::loadComponentDataFromCacheAsync(const QString& normalized
             }
             if (result.footprintData) {
                 result.cachedData->setFootprintData(result.footprintData);
-                restoreModel3DFromFootprint(*result.cachedData, result.footprintData);
+                ComponentCacheLoadWorker::restoreModel3DFromFootprint(*result.cachedData, result.footprintData);
             }
 
             // 更新 m_fetchingComponents

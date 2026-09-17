@@ -1,6 +1,7 @@
 #ifndef COMPONENTSERVICE_H
 #define COMPONENTSERVICE_H
 
+#include "ComponentCacheLoadWorker.h"
 #include "ComponentCacheService.h"
 #include "ComponentDataMemoryStore.h"
 #include "LcscImageService.h"
@@ -416,22 +417,6 @@ private:
     // BOM 解析已移至独立的 BomParser 类
 
     // 图片抓取已移至独立的 LcscImageService 类
-
-    /**
-     * @brief 缓存加载结果结构体（用于异步缓存加载）
-     */
-    struct CacheLoadResult {
-        QString componentId;
-        bool success;
-        QSharedPointer<ComponentData> cachedData;
-        QByteArray cadDataJson;  // 原始 CAD JSON 数据
-        QList<QPair<int, QByteArray>> previewImageData;  // index, data
-        QStringList encodedPreviewImages;  // 后台线程预编码后的预览图
-        QByteArray datasheetData;
-        // 预解析的符号和封装数据（在后台线程解析）
-        QSharedPointer<SymbolData> symbolData;
-        QSharedPointer<FootprintData> footprintData;
-    };
 
     /**
      * @brief 异步从缓存加载元件数据（后台线程执行）
