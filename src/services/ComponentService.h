@@ -24,6 +24,8 @@
 
 namespace EasyKiConverter {
 
+struct CadFetchTaskResult;
+
 /**
  * @brief 元件服务类
  *
@@ -426,6 +428,13 @@ private:
      * @param cache 缓存服务指针
      */
     void loadComponentDataFromCacheAsync(const QString& normalizedId, bool fetch3DModel, ComponentCacheService* cache);
+
+    /**
+     * @brief 处理异步 CAD 获取结果并完成缓存、信号和批量状态更新
+     * @param result CAD 获取与解析结果
+     * @param expectedGeneration 请求创建时的缓存代次
+     */
+    void handleCadFetchResult(const CadFetchTaskResult& result, uint64_t expectedGeneration);
 
 private:
     class EasyedaApi* m_api;
