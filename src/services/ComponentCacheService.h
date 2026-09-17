@@ -21,6 +21,7 @@
 #include <memory>
 
 class CacheHealthManager;
+class ComponentCacheMetadataWriter;
 
 namespace EasyKiConverter {
 
@@ -494,6 +495,8 @@ signals:
     void memoryCacheSizeChanged(qint64 newSize);
 
 private:
+    friend class ComponentCacheMetadataWriter;
+
     /**
      * @brief 私有构造函数（单例模式）
      */

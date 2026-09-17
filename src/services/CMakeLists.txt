@@ -27,6 +27,8 @@ add_library(EasyKiConverterServices STATIC
     ComponentCacheLoadWorker.h
     ComponentCacheWritePolicy.cpp
     ComponentCacheWritePolicy.h
+    ComponentCacheMetadataWriter.cpp
+    ComponentCacheMetadataWriter.h
     ComponentInfoParser.cpp
     ComponentInfoParser.h
     CacheHealthManager.cpp

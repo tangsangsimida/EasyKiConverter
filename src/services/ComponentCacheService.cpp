@@ -8,6 +8,7 @@
 #include "CacheMetadataStore.h"
 #include "CachePruner.h"
 #include "ComponentCacheBinaryFileStore.h"
+#include "ComponentCacheMetadataWriter.h"
 #include "ComponentCacheWritePolicy.h"
 #include "ConfigService.h"
 #include "core/kicad/Exporter3DModel.h"
@@ -50,7 +51,7 @@ bool hasValidCadDataFile(const QString& path) {
 
 std::unique_ptr<ComponentCacheService> ComponentCacheService::s_instance;
 
-ComponentCacheService::ComponentCacheService(QObject* parent)
+ComponentCacheService::ComponentCacheService(QObject* parent) /* 初始化默认容量和缓存目录。 */
     : QObject(parent), m_diskCacheLimitMB(ConfigService::DEFAULT_DISK_CACHE_LIMIT_MB), m_memoryCache(50 * 1024 * 1024) {
     m_lastEnforceTimer.start();
     setCacheDir(ConfigService::defaultCacheDir());
@@ -312,39 +313,14 @@ void ComponentCacheService::saveComponentMetadata(const QString& componentId,
                                                   const ComponentData& data,
                                                   uint64_t expectedGeneration,
                                                   bool replaceModel3DMetadata) {
-    QJsonObject metadata = CacheMetadataStore::build(componentId, data);
-    const QString key = makeMemoryKey(componentId, "metadata");
-    qint64 sizeAfterUpdate = 0;
+    ComponentCacheMetadataWriter metadataWriter(*this);
+    const std::optional<qint64> sizeAfterUpdate =
+        metadataWriter.write(componentId, data, expectedGeneration, replaceModel3DMetadata);
+    if (!sizeAfterUpdate.has_value())
+        return;
 
-    // 旧元数据读取、合并、代次检查、L1 写入和磁盘写入必须在同一把锁内，
-    // 否则并发的部分元数据更新可能基于同一个旧快照写回并互相覆盖。
-    {
-        QMutexLocker diskLocker(&m_diskWriteMutex);
-        if (expectedGeneration != 0) {
-            if (m_cacheGeneration.load() != expectedGeneration) {
-                LOG_DEBUG(LogModule::Core, "Discarded stale write for {} (generation mismatch)", componentId);
-                return;
-            }
-            if (isTombstoned(componentId)) {
-                LOG_DEBUG(LogModule::Core, "Discarded write for tombstoned component {}", componentId);
-                return;
-            }
-        }
-
-        const QJsonObject existingMetadata = CacheMetadataStore::read(metadataPath(componentId));
-        metadata = CacheMetadataStore::merge(existingMetadata, metadata);
-        if (replaceModel3DMetadata && !CacheMetadataStore::hasModel3D(data)) {
-            metadata.remove(QStringLiteral("model3duuid"));
-            metadata.remove(QStringLiteral("model3dName"));
-            metadata.remove(QStringLiteral("model3dTranslation"));
-            metadata.remove(QStringLiteral("model3dRotation"));
-        }
-
-        sizeAfterUpdate = m_memoryCache.insert(key, QJsonDocument(metadata).toJson(QJsonDocument::Compact));
-        saveMetadata(componentId, metadata);
-    }
     enforceDiskCacheLimit();
-    emit memoryCacheSizeChanged(sizeAfterUpdate);
+    emit memoryCacheSizeChanged(*sizeAfterUpdate);
     emit cacheSaved(componentId);
     LOG_DEBUG(LogModule::Core, "Saved component metadata to cache: {}", componentId);
 }
