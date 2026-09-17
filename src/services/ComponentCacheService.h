@@ -22,6 +22,7 @@
 
 class CacheHealthManager;
 class ComponentCacheMetadataWriter;
+class ComponentCacheCadDataWriter;
 
 namespace EasyKiConverter {
 
@@ -495,6 +496,7 @@ signals:
     void memoryCacheSizeChanged(qint64 newSize);
 
 private:
+    friend class ComponentCacheCadDataWriter;
     friend class ComponentCacheMetadataWriter;
 
     /**

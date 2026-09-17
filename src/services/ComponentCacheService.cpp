@@ -8,6 +8,7 @@
 #include "CacheMetadataStore.h"
 #include "CachePruner.h"
 #include "ComponentCacheBinaryFileStore.h"
+#include "ComponentCacheCadDataWriter.h"
 #include "ComponentCacheMetadataWriter.h"
 #include "ComponentCacheWritePolicy.h"
 #include "ConfigService.h"
@@ -350,32 +351,8 @@ void ComponentCacheService::saveComponentMetadataAsync(const QString& componentI
 
 // 将符号数据原子写入二级磁盘缓存。
 void ComponentCacheService::saveSymbolData(const QString& lcscId, const QByteArray& data, uint64_t expectedGeneration) {
-    if (!CacheDataValidator::isValidCadData(data)) {
-        return;
-    }
-
-    QMutexLocker diskLocker(&m_diskWriteMutex);
-    if (!ComponentCacheWritePolicy::isAllowed(m_cacheGeneration.load(), expectedGeneration, m_tombstones, lcscId)) {
-        return;
-    }
-    QString symbolPath;
-    {
-        QMutexLocker locker(&m_mutex);
-        if (ensureComponentDir(lcscId).isEmpty()) {
-            return;
-        }
-        symbolPath = CacheFileLayout::symbolFile(componentCacheDir(lcscId));
-    }
-
-    if (CacheMetadataStore::writeAtomically(symbolPath, data)) {
-        LOG_DEBUG(LogModule::Core, "Saved symbol data to disk: {}", symbolPath);
-        enforceDiskCacheLimit();
-    } else {
-        LOG_WARN(LogModule::Core, "Failed to write symbol data: {}", symbolPath);
-    }
-
-    // 同时保存到L1内存缓存
-    saveSymbolDataToMemory(lcscId, data);
+    ComponentCacheCadDataWriter writer(*this);
+    writer.writeSymbol(lcscId, data, expectedGeneration);
 }
 
 // 从二级磁盘缓存读取符号数据。
@@ -397,32 +374,8 @@ QByteArray ComponentCacheService::loadSymbolData(const QString& lcscId) const {
 void ComponentCacheService::saveFootprintData(const QString& lcscId,
                                               const QByteArray& data,
                                               uint64_t expectedGeneration) {
-    if (!CacheDataValidator::isValidCadData(data)) {
-        return;
-    }
-
-    QMutexLocker diskLocker(&m_diskWriteMutex);
-    if (!ComponentCacheWritePolicy::isAllowed(m_cacheGeneration.load(), expectedGeneration, m_tombstones, lcscId)) {
-        return;
-    }
-    QString footprintPath;
-    {
-        QMutexLocker locker(&m_mutex);
-        if (ensureComponentDir(lcscId).isEmpty()) {
-            return;
-        }
-        footprintPath = CacheFileLayout::footprintFile(componentCacheDir(lcscId));
-    }
-
-    if (CacheMetadataStore::writeAtomically(footprintPath, data)) {
-        LOG_DEBUG(LogModule::Core, "Saved footprint data to disk: {}", footprintPath);
-        enforceDiskCacheLimit();
-    } else {
-        LOG_WARN(LogModule::Core, "Failed to write footprint data: {}", footprintPath);
-    }
-
-    // 同时保存到L1内存缓存
-    saveFootprintDataToMemory(lcscId, data);
+    ComponentCacheCadDataWriter writer(*this);
+    writer.writeFootprint(lcscId, data, expectedGeneration);
 }
 
 // 从二级磁盘缓存读取封装数据。
@@ -444,29 +397,8 @@ QByteArray ComponentCacheService::loadFootprintData(const QString& lcscId) const
 void ComponentCacheService::saveCadDataJson(const QString& lcscId,
                                             const QByteArray& cadData,
                                             uint64_t expectedGeneration) {
-    if (!CacheDataValidator::isValidCadData(cadData)) {
-        return;
-    }
-
-    QMutexLocker diskLocker(&m_diskWriteMutex);
-    if (!ComponentCacheWritePolicy::isAllowed(m_cacheGeneration.load(), expectedGeneration, m_tombstones, lcscId)) {
-        return;
-    }
-    QString cadDataPath;
-    {
-        QMutexLocker locker(&m_mutex);
-        if (ensureComponentDir(lcscId).isEmpty()) {
-            return;
-        }
-        cadDataPath = CacheFileLayout::cadDataFile(componentCacheDir(lcscId));
-    }
-
-    if (CacheMetadataStore::writeAtomically(cadDataPath, cadData)) {
-        LOG_DEBUG(LogModule::Core, "Saved CAD data JSON to disk: {}", cadDataPath);
-        enforceDiskCacheLimit();
-    } else {
-        LOG_WARN(LogModule::Core, "Failed to write CAD data JSON: {}", cadDataPath);
-    }
+    ComponentCacheCadDataWriter writer(*this);
+    writer.writeCadJson(lcscId, cadData, expectedGeneration);
 }
 
 // 从二级磁盘缓存读取 CAD 原始 JSON。

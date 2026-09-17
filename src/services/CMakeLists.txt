@@ -6,6 +6,8 @@ add_library(EasyKiConverterServices STATIC
     LcscImageService.cpp
     ComponentService.cpp
     ComponentCacheService.cpp
+    ComponentCacheCadDataWriter.cpp
+    ComponentCacheCadDataWriter.h
     CacheFileLayout.h
     CacheDirectoryMigrator.cpp
     CacheDirectoryMigrator.h
