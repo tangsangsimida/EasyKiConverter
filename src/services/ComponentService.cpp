@@ -2,6 +2,7 @@
 
 #include "BomParser.h"
 #include "CadDataLoader.h"
+#include "ComponentInfoParser.h"
 #include "ComponentQueueManager.h"
 #include "ConfigService.h"
 #include "core/easyeda/EasyedaApi.h"
@@ -921,28 +922,7 @@ void ComponentService::handleComponentInfoFetched(const QString& componentId, co
         }
     }
 
-    // 解析组件信息
-    ComponentData componentData;
-    componentData.setLcscId(normalizedId);
-
-    // 从响应中提取基本信息
-    if (data.contains("result")) {
-        QJsonObject result = data["result"].toObject();
-
-        if (result.contains("title")) {
-            componentData.setName(result["title"].toString());
-        }
-        if (result.contains("package")) {
-            componentData.setPackage(result["package"].toString());
-        }
-        if (result.contains("manufacturer")) {
-            componentData.setManufacturer(result["manufacturer"].toString());
-        }
-        if (result.contains("datasheet")) {
-            componentData.setDatasheet(result["datasheet"].toString());
-        }
-    }
-
+    const ComponentData componentData = ComponentInfoParser::parse(normalizedId, data);
     emit componentInfoReady(normalizedId, componentData);
 }
 
