@@ -8,13 +8,13 @@
 
 | 类型 | 文件数 | 过长 | 偏长 | 健康率 |
 |------|--------|------|------|--------|
-| 产品源码与资源 | 379 | 55 | 34 | -- |
+| 产品源码与资源 | 386 | 55 | 34 | -- |
 | Python 工具 | 13 | 5 | 4 | -- |
-| **合计** | **392** | **60** | **38** | -- |
+| **合计** | **399** | **60** | **38** | -- |
 
 当前统计工具按文件总行数使用统一阈值：高风险 >500 行，中风险 300-500 行，低风险 200-300 行。类型分项和代码/注释行数需要额外脚本才能精确拆分，因此本报告不再保留旧的推算健康率。
 
-当前基线：`src` 319 个文件、73,529 行；`tests` 58 个文件、18,500 行；翻译资源 2 个文件、3,303 行；`tools/python` 13 个文件、6,642 行。项目工具的 `--all` 统计覆盖产品源码、测试和翻译资源，工具目录单独统计后合计 392 个文件、101,974 行。
+当前基线：`src` 326 个文件、73,797 行；`tests` 58 个文件、18,500 行；翻译资源 2 个文件、3,303 行；`tools/python` 13 个文件、6,642 行。项目工具的 `--all` 统计覆盖产品源码、测试和翻译资源，工具目录单独统计后合计 399 个文件、102,242 行。
 
 ---
 
@@ -53,7 +53,7 @@
 
 | 文件 | 总行数 | 代码行 | 注释行 | 问题分析 |
 |------|--------|--------|--------|---------|
-| `src/services/ComponentCacheService.cpp` | 1,852 | -- | -- | 项目最长生产服务文件，缓存读写/过期/迁移逻辑全集中 |
+| `src/services/ComponentCacheService.cpp` | 1,567 | -- | -- | 缓存读写/过期/迁移逻辑仍集中，已通过辅助职责拆分逐步收敛 |
 | `src/ui/viewmodels/ComponentListViewModel.cpp` | 1,385 | 1,082 | 109 | ViewModel 职责过多：列表管理+搜索+选择+批量操作 |
 | `src/services/ComponentService.cpp` | 1,361 | -- | -- | 数据获取+解析+缓存+错误处理全在一个类 |
 
@@ -86,7 +86,7 @@
 - `SymbolData.h` 相关的模型文件 -- 拆分为 IR + Importer
 
 **需要独立拆分的**：
-- `ComponentCacheService.cpp`（1,852 行）：拆分为 `CacheReader` / `CacheWriter` / `CacheMigration` 三个子类
+- `ComponentCacheService.cpp`（1,567 行）：已提取缓存文件布局、目录迁移、元数据存储和数据校验职责，后续继续按锁边界拆分读写协调逻辑
 - `ComponentListViewModel.cpp`（1,385 行）：提取 `ComponentSearchManager`、`ComponentSelectionManager` 等子管理器
 - `ComponentService.cpp`（1,361 行）：提取 `ComponentFetcher`、`ComponentParser` 等
 - `main.cpp`（857 行）：CLI 入口逻辑已迁移到 `CliConverter`，剩余 GUI 初始化可提取为 `ApplicationSetup` 类
