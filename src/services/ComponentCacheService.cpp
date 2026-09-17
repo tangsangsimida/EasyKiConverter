@@ -183,11 +183,6 @@ QString ComponentCacheService::ensureModel3DCacheDir() const {
     return dirPath;
 }
 
-// 构造内存缓存使用的复合键。
-QString ComponentCacheService::makeMemoryKey(const QString& lcscId, const QString& type) const {
-    return lcscId.toUpper() + ":" + type;
-}
-
 // 判断元器件是否具有可用的完整磁盘缓存。
 bool ComponentCacheService::hasCache(const QString& lcscId) const {
     // 统一由完整性检查负责路径读取，避免目录迁移期间出现先检查后失效。
@@ -222,66 +217,51 @@ bool ComponentCacheService::isCacheValid(const QString& lcscId) const {
 
 // 判断元器件元数据是否存在于一级内存缓存。
 bool ComponentCacheService::hasInMemoryCache(const QString& lcscId) const {
-    return m_memoryCache.contains(makeMemoryKey(lcscId, "metadata"));
+    return m_memoryCache.containsMetadata(lcscId);
 }
 
 // ==================== L1 内存缓存操作 ====================
 
 // 从一级内存缓存读取元器件元数据。
 QJsonObject ComponentCacheService::loadMetadataFromMemory(const QString& lcscId) const {
-    const QByteArray data = m_memoryCache.value(makeMemoryKey(lcscId, "metadata"));
-    if (data.isEmpty()) {
-        return QJsonObject();
-    }
-
-    QJsonParseError error;
-    QJsonDocument doc = QJsonDocument::fromJson(data, &error);
-    if (error.error != QJsonParseError::NoError) {
-        return QJsonObject();
-    }
-
-    return doc.object();
+    return m_memoryCache.loadMetadata(lcscId);
 }
 
 // 将元器件元数据写入一级内存缓存。
 void ComponentCacheService::saveMetadataToMemory(const QString& lcscId, const QJsonObject& metadata) {
-    const QJsonDocument document(metadata);
-    const qint64 sizeAfterUpdate =
-        m_memoryCache.insert(makeMemoryKey(lcscId, "metadata"), document.toJson(QJsonDocument::Compact));
+    const qint64 sizeAfterUpdate = m_memoryCache.saveMetadata(lcscId, metadata);
     // 锁外发送信号
     emit memoryCacheSizeChanged(sizeAfterUpdate);
 }
 
 // 从一级内存缓存读取符号数据。
 QByteArray ComponentCacheService::loadSymbolDataFromMemory(const QString& lcscId) const {
-    return m_memoryCache.value(makeMemoryKey(lcscId, "symbol"));
+    return m_memoryCache.loadSymbol(lcscId);
 }
 
 // 将符号数据写入一级内存缓存。
 void ComponentCacheService::saveSymbolDataToMemory(const QString& lcscId, const QByteArray& data) {
-    if (!CacheDataValidator::isValidCadData(data)) {
+    const std::optional<qint64> sizeAfterUpdate = m_memoryCache.saveSymbol(lcscId, data);
+    if (!sizeAfterUpdate.has_value()) {
         return;
     }
-
-    const qint64 sizeAfterUpdate = m_memoryCache.insert(makeMemoryKey(lcscId, "symbol"), data);
     // 锁外发送信号
-    emit memoryCacheSizeChanged(sizeAfterUpdate);
+    emit memoryCacheSizeChanged(*sizeAfterUpdate);
 }
 
 // 从一级内存缓存读取封装数据。
 QByteArray ComponentCacheService::loadFootprintDataFromMemory(const QString& lcscId) const {
-    return m_memoryCache.value(makeMemoryKey(lcscId, "footprint"));
+    return m_memoryCache.loadFootprint(lcscId);
 }
 
 // 将封装数据写入一级内存缓存。
 void ComponentCacheService::saveFootprintDataToMemory(const QString& lcscId, const QByteArray& data) {
-    if (!CacheDataValidator::isValidCadData(data)) {
+    const std::optional<qint64> sizeAfterUpdate = m_memoryCache.saveFootprint(lcscId, data);
+    if (!sizeAfterUpdate.has_value()) {
         return;
     }
-
-    const qint64 sizeAfterUpdate = m_memoryCache.insert(makeMemoryKey(lcscId, "footprint"), data);
     // 锁外发送信号
-    emit memoryCacheSizeChanged(sizeAfterUpdate);
+    emit memoryCacheSizeChanged(*sizeAfterUpdate);
 }
 
 // ==================== L2 磁盘缓存操作 ====================
@@ -418,18 +398,12 @@ bool ComponentCacheService::hasSymbolFootprintCache(const QString& lcscId) const
     // 缓存存在性和完整性检查必须使用稳定的缓存目录。
     QMutexLocker diskLocker(&m_diskWriteMutex);
     // 内存缓存命中时仍需验证 CAD JSON 内容，避免损坏文件仅因存在而通过检查。
-    const QString metadataKey = makeMemoryKey(lcscId, "metadata");
-    {
-        QMutexLocker locker(&m_mutex);
-        if (m_memoryCache.contains(metadataKey)) {
-            const QString cadDataPath = CacheFileLayout::cadDataFile(componentCacheDir(lcscId));
-            const bool exists = hasValidCadDataFile(cadDataPath);
-            LOG_DEBUG(LogModule::Core,
-                      "hasSymbolFootprintCache: memory hit for {}, cad_data.json exists: {}",
-                      lcscId,
-                      exists);
-            return exists;
-        }
+    if (m_memoryCache.containsMetadata(lcscId)) {
+        const QString cadDataPath = CacheFileLayout::cadDataFile(componentCacheDir(lcscId));
+        const bool exists = hasValidCadDataFile(cadDataPath);
+        LOG_DEBUG(
+            LogModule::Core, "hasSymbolFootprintCache: memory hit for {}, cad_data.json exists: {}", lcscId, exists);
+        return exists;
     }
 
     // 内存缓存未命中时直接校验磁盘中的 CAD JSON。

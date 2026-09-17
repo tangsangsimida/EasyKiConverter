@@ -5,7 +5,6 @@
 #include "ComponentCacheWritePolicy.h"
 #include "utils/logging/LogMacros.h"
 
-#include <QJsonDocument>
 #include <QMutexLocker>
 
 namespace EasyKiConverter {
@@ -20,7 +19,6 @@ std::optional<qint64> ComponentCacheMetadataWriter::write(const QString& compone
                                                           uint64_t expectedGeneration,
                                                           bool replaceModel3DMetadata) {
     QJsonObject metadata = CacheMetadataStore::build(componentId, data);
-    const QString key = m_owner.makeMemoryKey(componentId, QStringLiteral("metadata"));
     qint64 sizeAfterUpdate = 0;
 
     // 旧快照读取、代次校验、合并和双层提交必须保持原子顺序，避免并发更新互相覆盖。
@@ -41,7 +39,7 @@ std::optional<qint64> ComponentCacheMetadataWriter::write(const QString& compone
             metadata.remove(QStringLiteral("model3dRotation"));
         }
 
-        sizeAfterUpdate = m_owner.m_memoryCache.insert(key, QJsonDocument(metadata).toJson(QJsonDocument::Compact));
+        sizeAfterUpdate = m_owner.m_memoryCache.saveMetadata(componentId, metadata);
         m_owner.saveMetadata(componentId, metadata);
     }
 

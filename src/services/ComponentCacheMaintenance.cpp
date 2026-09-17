@@ -45,10 +45,7 @@ void ComponentCacheMaintenance::remove(const QString& componentId) {
     qint64 sizeAfterUpdate = 0;
     {
         QMutexLocker locker(&m_owner.m_mutex);
-        const QString metadataKey = m_owner.makeMemoryKey(componentId, QStringLiteral("metadata"));
-        const QString symbolKey = m_owner.makeMemoryKey(componentId, QStringLiteral("symbol"));
-        const QString footprintKey = m_owner.makeMemoryKey(componentId, QStringLiteral("footprint"));
-        sizeAfterUpdate = m_owner.m_memoryCache.remove({metadataKey, symbolKey, footprintKey});
+        sizeAfterUpdate = m_owner.m_memoryCache.removeComponent(normalizedId);
     }
     emit m_owner.memoryCacheSizeChanged(sizeAfterUpdate);
     emit m_owner.cacheSizeChanged(cacheSize(m_owner));
