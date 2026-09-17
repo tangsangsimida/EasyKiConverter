@@ -535,21 +535,6 @@ private:
     void saveMetadata(const QString& lcscId, const QJsonObject& metadata);
 
     /**
-     * @brief 从ComponentData构建元数据
-     */
-    QJsonObject buildMetadata(const QString& componentId, const ComponentData& data) const;
-
-    /**
-     * @brief 合并新旧元数据，避免新数据缺字段时覆盖掉已有缓存
-     */
-    QJsonObject mergeMetadata(const QJsonObject& existing, const QJsonObject& incoming) const;
-
-    /**
-     * @brief 原子写文件，防止半写入缓存损坏
-     */
-    bool writeFileAtomically(const QString& path, const QByteArray& data) const;
-
-    /**
      * @brief 解析datasheet缓存文件实际路径
      */
     QString resolveDatasheetPath(const QString& lcscId,

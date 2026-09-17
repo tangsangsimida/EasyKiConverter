@@ -3,6 +3,7 @@
 #include "CacheDirectoryMigrator.h"
 #include "CacheFileLayout.h"
 #include "CacheHealthManager.h"
+#include "CacheMetadataStore.h"
 #include "CachePruner.h"
 #include "ConfigService.h"
 #include "core/kicad/Exporter3DModel.h"
@@ -29,48 +30,6 @@
 namespace EasyKiConverter {
 
 namespace {
-
-/**
- * @brief 获取元器件可用于缓存的三维模型信息。
- * @param data 元器件数据。
- * @return 优先使用独立模型字段，缺失 UUID 时回退到封装模型字段。
- */
-Model3DData effectiveModel3D(const ComponentData& data) {
-    Model3DData model;
-    if (data.model3DData())
-        model = *data.model3DData();
-    if (model.uuid().isEmpty() && data.footprintData()) {
-        const Model3DData footprintModel = data.footprintData()->model3D();
-        if (!footprintModel.uuid().isEmpty())
-            model = footprintModel;
-    }
-    return model;
-}
-
-// 校验缓存元数据中的三维模型字段是否完整有效。
-bool hasValidModel3DMetadata(const QJsonObject& metadata) {
-    if (!metadata.contains(QStringLiteral("model3duuid")))
-        return true;
-
-    const QJsonValue uuid = metadata.value(QStringLiteral("model3duuid"));
-    if (!uuid.isString() || uuid.toString().isEmpty())
-        return false;
-
-    if (metadata.contains(QStringLiteral("model3dName")) && !metadata.value(QStringLiteral("model3dName")).isString())
-        return false;
-
-    const auto validateVector = [&metadata](const QString& name) {
-        if (!metadata.contains(name))
-            return true;
-        const QJsonValue value = metadata.value(name);
-        if (!value.isObject())
-            return false;
-        Model3DBase vector;
-        return vector.fromJson(value.toObject());
-    };
-
-    return validateVector(QStringLiteral("model3dTranslation")) && validateVector(QStringLiteral("model3dRotation"));
-}
 
 // 按文件扩展名校验公共三维模型缓存内容。
 bool isUsableModel3DCacheData(const QByteArray& data, const QString& extension) {
@@ -103,32 +62,6 @@ bool hasValidCadDataFile(const QString& path) {
     const QByteArray data = file.readAll();
     file.close();
     return isValidCadData(data);
-}
-
-/**
- * @brief 从指定路径读取元器件元数据。
- * @param metadataPath 元数据文件路径。
- * @return 解析成功的 JSON 对象，读取或解析失败时返回空对象。
- */
-QJsonObject readMetadataFile(const QString& metadataPath) {
-    if (!QFileInfo::exists(metadataPath))
-        return QJsonObject();
-
-    QFile file(metadataPath);
-    if (!file.open(QIODevice::ReadOnly))
-        return QJsonObject();
-
-    const QByteArray data = file.readAll();
-    file.close();
-
-    QJsonParseError error;
-    const QJsonDocument doc = QJsonDocument::fromJson(data, &error);
-    if (error.error != QJsonParseError::NoError) {
-        LOG_WARN(LogModule::Core, "JSON parse error: {}", error.errorString());
-        return QJsonObject();
-    }
-
-    return doc.object();
 }
 
 }  // namespace
@@ -283,7 +216,7 @@ bool ComponentCacheService::hasCache(const QString& lcscId) const {
 bool ComponentCacheService::isCacheValid(const QString& lcscId) const {
     // 元数据和 CAD 文件必须在同一次目录迁移保护下完成检查。
     QMutexLocker diskLocker(&m_diskWriteMutex);
-    const QJsonObject metadata = readMetadataFile(metadataPath(lcscId));
+    const QJsonObject metadata = CacheMetadataStore::read(metadataPath(lcscId));
     if (metadata.isEmpty()) {
         return false;
     }
@@ -294,7 +227,7 @@ bool ComponentCacheService::isCacheValid(const QString& lcscId) const {
         return false;
     }
 
-    if (!hasValidModel3DMetadata(metadata)) {
+    if (!CacheMetadataStore::hasValidModel3D(metadata)) {
         return false;
     }
 
@@ -426,12 +359,12 @@ QSharedPointer<ComponentData> ComponentCacheService::loadComponentData(const QSt
     // 再加载数据（使用锁保护）
     QMutexLocker locker(&m_mutex);
 
-    QJsonObject metadata = readMetadataFile(metaPath);
+    QJsonObject metadata = CacheMetadataStore::read(metaPath);
     if (metadata.isEmpty()) {
         return nullptr;
     }
 
-    if (!hasValidModel3DMetadata(metadata)) {
+    if (!CacheMetadataStore::hasValidModel3D(metadata)) {
         LOG_WARN(LogModule::Core, "Rejected component cache with invalid 3D metadata: {}", lcscId);
         return nullptr;
     }
@@ -491,7 +424,7 @@ void ComponentCacheService::saveComponentMetadata(const QString& componentId,
                                                   const ComponentData& data,
                                                   uint64_t expectedGeneration,
                                                   bool replaceModel3DMetadata) {
-    QJsonObject metadata = buildMetadata(componentId, data);
+    QJsonObject metadata = CacheMetadataStore::build(componentId, data);
     QString key = makeMemoryKey(componentId, "metadata");
     qint64 sizeAfterUpdate = 0;
 
@@ -510,10 +443,9 @@ void ComponentCacheService::saveComponentMetadata(const QString& componentId,
             }
         }
 
-        const QJsonObject existingMetadata = readMetadataFile(metadataPath(componentId));
-        metadata = mergeMetadata(existingMetadata, metadata);
-        const Model3DData model3D = effectiveModel3D(data);
-        if (replaceModel3DMetadata && model3D.uuid().isEmpty()) {
+        const QJsonObject existingMetadata = CacheMetadataStore::read(metadataPath(componentId));
+        metadata = CacheMetadataStore::merge(existingMetadata, metadata);
+        if (replaceModel3DMetadata && !CacheMetadataStore::hasModel3D(data)) {
             metadata.remove(QStringLiteral("model3duuid"));
             metadata.remove(QStringLiteral("model3dName"));
             metadata.remove(QStringLiteral("model3dTranslation"));
@@ -578,7 +510,7 @@ void ComponentCacheService::saveSymbolData(const QString& lcscId, const QByteArr
         symbolPath = CacheFileLayout::symbolFile(componentCacheDir(lcscId));
     }
 
-    if (writeFileAtomically(symbolPath, data)) {
+    if (CacheMetadataStore::writeAtomically(symbolPath, data)) {
         LOG_DEBUG(LogModule::Core, "Saved symbol data to disk: {}", symbolPath);
         enforceDiskCacheLimit();
     } else {
@@ -644,7 +576,7 @@ void ComponentCacheService::saveFootprintData(const QString& lcscId,
         footprintPath = CacheFileLayout::footprintFile(componentCacheDir(lcscId));
     }
 
-    if (writeFileAtomically(footprintPath, data)) {
+    if (CacheMetadataStore::writeAtomically(footprintPath, data)) {
         LOG_DEBUG(LogModule::Core, "Saved footprint data to disk: {}", footprintPath);
         enforceDiskCacheLimit();
     } else {
@@ -710,7 +642,7 @@ void ComponentCacheService::saveCadDataJson(const QString& lcscId,
         cadDataPath = CacheFileLayout::cadDataFile(componentCacheDir(lcscId));
     }
 
-    if (writeFileAtomically(cadDataPath, cadData)) {
+    if (CacheMetadataStore::writeAtomically(cadDataPath, cadData)) {
         LOG_DEBUG(LogModule::Core, "Saved CAD data JSON to disk: {}", cadDataPath);
         enforceDiskCacheLimit();
     } else {
@@ -837,7 +769,7 @@ void ComponentCacheService::savePreviewImage(const QString& lcscId,
         previewPath = previewImagePath(lcscId, imageIndex);
     }
 
-    if (writeFileAtomically(previewPath, imageData)) {
+    if (CacheMetadataStore::writeAtomically(previewPath, imageData)) {
         LOG_DEBUG(LogModule::Core, "Saved preview image to disk: {}", previewPath);
         enforceDiskCacheLimit();
     } else {
@@ -952,7 +884,7 @@ QByteArray ComponentCacheService::downloadPreviewImage(const QString& lcscId,
 QByteArray ComponentCacheService::loadDatasheet(const QString& lcscId) const {
     // 数据手册路径和文件读取必须与目录迁移串行化。
     QMutexLocker diskLocker(&m_diskWriteMutex);
-    const QString preferredFormat = readMetadataFile(metadataPath(lcscId)).value("datasheetFormat").toString();
+    const QString preferredFormat = CacheMetadataStore::read(metadataPath(lcscId)).value("datasheetFormat").toString();
     const QString datasheetFilePath = resolveDatasheetPath(lcscId, preferredFormat, false);
     if (!QFileInfo::exists(datasheetFilePath)) {
         return QByteArray();
@@ -1026,7 +958,7 @@ void ComponentCacheService::saveDatasheet(const QString& lcscId,
         }
     }
 
-    if (writeFileAtomically(actualPath, datasheetData)) {
+    if (CacheMetadataStore::writeAtomically(actualPath, datasheetData)) {
         LOG_DEBUG(LogModule::Core, "Saved datasheet to disk: {}", actualPath);
         enforceDiskCacheLimit();
     } else {
@@ -1217,7 +1149,7 @@ void ComponentCacheService::saveModel3D(const QString& uuid,
         }
     }
 
-    if (writeFileAtomically(path, data)) {
+    if (CacheMetadataStore::writeAtomically(path, data)) {
         LOG_DEBUG(LogModule::Core, "Saved 3D model to disk: {}", path);
         enforceDiskCacheLimit();
     } else {
@@ -1421,13 +1353,13 @@ QStringList ComponentCacheService::getCachedComponentIds() const {
         if (entry != "." && entry != ".." && entry != "model3d") {
             // 解析元数据并校验三维字段，避免仅凭文件存在把损坏目录列为有效缓存。
             const QString normalizedId = entry.toUpper();
-            const QJsonObject metadata = readMetadataFile(metadataPath(entry));
+            const QJsonObject metadata = CacheMetadataStore::read(metadataPath(entry));
             const QJsonValue metadataId = metadata.value(QStringLiteral("lcscId"));
             const bool matchesEntry =
                 !metadata.contains(QStringLiteral("lcscId")) ||
                 (metadataId.isString() &&
                  (metadataId.toString().isEmpty() || metadataId.toString().compare(entry, Qt::CaseInsensitive) == 0));
-            if (!metadata.isEmpty() && matchesEntry && hasValidModel3DMetadata(metadata) &&
+            if (!metadata.isEmpty() && matchesEntry && CacheMetadataStore::hasValidModel3D(metadata) &&
                 !seenIds.contains(normalizedId)) {
                 result.append(normalizedId);
                 seenIds.insert(normalizedId);
@@ -1545,7 +1477,7 @@ void ComponentCacheService::enforceDiskCacheLimit(bool bypassCooldown) {
 QJsonObject ComponentCacheService::loadMetadata(const QString& lcscId) const {
     // 外部元数据读取必须与缓存目录迁移串行化。
     QMutexLocker diskLocker(&m_diskWriteMutex);
-    return readMetadataFile(metadataPath(lcscId));
+    return CacheMetadataStore::read(metadataPath(lcscId));
 }
 
 // 将元器件元数据原子写入二级磁盘缓存。
@@ -1555,86 +1487,9 @@ void ComponentCacheService::saveMetadata(const QString& lcscId, const QJsonObjec
     }
     QString metaPath = metadataPath(lcscId);
     QJsonDocument doc(metadata);
-    if (!writeFileAtomically(metaPath, doc.toJson(QJsonDocument::Indented))) {
+    if (!CacheMetadataStore::writeAtomically(metaPath, doc.toJson(QJsonDocument::Indented))) {
         LOG_WARN(LogModule::Core, "Failed to open metadata file for writing: {}", metaPath);
     }
-}
-
-// 从元器件及其封装数据构建可持久化的缓存元数据。
-QJsonObject ComponentCacheService::buildMetadata(const QString& componentId, const ComponentData& data) const {
-    QJsonObject metadata;
-    metadata["lcscId"] = componentId;
-    metadata["name"] = data.name();
-    metadata["prefix"] = data.prefix();
-    metadata["package"] = data.package();
-    metadata["manufacturer"] = data.manufacturer();
-    metadata["manufacturerPart"] = data.manufacturerPart();
-    metadata["datasheet"] = data.datasheet();
-    metadata["datasheetFormat"] = data.datasheetFormat();
-    metadata["cachedAt"] = QDateTime::currentDateTime().toString(Qt::ISODate);
-
-    QJsonArray previewUrls;
-    for (const QString& url : data.previewImages()) {
-        const QString normalizedUrl = UrlUtils::normalizePreviewImageUrl(url);
-        if (!normalizedUrl.isEmpty()) {
-            previewUrls.append(normalizedUrl);
-        }
-    }
-    metadata["previewImages"] = previewUrls;
-
-    const Model3DData model3D = effectiveModel3D(data);
-    if (!model3D.uuid().isEmpty()) {
-        metadata["model3duuid"] = model3D.uuid();
-        metadata["model3dName"] = model3D.name();
-        metadata["model3dTranslation"] = model3D.translation().toJson();
-        metadata["model3dRotation"] = model3D.rotation().toJson();
-    }
-
-    return metadata;
-}
-
-// 合并新旧元数据并保留未被空值覆盖的字段。
-QJsonObject ComponentCacheService::mergeMetadata(const QJsonObject& existing, const QJsonObject& incoming) const {
-    QJsonObject merged = existing;
-    for (auto it = incoming.begin(); it != incoming.end(); ++it) {
-        const QJsonValue& value = it.value();
-        bool shouldWrite = true;
-
-        if (value.isString() && value.toString().isEmpty()) {
-            shouldWrite = false;
-        } else if (value.isArray() && value.toArray().isEmpty()) {
-            shouldWrite = false;
-        } else if (value.isObject() && value.toObject().isEmpty()) {
-            shouldWrite = false;
-        }
-
-        if (shouldWrite) {
-            merged[it.key()] = value;
-        }
-    }
-
-    merged["cachedAt"] = incoming.value("cachedAt").toString(QDateTime::currentDateTime().toString(Qt::ISODate));
-    return merged;
-}
-
-// 使用临时文件和提交操作原子写入缓存文件。
-bool ComponentCacheService::writeFileAtomically(const QString& path, const QByteArray& data) const {
-    QFileInfo info(path);
-    if (!info.absoluteDir().exists() && !QDir().mkpath(info.absolutePath())) {
-        return false;
-    }
-
-    QSaveFile file(path);
-    if (!file.open(QIODevice::WriteOnly)) {
-        return false;
-    }
-
-    if (file.write(data) != data.size()) {
-        file.cancelWriting();
-        return false;
-    }
-
-    return file.commit();
 }
 
 // 根据格式和现有文件解析数据手册的实际路径。
