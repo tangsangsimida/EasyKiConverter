@@ -1,6 +1,7 @@
 #include "AltiumSchLibWriter.h"
 
 #include "AltiumSchGraphicOrderWriter.h"
+#include "AltiumSchImageRecordWriter.h"
 #include "AltiumSchImageStorageEncoder.h"
 #include "AltiumSchTextRecordWriter.h"
 #include "utils/AltiumConstants.h"
@@ -1464,49 +1465,10 @@ void AltiumSchLibWriter::writeTextFrameRecord(AltiumBinaryWriter& writer, const 
     textWriter.writeTextFrame(writer, frame);
 }
 
-/**
- * @brief 写入图片记录 (RECORD=30)
- */
+/** @brief 将图片记录委托给专用协作者，保持主写入器的状态边界不变。 */
 void AltiumSchLibWriter::writeImageRecord(AltiumBinaryWriter& writer, const AltiumSchImage& image) {
-    QMap<QString, QString> params;
-    params["RECORD"] = "30";
-    addOwnerParams(params, image.ownerPartId);
-    addCoordParam(params, "Location.X", image.locationX);
-    addCoordParam(params, "Location.Y", image.locationY);
-    addCoordParam(params, "Corner.X", image.cornerX);
-    addCoordParam(params, "Corner.Y", image.cornerY);
-    if (image.rotation != 0.0)
-        params["Rotation"] = QString::number(image.rotation, 'f', 3);
-    if (image.lineWidth != 0)
-        params["LineWidth"] = QString::number(image.lineWidth);
-    if (image.lineStyle != 0)
-        params["LineStyle"] = QString::number(image.lineStyle);
-    addColorParam(params, "Color", image.color);
-    if (image.areaColor != 0)
-        params["AreaColor"] = QString::number(image.areaColor);
-    if (image.isSolid)
-        params["IsSolid"] = "T";
-    if (image.transparent)
-        params["Transparent"] = "T";
-    if (image.showBorder)
-        params["ShowBorder"] = "T";
-    if (image.keepAspect)
-        params["KeepAspect"] = "T";
-    const bool isEmbeddedImage = image.embedImage;
-    const QString storageFileName = isEmbeddedImage ? m_embeddedImageNames.value(&image) : image.fileName;
-    const bool hasEmbeddedImage = isEmbeddedImage && !image.data.isEmpty() && !storageFileName.isEmpty() &&
-                                  storageFileName.toLocal8Bit().size() <= 255;
-    const bool canUseExternalFallback = isEmbeddedImage && image.data.isEmpty() && !image.fileName.trimmed().isEmpty();
-    if (hasEmbeddedImage)
-        params["EmbedImage"] = "T";
-    if (!isEmbeddedImage && !storageFileName.isEmpty())
-        params["FileName"] = storageFileName;
-    else if (hasEmbeddedImage)
-        params["FileName"] = storageFileName;
-    else if (canUseExternalFallback)
-        params["FileName"] = image.fileName;
-    addUniqueID(params);
-    writer.writeCStringParameterBlockUtf8(params);
+    AltiumSchImageRecordWriter imageWriter(*this);
+    imageWriter.write(writer, image);
 }
 
 /**

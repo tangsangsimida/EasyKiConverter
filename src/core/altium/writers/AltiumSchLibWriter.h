@@ -49,6 +49,7 @@ public:
 
 private:
     friend class AltiumSchGraphicOrderWriter;
+    friend class AltiumSchImageRecordWriter;
     friend class AltiumSchTextRecordWriter;
 
     // ---- 文件级写入 ----
