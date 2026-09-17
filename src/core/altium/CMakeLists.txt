@@ -11,6 +11,8 @@ target_sources(EasyKiConverterAltium
         ExporterAltiumFootprint.cpp
 
         # 写入器
+        writers/AltiumSchFontRegistry.h
+        writers/AltiumSchFontRegistry.cpp
         writers/AltiumSchLibWriter.h
         writers/AltiumSchLibWriter.cpp
         writers/AltiumPcbLibWriter.h

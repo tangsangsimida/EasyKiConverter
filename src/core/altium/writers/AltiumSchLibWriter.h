@@ -1,5 +1,6 @@
 #pragma once
 
+#include "AltiumSchFontRegistry.h"
 #include "compound/OLECompoundWriter.h"
 #include "models/AltiumSchComponent.h"
 #include "utils/AltiumBinaryWriter.h"
@@ -85,12 +86,6 @@ private:
 
     // ---- 辅助 ----
     QString getSectionKey(const QString& name) const;
-    int getOrAddFont(const QString& fontName,
-                     int fontSize,
-                     bool bold = false,
-                     bool italic = false,
-                     bool underline = false);
-    void registerTextFonts(const QList<AltiumSchComponent>& components);
     void addCoordParam(QMap<QString, QString>& params, const QString& key, int raw);
     void addColorParam(QMap<QString, QString>& params, const QString& key, uint32_t color);
     void addUniqueID(QMap<QString, QString>& params);
@@ -102,7 +97,7 @@ private:
     void addOwnerParams(QMap<QString, QString>& params, int ownerPartId);
 
     // 字体表管理
-    QList<AltiumModels::FontEntry> m_fonts;
+    AltiumSchFontRegistry m_fontRegistry;
     QHash<const AltiumSchImage*, QString> m_embeddedImageNames;
     int m_uniqueIdCounter = 0;
     int m_nextIndexInSheet = 0;

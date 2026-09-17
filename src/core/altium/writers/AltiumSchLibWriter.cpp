@@ -149,59 +149,6 @@ QString AltiumSchLibWriter::getSectionKey(const QString& name) const {
 }
 
 /**
- * @brief 获取或添加字体到字体表
- */
-int AltiumSchLibWriter::getOrAddFont(const QString& fontName, int fontSize, bool bold, bool italic, bool underline) {
-    for (int i = 0; i < m_fonts.size(); ++i) {
-        if (m_fonts[i].name.compare(fontName, Qt::CaseInsensitive) == 0 && m_fonts[i].size == fontSize &&
-            m_fonts[i].bold == bold && m_fonts[i].italic == italic && m_fonts[i].underline == underline) {
-            return i + 1;  // 1-based
-        }
-    }
-    AltiumModels::FontEntry entry;
-    entry.name = fontName;
-    entry.size = fontSize;
-    entry.bold = bold;
-    entry.italic = italic;
-    entry.underline = underline;
-    m_fonts.append(entry);
-    return m_fonts.size();  // 1-based
-}
-
-/**
- * @brief 预注册符号文本使用的字体。
- * @details FileHeader 在 Data 流之前写入，因此所有动态字体必须提前加入字体表。
- */
-void AltiumSchLibWriter::registerTextFonts(const QList<AltiumSchComponent>& components) {
-    constexpr double MILLIMETERS_PER_POINT = 25.4 / 72.0;
-    for (const AltiumSchComponent& component : components) {
-        for (const AltiumSchText& text : component.texts) {
-            const bool hasValidFontSize = std::isfinite(text.fontSizeMm) && text.fontSizeMm > 0.0;
-            if (text.fontName.isEmpty() && text.fontId > 0 && !hasValidFontSize)
-                continue;
-            const QString fontName = text.fontName.isEmpty() ? QStringLiteral("Times New Roman") : text.fontName;
-            const int fontSize = hasValidFontSize ? qMax(1, qRound(text.fontSizeMm / MILLIMETERS_PER_POINT)) : 10;
-            getOrAddFont(fontName, fontSize, text.bold, text.italic);
-        }
-        for (const AltiumSchTextFrame& frame : component.textFrames) {
-            const bool hasValidFontSize = std::isfinite(frame.fontSizeMm) && frame.fontSizeMm > 0.0;
-            if (frame.fontName.isEmpty() && frame.fontId > 0 && !hasValidFontSize)
-                continue;
-            const QString fontName = frame.fontName.isEmpty() ? QStringLiteral("Times New Roman") : frame.fontName;
-            const int fontSize = hasValidFontSize ? qMax(1, qRound(frame.fontSizeMm / MILLIMETERS_PER_POINT)) : 10;
-            getOrAddFont(fontName, fontSize, frame.bold, frame.italic);
-        }
-        for (const AltiumSchParameter& parameter : component.parameters) {
-            if (!std::isfinite(parameter.fontSizeMm) || parameter.fontSizeMm <= 0.0)
-                continue;
-            constexpr double MILLIMETERS_PER_POINT = 25.4 / 72.0;
-            const int fontSize = qMax(1, qRound(parameter.fontSizeMm / MILLIMETERS_PER_POINT));
-            getOrAddFont(QStringLiteral("Times New Roman"), fontSize);
-        }
-    }
-}
-
-/**
  * @brief 添加坐标参数（DXP 单位 + 小数部分）
  */
 void AltiumSchLibWriter::addCoordParam(QMap<QString, QString>& params, const QString& key, int raw) {
@@ -384,7 +331,7 @@ bool AltiumSchLibWriter::write(const QList<AltiumSchComponent>& components,
                 QStringLiteral("Altium SchLib 组件 %1 的 partCount 无效，已规范化为 1").arg(component.name));
         }
     }
-    m_fonts.clear();
+    m_fontRegistry.clear();
     m_embeddedImageNames.clear();
     m_uniqueIdCounter = 0;
     m_nextIndexInSheet = 0;
@@ -393,8 +340,8 @@ bool AltiumSchLibWriter::write(const QList<AltiumSchComponent>& components,
     prepareImageStorageNames(components);
 
     // 确保有默认字体
-    getOrAddFont("Times New Roman", 10);
-    registerTextFonts(components);
+    m_fontRegistry.getOrAdd(QStringLiteral("Times New Roman"), 10);
+    m_fontRegistry.registerTextFonts(components);
 
     OLECompoundWriter ole;
     if (!ole.create()) {
@@ -450,16 +397,17 @@ void AltiumSchLibWriter::writeFileHeader(OLECompoundWriter& ole, const QList<Alt
     params["UniqueID"] = uid;
 
     // 字体表
-    params["FontIdCount"] = QString::number(m_fonts.size());
-    for (int i = 0; i < m_fonts.size(); ++i) {
+    const QList<AltiumModels::FontEntry>& fonts = m_fontRegistry.entries();
+    params["FontIdCount"] = QString::number(fonts.size());
+    for (int i = 0; i < fonts.size(); ++i) {
         int idx = i + 1;
-        params[QString("FontName%1").arg(idx)] = m_fonts[i].name;
-        params[QString("Size%1").arg(idx)] = QString::number(m_fonts[i].size);
-        if (m_fonts[i].bold)
+        params[QString("FontName%1").arg(idx)] = fonts[i].name;
+        params[QString("Size%1").arg(idx)] = QString::number(fonts[i].size);
+        if (fonts[i].bold)
             params[QString("Bold%1").arg(idx)] = "T";
-        if (m_fonts[i].italic)
+        if (fonts[i].italic)
             params[QString("Italic%1").arg(idx)] = "T";
-        if (m_fonts[i].underline)
+        if (fonts[i].underline)
             params[QString("Underline%1").arg(idx)] = "T";
     }
 
@@ -1673,7 +1621,7 @@ void AltiumSchLibWriter::writeTextRecord(AltiumBinaryWriter& writer, const Altiu
         m_diagnostics.append(diagnostic);
         qWarning() << "AltiumSchLibWriter:" << diagnostic;
     }
-    if (text.fontName.isEmpty() && !hasValidFontSize && (text.fontId < 1 || text.fontId > m_fonts.size())) {
+    if (text.fontName.isEmpty() && !hasValidFontSize && (text.fontId < 1 || text.fontId > m_fontRegistry.size())) {
         const QString diagnostic = QStringLiteral("Altium SchLib 文本字体 ID 无效，已回退为默认字体");
         m_diagnostics.append(diagnostic);
         qWarning() << "AltiumSchLibWriter:" << diagnostic;
@@ -1687,8 +1635,8 @@ void AltiumSchLibWriter::writeTextRecord(AltiumBinaryWriter& writer, const Altiu
         constexpr double MILLIMETERS_PER_POINT = 25.4 / 72.0;
         const QString fontName = text.fontName.isEmpty() ? QStringLiteral("Times New Roman") : text.fontName;
         const int fontSize = hasValidFontSize ? qMax(1, qRound(text.fontSizeMm / MILLIMETERS_PER_POINT)) : 10;
-        fontId = getOrAddFont(fontName, fontSize, text.bold, text.italic);
-    } else if (fontId < 1 || fontId > m_fonts.size())
+        fontId = m_fontRegistry.getOrAdd(fontName, fontSize, text.bold, text.italic);
+    } else if (fontId < 1 || fontId > m_fontRegistry.size())
         fontId = 1;
     params["FontID"] = QString::number(fontId);
     params["Text"] = text.text;
@@ -1743,14 +1691,14 @@ void AltiumSchLibWriter::writeTextFrameRecord(AltiumBinaryWriter& writer, const 
         constexpr double MILLIMETERS_PER_POINT = 25.4 / 72.0;
         const QString fontName = frame.fontName.isEmpty() ? QStringLiteral("Times New Roman") : frame.fontName;
         const int fontSize = hasValidFontSize ? qMax(1, qRound(frame.fontSizeMm / MILLIMETERS_PER_POINT)) : 10;
-        fontId = getOrAddFont(fontName, fontSize, frame.bold, frame.italic);
+        fontId = m_fontRegistry.getOrAdd(fontName, fontSize, frame.bold, frame.italic);
     }
-    if (frame.fontName.isEmpty() && !hasValidFontSize && (fontId < 1 || fontId > m_fonts.size())) {
+    if (frame.fontName.isEmpty() && !hasValidFontSize && (fontId < 1 || fontId > m_fontRegistry.size())) {
         const QString diagnostic = QStringLiteral("Altium SchLib 文本框字体 ID 无效，已回退为默认字体");
         m_diagnostics.append(diagnostic);
         qWarning() << "AltiumSchLibWriter:" << diagnostic;
     }
-    params["FontID"] = QString::number(fontId >= 1 && fontId <= m_fonts.size() ? fontId : 1);
+    params["FontID"] = QString::number(fontId >= 1 && fontId <= m_fontRegistry.size() ? fontId : 1);
     if (hasValidFontSize)
         params["FontSize"] = QString::number(frame.fontSizeMm, 'f', 4);
     if (frame.text.trimmed().isEmpty()) {
@@ -2008,9 +1956,9 @@ void AltiumSchLibWriter::writeComponentParameterRecords(AltiumBinaryWriter& writ
         int fontId = field.fontId;
         if (std::isfinite(field.fontSizeMm) && field.fontSizeMm > 0.0) {
             constexpr double MILLIMETERS_PER_POINT = 25.4 / 72.0;
-            fontId = getOrAddFont(QStringLiteral("Times New Roman"),
-                                  qMax(1, qRound(field.fontSizeMm / MILLIMETERS_PER_POINT)));
-        } else if (fontId < 1 || fontId > m_fonts.size()) {
+            fontId = m_fontRegistry.getOrAdd(QStringLiteral("Times New Roman"),
+                                             qMax(1, qRound(field.fontSizeMm / MILLIMETERS_PER_POINT)));
+        } else if (fontId < 1 || fontId > m_fontRegistry.size()) {
             fontId = 1;
         }
         parameterParams["FONTID"] = QString::number(fontId);
