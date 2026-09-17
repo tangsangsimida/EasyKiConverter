@@ -52,6 +52,7 @@ private:
     friend class AltiumSchImageRecordWriter;
     friend class AltiumSchPinRecordWriter;
     friend class AltiumSchPrimitiveRecordWriter;
+    friend class AltiumSchComponentRecordWriter;
     friend class AltiumSchTextRecordWriter;
 
     // ---- 文件级写入 ----

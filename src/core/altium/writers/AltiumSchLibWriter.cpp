@@ -1,5 +1,6 @@
 #include "AltiumSchLibWriter.h"
 
+#include "AltiumSchComponentRecordWriter.h"
 #include "AltiumSchGraphicOrderWriter.h"
 #include "AltiumSchImageRecordWriter.h"
 #include "AltiumSchImageStorageEncoder.h"
@@ -20,130 +21,6 @@
 #include <cmath>
 
 namespace EasyKiConverter {
-
-namespace {
-
-struct ParameterField {
-    QString name;
-    QString value;
-    int locationX = 0;
-    int locationY = 0;
-    int fontId = 1;
-    uint32_t color = 0x000000;
-    bool hasLocation = false;
-    bool hasVisibility = false;
-    bool isHidden = true;
-    bool readOnly = false;
-    int orientation = 0;
-    int ownerPartId = -1;
-    double fontSizeMm = 0.0;
-};
-
-/**
- * @brief 将来源元数据转换为 Altium 可编辑的参数字段。
- * @details Comment 是 Altium 的 Value 字段；其余字段使用 RECORD=41，
- *          保留未知键以支持新的供应商数据而无需修改协议模型。
- */
-QList<ParameterField> componentParameterFields(const AltiumSchComponent& component) {
-    static const QMap<QString, QString> knownNames = {
-        {QStringLiteral("description"), QStringLiteral("Description")},
-        {QStringLiteral("manufacturer"), QStringLiteral("Manufacturer")},
-        {QStringLiteral("manufacturerPart"), QStringLiteral("Manufacturer Part Number")},
-        {QStringLiteral("datasheet"), QStringLiteral("Datasheet")},
-        {QStringLiteral("lcscId"), QStringLiteral("LCSC Part")},
-        {QStringLiteral("jlcId"), QStringLiteral("JLCPCB Part")},
-        {QStringLiteral("jlcpcbPartClass"), QStringLiteral("JLCPCB Part Class")},
-        {QStringLiteral("supplierPart"), QStringLiteral("Supplier Part Number")},
-        {QStringLiteral("supplier"), QStringLiteral("Supplier")},
-        {QStringLiteral("category"), QStringLiteral("Category")},
-        {QStringLiteral("source"), QStringLiteral("Source")},
-    };
-
-    QList<ParameterField> fields;
-    QSet<QString> names;
-    const auto appendField = [&](const QString& name,
-                                 const QString& value,
-                                 bool hasLocation = false,
-                                 int locationX = 0,
-                                 int locationY = 0,
-                                 bool hasVisibility = false,
-                                 bool isHidden = true,
-                                 bool readOnly = false,
-                                 int orientation = 0,
-                                 int ownerPartId = -1,
-                                 int fontId = 1,
-                                 uint32_t color = 0x000000,
-                                 double fontSizeMm = 0.0) {
-        const QString normalizedName = name.trimmed();
-        const QString deduplicationKey = QStringLiteral("%1:%2").arg(normalizedName).arg(ownerPartId);
-        if (normalizedName.isEmpty() || value.trimmed().isEmpty() || names.contains(deduplicationKey))
-            return;
-        ParameterField field;
-        field.name = normalizedName;
-        field.value = value.trimmed();
-        field.hasLocation = hasLocation;
-        field.locationX = locationX;
-        field.locationY = locationY;
-        field.hasVisibility = hasVisibility;
-        field.isHidden = isHidden;
-        field.readOnly = readOnly;
-        field.orientation = orientation;
-        field.ownerPartId = ownerPartId;
-        field.fontId = fontId;
-        field.color = color;
-        field.fontSizeMm = fontSizeMm;
-        fields.append(field);
-        names.insert(deduplicationKey);
-    };
-
-    QString value = component.sourceMetadata.value(QStringLiteral("value")).trimmed();
-    if (value.isEmpty())
-        value = component.name.trimmed();
-    if (!value.isEmpty()) {
-        appendField(QStringLiteral("Comment"), value);
-    }
-
-    QString description = component.sourceMetadata.value(QStringLiteral("description")).trimmed();
-    if (description.isEmpty())
-        description = component.description.trimmed();
-    if (!description.isEmpty()) {
-        appendField(QStringLiteral("Description"), description);
-    }
-
-    for (auto it = component.sourceMetadata.constBegin(); it != component.sourceMetadata.constEnd(); ++it) {
-        const QString value = it.value().trimmed();
-        if (value.isEmpty() || it.key() == QStringLiteral("value") || it.key() == QStringLiteral("description"))
-            continue;
-
-        const QString name = knownNames.value(it.key(), it.key()).trimmed();
-        appendField(name, value);
-    }
-
-    if (!component.aliases.isEmpty())
-        appendField(QStringLiteral("Aliases"), component.aliases.join(QStringLiteral(", ")));
-
-    for (const AltiumSchParameter& parameter : component.parameters) {
-        QString name = parameter.name.trimmed();
-        if (name.compare(QStringLiteral("Value"), Qt::CaseInsensitive) == 0)
-            name = QStringLiteral("Comment");
-        appendField(name,
-                    parameter.value,
-                    parameter.locationX != 0 || parameter.locationY != 0,
-                    parameter.locationX,
-                    parameter.locationY,
-                    true,
-                    parameter.isHidden,
-                    parameter.readOnly,
-                    parameter.orientation,
-                    parameter.ownerPartId,
-                    parameter.fontId,
-                    parameter.color,
-                    parameter.fontSizeMm);
-    }
-    return fields;
-}
-
-}  // namespace
 
 /**
  * @brief 获取元件的 Section Key（存储键）
@@ -1308,143 +1185,16 @@ void AltiumSchLibWriter::writeImageStorage(OLECompoundWriter& ole, const QList<A
  */
 void AltiumSchLibWriter::writeComponentParameterRecords(AltiumBinaryWriter& writer,
                                                         const AltiumSchComponent& component) {
-    QString designator = component.designatorPrefix.trimmed();
-    if (designator.isEmpty()) {
-        designator = "?";
-    } else if (!designator.endsWith('?')) {
-        designator += '?';
-    }
-
-    QMap<QString, QString> designatorParams;
-    designatorParams["RECORD"] = "34";
-    designatorParams["OWNERPARTID"] = "-1";
-    designatorParams["LOCATION.X_FRAC"] = "-5";
-    designatorParams["LOCATION.Y_FRAC"] = "5";
-    designatorParams["COLOR"] = "8388608";
-    designatorParams["FONTID"] = "1";
-    designatorParams["TEXT"] = designator;
-    designatorParams["NAME"] = "Designator";
-    designatorParams["READONLYSTATE"] = "1";
-    addUniqueID(designatorParams);
-    writer.writeCStringParameterBlockUtf8(designatorParams);
-
-    for (const ParameterField& field : componentParameterFields(component)) {
-        QMap<QString, QString> parameterParams;
-        parameterParams["RECORD"] = "41";
-        const int ownerPartId = normalizeOwnerPartId(field.ownerPartId, QStringLiteral("参数"));
-        parameterParams["OWNERPARTID"] = QString::number(ownerPartId);
-        if (ownerPartId >= 1) {
-            parameterParams["OWNERPARTDISPLAYMODE"] = "1";
-            addContentIndex(parameterParams);
-        }
-        if (field.hasLocation) {
-            addCoordParam(parameterParams, "LOCATION.X", field.locationX);
-            addCoordParam(parameterParams, "LOCATION.Y", field.locationY);
-        } else {
-            parameterParams["LOCATION.X_FRAC"] = "-5";
-            parameterParams["LOCATION.Y_FRAC"] = "-15";
-        }
-        if (field.color != 0)
-            parameterParams["COLOR"] = QString::number(field.color);
-        int fontId = field.fontId;
-        if (std::isfinite(field.fontSizeMm) && field.fontSizeMm > 0.0) {
-            constexpr double MILLIMETERS_PER_POINT = 25.4 / 72.0;
-            fontId = m_fontRegistry.getOrAdd(QStringLiteral("Times New Roman"),
-                                             qMax(1, qRound(field.fontSizeMm / MILLIMETERS_PER_POINT)));
-        } else if (fontId < 1 || fontId > m_fontRegistry.size()) {
-            fontId = 1;
-        }
-        parameterParams["FONTID"] = QString::number(fontId);
-        parameterParams["TEXT"] = field.value;
-        parameterParams["NAME"] = field.name;
-        if (field.orientation != 0)
-            parameterParams["Orientation"] = QString::number(field.orientation);
-        if (field.hasVisibility && field.isHidden)
-            parameterParams["IsHidden"] = "T";
-        if (field.readOnly)
-            parameterParams["READONLYSTATE"] = "1";
-        addUniqueID(parameterParams);
-        writer.writeCStringParameterBlockUtf8(parameterParams);
-    }
+    AltiumSchComponentRecordWriter recordWriter(*this);
+    recordWriter.writeParameters(writer, component);
 }
 
 /**
  * @brief 写入实现记录 (RECORD=44-48)
  */
 void AltiumSchLibWriter::writeImplementationRecords(AltiumBinaryWriter& writer, const AltiumSchComponent& component) {
-    // RECORD=44: ImplementationList（容器，始终写入）
-    {
-        QMap<QString, QString> params;
-        params["RECORD"] = "44";
-        params["DataFileFormatID"] = "";
-        params["Description"] = "";
-        params["FileName"] = "";
-        writer.writeCStringParameterBlockUtf8(params);
-    }
-
-    // 每个实现
-    for (int implementationIndex = 0; implementationIndex < component.implementations.size(); ++implementationIndex) {
-        const AltiumSchComponent::Implementation& impl = component.implementations.at(implementationIndex);
-        // RECORD=45: Implementation
-        {
-            QMap<QString, QString> params;
-            params["RECORD"] = "45";
-            params["DESCRIPTION"] = impl.modelName;
-            params["MODELNAME"] = impl.modelName;
-            params["MODELTYPE"] = impl.modelType;
-            const QString modelType = impl.modelType.trimmed().toUpper();
-            const bool isPcbLibrary = modelType.isEmpty() || modelType == QStringLiteral("PCBLIB");
-            const bool hasExplicitDataFileKind =
-                !impl.dataFileKind.trimmed().isEmpty() &&
-                (isPcbLibrary || impl.dataFileKind.compare(QStringLiteral("PCBLib"), Qt::CaseInsensitive) != 0);
-            const bool hasDataFile =
-                isPcbLibrary || hasExplicitDataFileKind || !impl.dataFileEntity.trimmed().isEmpty();
-            params["DATAFILECOUNT"] = hasDataFile ? "1" : "0";
-            if (hasDataFile) {
-                params["MODELDATAFILEKIND1"] = impl.dataFileKind.isEmpty() ? "PCBLib" : impl.dataFileKind;
-                params["MODELDATAFILEENTITY1"] =
-                    impl.dataFileEntity.isEmpty()
-                        ? (isPcbLibrary && !m_libraryName.isEmpty() ? m_libraryName + ".PcbLib" : "*")
-                        : impl.dataFileEntity;
-            }
-            // Altium 只允许一个默认实现，候选封装和附加模型不能全部标记为当前。
-            if (implementationIndex == 0)
-                params["ISCURRENT"] = "T";
-            addUniqueID(params);
-            writer.writeCStringParameterBlockUtf8(params);
-        }
-
-        // RECORD=46: MapDefinerList（容器）
-        {
-            QMap<QString, QString> params;
-            params["RECORD"] = "46";
-            writer.writeCStringParameterBlockUtf8(params);
-        }
-
-        // RECORD=47: 将每个引脚映射到当前实现。
-        // Altium 会依据这些索引建立符号引脚与 PCBLib 实现之间的关系；
-        // 缺少该记录时，库虽然可以打开，但引脚归属和封装关联并不完整。
-        for (int pinIndex = 1; pinIndex <= component.pins.size(); ++pinIndex) {
-            QMap<QString, QString> pinMappingParams;
-            pinMappingParams["RECORD"] = "47";
-            pinMappingParams["DESINTF"] = QString::number(pinIndex);
-            pinMappingParams["DESIMPCOUNT"] = "1";
-            const QString mappedPin = impl.pinMappings.value(QString::number(pinIndex), QString::number(pinIndex));
-            pinMappingParams["DESIMP0"] = mappedPin;
-            pinMappingParams["ISTRIVIAL"] = "T";
-            addUniqueID(pinMappingParams);
-            writer.writeCStringParameterBlockUtf8(pinMappingParams);
-        }
-
-        // RECORD=48: ImplementationParameters
-        {
-            QMap<QString, QString> params;
-            params["RECORD"] = "48";
-            for (auto it = impl.parameters.constBegin(); it != impl.parameters.constEnd(); ++it)
-                params[it.key()] = it.value();
-            writer.writeCStringParameterBlockUtf8(params);
-        }
-    }
+    AltiumSchComponentRecordWriter recordWriter(*this);
+    recordWriter.writeImplementations(writer, component);
 }
 
 /**
@@ -1476,7 +1226,7 @@ int AltiumSchLibWriter::componentRecordCount(const AltiumSchComponent& component
  * @return Designator、Value 和自定义参数记录总数
  */
 int AltiumSchLibWriter::componentParameterRecordCount(const AltiumSchComponent& component) const {
-    return 1 + componentParameterFields(component).size();
+    return AltiumSchComponentRecordWriter::parameterRecordCount(component);
 }
 
 /**

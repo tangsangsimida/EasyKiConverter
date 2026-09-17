@@ -27,6 +27,8 @@ target_sources(EasyKiConverterAltium
         writers/AltiumSchPinRecordWriter.cpp
         writers/AltiumSchPrimitiveRecordWriter.h
         writers/AltiumSchPrimitiveRecordWriter.cpp
+        writers/AltiumSchComponentRecordWriter.h
+        writers/AltiumSchComponentRecordWriter.cpp
         writers/AltiumPcbLibWriter.h
         writers/AltiumPcbLibWriter.cpp
 
