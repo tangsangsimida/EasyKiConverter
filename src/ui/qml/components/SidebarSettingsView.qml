@@ -33,7 +33,8 @@ Item {
                     model: root.exportTargetModel ? root.exportTargetModel.availableTargets : []
                     Rectangle {
                         Layout.fillWidth: true
-                        Layout.preferredHeight: 52
+                        Layout.minimumWidth: 0
+                        Layout.preferredHeight: 76
                         radius: AppStyle.radius.md
                         property bool isActive: root.exportTargetModel ? root.exportTargetModel.currentIndex === index : false
                         property string targetId: modelData.id || ""
@@ -54,13 +55,16 @@ Item {
                         ColumnLayout {
                             anchors.fill: parent
                             anchors.margins: AppStyle.spacing.sm
-                            spacing: 1
+                            spacing: 4
                             Text {
                                 text: modelData.displayName || ""
                                 font.pixelSize: AppStyle.fontSizes.xs
                                 font.bold: true
                                 color: isActive ? AppStyle.colors.primary : AppStyle.colors.textPrimary
+                                Layout.fillWidth: true
                                 Layout.alignment: Qt.AlignHCenter
+                                horizontalAlignment: Text.AlignHCenter
+                                elide: Text.ElideRight
                             }
 
                             Text {
@@ -75,7 +79,12 @@ Item {
                                 }
                                 font.pixelSize: 9
                                 color: AppStyle.colors.textSecondary
+                                Layout.fillWidth: true
                                 Layout.alignment: Qt.AlignHCenter
+                                horizontalAlignment: Text.AlignHCenter
+                                maximumLineCount: 2
+                                wrapMode: Text.WordWrap
+                                elide: Text.ElideRight
                             }
                         }
 
