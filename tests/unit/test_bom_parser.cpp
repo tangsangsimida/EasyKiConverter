@@ -42,6 +42,13 @@ private slots:
         QVERIFY(!BomParser::validateId(QStringLiteral("C0603")));
     }
 
+    // 验证文本提取会规范化大小写、去重并过滤排除编号。
+    void extractIdsFromTextNormalizesDeduplicatesAndFiltersIds() {
+        const QString text = QStringLiteral("C1234 c1234 C0402 R12345 C56789");
+
+        QCOMPARE(BomParser::extractIdsFromText(text), QStringList({QStringLiteral("C1234"), QStringLiteral("C56789")}));
+    }
+
     // 验证 CSV 解析会规范化、去重并过滤无效编号。
     void parseCsvNormalizesDeduplicatesAndFiltersIds() {
         BomParser parser;

@@ -1015,19 +1015,7 @@ bool ComponentService::validateComponentId(const QString& componentId) const {
 
 /** @brief 从文本中提取元器件编号。 */
 QStringList ComponentService::extractComponentIdFromText(const QString& text) const {
-    // 依然保留简单的提取逻辑，或者可以进一步整合进 BomParser
-    QStringList extractedIds;
-    QRegularExpression re("[Cc]\\d{4,}");
-    QRegularExpressionMatchIterator it = re.globalMatch(text);
-
-    while (it.hasNext()) {
-        QRegularExpressionMatch match = it.next();
-        QString id = match.captured().toUpper();
-        if (!BomParser::getExcludedIds().contains(id) && !extractedIds.contains(id)) {
-            extractedIds.append(id);
-        }
-    }
-    return extractedIds;
+    return BomParser::extractIdsFromText(text);
 }
 
 /** @brief 解析 BOM 文件中的元器件编号。 */
