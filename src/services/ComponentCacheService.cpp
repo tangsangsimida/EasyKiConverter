@@ -7,6 +7,7 @@
 #include "CacheHealthManager.h"
 #include "CacheMetadataStore.h"
 #include "CachePruner.h"
+#include "ComponentCacheBinaryFileStore.h"
 #include "ConfigService.h"
 #include "core/kicad/Exporter3DModel.h"
 #include "core/network/NetworkClient.h"
@@ -413,21 +414,7 @@ QByteArray ComponentCacheService::loadSymbolData(const QString& lcscId) const {
     QMutexLocker diskLocker(&m_diskWriteMutex);
     // L1未命中，查L2磁盘
     const QString symbolPath = CacheFileLayout::symbolFile(componentCacheDir(lcscId));
-    if (!QFileInfo::exists(symbolPath)) {
-        return QByteArray();
-    }
-
-    QFile file(symbolPath);
-    if (file.open(QIODevice::ReadOnly)) {
-        data = file.readAll();
-        file.close();
-        if (CacheDataValidator::isValidCadData(data)) {
-            return data;
-        }
-        QFile::remove(symbolPath);
-    }
-
-    return QByteArray();
+    return ComponentCacheBinaryFileStore::readCadData(symbolPath);
 }
 
 // 将封装数据原子写入二级磁盘缓存。
@@ -479,21 +466,7 @@ QByteArray ComponentCacheService::loadFootprintData(const QString& lcscId) const
     QMutexLocker diskLocker(&m_diskWriteMutex);
     // L1未命中，查L2磁盘
     const QString footprintPath = CacheFileLayout::footprintFile(componentCacheDir(lcscId));
-    if (!QFileInfo::exists(footprintPath)) {
-        return QByteArray();
-    }
-
-    QFile file(footprintPath);
-    if (file.open(QIODevice::ReadOnly)) {
-        data = file.readAll();
-        file.close();
-        if (CacheDataValidator::isValidCadData(data)) {
-            return data;
-        }
-        QFile::remove(footprintPath);
-    }
-
-    return QByteArray();
+    return ComponentCacheBinaryFileStore::readCadData(footprintPath);
 }
 
 // 将 CAD 原始 JSON 原子写入二级磁盘缓存。
@@ -535,21 +508,7 @@ QByteArray ComponentCacheService::loadCadDataJson(const QString& lcscId) const {
     // CAD 文件读取必须与目录迁移串行化。
     QMutexLocker diskLocker(&m_diskWriteMutex);
     const QString cadDataPath = CacheFileLayout::cadDataFile(componentCacheDir(lcscId));
-    if (!QFileInfo::exists(cadDataPath)) {
-        return QByteArray();
-    }
-
-    QFile file(cadDataPath);
-    if (file.open(QIODevice::ReadOnly)) {
-        QByteArray data = file.readAll();
-        file.close();
-        if (CacheDataValidator::isValidCadData(data)) {
-            return data;
-        }
-        QFile::remove(cadDataPath);
-    }
-
-    return QByteArray();
+    return ComponentCacheBinaryFileStore::readCadData(cadDataPath);
 }
 
 // 判断符号、封装和 CAD 数据缓存是否完整。
@@ -596,22 +555,8 @@ QByteArray ComponentCacheService::loadPreviewImage(const QString& lcscId, int im
         previewPath = previewImagePath(lcscId, imageIndex);
     }
 
-    // I/O 操作在锁外进行，避免长时间持锁导致其他线程阻塞
-    if (!QFileInfo::exists(previewPath)) {
-        return QByteArray();
-    }
-
-    QFile file(previewPath);
-    if (file.open(QIODevice::ReadOnly)) {
-        QByteArray data = file.readAll();
-        file.close();
-        if (CacheDataValidator::isValidPreviewImage(data)) {
-            return data;
-        }
-        QFile::remove(previewPath);
-    }
-
-    return QByteArray();
+    // I/O 操作由文件存储器完成，避免服务层重复实现校验和损坏文件清理。
+    return ComponentCacheBinaryFileStore::readPreviewImage(previewPath);
 }
 
 // 使用 Qt 图片解码器拒绝错误页、截断文件和其他非图片缓存内容。
