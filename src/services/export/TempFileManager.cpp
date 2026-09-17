@@ -290,7 +290,9 @@ QString TempFileManager::tempDirectory() const {
     if (m_outputPath.isEmpty()) {
         return QString();
     }
-    return m_outputPath + QDir::separator() + m_tempDirName;
+    // 使用与 setOutputPath() 注册引用时相同的路径构造方式，避免 Windows
+    // 下不同路径分隔符导致共享临时目录引用计数无法匹配。
+    return QDir(m_outputPath).filePath(m_tempDirName);
 }
 
 // 创建并登记单个元器件的临时文件路径。
