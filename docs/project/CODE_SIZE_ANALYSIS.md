@@ -8,13 +8,13 @@
 
 | 类型 | 文件数 | 过长 | 偏长 | 健康率 |
 |------|--------|------|------|--------|
-| 产品源码与资源 | 465 | 54 | 38 | -- |
+| 产品源码与资源 | 467 | 54 | 38 | -- |
 | Python 工具 | 13 | 5 | 4 | -- |
-| **合计** | **478** | **59** | **42** | -- |
+| **合计** | **480** | **59** | **42** | -- |
 
 当前统计工具按文件总行数使用统一阈值：高风险 >500 行，中风险 300-500 行，低风险 200-300 行。类型分项和代码/注释行数需要额外脚本才能精确拆分，因此本报告不再保留旧的推算健康率。
 
-当前基线：`src` 405 个文件、76,357 行；`tests` 58 个文件、18,632 行；翻译资源 2 个文件、3,303 行；`tools/python` 13 个文件、6,640 行。项目工具的 `--all` 统计覆盖产品源码、测试和翻译资源，工具目录单独统计后合计 478 个文件、104,932 行。
+当前基线：`src` 407 个文件、76,438 行；`tests` 58 个文件、18,632 行；翻译资源 2 个文件、3,303 行；`tools/python` 13 个文件、6,640 行。项目工具的 `--all` 统计覆盖产品源码、测试和翻译资源，工具目录单独统计后合计 480 个文件、105,013 行。
 
 ---
 
@@ -60,8 +60,9 @@
 | `src/services/DatasheetCacheFileStore.cpp` | 88 | -- | -- | 独立承载数据手册缓存读取、格式校验、格式切换、旧文件清理和原子写入 |
 | `src/services/ComponentCacheMaintenance.cpp` | 130 | -- | -- | 独立协调缓存删除、全量清理、L1 清理、有效组件枚举和磁盘大小统计 |
 | `src/services/ComponentCacheQuotaEnforcer.cpp` | 40 | -- | -- | 独立协调磁盘缓存限制、冷却策略、目录清理和缓存大小信号 |
-| `src/ui/viewmodels/ComponentListViewModel.cpp` | 1,204 | 937 | 155 | ViewModel 职责过多：列表管理+搜索+选择+批量操作；预览更新缓冲、列表项更新缓冲、验证队列状态和验证错误分类已提取 |
+| `src/ui/viewmodels/ComponentListViewModel.cpp` | 1,067 | -- | -- | ViewModel 职责过多：列表管理+搜索+选择+批量操作；列表数据回调、预览更新缓冲、列表项更新缓冲、验证队列状态和验证错误分类已提取 |
 | `src/ui/viewmodels/ComponentValidationCoordinator.cpp` | 81 | -- | -- | 独立协调验证队列的启动、并发调度、完成回调和 BOM 导入状态推进 |
+| `src/ui/viewmodels/ComponentListDataCoordinator.cpp` | 166 | -- | -- | 独立协调组件基础信息、CAD、LCSC、数据手册和错误回调到列表项状态的转换 |
 | `src/services/ComponentService.cpp` | 977 | -- | -- | 数据获取+缓存+错误处理仍在服务内，基础信息字段解析、BOM 文本编号提取、缓存加载任务、预览图文件编码、CAD 结果收敛、队列初始化、并行批量协调和 CAD 响应协调已提取 |
 | `src/services/ComponentCadFetchCoordinator.cpp` | 93 | -- | -- | 独立协调 CAD 响应的后台解析、缓存代次校验、结果提交和并行批处理通知 |
 
@@ -106,8 +107,9 @@
 - `ComponentCacheService.cpp`（925 行）：已提取缓存文件布局、目录迁移、元数据存储、组件数据读取、二进制文件读取、CAD 数据写入、预览图写入、数据手册文件存储、数据手册下载、缓存维护、磁盘配额清理、写入代次策略、数据校验、tombstone、L1 存储、元数据写入协调和 3D 文件 I/O 职责，后续继续按锁边界拆分管理流程
 - `ComponentCacheCadDataWriter.cpp`（86 行）：统一承载符号、封装和 CAD JSON 的磁盘写入流程，保持目录迁移锁、代次校验、配额维护和内存缓存同步顺序
 - `Model3DCacheFileStore.cpp`（64 行）：独立承载三维模型文件的校验读取、原子写入和导出复制，ComponentCacheService 继续负责锁、路径、代次和配额策略
-- `ComponentListViewModel.cpp`（1,204 行）：已提取列表状态统计、编号索引、预览更新缓冲、列表项更新缓冲、验证队列状态、验证错误分类、定时器初始化、服务信号连接和验证队列协调职责，并移除失效的预览图编码线程池，后续继续拆分搜索、选择和批量操作
+- `ComponentListViewModel.cpp`（1,067 行）：已提取列表状态统计、编号索引、组件服务数据回调、预览更新缓冲、列表项更新缓冲、验证队列状态、验证错误分类、定时器初始化、服务信号连接和验证队列协调职责，并移除失效的预览图编码线程池，后续继续拆分搜索、选择和批量操作
 - `ComponentValidationCoordinator.cpp`（81 行）：独立协调验证队列启动、并发调度、完成回调和 BOM 导入状态推进，保持 ViewModel 的状态更新与服务请求顺序
+- `ComponentListDataCoordinator.cpp`（166 行）：独立协调基础信息、CAD、LCSC、数据手册和错误回调，保持列表项状态更新、验证完成通知和批量刷新顺序
 - `ComponentListItemUpdateBuffer.cpp`（约 31 行）：独立收集异步基础信息更新涉及的列表项，负责去重、线程安全转移和清理
 - `ComponentCachePreviewImageWriter.cpp`（52 行）：独立承载预览图二级缓存写入，保持校验、目录迁移锁、代次策略、原子替换和配额维护顺序
 - `DatasheetCacheFileStore.cpp`（88 行）：独立承载数据手册缓存读取、格式校验、格式切换、旧文件清理和原子写入
