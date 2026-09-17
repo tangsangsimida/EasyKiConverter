@@ -8,13 +8,13 @@
 
 | 类型 | 文件数 | 过长 | 偏长 | 健康率 |
 |------|--------|------|------|--------|
-| 产品源码与资源 | 473 | 54 | 38 | -- |
+| 产品源码与资源 | 475 | 54 | 38 | -- |
 | Python 工具 | 13 | 5 | 4 | -- |
-| **合计** | **486** | **59** | **42** | -- |
+| **合计** | **488** | **59** | **42** | -- |
 
 当前统计工具按文件总行数使用统一阈值：高风险 >500 行，中风险 300-500 行，低风险 200-300 行。类型分项和代码/注释行数需要额外脚本才能精确拆分，因此本报告不再保留旧的推算健康率。
 
-当前基线：`src` 413 个文件、76,570 行；`tests` 58 个文件、18,632 行；翻译资源 2 个文件、3,303 行；`tools/python` 13 个文件、6,640 行。项目工具的 `--all` 统计覆盖产品源码、测试和翻译资源，工具目录单独统计后合计 486 个文件、105,145 行。
+当前基线：`src` 415 个文件、76,693 行；`tests` 58 个文件、18,632 行；翻译资源 2 个文件、3,303 行；`tools/python` 13 个文件、6,640 行。项目工具的 `--all` 统计覆盖产品源码、测试和翻译资源，工具目录单独统计后合计 488 个文件、105,268 行。
 
 ---
 
@@ -53,13 +53,14 @@
 
 | 文件 | 总行数 | 代码行 | 注释行 | 问题分析 |
 |------|--------|--------|--------|---------|
-| `src/services/ComponentCacheService.cpp` | 925 | -- | -- | 缓存目录、生命周期、预览图和数据手册缓存接口仍集中，元数据、3D 文件、CAD 数据、预览图写入、数据手册文件存储、数据手册下载、缓存维护和配额清理已提取 |
+| `src/services/ComponentCacheService.cpp` | 899 | -- | -- | 缓存目录、生命周期和二级缓存接口仍集中，元数据、3D 文件、CAD 数据、预览图写入、数据手册文件存储、数据手册下载、缓存维护、配额清理和一级内存缓存语义已提取 |
 | `src/services/ComponentCacheMetadataWriter.cpp` | 51 | -- | -- | 独立协调元数据快照合并、代次校验和 L1/L2 提交 |
 | `src/services/ComponentCacheCadDataWriter.cpp` | 86 | -- | -- | 独立协调符号、封装和 CAD JSON 的校验、原子写入、配额维护及 L1 同步 |
 | `src/services/ComponentCachePreviewImageWriter.cpp` | 52 | -- | -- | 独立协调预览图校验、代次/tombstone 检查、原子写入和配额维护 |
 | `src/services/DatasheetCacheFileStore.cpp` | 88 | -- | -- | 独立承载数据手册缓存读取、格式校验、格式切换、旧文件清理和原子写入 |
 | `src/services/ComponentCacheMaintenance.cpp` | 130 | -- | -- | 独立协调缓存删除、全量清理、L1 清理、有效组件枚举和磁盘大小统计 |
 | `src/services/ComponentCacheQuotaEnforcer.cpp` | 40 | -- | -- | 独立协调磁盘缓存限制、冷却策略、目录清理和缓存大小信号 |
+| `src/services/ComponentCacheMemoryStore.cpp` | 92 | -- | -- | 独立承载一级缓存复合键、元数据 JSON、CAD 数据校验、LRU 数据访问和容量统计 |
 | `src/ui/viewmodels/ComponentListViewModel.cpp` | 896 | -- | -- | ViewModel 职责过多：列表管理+搜索+选择；批量导入、列表数据回调、预览更新缓冲、列表项更新缓冲、验证队列状态和验证错误分类已提取 |
 | `src/ui/viewmodels/ComponentValidationCoordinator.cpp` | 81 | -- | -- | 独立协调验证队列的启动、并发调度、完成回调和 BOM 导入状态推进 |
 | `src/ui/viewmodels/ComponentListDataCoordinator.cpp` | 166 | -- | -- | 独立协调组件基础信息、CAD、LCSC、数据手册和错误回调到列表项状态的转换 |
@@ -107,7 +108,7 @@
 - `SymbolData.h` 相关的模型文件 -- 拆分为 IR + Importer
 
 **需要独立拆分的**：
-- `ComponentCacheService.cpp`（925 行）：已提取缓存文件布局、目录迁移、元数据存储、组件数据读取、二进制文件读取、CAD 数据写入、预览图写入、数据手册文件存储、数据手册下载、缓存维护、磁盘配额清理、写入代次策略、数据校验、tombstone、L1 存储、元数据写入协调和 3D 文件 I/O 职责，后续继续按锁边界拆分管理流程
+- `ComponentCacheService.cpp`（899 行）：已提取缓存文件布局、目录迁移、元数据存储、组件数据读取、二进制文件读取、CAD 数据写入、预览图写入、数据手册文件存储、数据手册下载、缓存维护、磁盘配额清理、写入代次策略、数据校验、tombstone、L1 内存缓存语义、元数据写入协调和 3D 文件 I/O 职责，后续继续按锁边界拆分管理流程
 - `ComponentCacheCadDataWriter.cpp`（86 行）：统一承载符号、封装和 CAD JSON 的磁盘写入流程，保持目录迁移锁、代次校验、配额维护和内存缓存同步顺序
 - `Model3DCacheFileStore.cpp`（64 行）：独立承载三维模型文件的校验读取、原子写入和导出复制，ComponentCacheService 继续负责锁、路径、代次和配额策略
 - `ComponentListViewModel.cpp`（896 行）：已提取列表状态统计、编号索引、批量导入、组件服务数据回调、预览更新缓冲、列表项更新缓冲、验证队列状态、验证错误分类、定时器初始化、服务信号连接和验证队列协调职责，并移除失效的预览图编码线程池，后续继续拆分搜索和选择
@@ -123,6 +124,7 @@
 **CLI 重复逻辑收敛**：
 - `CliExportWaiter.cpp`：统一 BatchConverter 和 BomConverter 的预加载/导出事件循环等待逻辑，转换器自身继续负责输入读取、结果统计和错误处理
 - `ComponentCacheQuotaEnforcer.cpp`（40 行）：独立承载磁盘缓存配额的冷却判断、目标容量计算、清理执行和大小变化通知
+- `ComponentCacheMemoryStore.cpp`（92 行）：独立承载一级缓存复合键、JSON 编解码、CAD 数据校验、LRU 访问和容量统计；ComponentCacheService 继续负责信号、代次和磁盘流程
 - `ComponentValidationErrorPolicy.cpp`（65 行）：集中维护 CAD 数据失败、不可重试错误和预览图错误分类规则，保持 ViewModel 的验证状态与界面提示行为一致
 - `ComponentService.cpp`（977 行）：已提取组件数据内存缓存、基础信息字段解析、BOM 文本编号提取、后台缓存加载、预览图文件编码、CAD 结果收敛、队列初始化、并行批量协调和 CAD 响应协调职责，后续继续按异步请求状态边界拆分获取与错误处理
 - `ComponentParallelFetchCoordinator.cpp`（约 100 行）：独立协调并行上下文完成/失败回调、队列槽位释放、超时通知和批量状态重置
@@ -237,7 +239,7 @@ QML 文件过长是当前最严重的问题区域，建议按以下优先级处�
 
 | 目录 | 总行数 | 文件数 |
 |------|--------|--------|
-| `src` | 76,570 | 413 |
+| `src` | 76,693 | 415 |
 | `tests` | 18,632 | 58 |
 | `resources/translations` | 3,303 | 2 |
 | `tools/python` | 6,642 | 13 |
