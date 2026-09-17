@@ -1,17 +1,19 @@
 #include "BatchConverter.h"
 
 #include "CliContext.h"
+#include "CliExportWaiter.h"
 #include "FileReader.h"
 #include "services/ComponentService.h"
 #include "services/export/ParallelExportService.h"
 
 #include <QCoreApplication>
-#include <QEventLoop>
 
 namespace EasyKiConverter {
 
+/** @brief 创建批量转换器并绑定 CLI 上下文。 */
 BatchConverter::BatchConverter(CliContext* context, QObject* parent) : BaseConverter(context, parent) {}
 
+/** @brief 读取元器件列表、预加载组件并执行导出流程。 */
 bool BatchConverter::execute() {
     printMessage(QCoreApplication::translate("CliConverter", "开始批量转换..."));
 
@@ -45,31 +47,15 @@ bool BatchConverter::execute() {
     connect(exportService, &ParallelExportService::completed, this, &BatchConverter::onExportCompleted);
     connect(exportService, &ParallelExportService::failed, this, &BatchConverter::onExportFailed);
 
-    // 创建事件循环等待预加载完成
-    QEventLoop preloadLoop;
-    connect(exportService, &ParallelExportService::preloadCompleted, &preloadLoop, &QEventLoop::quit);
-    connect(exportService, &ParallelExportService::failed, &preloadLoop, &QEventLoop::quit);
-
-    // 开始预加载
-    exportService->startPreload(componentIds);
-
-    // 等待预加载完成
-    preloadLoop.exec();
+    // 统一等待预加载完成。
+    CliExportWaiter::waitForPreload(exportService, componentIds);
 
     // 检查是否预加载成功
     if (errorMessage().isEmpty()) {
         printMessage(QCoreApplication::translate("CliConverter", "预加载完成，开始导出..."));
 
-        // 创建事件循环等待导出完成
-        QEventLoop exportLoop;
-        connect(exportService, &ParallelExportService::completed, &exportLoop, &QEventLoop::quit);
-        connect(exportService, &ParallelExportService::failed, &exportLoop, &QEventLoop::quit);
-
-        // 开始导出
-        exportService->startExport();
-
-        // 等待导出完成
-        exportLoop.exec();
+        // 统一等待导出完成。
+        CliExportWaiter::waitForExport(exportService);
     }
 
     printMessage(QCoreApplication::translate("CliConverter", "\n转换完成: 成功 %1, 失败 %2")
@@ -79,11 +65,13 @@ bool BatchConverter::execute() {
     return m_exportSuccess;
 }
 
+/** @brief 输出预加载阶段的成功和失败数量。 */
 void BatchConverter::onPreloadCompleted(int successCount, int failedCount) {
     printMessage(
         QCoreApplication::translate("CliConverter", "预加载完成: 成功 %1, 失败 %2").arg(successCount).arg(failedCount));
 }
 
+/** @brief 根据 CLI 选项输出导出进度。 */
 void BatchConverter::onProgressChanged(const ExportOverallProgress& progress) {
     if (context()->parser().showProgress()) {
         int percent = progress.overallPercentage();
@@ -91,6 +79,7 @@ void BatchConverter::onProgressChanged(const ExportOverallProgress& progress) {
     }
 }
 
+/** @brief 保存导出完成统计并更新最终成功状态。 */
 void BatchConverter::onExportCompleted(int successCount, int failedCount) {
     m_successCount = successCount;
     m_failedCount = failedCount;
@@ -98,6 +87,7 @@ void BatchConverter::onExportCompleted(int successCount, int failedCount) {
     m_exportFinished = true;
 }
 
+/** @brief 保存导出失败信息并终止成功状态。 */
 void BatchConverter::onExportFailed(const QString& error) {
     setError(error);
     m_exportSuccess = false;
