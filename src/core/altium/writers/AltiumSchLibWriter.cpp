@@ -4,6 +4,7 @@
 #include "AltiumSchImageRecordWriter.h"
 #include "AltiumSchImageStorageEncoder.h"
 #include "AltiumSchPinRecordWriter.h"
+#include "AltiumSchPrimitiveRecordWriter.h"
 #include "AltiumSchTextRecordWriter.h"
 #include "utils/AltiumConstants.h"
 #include "utils/AltiumCoord.h"
@@ -1098,237 +1099,72 @@ void AltiumSchLibWriter::writePinRecord(AltiumBinaryWriter& writer, const Altium
  * @brief 写入矩形记录 (RECORD=14)
  */
 void AltiumSchLibWriter::writeRectangleRecord(AltiumBinaryWriter& writer, const AltiumSchRectangle& rect) {
-    QMap<QString, QString> params;
-    params["RECORD"] = "14";
-    addOwnerParams(params, rect.ownerPartId);
-    addCoordParam(params, "Location.X", rect.locationX);
-    addCoordParam(params, "Location.Y", rect.locationY);
-    addCoordParam(params, "Corner.X", rect.cornerX);
-    addCoordParam(params, "Corner.Y", rect.cornerY);
-
-    if (rect.lineWidth != 0)
-        params["LineWidth"] = QString::number(rect.lineWidth);
-    if (rect.lineStyle != 0)
-        params["LineStyleExt"] = QString::number(rect.lineStyle);
-    addColorParam(params, "Color", rect.color);
-    if (rect.areaColor != 0xFFFFFF)
-        params["AreaColor"] = QString::number(rect.areaColor);
-    if (rect.isSolid)
-        params["IsSolid"] = "T";
-
-    addUniqueID(params);
-    writer.writeCStringParameterBlock(params);
+    AltiumSchPrimitiveRecordWriter primitiveWriter(*this);
+    primitiveWriter.writeRectangle(writer, rect);
 }
 
 /**
  * @brief 写入圆角矩形记录 (RECORD=10)
  */
 void AltiumSchLibWriter::writeRoundRectangleRecord(AltiumBinaryWriter& writer, const AltiumSchRoundRectangle& rect) {
-    QMap<QString, QString> params;
-    params["RECORD"] = "10";
-    addOwnerParams(params, rect.ownerPartId);
-    addCoordParam(params, "Location.X", rect.locationX);
-    addCoordParam(params, "Location.Y", rect.locationY);
-    addCoordParam(params, "Corner.X", rect.cornerX);
-    addCoordParam(params, "Corner.Y", rect.cornerY);
-    addCoordParam(params, "CornerXRadius", rect.cornerXRadius);
-    addCoordParam(params, "CornerYRadius", rect.cornerYRadius);
-    if (rect.lineWidth != 0)
-        params["LineWidth"] = QString::number(rect.lineWidth);
-    if (rect.lineStyle != 0)
-        params["LineStyle"] = QString::number(rect.lineStyle);
-    addColorParam(params, "Color", rect.color);
-    if (rect.areaColor != 0xFFFFFF)
-        params["AreaColor"] = QString::number(rect.areaColor);
-    if (rect.isSolid)
-        params["IsSolid"] = "T";
-    addUniqueID(params);
-    writer.writeCStringParameterBlock(params);
+    AltiumSchPrimitiveRecordWriter primitiveWriter(*this);
+    primitiveWriter.writeRoundRectangle(writer, rect);
 }
 
 /**
  * @brief 写入线段记录 (RECORD=13)
  */
 void AltiumSchLibWriter::writeLineRecord(AltiumBinaryWriter& writer, const AltiumSchLine& line) {
-    QMap<QString, QString> params;
-    params["RECORD"] = "13";
-    addOwnerParams(params, line.ownerPartId);
-    addCoordParam(params, "Location.X", line.locationX);
-    addCoordParam(params, "Location.Y", line.locationY);
-    addCoordParam(params, "Corner.X", line.cornerX);
-    addCoordParam(params, "Corner.Y", line.cornerY);
-
-    params["LineWidth"] = QString::number(AltiumCoord::lineWidthToIndex(line.lineWidth));
-    if (line.lineStyle != 0)
-        params["LineStyle"] = QString::number(line.lineStyle);
-    addColorParam(params, "Color", line.color);
-
-    addUniqueID(params);
-    writer.writeCStringParameterBlock(params);
+    AltiumSchPrimitiveRecordWriter primitiveWriter(*this);
+    primitiveWriter.writeLine(writer, line);
 }
 
 /**
  * @brief 写入弧线记录 (RECORD=12)
  */
 void AltiumSchLibWriter::writeArcRecord(AltiumBinaryWriter& writer, const AltiumSchArc& arc) {
-    const double startAngle = normalizeFiniteAngle(arc.startAngle, 0.0, QStringLiteral("圆弧起始角度"));
-    const double endAngle = normalizeFiniteAngle(arc.endAngle, 360.0, QStringLiteral("圆弧结束角度"));
-    QMap<QString, QString> params;
-    params["RECORD"] = "12";
-    addOwnerParams(params, arc.ownerPartId);
-    addCoordParam(params, "Location.X", arc.centerX);
-    addCoordParam(params, "Location.Y", arc.centerY);
-    addCoordParam(params, "Radius", arc.radius);
-
-    if (arc.lineWidth != 0)
-        params["LineWidth"] = QString::number(arc.lineWidth);
-    if (arc.lineStyle != 0)
-        params["LineStyle"] = QString::number(arc.lineStyle);
-    if (startAngle != 0.0)
-        params["StartAngle"] = QString::number(startAngle, 'f', 3);
-    params["EndAngle"] = QString::number(endAngle, 'f', 3);
-    addColorParam(params, "Color", arc.color);
-
-    addUniqueID(params);
-    writer.writeCStringParameterBlock(params);
+    AltiumSchPrimitiveRecordWriter primitiveWriter(*this);
+    primitiveWriter.writeArc(writer, arc);
 }
 
 /**
  * @brief 写入多边形记录 (RECORD=7)
  */
 void AltiumSchLibWriter::writePolygonRecord(AltiumBinaryWriter& writer, const AltiumSchPolygon& polygon) {
-    QMap<QString, QString> params;
-    params["RECORD"] = "7";
-    addOwnerParams(params, polygon.ownerPartId);
-    params["LineWidth"] = QString::number(polygon.lineWidth);
-    if (polygon.lineStyle != 0)
-        params["LineStyle"] = QString::number(polygon.lineStyle);
-    addColorParam(params, "Color", polygon.color);
-    if (polygon.areaColor != 0xFFFFFF)
-        params["AreaColor"] = QString::number(polygon.areaColor);
-    if (polygon.isSolid)
-        params["IsSolid"] = "T";
-
-    params["LocationCount"] = QString::number(polygon.vertices.size());
-    for (int i = 0; i < polygon.vertices.size(); ++i) {
-        int idx = i + 1;
-        int32_t x = AltiumCoord::toSchematicUnits(static_cast<int>(polygon.vertices[i].x()));
-        int32_t y = AltiumCoord::toSchematicUnits(static_cast<int>(polygon.vertices[i].y()));
-        if (x != 0)
-            params[QString("X%1").arg(idx)] = QString::number(x);
-        if (y != 0)
-            params[QString("Y%1").arg(idx)] = QString::number(y);
-    }
-
-    addUniqueID(params);
-    writer.writeCStringParameterBlock(params);
+    AltiumSchPrimitiveRecordWriter primitiveWriter(*this);
+    primitiveWriter.writePolygon(writer, polygon);
 }
 
 /**
  * @brief 写入椭圆记录 (RECORD=8)
  */
 void AltiumSchLibWriter::writeEllipseRecord(AltiumBinaryWriter& writer, const AltiumSchEllipse& ellipse) {
-    QMap<QString, QString> params;
-    params["RECORD"] = "8";
-    addOwnerParams(params, ellipse.ownerPartId);
-    addCoordParam(params, "Location.X", ellipse.centerX);
-    addCoordParam(params, "Location.Y", ellipse.centerY);
-    addCoordParam(params, "Radius", ellipse.radiusX);
-    addCoordParam(params, "SecondaryRadius", ellipse.radiusY);
-
-    if (ellipse.lineWidth != 0)
-        params["LineWidth"] = QString::number(ellipse.lineWidth);
-    if (ellipse.lineStyle != 0)
-        params["LineStyle"] = QString::number(ellipse.lineStyle);
-    addColorParam(params, "Color", ellipse.color);
-    if (ellipse.areaColor != 0xFFFFFF)
-        params["AreaColor"] = QString::number(ellipse.areaColor);
-    if (ellipse.isSolid)
-        params["IsSolid"] = "T";
-
-    addUniqueID(params);
-    writer.writeCStringParameterBlock(params);
+    AltiumSchPrimitiveRecordWriter primitiveWriter(*this);
+    primitiveWriter.writeEllipse(writer, ellipse);
 }
 
 /**
  * @brief 写入扇形记录 (RECORD=9)
  */
 void AltiumSchLibWriter::writePieRecord(AltiumBinaryWriter& writer, const AltiumSchPie& pie) {
-    const double startAngle = normalizeFiniteAngle(pie.startAngle, 0.0, QStringLiteral("扇形起始角度"));
-    const double endAngle = normalizeFiniteAngle(pie.endAngle, 360.0, QStringLiteral("扇形结束角度"));
-    QMap<QString, QString> params;
-    params["RECORD"] = "9";
-    addOwnerParams(params, pie.ownerPartId);
-    addCoordParam(params, "Location.X", pie.centerX);
-    addCoordParam(params, "Location.Y", pie.centerY);
-    addCoordParam(params, "Radius", pie.radius);
-    if (pie.lineWidth != 0)
-        params["LineWidth"] = QString::number(pie.lineWidth);
-    if (pie.lineStyle != 0)
-        params["LineStyle"] = QString::number(pie.lineStyle);
-    if (startAngle != 0.0)
-        params["StartAngle"] = QString::number(startAngle, 'f', 3);
-    params["EndAngle"] = QString::number(endAngle, 'f', 3);
-    addColorParam(params, "Color", pie.color);
-    if (pie.areaColor != 0xFFFFFF)
-        params["AreaColor"] = QString::number(pie.areaColor);
-    if (pie.isSolid)
-        params["IsSolid"] = "T";
-    writer.writeCStringParameterBlock(params);
+    AltiumSchPrimitiveRecordWriter primitiveWriter(*this);
+    primitiveWriter.writePie(writer, pie);
 }
 
 /**
  * @brief 写入椭圆弧记录 (RECORD=11)
  */
 void AltiumSchLibWriter::writeEllipticalArcRecord(AltiumBinaryWriter& writer, const AltiumSchEllipticalArc& arc) {
-    const double startAngle = normalizeFiniteAngle(arc.startAngle, 0.0, QStringLiteral("椭圆弧起始角度"));
-    const double endAngle = normalizeFiniteAngle(arc.endAngle, 360.0, QStringLiteral("椭圆弧结束角度"));
-    QMap<QString, QString> params;
-    params["RECORD"] = "11";
-    addOwnerParams(params, arc.ownerPartId);
-    addCoordParam(params, "Location.X", arc.centerX);
-    addCoordParam(params, "Location.Y", arc.centerY);
-    addCoordParam(params, "Radius", arc.radiusX);
-    addCoordParam(params, "SecondaryRadius", arc.radiusY);
-    if (arc.lineWidth != 0)
-        params["LineWidth"] = QString::number(arc.lineWidth);
-    if (arc.lineStyle != 0)
-        params["LineStyle"] = QString::number(arc.lineStyle);
-    if (startAngle != 0.0)
-        params["StartAngle"] = QString::number(startAngle, 'f', 3);
-    params["EndAngle"] = QString::number(endAngle, 'f', 3);
-    addColorParam(params, "Color", arc.color);
-    if (arc.areaColor != 0xFFFFFF)
-        params["AreaColor"] = QString::number(arc.areaColor);
-    addUniqueID(params);
-    writer.writeCStringParameterBlock(params);
+    AltiumSchPrimitiveRecordWriter primitiveWriter(*this);
+    primitiveWriter.writeEllipticalArc(writer, arc);
 }
 
 /**
  * @brief 写入折线记录 (RECORD=6)
  */
 void AltiumSchLibWriter::writePolylineRecord(AltiumBinaryWriter& writer, const AltiumSchPolyline& polyline) {
-    QMap<QString, QString> params;
-    params["RECORD"] = "6";
-    addOwnerParams(params, polyline.ownerPartId);
-    params["LineWidth"] = QString::number(polyline.lineWidth);
-    if (polyline.lineStyle != 0)
-        params["LineStyle"] = QString::number(polyline.lineStyle);
-    addColorParam(params, "Color", polyline.color);
-
-    params["LocationCount"] = QString::number(polyline.vertices.size());
-    for (int i = 0; i < polyline.vertices.size(); ++i) {
-        int idx = i + 1;
-        int32_t x = AltiumCoord::toSchematicUnits(static_cast<int>(polyline.vertices[i].x()));
-        int32_t y = AltiumCoord::toSchematicUnits(static_cast<int>(polyline.vertices[i].y()));
-        if (x != 0)
-            params[QString("X%1").arg(idx)] = QString::number(x);
-        if (y != 0)
-            params[QString("Y%1").arg(idx)] = QString::number(y);
-    }
-
-    addUniqueID(params);
-    writer.writeCStringParameterBlock(params);
+    AltiumSchPrimitiveRecordWriter primitiveWriter(*this);
+    primitiveWriter.writePolyline(writer, polyline);
 }
 
 /**
@@ -1337,61 +1173,24 @@ void AltiumSchLibWriter::writePolylineRecord(AltiumBinaryWriter& writer, const A
  * @param path 路径数据
  */
 void AltiumSchLibWriter::writePathRecord(AltiumBinaryWriter& writer, const AltiumSchPath& path) {
-    AltiumSchPolyline polyline;
-    polyline.vertices = path.vertices;
-    polyline.lineWidth = path.lineWidth;
-    polyline.lineStyle = path.lineStyle;
-    polyline.color = path.color;
-    polyline.ownerPartId = path.ownerPartId;
-    writePolylineRecord(writer, polyline);
+    AltiumSchPrimitiveRecordWriter primitiveWriter(*this);
+    primitiveWriter.writePath(writer, path);
 }
 
 /**
  * @brief 写入三次 Bézier 曲线记录 (RECORD=5)
  */
 void AltiumSchLibWriter::writeBezierRecord(AltiumBinaryWriter& writer, const AltiumSchBezier& bezier) {
-    if (bezier.controlPoints.size() != 4) {
-        m_diagnostics.append(QStringLiteral("Altium SchLib Bézier 图元控制点数量无效（数量为 %1），已跳过")
-                                 .arg(bezier.controlPoints.size()));
-        return;
-    }
-
-    QMap<QString, QString> params;
-    params["RECORD"] = "5";
-    addOwnerParams(params, bezier.ownerPartId);
-    params["LineWidth"] = QString::number(bezier.lineWidth);
-    addColorParam(params, "Color", bezier.color);
-    params["LocationCount"] = "4";
-    for (int i = 0; i < 4; ++i) {
-        const int32_t x = AltiumCoord::toSchematicUnits(static_cast<int>(bezier.controlPoints[i].x()));
-        const int32_t y = AltiumCoord::toSchematicUnits(static_cast<int>(bezier.controlPoints[i].y()));
-        if (x != 0)
-            params[QString("X%1").arg(i + 1)] = QString::number(x);
-        if (y != 0)
-            params[QString("Y%1").arg(i + 1)] = QString::number(y);
-    }
-    addUniqueID(params);
-    writer.writeCStringParameterBlock(params);
+    AltiumSchPrimitiveRecordWriter primitiveWriter(*this);
+    primitiveWriter.writeBezier(writer, bezier);
 }
 
 /**
  * @brief 写入 IEEE 图形记录 (RECORD=3)
  */
 void AltiumSchLibWriter::writeIeeeRecord(AltiumBinaryWriter& writer, const AltiumSchIeee& ieee) {
-    QMap<QString, QString> params;
-    params["RECORD"] = "3";
-    addOwnerParams(params, ieee.ownerPartId);
-    params["Symbol"] = QString::number(ieee.symbol);
-    addCoordParam(params, "Location.X", ieee.locationX);
-    addCoordParam(params, "Location.Y", ieee.locationY);
-    params["ScaleFactor"] = QString::number(qMax(1, ieee.scaleFactor));
-    if (ieee.orientation != 0)
-        params["Orientation"] = QString::number(ieee.orientation);
-    params["LineWidth"] = QString::number(qMax(0, ieee.lineWidth));
-    if (ieee.mirrored)
-        params["Mirror"] = "T";
-    addColorParam(params, "Color", ieee.color);
-    writer.writeCStringParameterBlock(params);
+    AltiumSchPrimitiveRecordWriter primitiveWriter(*this);
+    primitiveWriter.writeIeee(writer, ieee);
 }
 
 /** @brief 将文本记录委托给专用协作者，保持写入器对外行为不变。 */
