@@ -1,5 +1,6 @@
 #include "ComponentCacheService.h"
 
+#include "CacheDataValidator.h"
 #include "CacheDirectoryMigrator.h"
 #include "CacheFileLayout.h"
 #include "CacheHealthManager.h"
@@ -31,28 +32,6 @@ namespace EasyKiConverter {
 
 namespace {
 
-// 按文件扩展名校验公共三维模型缓存内容。
-bool isUsableModel3DCacheData(const QByteArray& data, const QString& extension) {
-    const QString normalizedExtension = extension.toLower();
-    if (normalizedExtension == QStringLiteral("obj"))
-        return Exporter3DModel::hasUsableObjGeometry(data);
-    if (normalizedExtension == QStringLiteral("wrl"))
-        return Exporter3DModel::hasUsableWrlGeometry(data);
-    if (normalizedExtension == QStringLiteral("step"))
-        return Exporter3DModel::hasUsableStepData(data);
-    return false;
-}
-
-// 判断 CAD 原始缓存是否为可解析的 JSON 对象。
-bool isValidCadData(const QByteArray& data) {
-    if (data.isEmpty()) {
-        return false;
-    }
-    QJsonParseError parseError;
-    const QJsonDocument document = QJsonDocument::fromJson(data, &parseError);
-    return parseError.error == QJsonParseError::NoError && document.isObject();
-}
-
 // 从磁盘读取并校验 CAD 原始缓存文件。
 bool hasValidCadDataFile(const QString& path) {
     QFile file(path);
@@ -61,7 +40,7 @@ bool hasValidCadDataFile(const QString& path) {
     }
     const QByteArray data = file.readAll();
     file.close();
-    return isValidCadData(data);
+    return CacheDataValidator::isValidCadData(data);
 }
 
 }  // namespace
@@ -296,7 +275,7 @@ QByteArray ComponentCacheService::loadSymbolDataFromMemory(const QString& lcscId
 
 // 将符号数据写入一级内存缓存。
 void ComponentCacheService::saveSymbolDataToMemory(const QString& lcscId, const QByteArray& data) {
-    if (!isValidCadData(data)) {
+    if (!CacheDataValidator::isValidCadData(data)) {
         return;
     }
 
@@ -327,7 +306,7 @@ QByteArray ComponentCacheService::loadFootprintDataFromMemory(const QString& lcs
 
 // 将封装数据写入一级内存缓存。
 void ComponentCacheService::saveFootprintDataToMemory(const QString& lcscId, const QByteArray& data) {
-    if (!isValidCadData(data)) {
+    if (!CacheDataValidator::isValidCadData(data)) {
         return;
     }
 
@@ -488,7 +467,7 @@ void ComponentCacheService::saveComponentMetadataAsync(const QString& componentI
 
 // 将符号数据原子写入二级磁盘缓存。
 void ComponentCacheService::saveSymbolData(const QString& lcscId, const QByteArray& data, uint64_t expectedGeneration) {
-    if (!isValidCadData(data)) {
+    if (!CacheDataValidator::isValidCadData(data)) {
         return;
     }
 
@@ -541,7 +520,7 @@ QByteArray ComponentCacheService::loadSymbolData(const QString& lcscId) const {
     if (file.open(QIODevice::ReadOnly)) {
         data = file.readAll();
         file.close();
-        if (isValidCadData(data)) {
+        if (CacheDataValidator::isValidCadData(data)) {
             return data;
         }
         QFile::remove(symbolPath);
@@ -554,7 +533,7 @@ QByteArray ComponentCacheService::loadSymbolData(const QString& lcscId) const {
 void ComponentCacheService::saveFootprintData(const QString& lcscId,
                                               const QByteArray& data,
                                               uint64_t expectedGeneration) {
-    if (!isValidCadData(data)) {
+    if (!CacheDataValidator::isValidCadData(data)) {
         return;
     }
 
@@ -607,7 +586,7 @@ QByteArray ComponentCacheService::loadFootprintData(const QString& lcscId) const
     if (file.open(QIODevice::ReadOnly)) {
         data = file.readAll();
         file.close();
-        if (isValidCadData(data)) {
+        if (CacheDataValidator::isValidCadData(data)) {
             return data;
         }
         QFile::remove(footprintPath);
@@ -620,7 +599,7 @@ QByteArray ComponentCacheService::loadFootprintData(const QString& lcscId) const
 void ComponentCacheService::saveCadDataJson(const QString& lcscId,
                                             const QByteArray& cadData,
                                             uint64_t expectedGeneration) {
-    if (!isValidCadData(cadData)) {
+    if (!CacheDataValidator::isValidCadData(cadData)) {
         return;
     }
 
@@ -663,7 +642,7 @@ QByteArray ComponentCacheService::loadCadDataJson(const QString& lcscId) const {
     if (file.open(QIODevice::ReadOnly)) {
         QByteArray data = file.readAll();
         file.close();
-        if (isValidCadData(data)) {
+        if (CacheDataValidator::isValidCadData(data)) {
             return data;
         }
         QFile::remove(cadDataPath);
@@ -725,7 +704,7 @@ QByteArray ComponentCacheService::loadPreviewImage(const QString& lcscId, int im
     if (file.open(QIODevice::ReadOnly)) {
         QByteArray data = file.readAll();
         file.close();
-        if (isValidPreviewImageData(data)) {
+        if (CacheDataValidator::isValidPreviewImage(data)) {
             return data;
         }
         QFile::remove(previewPath);
@@ -736,18 +715,14 @@ QByteArray ComponentCacheService::loadPreviewImage(const QString& lcscId, int im
 
 // 使用 Qt 图片解码器拒绝错误页、截断文件和其他非图片缓存内容。
 bool ComponentCacheService::isValidPreviewImageData(const QByteArray& imageData) {
-    if (imageData.isEmpty()) {
-        return false;
-    }
-    QImage image;
-    return image.loadFromData(imageData);
+    return CacheDataValidator::isValidPreviewImage(imageData);
 }
 
 void ComponentCacheService::savePreviewImage(const QString& lcscId,
                                              const QByteArray& imageData,
                                              int imageIndex,
                                              uint64_t expectedGeneration) {
-    if (imageIndex < 0 || imageIndex >= 3 || !isValidPreviewImageData(imageData)) {
+    if (imageIndex < 0 || imageIndex >= 3 || !CacheDataValidator::isValidPreviewImage(imageData)) {
         return;
     }
 
@@ -802,7 +777,7 @@ QByteArray ComponentCacheService::downloadPreviewImage(const QString& lcscId,
             if (file.open(QIODevice::ReadOnly)) {
                 const QByteArray data = file.readAll();
                 file.close();
-                if (isValidPreviewImageData(data)) {
+                if (CacheDataValidator::isValidPreviewImage(data)) {
                     LOG_DEBUG(LogModule::Core, "Preview image loaded from disk cache: {}", previewFilePath);
                     if (diag) {
                         diag->url = imageUrl;
@@ -846,7 +821,7 @@ QByteArray ComponentCacheService::downloadPreviewImage(const QString& lcscId,
         errorString = "Cancelled";
     } else if (result.success) {
         data = result.data;
-        if (!isValidPreviewImageData(data)) {
+        if (!CacheDataValidator::isValidPreviewImage(data)) {
             data.clear();
             errorString = QStringLiteral("Invalid preview image data");
         }
@@ -897,7 +872,7 @@ QByteArray ComponentCacheService::loadDatasheet(const QString& lcscId) const {
         const QString format = datasheetFilePath.endsWith(QStringLiteral(".pdf"), Qt::CaseInsensitive)
                                    ? QStringLiteral("pdf")
                                    : QStringLiteral("html");
-        if (isValidDatasheetData(data, format)) {
+        if (CacheDataValidator::isValidDatasheet(data, format)) {
             return data;
         }
         QFile::remove(datasheetFilePath);
@@ -908,15 +883,7 @@ QByteArray ComponentCacheService::loadDatasheet(const QString& lcscId) const {
 
 // 校验 PDF 签名或 HTML 文档标记，拒绝被错误响应污染的数据手册缓存。
 bool ComponentCacheService::isValidDatasheetData(const QByteArray& datasheetData, const QString& format) {
-    if (datasheetData.isEmpty()) {
-        return false;
-    }
-    if (format.compare(QStringLiteral("pdf"), Qt::CaseInsensitive) == 0) {
-        return datasheetData.startsWith("%PDF-");
-    }
-
-    const QByteArray normalized = datasheetData.toLower();
-    return normalized.contains("<html") || normalized.contains("<!doctype html") || normalized.contains("<body");
+    return CacheDataValidator::isValidDatasheet(datasheetData, format);
 }
 
 void ComponentCacheService::saveDatasheet(const QString& lcscId,
@@ -930,7 +897,7 @@ void ComponentCacheService::saveDatasheet(const QString& lcscId,
     if (effectiveFormat == QStringLiteral("pdf") && !datasheetData.startsWith("%PDF-")) {
         effectiveFormat = QStringLiteral("html");
     }
-    if (!isValidDatasheetData(datasheetData, effectiveFormat)) {
+    if (!CacheDataValidator::isValidDatasheet(datasheetData, effectiveFormat)) {
         return;
     }
 
@@ -999,7 +966,7 @@ QByteArray ComponentCacheService::downloadDatasheet(const QString& lcscId,
                 file.close();
                 const QString cachedFormat =
                     fullPath.endsWith(".pdf", Qt::CaseInsensitive) ? QStringLiteral("pdf") : QStringLiteral("html");
-                if (isValidDatasheetData(cachedData, cachedFormat)) {
+                if (CacheDataValidator::isValidDatasheet(cachedData, cachedFormat)) {
                     LOG_DEBUG(LogModule::Core, "Datasheet loaded from disk cache: {}", fullPath);
                     if (diag) {
                         diag->url = datasheetUrl;
@@ -1050,7 +1017,7 @@ QByteArray ComponentCacheService::downloadDatasheet(const QString& lcscId,
             ext = "html";
             *format = ext;
         }
-        if (!isValidDatasheetData(data, ext)) {
+        if (!CacheDataValidator::isValidDatasheet(data, ext)) {
             data.clear();
             errorString = QStringLiteral("Invalid datasheet data");
         }
@@ -1095,7 +1062,7 @@ bool ComponentCacheService::hasModel3DCached(const QString& uuid, const QString&
         return false;
     const QByteArray data = file.readAll();
     file.close();
-    if (!isUsableModel3DCacheData(data, extension)) {
+    if (!CacheDataValidator::isUsableModel3D(data, extension)) {
         QFile::remove(path);
         return false;
     }
@@ -1117,7 +1084,7 @@ QByteArray ComponentCacheService::loadModel3D(const QString& uuid, const QString
     if (file.open(QIODevice::ReadOnly)) {
         QByteArray data = file.readAll();
         file.close();
-        if (!isUsableModel3DCacheData(data, extension)) {
+        if (!CacheDataValidator::isUsableModel3D(data, extension)) {
             QFile::remove(path);
             return QByteArray();
         }
@@ -1131,7 +1098,7 @@ void ComponentCacheService::saveModel3D(const QString& uuid,
                                         const QByteArray& data,
                                         const QString& extension,
                                         uint64_t expectedGeneration) {
-    if (!isUsableModel3DCacheData(data, extension)) {
+    if (!CacheDataValidator::isUsableModel3D(data, extension)) {
         return;
     }
 
@@ -1179,7 +1146,7 @@ bool ComponentCacheService::copyModel3DToFile(const QString& uuid,
     }
     const QByteArray sourceData = sourceFile.readAll();
     sourceFile.close();
-    if (!isUsableModel3DCacheData(sourceData, extension)) {
+    if (!CacheDataValidator::isUsableModel3D(sourceData, extension)) {
         QFile::remove(sourcePath);
         return false;
     }
