@@ -8,13 +8,13 @@
 
 | 类型 | 文件数 | 过长 | 偏长 | 健康率 |
 |------|--------|------|------|--------|
-| 产品源码与资源 | 421 | 54 | 37 | -- |
+| 产品源码与资源 | 423 | 54 | 37 | -- |
 | Python 工具 | 13 | 5 | 4 | -- |
-| **合计** | **434** | **59** | **41** | -- |
+| **合计** | **436** | **59** | **41** | -- |
 
 当前统计工具按文件总行数使用统一阈值：高风险 >500 行，中风险 300-500 行，低风险 200-300 行。类型分项和代码/注释行数需要额外脚本才能精确拆分，因此本报告不再保留旧的推算健康率。
 
-当前基线：`src` 361 个文件、74,986 行；`tests` 58 个文件、18,588 行；翻译资源 2 个文件、3,303 行；`tools/python` 13 个文件、6,642 行。项目工具的 `--all` 统计覆盖产品源码、测试和翻译资源，工具目录单独统计后合计 434 个文件、103,519 行。
+当前基线：`src` 363 个文件、75,038 行；`tests` 58 个文件、18,588 行；翻译资源 2 个文件、3,303 行；`tools/python` 13 个文件、6,642 行。项目工具的 `--all` 统计覆盖产品源码、测试和翻译资源，工具目录单独统计后合计 436 个文件、103,571 行。
 
 ---
 
@@ -66,8 +66,9 @@
 | `src/main.cpp` | 859 | 入口文件混入了 CLI/GUI 切换逻辑 |
 | `src/workers/WriteWorker.cpp` | 846 | 文件写入工作线程 |
 | `src/core/altium/writers/AltiumPcbLibWriter.cpp` | 1,193 | PcbLib 二进制写入 |
-| `src/core/altium/writers/AltiumSchLibWriter.cpp` | 1,831 | SchLib 主记录写入；来源顺序调度、文本记录、字体表和图片 Storage 编码已提取 |
-| `src/core/altium/writers/AltiumSchTextRecordWriter.cpp` | 135 | 独立承载 SchLib 文本与文本框记录编码 |
+| `src/core/altium/writers/AltiumSchLibWriter.cpp` | 1,793 | SchLib 主记录写入；来源顺序调度、文本记录、图片记录、字体表和图片 Storage 编码已提取 |
+| `src/core/altium/writers/AltiumSchTextRecordWriter.cpp` | 142 | 独立承载 SchLib 文本与文本框记录编码 |
+| `src/core/altium/writers/AltiumSchImageRecordWriter.cpp` | 54 | 独立承载 SchLib 图片记录编码 |
 | `src/models/SymbolDataSerializer.cpp` | 842 | IR 重构后自然解决 |
 | `src/services/export/TempFileManager.cpp` | 804 | 临时文件管理 |
 | `src/core/kicad/SymbolGraphicsGenerator.cpp` | 443 | KiCad 符号图形生成 |
@@ -94,7 +95,7 @@
 - `main.cpp`（857 行）：CLI 入口逻辑已迁移到 `CliConverter`，剩余 GUI 初始化可提取为 `ApplicationSetup` 类
 
 **可接受但需关注的**（导出器和写入器）：
-- `AltiumSchLibWriter.cpp`（1,831 行）：二进制格式写入天然较长，来源顺序调度、文本记录、字体表和图片 Storage 编码已提取，后续可按记录类型继续拆分
+- `AltiumSchLibWriter.cpp`（1,793 行）：二进制格式写入天然较长，来源顺序调度、文本记录、图片记录、字体表和图片 Storage 编码已提取，后续可按记录类型继续拆分
 - `AltiumPcbLibWriter.cpp`（1,193 行）：二进制格式写入天然较长，可按原语类型拆分方法但收益有限
 - KiCad 导出器系列（各 660-690 行）：与 IR 重构后的导出器接口调整一并处理
 
