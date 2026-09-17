@@ -3,40 +3,16 @@
 #include "services/ConfigService.h"
 #include "ui/viewmodels/ValidationStateManager.h"
 
-#include <QBuffer>
 #include <QClipboard>
 #include <QDebug>
 #include <QGuiApplication>
+#include <QImage>
 #include <QPointer>
 #include <QStringList>
 #include <QUrl>
 #include <QtConcurrent>
 
 namespace EasyKiConverter {
-
-PreviewImageEncodeRunnable::PreviewImageEncodeRunnable(ComponentListItemData* item,
-                                                       const QList<QImage>& images,
-                                                       std::function<void(const QString&, const QStringList&)> callback)
-    : m_componentId(item ? item->componentId() : QString()), m_images(images), m_callback(callback) {}
-
-void PreviewImageEncodeRunnable::run() {
-    QStringList encodedList;
-    for (const QImage& img : m_images) {
-        if (img.isNull()) {
-            encodedList.append(QString());
-            continue;
-        }
-        QByteArray byteArray;
-        QBuffer buffer(&byteArray);
-        buffer.open(QIODevice::WriteOnly);
-        img.save(&buffer, "PNG");
-        encodedList.append(QString::fromLatin1(byteArray.toBase64().data()));
-    }
-
-    if (m_callback) {
-        m_callback(m_componentId, encodedList);
-    }
-}
 
 ComponentListViewModel::ComponentListViewModel(ComponentService* service, QObject* parent)
     : QAbstractListModel(parent), m_service(service) {

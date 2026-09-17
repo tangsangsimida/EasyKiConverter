@@ -3,36 +3,19 @@
 
 #include "models/ComponentListItemData.h"
 #include "services/ComponentService.h"
+#include "ui/viewmodels/PreviewImageEncodeRunnable.h"
 
 #include <QAbstractListModel>
-#include <QImage>
 #include <QMutex>
 #include <QPointer>
-#include <QRunnable>
 #include <QSet>
 #include <QStringList>
 #include <QThreadPool>
 #include <QTimer>
 
-#include <functional>
-
 namespace EasyKiConverter {
 
 class ValidationStateManager;
-
-// 预览图编码任务
-class PreviewImageEncodeRunnable : public QRunnable {
-public:
-    PreviewImageEncodeRunnable(ComponentListItemData* item,
-                               const QList<QImage>& images,
-                               std::function<void(const QString&, const QStringList&)> callback);
-    void run() override;
-
-private:
-    QString m_componentId;
-    QList<QImage> m_images;
-    std::function<void(const QString&, const QStringList&)> m_callback;
-};
 
 // 元件列表视图模型
 class ComponentListViewModel : public QAbstractListModel {
