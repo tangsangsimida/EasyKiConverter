@@ -2,6 +2,8 @@
 
 add_library(EasyKiConverterViewModels STATIC
     ComponentListViewModel.cpp
+    ComponentListStateTracker.cpp
+    ComponentListStateTracker.h
     PreviewImageEncodeRunnable.cpp
     PreviewImageEncodeRunnable.h
     ExportSettingsViewModel.cpp

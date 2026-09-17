@@ -1193,7 +1193,7 @@ void ComponentListViewModel::delayedFetchPreviewImages() {
 }
 
 void ComponentListViewModel::updateHasInvalidComponents() {
-    const bool hasInvalid = m_retryableInvalidCountCache > 0;
+    const bool hasInvalid = m_stateTracker.hasRetryableInvalidComponents();
     if (hasInvalid != m_hasInvalidComponents) {
         m_hasInvalidComponents = hasInvalid;
         emit hasInvalidComponentsChanged();
@@ -1201,8 +1201,7 @@ void ComponentListViewModel::updateHasInvalidComponents() {
 }
 
 void ComponentListViewModel::setFilterMode(const QString& mode) {
-    if (m_filterMode != mode) {
-        m_filterMode = mode;
+    if (m_stateTracker.setFilterMode(mode)) {
         emit filterModeChanged();
         emit filteredCountChanged();
     }
@@ -1269,28 +1268,19 @@ void ComponentListViewModel::updateExportStatus(const QString& componentId,
 }
 
 int ComponentListViewModel::filteredCount() const {
-    if (m_filterMode == "validating") {
-        return m_validatingCountCache;
-    }
-    if (m_filterMode == "valid") {
-        return m_validCountCache;
-    }
-    if (m_filterMode == "invalid") {
-        return m_invalidCountCache;
-    }
-    return componentCount();
+    return m_stateTracker.filteredCount(componentCount());
 }
 
 int ComponentListViewModel::validatingCount() const {
-    return m_validatingCountCache;
+    return m_stateTracker.validatingCount();
 }
 
 int ComponentListViewModel::validCount() const {
-    return m_validCountCache;
+    return m_stateTracker.validCount();
 }
 
 int ComponentListViewModel::invalidCount() const {
-    return m_invalidCountCache;
+    return m_stateTracker.invalidCount();
 }
 
 void ComponentListViewModel::scheduleListUpdate() {
@@ -1319,34 +1309,8 @@ void ComponentListViewModel::scheduleListUpdate() {
 }
 
 void ComponentListViewModel::recomputeStateCounters() {
-    int validatingCount = 0;
-    int validCount = 0;
-    int invalidCount = 0;
-    int retryableInvalidCount = 0;
-
     QMutexLocker locker(&m_listMutex);
-    for (const auto& item : m_componentList) {
-        if (!item) {
-            continue;
-        }
-
-        const QString phase = item->validationPhase();
-        if (phase == "validating") {
-            ++validatingCount;
-        } else if (phase == "completed" || phase == "fetching_preview") {
-            ++validCount;
-        } else if (phase == "failed") {
-            ++invalidCount;
-            if (item->retryable()) {
-                ++retryableInvalidCount;
-            }
-        }
-    }
-
-    m_validatingCountCache = validatingCount;
-    m_validCountCache = validCount;
-    m_invalidCountCache = invalidCount;
-    m_retryableInvalidCountCache = retryableInvalidCount;
+    m_stateTracker.recompute(m_componentList);
 }
 
 }  // namespace EasyKiConverter

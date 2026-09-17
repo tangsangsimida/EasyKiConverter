@@ -3,6 +3,7 @@
 
 #include "models/ComponentListItemData.h"
 #include "services/ComponentService.h"
+#include "ui/viewmodels/ComponentListStateTracker.h"
 #include "ui/viewmodels/PreviewImageEncodeRunnable.h"
 
 #include <QAbstractListModel>
@@ -89,7 +90,7 @@ public slots:
 
     // Getter 方法
     QString filterMode() const {
-        return m_filterMode;
+        return m_stateTracker.filterMode();
     }
 
     int filteredCount() const;
@@ -178,12 +179,8 @@ private:
     int m_pendingValidationCount = 0;
     QStringList m_validatedComponentIds;
 
-    QString m_filterMode = "all";
+    ComponentListStateTracker m_stateTracker;
     bool m_isScrolling = false;
-    int m_validatingCountCache = 0;
-    int m_validCountCache = 0;
-    int m_invalidCountCache = 0;
-    int m_retryableInvalidCountCache = 0;
 
     QStringList m_validationQueue;
     QSet<QString> m_inFlightComponentIds;  // 追踪正在处理中的组件，避免重复调度
