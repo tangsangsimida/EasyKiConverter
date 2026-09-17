@@ -8,13 +8,13 @@
 
 | 类型 | 文件数 | 过长 | 偏长 | 健康率 |
 |------|--------|------|------|--------|
-| 产品源码与资源 | 447 | 54 | 38 | -- |
+| 产品源码与资源 | 449 | 54 | 38 | -- |
 | Python 工具 | 13 | 5 | 4 | -- |
-| **合计** | **460** | **59** | **42** | -- |
+| **合计** | **462** | **59** | **42** | -- |
 
 当前统计工具按文件总行数使用统一阈值：高风险 >500 行，中风险 300-500 行，低风险 200-300 行。类型分项和代码/注释行数需要额外脚本才能精确拆分，因此本报告不再保留旧的推算健康率。
 
-当前基线：`src` 387 个文件、75,790 行；`tests` 58 个文件、18,632 行；翻译资源 2 个文件、3,303 行；`tools/python` 13 个文件、6,640 行。项目工具的 `--all` 统计覆盖产品源码、测试和翻译资源，工具目录单独统计后合计 460 个文件、104,365 行。
+当前基线：`src` 389 个文件、75,859 行；`tests` 58 个文件、18,632 行；翻译资源 2 个文件、3,303 行；`tools/python` 13 个文件、6,640 行。项目工具的 `--all` 统计覆盖产品源码、测试和翻译资源，工具目录单独统计后合计 462 个文件、104,434 行。
 
 ---
 
@@ -70,13 +70,14 @@
 | `src/main.cpp` | 859 | 入口文件混入了 CLI/GUI 切换逻辑 |
 | `src/workers/WriteWorker.cpp` | 846 | 文件写入工作线程 |
 | `src/core/altium/writers/AltiumPcbLibWriter.cpp` | 1,193 | PcbLib 二进制写入 |
-| `src/core/altium/writers/AltiumSchLibWriter.cpp` | 1,196 | SchLib 主记录写入；来源顺序调度、文本记录、图片记录、引脚记录、几何图元、文件级头部、字体表、参数和图片 Storage 编码已提取 |
+| `src/core/altium/writers/AltiumSchLibWriter.cpp` | 1,124 | SchLib 主记录写入；来源顺序调度、文本记录、图片记录、引脚记录、几何图元、文件级头部、字体表、参数和图片 Storage 编码已提取 |
 | `src/core/altium/writers/AltiumSchPinRecordWriter.cpp` | 61 | 独立承载 SchLib `RECORD=2` 二进制引脚记录编码，并复用主写入器的 Owner 校验与内容序号状态 |
 | `src/core/altium/writers/AltiumSchPrimitiveRecordWriter.cpp` | 273 | 独立承载矩形、弧线、多边形、折线、Bezier 和 IEEE 等文本参数图元记录编码 |
 | `src/core/altium/writers/AltiumSchComponentRecordWriter.cpp` | 265 | 独立承载 Designator、参数字段、实现关系、引脚映射和实现参数记录编码 |
 | `src/core/altium/writers/AltiumSchTextRecordWriter.cpp` | 142 | 独立承载 SchLib 文本与文本框记录编码 |
 | `src/core/altium/writers/AltiumSchImageRecordWriter.cpp` | 54 | 独立承载 SchLib 图片记录编码 |
 | `src/core/altium/writers/AltiumSchLibraryHeaderWriter.cpp` | 105 | 独立承载 SchLib FileHeader 和 SectionKeys 文件级流编码 |
+| `src/core/altium/writers/AltiumSchImageStorageWriter.cpp` | 101 | 独立承载嵌入图片名称校验、重复命名消解和 Storage 流编码 |
 | `src/models/SymbolDataSerializer.cpp` | 842 | IR 重构后自然解决 |
 | `src/services/export/TempFileManager.cpp` | 804 | 临时文件管理 |
 | `src/core/kicad/SymbolGraphicsGenerator.cpp` | 443 | KiCad 符号图形生成 |
@@ -110,11 +111,12 @@
 - `main.cpp`（859 行）：CLI 入口逻辑已迁移到 `CliConverter`，剩余 GUI 初始化可提取为 `ApplicationSetup` 类
 
 **可接受但需关注的**（导出器和写入器）：
-- `AltiumSchLibWriter.cpp`（1,196 行）：二进制格式写入天然较长，来源顺序调度、文本记录、图片记录、引脚记录、几何图元、文件级头部、字体表、参数和图片 Storage 编码已提取，后续可按组件级文件流程继续拆分
+- `AltiumSchLibWriter.cpp`（1,124 行）：二进制格式写入天然较长，来源顺序调度、文本记录、图片记录、引脚记录、几何图元、文件级头部、字体表、参数和图片 Storage 编码已提取，后续可按组件级文件流程继续拆分
 - `AltiumSchPinRecordWriter.cpp`（61 行）：独立编码二进制引脚记录，保持引脚方向、可见性、名称/编号和连接属性的原有写入顺序
 - `AltiumSchPrimitiveRecordWriter.cpp`（273 行）：独立编码几何图元文本参数，复用主写入器的坐标、Owner、唯一标识和诊断策略
 - `AltiumSchComponentRecordWriter.cpp`（265 行）：独立编码参数和实现关系记录，复用主写入器的字体、编号、库名和诊断状态
 - `AltiumSchLibraryHeaderWriter.cpp`（105 行）：独立承载 SchLib FileHeader 和 SectionKeys 流，保持字体表、组件计数、记录权重和存储键映射的一致性
+- `AltiumSchImageStorageWriter.cpp`（101 行）：独立承载嵌入图片名称校验、大小写不敏感的重复命名消解、255 字节限制和 OLE Storage 流编码
 - `AltiumPcbLibWriter.cpp`（1,193 行）：二进制格式写入天然较长，可按原语类型拆分方法但收益有限
 - KiCad 导出器系列（各 660-690 行）：与 IR 重构后的导出器接口调整一并处理
 
