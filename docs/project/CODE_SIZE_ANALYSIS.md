@@ -8,13 +8,13 @@
 
 | 类型 | 文件数 | 过长 | 偏长 | 健康率 |
 |------|--------|------|------|--------|
-| 产品源码与资源 | 417 | 55 | 35 | -- |
+| 产品源码与资源 | 418 | 55 | 35 | -- |
 | Python 工具 | 13 | 5 | 4 | -- |
-| **合计** | **430** | **60** | **39** | -- |
+| **合计** | **431** | **60** | **39** | -- |
 
 当前统计工具按文件总行数使用统一阈值：高风险 >500 行，中风险 300-500 行，低风险 200-300 行。类型分项和代码/注释行数需要额外脚本才能精确拆分，因此本报告不再保留旧的推算健康率。
 
-当前基线：`src` 357 个文件、74,927 行；`tests` 58 个文件、18,581 行；翻译资源 2 个文件、3,303 行；`tools/python` 13 个文件、6,642 行。项目工具的 `--all` 统计覆盖产品源码、测试和翻译资源，工具目录单独统计后合计 430 个文件、103,453 行。
+当前基线：`src` 358 个文件、74,960 行；`tests` 58 个文件、18,581 行；翻译资源 2 个文件、3,303 行；`tools/python` 13 个文件、6,642 行。项目工具的 `--all` 统计覆盖产品源码、测试和翻译资源，工具目录单独统计后合计 431 个文件、103,486 行。
 
 ---
 
@@ -105,7 +105,8 @@
 
 | 文件 | 总行数 | 代码行 | 问题分析 |
 |------|--------|--------|---------|
-| `src/ui/qml/components/ComponentListCard.qml` | 913 | -- | 列表+搜索+工具栏+状态管理仍在一个文件，预览弹窗已提取 |
+| `src/ui/qml/components/ComponentListCard.qml` | 519 | -- | 列表+过滤模型+弹窗定位仍在一个文件，预览弹窗和工具栏已提取 |
+| `src/ui/qml/components/ComponentToolbar.qml` | 426 | -- | 独立承载数量、筛选、搜索和批量操作 |
 | `src/ui/qml/components/ComponentPreviewPopup.qml` | 320 | -- | 独立承载预览图展示、缩略图切换和延迟隐藏 |
 | `src/ui/qml/MainWindow.qml` | 911 | -- | 主窗口布局+状态管理+对话框逻辑 |
 | `src/ui/qml/components/deprecated/ExportSettingsCard.qml` | 791 | 752 | 已标记 deprecated，可忽略 |
@@ -128,7 +129,7 @@
 
 QML 文件过长是当前最严重的问题区域，建议按以下优先级处理：
 
-1. **`ComponentListCard.qml`（913 行）**：已提取预览弹窗，后续继续拆分为 `ComponentToolbar`、`ComponentSearchBar`、`ComponentListView` 等子组件
+1. **`ComponentListCard.qml`（519 行）**：已提取预览弹窗和工具栏，后续继续拆分过滤模型与列表视图
 2. **`MainWindow.qml`（911 行）**：提取 `MenuBar`、`StatusBar`、`DialogManager` 等独立 QML 组件
 3. **`ComponentListItem.qml`（629 行）**：拆分渲染逻辑为更小的子委托组件
 4. **`ExportSettingsCard.qml`（deprecated，791 行）**：确认无引用后直接删除
@@ -188,7 +189,7 @@ QML 文件过长是当前最严重的问题区域，建议按以下优先级处�
 
 | 目录 | 总行数 | 文件数 |
 |------|--------|--------|
-| `src` | 74,927 | 357 |
+| `src` | 74,960 | 358 |
 | `tests` | 18,581 | 58 |
 | `resources/translations` | 3,303 | 2 |
 | `tools/python` | 6,642 | 13 |
