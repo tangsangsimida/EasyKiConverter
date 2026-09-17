@@ -54,7 +54,7 @@
 | 文件 | 总行数 | 代码行 | 注释行 | 问题分析 |
 |------|--------|--------|--------|---------|
 | `src/services/ComponentCacheService.cpp` | 1,485 | -- | -- | 缓存读写/过期/迁移逻辑仍集中，已通过辅助职责拆分逐步收敛 |
-| `src/ui/viewmodels/ComponentListViewModel.cpp` | 1,372 | 1,022 | 109 | ViewModel 职责过多：列表管理+搜索+选择+批量操作 |
+| `src/ui/viewmodels/ComponentListViewModel.cpp` | 1,372 | 1,029 | 155 | ViewModel 职责过多：列表管理+搜索+选择+批量操作 |
 | `src/services/ComponentService.cpp` | 1,331 | -- | -- | 数据获取+解析+缓存+错误处理全在一个类 |
 
 ### 偏长（500-1000 行，按行数排序）
