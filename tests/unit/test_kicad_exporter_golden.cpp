@@ -20,6 +20,7 @@ class TestKiCadExporterGolden : public QObject {
 
 private slots:
 
+    // 验证基本符号库导出结果与黄金文件一致。
     void testSymbolLibraryMatchesGolden() {
         QTemporaryDir tempDir;
         QVERIFY(tempDir.isValid());
@@ -37,6 +38,7 @@ private slots:
             qPrintable(error));
     }
 
+    // 验证基本封装导出结果与黄金文件一致。
     void testFootprintMatchesGolden() {
         QTemporaryDir tempDir;
         QVERIFY(tempDir.isValid());
@@ -53,6 +55,7 @@ private slots:
                  qPrintable(error));
     }
 
+    // 验证带三维模型引用的封装导出结果。
     void testFootprintWith3DMatchesGolden() {
         QTemporaryDir tempDir;
         QVERIFY(tempDir.isValid());
@@ -73,6 +76,7 @@ private slots:
             qPrintable(error));
     }
 
+    // 验证复杂焊盘、文本和区域的封装导出结果。
     void testComplexFootprintMatchesGolden() {
         QTemporaryDir tempDir;
         QVERIFY(tempDir.isValid());
@@ -90,6 +94,7 @@ private slots:
             qPrintable(error));
     }
 
+    // 验证多个符号合并到同一库文件时的输出结果。
     void testMultiComponentLibraryMatchesGolden() {
         QTemporaryDir tempDir;
         QVERIFY(tempDir.isValid());
@@ -108,6 +113,7 @@ private slots:
                  qPrintable(error));
     }
 
+    // 验证单部分符号使用来源中心并保留引脚名称元数据。
     void testSinglePartSymbolUsesHeadCenterAndPinNameMetadata() {
         SymbolData symbol;
         SymbolInfo info;
@@ -145,6 +151,69 @@ private slots:
         QCOMPARE(ir.pins.first().nameAnchor, QStringLiteral("start"));
     }
 
+    // 验证 C146335 的实际引脚坐标在最终 KiCad 文件中保持栅格对齐。
+    void testC146335PreservesLogicalOriginForGridAlignedPins() {
+        SymbolData symbol;
+        SymbolInfo info;
+        info.name = QStringLiteral("CUS10S30,H3F");
+        info.prefix = QStringLiteral("D");
+        symbol.setInfo(info);
+
+        // C146335 的实际 EasyEDA CAD 数据：head=(400,300)，BBox=(379,293,42,15)。
+        SymbolBBox bbox;
+        bbox.x = 379.0;
+        bbox.y = 293.0;
+        bbox.width = 42.0;
+        bbox.height = 15.0;
+        bbox.headX = 400.0;
+        bbox.headY = 300.0;
+        bbox.hasHeadCenter = true;
+        symbol.setBbox(bbox);
+
+        SymbolPin pinRight;
+        pinRight.settings.posX = 420.0;
+        pinRight.settings.posY = 300.0;
+        pinRight.settings.rotation = 0;
+        pinRight.settings.spicePinNumber = QStringLiteral("2");
+        pinRight.pinPath.path = QStringLiteral("M 420 300 h -15");
+        symbol.addPin(pinRight);
+
+        SymbolPin pinLeft;
+        pinLeft.settings.posX = 380.0;
+        pinLeft.settings.posY = 300.0;
+        pinLeft.settings.rotation = 180;
+        pinLeft.settings.spicePinNumber = QStringLiteral("1");
+        pinLeft.pinPath.path = QStringLiteral("M 380 300 h 15");
+        symbol.addPin(pinLeft);
+
+        SymbolPolyline body;
+        body.points = QStringLiteral("392 294 392 293 394 293 394 308 396 308 396 307");
+        symbol.addPolyline(body);
+
+        SymbolPath triangle;
+        triangle.paths = QStringLiteral("M 405 294 L 395 300 L 405 307 Z");
+        symbol.addPath(triangle);
+
+        const IR::SymbolComponentIR ir = IR::toSymbolIR(symbol);
+        QVERIFY(ir.preserveLogicalOrigin);
+        QCOMPARE(ir.pins.size(), 2);
+        QVERIFY(qAbs(ir.pins[0].position.y()) < 1e-9);
+        QVERIFY(qAbs(ir.pins[1].position.y()) < 1e-9);
+
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+        const QString outputPath = tempDir.filePath(QStringLiteral("C146335.kicad_sym"));
+        ExporterSymbol exporter;
+        QVERIFY(exporter.exportSymbol(ir, outputPath));
+
+        QString error;
+        const QString actual = TestPaths::readText(outputPath, &error);
+        QVERIFY2(error.isEmpty(), qPrintable(error));
+        QVERIFY(actual.contains(QStringLiteral("      (at 5.08 0.00 180)")));
+        QVERIFY(actual.contains(QStringLiteral("      (at -5.08 0.00 0)")));
+    }
+
+    // 验证多部件符号各单元的图形和引脚导出结果。
     void testMultiPartSymbolMatchesGolden() {
         QTemporaryDir tempDir;
         QVERIFY(tempDir.isValid());
@@ -162,6 +231,7 @@ private slots:
             qPrintable(error));
     }
 
+    // 验证特殊字符属性在符号库中的转义和布局结果。
     void testSymbolWithSpecialCharsMatchesGolden() {
         QTemporaryDir tempDir;
         QVERIFY(tempDir.isValid());
@@ -180,6 +250,7 @@ private slots:
     }
 
 private:
+    // 构造基本符号黄金测试数据。
     SymbolData makeSymbol() const {
         SymbolData symbol;
 
@@ -194,6 +265,7 @@ private:
         return symbol;
     }
 
+    // 构造基本封装黄金测试数据。
     FootprintData makeFootprint() const {
         FootprintData footprint;
 
@@ -216,6 +288,7 @@ private:
         return footprint;
     }
 
+    // 构造覆盖复杂图元的封装测试数据。
     FootprintData makeComplexFootprint() const {
         FootprintData footprint;
 
@@ -274,6 +347,7 @@ private:
         return footprint;
     }
 
+    // 构造带三维模型信息的封装测试数据。
     FootprintData makeFootprintWith3D() const {
         FootprintData footprint;
 
@@ -314,6 +388,7 @@ private:
         return footprint;
     }
 
+    // 构造电容符号黄金测试数据。
     SymbolData makeCapacitorSymbol() const {
         SymbolData symbol;
 
@@ -362,6 +437,7 @@ private:
         return symbol;
     }
 
+    // 构造电感符号黄金测试数据。
     SymbolData makeInductorSymbol() const {
         SymbolData symbol;
 
@@ -414,6 +490,7 @@ private:
         return symbol;
     }
 
+    // 构造多部件符号黄金测试数据。
     SymbolData makeMultiPartSymbol() const {
         SymbolData symbol;
 
@@ -472,6 +549,7 @@ private:
         return symbol;
     }
 
+    // 构造包含特殊字符属性的电阻符号测试数据。
     SymbolData makeResistorSymbol() const {
         SymbolData symbol;
 

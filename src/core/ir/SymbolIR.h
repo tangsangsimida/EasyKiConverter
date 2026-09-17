@@ -419,6 +419,7 @@ struct SymbolComponentIR {
     int partCount = 1;  ///< 部件数（多部件符号）
     double originX = 0.0;  ///< 原点 X 坐标（mm）
     double originY = 0.0;  ///< 原点 Y 坐标（mm）
+    bool preserveLogicalOrigin = false;  ///< 坐标已按来源逻辑原点归一化，导出器不得再次按图形居中
 
     // 图形原语列表
     QList<SymbolPinIR> pins;
@@ -471,6 +472,7 @@ struct SymbolComponentIR {
         designatorPrefix.clear();
         partCount = 1;
         originX = originY = 0.0;
+        preserveLogicalOrigin = false;
         pins.clear();
         rectangles.clear();
         circles.clear();

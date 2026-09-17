@@ -427,6 +427,7 @@ inline SymbolComponentIR toSymbolIR(const SymbolData& data) {
         const SymbolBBox bbox = data.bbox();
         double ox = bbox.x;
         double oy = bbox.y;
+        bool usesLogicalOrigin = false;
         const double bboxCenterX = bbox.x + bbox.width / 2.0;
         const double bboxCenterY = bbox.y + bbox.height / 2.0;
         const double headTolerance = 0.75 * qMax(bbox.width, bbox.height);
@@ -435,6 +436,7 @@ inline SymbolComponentIR toSymbolIR(const SymbolData& data) {
         if (bbox.hasHeadCenter && std::isfinite(bbox.headX) && std::isfinite(bbox.headY) && headInsideBbox) {
             ox = bbox.headX;
             oy = bbox.headY;
+            usesLogicalOrigin = true;
         } else if (!bbox.hasHeadCenter) {
             // 兼容旧缓存：没有 head 中心时保留原有 BBox 原点语义。
         } else {
@@ -471,6 +473,7 @@ inline SymbolComponentIR toSymbolIR(const SymbolData& data) {
         convertTexts(data.texts(), ox, oy);
         for (const SymbolGraphicOrder& order : data.graphicOrder())
             ir.graphicOrder.append({order.type, order.index, 0});
+        ir.preserveLogicalOrigin = usesLogicalOrigin;
     }
 
     return ir;
