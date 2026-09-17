@@ -10,6 +10,8 @@ add_library(EasyKiConverterViewModels STATIC
     ComponentListPreviewUpdateBuffer.h
     ComponentListItemUpdateBuffer.cpp
     ComponentListItemUpdateBuffer.h
+    ComponentListDataCoordinator.cpp
+    ComponentListDataCoordinator.h
     ComponentValidationQueue.cpp
     ComponentValidationQueue.h
     ComponentValidationCoordinator.cpp

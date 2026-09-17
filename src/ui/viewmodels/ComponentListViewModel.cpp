@@ -1,5 +1,6 @@
 #include "ComponentListViewModel.h"
 
+#include "ComponentListDataCoordinator.h"
 #include "ComponentValidationCoordinator.h"
 #include "services/ConfigService.h"
 #include "ui/viewmodels/ComponentValidationErrorPolicy.h"
@@ -688,45 +689,12 @@ ComponentListItemData* ComponentListViewModel::findItemData(const QString& compo
 
 /** @brief 将异步返回的基础信息合并到列表项。 */
 void ComponentListViewModel::handleComponentInfoReady(const QString& componentId, const ComponentData& data) {
-    auto item = findItemData(componentId);
-    if (item) {
-        item->setNameSilent(data.name());
-        item->setPackageSilent(data.package());
-        m_batchUpdateItems.add(item);
-        if (!m_batchUpdateTimer->isActive()) {
-            m_batchUpdateTimer->start();
-        }
-    }
+    ComponentListDataCoordinator::handleComponentInfo(*this, componentId, data);
 }
 
 /** @brief 接收 CAD 数据并完成元件验证状态更新。 */
 void ComponentListViewModel::handleCadDataReady(const QString& componentId, const ComponentData& data) {
-    auto item = findItemData(componentId);
-    if (!item) {
-        qWarning() << "handleCadDataReady: item not found for componentId:" << componentId
-                   << ", m_componentIdIndex size:" << m_componentIdIndex.size();
-        return;
-    }
-
-    // 如果组件已经验证通过，说明 CAD 数据之前已经处理过了，
-    // 只需要更新 componentData，不要重复触发验证完成逻辑
-    if (item->isValid()) {
-        QSharedPointer<ComponentData> dataPtr = QSharedPointer<ComponentData>::create(data);
-        item->setComponentData(dataPtr);
-        return;
-    }
-
-    QSharedPointer<ComponentData> dataPtr = QSharedPointer<ComponentData>::create(data);
-    item->setComponentData(dataPtr);
-    item->setFetching(false);
-    item->setValid(true);
-    item->setRetryable(true);
-    item->setValidationPhase("completed");
-    item->setErrorMessage("");
-    scheduleListUpdate();
-
-    m_validationStateManager->onComponentValidated(componentId);
-    QTimer::singleShot(0, this, [this, componentId]() { onValidationComplete(componentId); });
+    ComponentListDataCoordinator::handleCadData(*this, componentId, data);
 }
 
 /** @brief 记录三维模型准备完成事件。 */
@@ -736,64 +704,7 @@ void ComponentListViewModel::handleModel3DReady(const QString& uuid, const QStri
 
 /** @brief 根据获取错误更新元件验证或预览状态。 */
 void ComponentListViewModel::handleFetchError(const QString& componentId, const QString& error) {
-    qWarning() << "Fetch error for:" << componentId << "-" << error;
-
-    auto item = findItemData(componentId);
-
-    if (item) {
-        // 重要：预览图获取失败不应该改变元器件的验证状态
-        // 元器件的验证状态只由 CAD 数据获取结果决定
-        // 如果组件已经验证通过（isValid 为 true），保持验证状态不变
-        bool wasAlreadyValid = item->isValid();
-
-        item->setFetching(false);
-
-        if (!wasAlreadyValid) {
-            // 组件尚未验证通过，说明 CAD 数据获取失败或还未完成
-            // 判断是否是 CAD 数据获取失败
-            // 扩大判断范围：包括网络错误和 HTTP 错误，因为这些也可能导致 CAD 数据获取失败
-            const bool isCadDataFailure = ComponentValidationErrorPolicy::isCadDataFailure(error);
-
-            if (isCadDataFailure) {
-                // CAD 数据获取失败，标记为验证失败
-                item->setValid(false);
-                item->setValidationPhase("failed");
-                const bool nonRetryable = ComponentValidationErrorPolicy::isNonRetryable(error);
-                item->setRetryable(!nonRetryable);
-                if (ComponentValidationErrorPolicy::isNotFound(error)) {
-                    item->setErrorMessage(tr("元器件不存在（404）"));
-                } else if (nonRetryable) {
-                    item->setErrorMessage(error);
-                } else {
-                    item->setErrorMessage(error);
-                }
-                m_validationStateManager->onComponentFailed(componentId);
-                scheduleListUpdate();
-                QTimer::singleShot(0, this, [this, componentId]() { onValidationComplete(componentId); });
-            } else {
-                // 预览图获取失败，保持验证状态（可能还未验证完成）
-                // 只更新错误消息，不改变验证状态
-                switch (ComponentValidationErrorPolicy::classifyPreviewError(error)) {
-                    case ComponentValidationErrorPolicy::PreviewErrorKind::Timeout:
-                        item->setErrorMessage(tr("预览图获取超时（网络不稳定）"));
-                        break;
-                    case ComponentValidationErrorPolicy::PreviewErrorKind::NotFound:
-                        item->setErrorMessage(tr("预览图不存在"));
-                        break;
-                    case ComponentValidationErrorPolicy::PreviewErrorKind::Forbidden:
-                        item->setErrorMessage(tr("预览图获取被拒绝"));
-                        break;
-                    case ComponentValidationErrorPolicy::PreviewErrorKind::Other:
-                        item->setErrorMessage(tr("预览图获取失败"));
-                        break;
-                }
-            }
-        } else {
-            // 组件已经验证通过，只是预览图获取失败，保持验证状态不变
-        }
-
-        scheduleListUpdate();
-    }
+    ComponentListDataCoordinator::handleFetchError(*this, componentId, error);
 }
 
 /** @brief 将 LCSC 返回的制造商、数据手册和图片信息合并到列表项。 */
@@ -801,60 +712,12 @@ void ComponentListViewModel::handleLcscDataUpdated(const QString& componentId,
                                                    const QString& manufacturerPart,
                                                    const QString& datasheetUrl,
                                                    const QStringList& imageUrls) {
-    auto item = findItemData(componentId);
-    if (item) {
-        if (item->componentData()) {
-            auto data = item->componentData();
-            if (!manufacturerPart.isEmpty()) {
-                data->setManufacturerPart(manufacturerPart);
-            }
-            if (!datasheetUrl.isEmpty()) {
-                data->setDatasheet(datasheetUrl);
-
-                QString format = "pdf";
-                if (datasheetUrl.toLower().contains(".html")) {
-                    format = "html";
-                }
-                data->setDatasheetFormat(format);
-            }
-            if (!imageUrls.isEmpty()) {
-                data->setPreviewImages(imageUrls);
-            }
-        }
-
-        if (!manufacturerPart.isEmpty()) {
-            item->setNameSilent(manufacturerPart);
-            m_batchUpdateItems.add(item);
-            if (!m_batchUpdateTimer->isActive()) {
-                m_batchUpdateTimer->start();
-            }
-        }
-    } else {
-        qWarning() << "Component" << componentId << "not found in list, cannot update LCSC data";
-    }
+    ComponentListDataCoordinator::handleLcscData(*this, componentId, manufacturerPart, datasheetUrl, imageUrls);
 }
 
 /** @brief 保存异步返回的数据手册内容并推断其格式。 */
 void ComponentListViewModel::handleDatasheetReady(const QString& componentId, const QByteArray& datasheetData) {
-    auto item = findItemData(componentId);
-    if (item) {
-        if (item->componentData()) {
-            auto data = item->componentData();
-            data->setDatasheetData(datasheetData);
-
-            QString format = data->datasheetFormat();
-            if (format.isEmpty()) {
-                if (datasheetData.startsWith("%PDF-")) {
-                    format = "pdf";
-                } else {
-                    format = "html";
-                }
-                data->setDatasheetFormat(format);
-            }
-        }
-    } else {
-        qWarning() << "Component" << componentId << "not found in list, cannot update datasheet data";
-    }
+    ComponentListDataCoordinator::handleDatasheet(*this, componentId, datasheetData);
 }
 
 /** @brief 批量应用缓存中的预览图编码结果。 */
