@@ -1,5 +1,6 @@
 #include "ComponentListViewModel.h"
 
+#include "ComponentListBatchCoordinator.h"
 #include "ComponentListDataCoordinator.h"
 #include "ComponentValidationCoordinator.h"
 #include "services/ConfigService.h"
@@ -390,129 +391,12 @@ void ComponentListViewModel::rebuildComponentIdIndex() {
 
 /** @brief 收集并批量调度元件编号。 */
 void ComponentListViewModel::addComponentsBatch(const QStringList& componentIds) {
-    clearAttentionHints();
-    QStringList newIds;
-    for (const QString& rawId : componentIds) {
-        QString id = rawId.trimmed().toUpper();
-        if (id.isEmpty())
-            continue;
-
-        if (!validateComponentId(id)) {
-            QStringList extracted = extractComponentIdFromText(id);
-            for (const QString& extractedId : extracted) {
-                if (!componentExists(extractedId) && !newIds.contains(extractedId)) {
-                    newIds.append(extractedId);
-                }
-            }
-            continue;
-        }
-
-        if (!componentExists(id) && !newIds.contains(id)) {
-            newIds.append(id);
-        }
-    }
-
-    if (newIds.isEmpty())
-        return;
-
-    m_bomImportComplete = false;
-
-    // 大量元器件导入时启用 BOM 导入模式，降低 UI 更新频率
-    if (newIds.count() >= 20 && !m_bomImportMode) {
-        m_bomImportMode = true;
-    }
-
-    m_pendingComponentIds.append(newIds);
-    m_pendingBatchValidationCount += newIds.count();
-
-    if (!m_batchAddTimer->isActive()) {
-        m_batchAddTimer->start();
-    }
+    ComponentListBatchCoordinator::addComponents(*this, componentIds);
 }
 
 /** @brief 处理一批待添加元件并更新验证队列。 */
 void ComponentListViewModel::processNextBatchAdd() {
-    if (m_pendingComponentIds.isEmpty()) {
-        m_batchAddTimer->stop();
-        return;
-    }
-
-    QStringList batch;
-    int count = qMin(BATCH_ADD_SIZE, m_pendingComponentIds.size());
-    for (int i = 0; i < count; ++i) {
-        batch.append(m_pendingComponentIds.takeFirst());
-    }
-
-    int pendingCount = batch.count();
-
-    // 获取起始索引（需要锁保护）
-    int startIndex;
-    bool isFirstBatch;
-    bool isLastBatch;
-    {
-        QMutexLocker locker(&m_listMutex);
-        startIndex = m_componentList.count();
-        isFirstBatch = (startIndex == 0);
-        isLastBatch = m_pendingComponentIds.isEmpty();
-    }
-
-    // 创建新的 items（在锁外创建，因为不涉及共享数据）
-    QList<ComponentListItemData*> newItems;
-    for (const QString& id : batch) {
-        auto item = new ComponentListItemData(id, this);
-        item->setFetching(true);
-        item->setValid(false);
-        item->setValidationPhase("validating");
-        newItems.append(item);
-    }
-
-    // 通知视图即将插入
-    beginInsertRows(QModelIndex(), startIndex, startIndex + pendingCount - 1);
-
-    // 修改列表（需要锁保护）
-    {
-        QMutexLocker locker(&m_listMutex);
-        for (auto item : newItems) {
-            m_componentList.append(item);
-            m_componentIdIndex.insert(item->componentId(), m_componentList.count() - 1);
-        }
-    }
-
-    // 通知视图插入完成
-    endInsertRows();
-
-    // 只有在最后一批时才启动验证和刷新统计，避免 BOM 导入时 UI 与验证并发抖动
-    if (isLastBatch) {
-        const int validationCount = m_pendingBatchValidationCount;
-        m_pendingBatchValidationCount = 0;
-
-        // BOM 导入模式结束，恢复正常 UI 更新
-        if (m_bomImportMode) {
-            // 保存状态以便后续处理
-            bool hadPendingUpdates = (m_bomImportPendingUpdates > 0);
-            m_bomImportMode = false;
-            // 如果有累积的验证完成计数，触发一次 UI 更新
-            if (hadPendingUpdates) {
-                m_bomImportPendingUpdates = 0;
-                scheduleListUpdate();
-            }
-        }
-
-        if (validationCount > 0) {
-            if (m_validationStateManager->pendingCount() > 0 || !m_validationQueue.isEmpty() ||
-                m_validationQueue.hasInFlight()) {
-                m_validationStateManager->addValidation(validationCount);
-            } else {
-                m_validationStateManager->startValidation(validationCount);
-            }
-        }
-
-        // BOM 导入完成，标记并启动验证队列
-        m_bomImportComplete = true;
-        startValidationQueue();
-    }
-
-    scheduleListUpdate();
+    ComponentListBatchCoordinator::processNext(*this);
 }
 
 /** @brief 启动验证队列中的并发元件请求。 */
@@ -588,62 +472,7 @@ void ComponentListViewModel::copyAllComponentIds() {
 
 /** @brief 异步解析用户选择的 BOM 文件并添加元件。 */
 void ComponentListViewModel::selectBomFile(const QString& filePath) {
-    qDebug() << "BOM file selected:" << filePath;
-
-    if (m_bomFilePath != filePath) {
-        m_bomFilePath = filePath;
-        emit bomFilePathChanged();
-    }
-
-    QString localPath = filePath;
-    if (filePath.startsWith("file:///")) {
-        localPath = QUrl(filePath).toLocalFile();
-        qDebug() << "Converted URL to local path:" << localPath;
-    }
-
-    m_bomResult = "Parsing BOM file...";
-    emit bomResultChanged();
-
-    QFuture<QStringList> future = QtConcurrent::run([this, localPath]() { return m_service->parseBomFile(localPath); });
-
-    QFutureWatcher<QStringList>* watcher = new QFutureWatcher<QStringList>(this);
-    QPointer<ComponentListViewModel> self(this);
-    connect(watcher, &QFutureWatcher<QStringList>::finished, this, [self, watcher, localPath]() {
-        if (!self) {
-            return;
-        }
-        QStringList componentIds = watcher->result();
-        watcher->deleteLater();
-
-        if (componentIds.isEmpty()) {
-            self->m_bomResult = "No valid component IDs found in BOM file";
-            qWarning() << "No component IDs found in BOM file:" << localPath;
-            emit self->bomResultChanged();
-            return;
-        }
-
-        QStringList newIds;
-        int skipped = 0;
-
-        for (const QString& id : componentIds) {
-            if (!self->componentExists(id)) {
-                newIds.append(id);
-            } else {
-                skipped++;
-            }
-        }
-
-        if (!newIds.isEmpty()) {
-            self->addComponentsBatch(newIds);
-        }
-
-        QString resultMsg =
-            QString("BOM file imported: %1 components added, %2 skipped").arg(newIds.count()).arg(skipped);
-        self->m_bomResult = resultMsg;
-        qDebug() << resultMsg;
-        emit self->bomResultChanged();
-    });
-    watcher->setFuture(future);
+    ComponentListBatchCoordinator::selectBomFile(*this, filePath);
 }
 
 /** @brief 请求指定元件的数据，可选择是否获取三维模型。 */
