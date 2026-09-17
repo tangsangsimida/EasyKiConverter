@@ -48,6 +48,8 @@ public:
     }
 
 private:
+    friend class AltiumSchGraphicOrderWriter;
+
     // ---- 文件级写入 ----
     void writeFileHeader(OLECompoundWriter& ole, const QList<AltiumSchComponent>& components);
     void writeSectionKeys(OLECompoundWriter& ole,
@@ -73,9 +75,6 @@ private:
     void writeTextRecord(AltiumBinaryWriter& writer, const AltiumSchText& text);
     void writeTextFrameRecord(AltiumBinaryWriter& writer, const AltiumSchTextFrame& frame);
     void writeImageRecord(AltiumBinaryWriter& writer, const AltiumSchImage& image);
-    void writeOrderedGraphic(AltiumBinaryWriter& writer,
-                             const AltiumSchComponent& component,
-                             const AltiumSchGraphicOrder& order);
     void prepareImageStorageNames(const QList<AltiumSchComponent>& components);
     void writeImageStorage(OLECompoundWriter& ole, const QList<AltiumSchComponent>& components);
     void writeComponentParameterRecords(AltiumBinaryWriter& writer, const AltiumSchComponent& component);

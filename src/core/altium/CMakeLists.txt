@@ -17,6 +17,8 @@ target_sources(EasyKiConverterAltium
         writers/AltiumSchImageStorageEncoder.cpp
         writers/AltiumSchLibWriter.h
         writers/AltiumSchLibWriter.cpp
+        writers/AltiumSchGraphicOrderWriter.h
+        writers/AltiumSchGraphicOrderWriter.cpp
         writers/AltiumPcbLibWriter.h
         writers/AltiumPcbLibWriter.cpp
 

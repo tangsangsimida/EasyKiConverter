@@ -1,5 +1,6 @@
 #include "AltiumSchLibWriter.h"
 
+#include "AltiumSchGraphicOrderWriter.h"
 #include "AltiumSchImageStorageEncoder.h"
 #include "utils/AltiumConstants.h"
 #include "utils/AltiumCoord.h"
@@ -478,156 +479,6 @@ void AltiumSchLibWriter::writeSectionKeys(OLECompoundWriter& ole,
 }
 
 /**
- * @brief 按来源顺序写入单个符号图元
- * @details 路径可能拆分为多个 Altium 原生记录，因此按 sourceSegmentIndex 重新合并其写出顺序。
- */
-void AltiumSchLibWriter::writeOrderedGraphic(AltiumBinaryWriter& writer,
-                                             const AltiumSchComponent& component,
-                                             const AltiumSchGraphicOrder& order) {
-    const auto matchesPart = [&order](int sourcePartIndex) { return sourcePartIndex == order.partIndex; };
-    if (order.type == QStringLiteral("P")) {
-        int localIndex = 0;
-        for (const AltiumSchPin& pin : component.pins) {
-            const bool matchesSourcePart =
-                order.partIndex < 0 ? pin.ownerPartId == -1 : pin.sourcePartIndex == order.partIndex;
-            if (!matchesSourcePart)
-                continue;
-            if (localIndex == order.index) {
-                writePinRecord(writer, pin);
-                return;
-            }
-            ++localIndex;
-        }
-        return;
-    }
-    if (order.type == QStringLiteral("R")) {
-        for (const AltiumSchRoundRectangle& rect : component.roundRectangles) {
-            if (rect.sourceGraphicIndex == order.index && matchesPart(rect.sourcePartIndex)) {
-                writeRoundRectangleRecord(writer, rect);
-                return;
-            }
-        }
-        for (const AltiumSchRectangle& rect : component.rectangles) {
-            if (rect.sourceGraphicIndex == order.index && matchesPart(rect.sourcePartIndex)) {
-                writeRectangleRecord(writer, rect);
-                return;
-            }
-        }
-        return;
-    }
-    if (order.type == QStringLiteral("C") || order.type == QStringLiteral("E")) {
-        for (const AltiumSchEllipse& ellipse : component.ellipses) {
-            if (ellipse.sourceGraphicType == order.type && ellipse.sourceGraphicIndex == order.index &&
-                matchesPart(ellipse.sourcePartIndex)) {
-                writeEllipseRecord(writer, ellipse);
-                return;
-            }
-        }
-        return;
-    }
-    if (order.type == QStringLiteral("A")) {
-        for (const AltiumSchArc& arc : component.arcs) {
-            if (arc.sourceGraphicType == order.type && arc.sourceGraphicIndex == order.index &&
-                matchesPart(arc.sourcePartIndex)) {
-                writeArcRecord(writer, arc);
-                return;
-            }
-        }
-        return;
-    }
-    if (order.type == QStringLiteral("PL")) {
-        for (const AltiumSchPolyline& polyline : component.polylines) {
-            if (polyline.sourceGraphicIndex == order.index && matchesPart(polyline.sourcePartIndex)) {
-                writePolylineRecord(writer, polyline);
-                return;
-            }
-        }
-        return;
-    }
-    if (order.type == QStringLiteral("PG")) {
-        for (const AltiumSchPolygon& polygon : component.polygons) {
-            if (polygon.sourceGraphicIndex == order.index && matchesPart(polygon.sourcePartIndex)) {
-                writePolygonRecord(writer, polygon);
-                return;
-            }
-        }
-        return;
-    }
-    if (order.type == QStringLiteral("T")) {
-        for (const AltiumSchText& text : component.texts) {
-            if (!text.isPinLabel && text.sourceGraphicIndex == order.index && matchesPart(text.sourcePartIndex)) {
-                writeTextRecord(writer, text);
-                return;
-            }
-        }
-        return;
-    }
-    if (order.type == QStringLiteral("I")) {
-        for (const AltiumSchImage& image : component.images) {
-            if (image.sourceGraphicIndex == order.index && matchesPart(image.sourcePartIndex)) {
-                writeImageRecord(writer, image);
-                return;
-            }
-        }
-        return;
-    }
-    if (order.type == QStringLiteral("PT")) {
-        for (const AltiumSchPath& path : component.paths) {
-            if (path.sourceGraphicType == order.type && path.sourceGraphicIndex == order.index &&
-                matchesPart(path.sourcePartIndex) && path.sourceSegmentIndex < 0) {
-                writePathRecord(writer, path);
-                return;
-            }
-        }
-        QSet<int> segmentIndexSet;
-        const auto collectSegmentIndices = [&](const auto& graphics) {
-            for (const auto& graphic : graphics) {
-                if (graphic.sourceGraphicType == order.type && graphic.sourceGraphicIndex == order.index &&
-                    matchesPart(graphic.sourcePartIndex) && graphic.sourceSegmentIndex >= 0) {
-                    segmentIndexSet.insert(graphic.sourceSegmentIndex);
-                }
-            }
-        };
-        collectSegmentIndices(component.paths);
-        collectSegmentIndices(component.beziers);
-        collectSegmentIndices(component.arcs);
-        collectSegmentIndices(component.ellipticalArcs);
-        QList<int> segmentIndices = segmentIndexSet.values();
-        std::sort(segmentIndices.begin(), segmentIndices.end());
-        for (const int segmentIndex : segmentIndices) {
-            for (const AltiumSchPath& path : component.paths) {
-                if (path.sourceGraphicType == order.type && path.sourceGraphicIndex == order.index &&
-                    matchesPart(path.sourcePartIndex) && path.sourceSegmentIndex == segmentIndex) {
-                    writePathRecord(writer, path);
-                    break;
-                }
-            }
-            for (const AltiumSchBezier& bezier : component.beziers) {
-                if (bezier.sourceGraphicType == order.type && bezier.sourceGraphicIndex == order.index &&
-                    matchesPart(bezier.sourcePartIndex) && bezier.sourceSegmentIndex == segmentIndex) {
-                    writeBezierRecord(writer, bezier);
-                    break;
-                }
-            }
-            for (const AltiumSchArc& arc : component.arcs) {
-                if (arc.sourceGraphicType == order.type && arc.sourceGraphicIndex == order.index &&
-                    matchesPart(arc.sourcePartIndex) && arc.sourceSegmentIndex == segmentIndex) {
-                    writeArcRecord(writer, arc);
-                    break;
-                }
-            }
-            for (const AltiumSchEllipticalArc& arc : component.ellipticalArcs) {
-                if (arc.sourceGraphicType == order.type && arc.sourceGraphicIndex == order.index &&
-                    matchesPart(arc.sourcePartIndex) && arc.sourceSegmentIndex == segmentIndex) {
-                    writeEllipticalArcRecord(writer, arc);
-                    break;
-                }
-            }
-        }
-    }
-}
-
-/**
  * @brief 写入元件存储
  */
 void AltiumSchLibWriter::writeComponentStorage(OLECompoundWriter& ole,
@@ -639,6 +490,7 @@ void AltiumSchLibWriter::writeComponentStorage(OLECompoundWriter& ole,
     // 构建 Data 流
     QByteArray data;
     AltiumBinaryWriter writer(data);
+    AltiumSchGraphicOrderWriter graphicOrderWriter(*this);
     // Altium 对图元和二进制引脚使用同一个从 0 开始的内容记录计数器。
     // 首条内容记录隐含索引 0，文本记录因此省略 IndexInSheet=0。
     m_nextIndexInSheet = 0;
@@ -658,7 +510,7 @@ void AltiumSchLibWriter::writeComponentStorage(OLECompoundWriter& ole,
 
     if (useGraphicOrder) {
         for (const AltiumSchGraphicOrder& order : component.graphicOrder)
-            writeOrderedGraphic(writer, component, order);
+            graphicOrderWriter.write(writer, component, order);
         // 引脚名称和编号是由引脚派生出的文本，不在源 shape 顺序中。
         for (const AltiumSchText& text : component.texts) {
             if (text.isPinLabel)
@@ -914,7 +766,7 @@ bool AltiumSchLibWriter::hasCompleteGraphicOrder(const AltiumSchComponent& compo
             return false;
     }
 
-    // 这些图元只有在来源类型和索引同时有效时才能由 writeOrderedGraphic() 写出。
+    // 这些图元只有在来源类型和索引同时有效时才能由 AltiumSchGraphicOrderWriter 写出。
     // 否则应回退到默认顺序，避免来源类型非空但索引缺失的图元被静默丢弃。
     const auto hasUnresolvedOrderedGraphic = [](const auto& graphics) {
         for (const auto& graphic : graphics) {
