@@ -1,5 +1,6 @@
 #include "services/ComponentDataMemoryStore.h"
 #include "services/ComponentService.h"
+#include "services/PreviewImageDataEncoder.h"
 #include "tests/common/TestPaths.hpp"
 
 #include <QBuffer>
@@ -168,6 +169,35 @@ private slots:
         QCOMPARE(completedSpy.count(), 1);
         QCOMPARE(context.completedCount(), 1);
         QCOMPARE(context.collectedData().size(), 1);
+    }
+
+    /** @brief 验证预览图编码器按文件名序号保存原始数据和 Base64 数据。 */
+    void testPreviewImageDataEncoderPreservesImageIndexes() {
+        QTemporaryDir imageDir;
+        QVERIFY(imageDir.isValid());
+
+        const QString firstPath = imageDir.filePath(QStringLiteral("preview_0.jpg"));
+        const QString thirdPath = imageDir.filePath(QStringLiteral("preview_2.jpg"));
+        {
+            QFile firstFile(firstPath);
+            QVERIFY(firstFile.open(QIODevice::WriteOnly));
+            QVERIFY(firstFile.write("first") == 5);
+            QFile thirdFile(thirdPath);
+            QVERIFY(thirdFile.open(QIODevice::WriteOnly));
+            QVERIFY(thirdFile.write("third") == 5);
+        }
+
+        const PreviewImageDataResult result = PreviewImageDataEncoder::encodeFiles(
+            {thirdPath, imageDir.filePath(QStringLiteral("ignored.png")), firstPath});
+
+        QCOMPARE(PreviewImageDataEncoder::imageIndexFromPath(firstPath), 0);
+        QCOMPARE(PreviewImageDataEncoder::imageIndexFromPath(QStringLiteral("preview_invalid.jpg")), -1);
+        QCOMPARE(result.imageData.size(), 3);
+        QCOMPARE(result.imageData.at(0), QByteArray("first"));
+        QCOMPARE(result.imageData.at(1), QByteArray());
+        QCOMPARE(result.imageData.at(2), QByteArray("third"));
+        QCOMPARE(result.encodedImages.at(0), QString::fromLatin1(QByteArray("first").toBase64()));
+        QCOMPARE(result.encodedImages.at(2), QString::fromLatin1(QByteArray("third").toBase64()));
     }
 
     /** @brief 验证取消缓存加载后不会重新创建获取状态。 */

@@ -40,6 +40,8 @@ add_library(EasyKiConverterServices STATIC
     ComponentQueueManager.cpp
     ParallelFetchContext.cpp
     PreviewImageExporter.cpp
+    PreviewImageDataEncoder.cpp
+    PreviewImageDataEncoder.h
     DatasheetExporter.cpp
 )
 
