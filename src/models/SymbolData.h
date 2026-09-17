@@ -7,6 +7,7 @@
 #include <QPointF>
 #include <QRectF>
 #include <QString>
+#include <QStringList>
 
 namespace EasyKiConverter {
 
@@ -36,6 +37,7 @@ struct SymbolInfo {
     QString datasheet;
     QString lcscId;
     QString jlcId;
+    QStringList aliases;
 
     // EasyEDA API 原始字段
     QString uuid;
@@ -268,6 +270,22 @@ struct SymbolPath {
 };
 
 /**
+ * @brief EasyEDA 符号图片
+ * @details source 保存外部 URL 或原始 data URL；data 非空时表示可直接嵌入的图片数据。
+ */
+struct SymbolImage {
+    double posX = 0.0;
+    double posY = 0.0;
+    double width = 0.0;
+    double height = 0.0;
+    double rotation = 0.0;
+    QString source;
+    QString fileName;
+    QByteArray data;
+    bool isLocked = false;
+};
+
+/**
  * @brief 文本
  */
 struct SymbolText {
@@ -289,15 +307,25 @@ struct SymbolText {
     bool isLocked;
 };
 
+/**
+ * @brief 符号图元在源数据中的绘制顺序引用
+ * @details type 使用 EasyEDA shape designator（如 P、R、C、T），index 指向对应类型列表中的元素。
+ */
+struct SymbolGraphicOrder {
+    QString type;
+    int index = -1;
+};
+
 // ==================== 符号部分 ====================
 
 /**
  * @brief 符号部分（用于多部分符号）
  */
 struct SymbolPart {
-    int unitNumber;  // 部分编号（从 0 开始）
-    double originX;  // 子部分的坐标原点 X（从 EasyEDA head.x）
-    double originY;  // 子部分的坐标原点 Y（从 EasyEDA head.y）
+    int unitNumber = 0;  // 部分编号（从 0 开始）
+    double originX = 0.0;  // 子部分的坐标原点 X（从 EasyEDA head.x）
+    double originY = 0.0;  // 子部分的坐标原点 Y（从 EasyEDA head.y）
+    bool commonToAllParts = false;  // 是否为公共 Part Zero；序列化键为 common_to_all_parts
     QList<SymbolPin> pins;
     QList<SymbolRectangle> rectangles;
     QList<SymbolCircle> circles;
@@ -306,7 +334,9 @@ struct SymbolPart {
     QList<SymbolPolyline> polylines;
     QList<SymbolPolygon> polygons;
     QList<SymbolPath> paths;
+    QList<SymbolImage> images;
     QList<SymbolText> texts;
+    QList<SymbolGraphicOrder> graphicOrder;
 };
 
 // ==================== 符号数据 ====================
@@ -326,140 +356,204 @@ public:
         return m_info;
     }
 
+    /** @brief 设置符号元数据。 */
     void setInfo(const SymbolInfo& info) {
         m_info = info;
     }
 
+    /** @brief 返回符号边界框。 */
     SymbolBBox bbox() const {
         return m_bbox;
     }
 
+    /** @brief 设置符号边界框。 */
     void setBbox(const SymbolBBox& bbox) {
         m_bbox = bbox;
     }
 
     // 单部分符号的兼容接口（向后兼容）
+    /** @brief 返回单部分兼容接口中的全部引脚。 */
     QList<SymbolPin> pins() const {
         return m_pins;
     }
 
+    /** @brief 批量设置单部分兼容接口中的引脚。 */
     void setPins(const QList<SymbolPin>& pins) {
         m_pins = pins;
     }
 
+    /** @brief 追加一个单部分兼容接口引脚。 */
     void addPin(const SymbolPin& pin) {
         m_pins.append(pin);
     }
 
+    /** @brief 返回全部矩形图元。 */
     QList<SymbolRectangle> rectangles() const {
         return m_rectangles;
     }
 
+    /** @brief 批量设置矩形图元。 */
     void setRectangles(const QList<SymbolRectangle>& rectangles) {
         m_rectangles = rectangles;
     }
 
+    /** @brief 追加一个矩形图元。 */
     void addRectangle(const SymbolRectangle& rect) {
         m_rectangles.append(rect);
     }
 
+    /** @brief 返回全部圆形图元。 */
     QList<SymbolCircle> circles() const {
         return m_circles;
     }
 
+    /** @brief 批量设置圆形图元。 */
     void setCircles(const QList<SymbolCircle>& circles) {
         m_circles = circles;
     }
 
+    /** @brief 追加一个圆形图元。 */
     void addCircle(const SymbolCircle& circle) {
         m_circles.append(circle);
     }
 
+    /** @brief 返回全部圆弧图元。 */
     QList<SymbolArc> arcs() const {
         return m_arcs;
     }
 
+    /** @brief 批量设置圆弧图元。 */
     void setArcs(const QList<SymbolArc>& arcs) {
         m_arcs = arcs;
     }
 
+    /** @brief 追加一个圆弧图元。 */
     void addArc(const SymbolArc& arc) {
         m_arcs.append(arc);
     }
 
+    /** @brief 返回全部椭圆图元。 */
     QList<SymbolEllipse> ellipses() const {
         return m_ellipses;
     }
 
+    /** @brief 批量设置椭圆图元。 */
     void setEllipses(const QList<SymbolEllipse>& ellipses) {
         m_ellipses = ellipses;
     }
 
+    /** @brief 追加一个椭圆图元。 */
     void addEllipse(const SymbolEllipse& ellipse) {
         m_ellipses.append(ellipse);
     }
 
+    /** @brief 返回全部折线图元。 */
     QList<SymbolPolyline> polylines() const {
         return m_polylines;
     }
 
+    /** @brief 批量设置折线图元。 */
     void setPolylines(const QList<SymbolPolyline>& polylines) {
         m_polylines = polylines;
     }
 
+    /** @brief 追加一个折线图元。 */
     void addPolyline(const SymbolPolyline& polyline) {
         m_polylines.append(polyline);
     }
 
+    /** @brief 返回全部多边形图元。 */
     QList<SymbolPolygon> polygons() const {
         return m_polygons;
     }
 
+    /** @brief 批量设置多边形图元。 */
     void setPolygons(const QList<SymbolPolygon>& polygons) {
         m_polygons = polygons;
     }
 
+    /** @brief 追加一个多边形图元。 */
     void addPolygon(const SymbolPolygon& polygon) {
         m_polygons.append(polygon);
     }
 
+    /** @brief 返回全部路径图元。 */
     QList<SymbolPath> paths() const {
         return m_paths;
     }
 
+    /** @brief 批量设置路径图元。 */
     void setPaths(const QList<SymbolPath>& paths) {
         m_paths = paths;
     }
 
+    /** @brief 追加一个路径图元。 */
     void addPath(const SymbolPath& path) {
         m_paths.append(path);
     }
 
+    /** @brief 返回全部图片图元。 */
+    QList<SymbolImage> images() const {
+        return m_images;
+    }
+
+    /** @brief 批量设置图片图元。 */
+    void setImages(const QList<SymbolImage>& images) {
+        m_images = images;
+    }
+
+    /** @brief 追加一个图片图元。 */
+    void addImage(const SymbolImage& image) {
+        m_images.append(image);
+    }
+
+    /** @brief 返回全部文本图元。 */
     QList<SymbolText> texts() const {
         return m_texts;
     }
 
+    /** @brief 批量设置文本图元。 */
     void setTexts(const QList<SymbolText>& texts) {
         m_texts = texts;
     }
 
+    /** @brief 追加一个文本图元。 */
     void addText(const SymbolText& text) {
         m_texts.append(text);
     }
 
+    /** @brief 返回符号图元的绘制顺序。 */
+    QList<SymbolGraphicOrder> graphicOrder() const {
+        return m_graphicOrder;
+    }
+
+    /** @brief 设置符号图元的绘制顺序。 */
+    void setGraphicOrder(const QList<SymbolGraphicOrder>& order) {
+        m_graphicOrder = order;
+    }
+
+    /** @brief 追加一个绘制顺序引用。 */
+    void addGraphicOrder(const SymbolGraphicOrder& order) {
+        m_graphicOrder.append(order);
+    }
+
     // 多部分符号接
+    /** @brief 返回多部分符号的全部部分。 */
     QList<SymbolPart> parts() const {
         return m_parts;
     }
 
+    /** @brief 批量设置多部分符号的部分。 */
     void setParts(const QList<SymbolPart>& parts) {
         m_parts = parts;
     }
 
+    /** @brief 追加一个多部分符号部分。 */
     void addPart(const SymbolPart& part) {
         m_parts.append(part);
     }
 
+    /** @brief 判断符号是否包含多个部分。 */
     bool isMultiPart() const {
         return m_parts.size() > 1;
     }
@@ -471,6 +565,13 @@ public:
     // 数据验证
     bool isValid() const;
     QString validate() const;
+
+    /**
+     * @brief 返回所有可诊断的符号数据问题
+     * @details 与只返回首个错误的 validate() 不同，该接口用于导出前一次性展示所有异常图元。
+     * @return 验证错误列表；为空表示未发现问题
+     */
+    QStringList validationErrors() const;
 
     // 清空数据
     void clear();
@@ -486,7 +587,9 @@ private:
     QList<SymbolPolyline> m_polylines;
     QList<SymbolPolygon> m_polygons;
     QList<SymbolPath> m_paths;
+    QList<SymbolImage> m_images;
     QList<SymbolText> m_texts;
+    QList<SymbolGraphicOrder> m_graphicOrder;
     QList<SymbolPart> m_parts;  // 多部分符号的部分列表
 };
 

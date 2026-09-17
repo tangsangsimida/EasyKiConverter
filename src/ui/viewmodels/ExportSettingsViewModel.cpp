@@ -82,6 +82,7 @@ ExportSettingsViewModel::ExportSettingsViewModel(ParallelExportService* exportSe
 
 ExportSettingsViewModel::~ExportSettingsViewModel() {}
 
+// 设置输出目录并持久化配置。
 void ExportSettingsViewModel::setOutputPath(const QString& path) {
     if (m_outputPath != path) {
         m_outputPath = path;
@@ -90,6 +91,7 @@ void ExportSettingsViewModel::setOutputPath(const QString& path) {
     }
 }
 
+// 清理库名称后更新并持久化配置。
 void ExportSettingsViewModel::setLibName(const QString& name) {
     // 清洗 libName，防止路径穿越（如 ../foo）和非法字符
     const QString safeName = PathSecurity::sanitizeFilename(name);
@@ -100,6 +102,7 @@ void ExportSettingsViewModel::setLibName(const QString& name) {
     }
 }
 
+// 设置是否导出符号库。
 void ExportSettingsViewModel::setExportSymbol(bool enabled) {
     if (m_exportSymbol != enabled) {
         m_exportSymbol = enabled;
@@ -108,6 +111,7 @@ void ExportSettingsViewModel::setExportSymbol(bool enabled) {
     }
 }
 
+// 设置是否导出封装库。
 void ExportSettingsViewModel::setExportFootprint(bool enabled) {
     if (m_exportFootprint != enabled) {
         m_exportFootprint = enabled;
@@ -116,7 +120,11 @@ void ExportSettingsViewModel::setExportFootprint(bool enabled) {
     }
 }
 
+// 设置是否导出三维模型，并应用目标格式限制。
 void ExportSettingsViewModel::setExportModel3D(bool enabled) {
+    if (enabled && m_targetModel && m_targetModel->currentIndex() == static_cast<int>(TargetEdaFormat::Xpedition)) {
+        enabled = false;
+    }
     if (m_exportModel3D != enabled) {
         m_exportModel3D = enabled;
         m_configService->setExportModel3D(enabled);
@@ -124,6 +132,7 @@ void ExportSettingsViewModel::setExportModel3D(bool enabled) {
     }
 }
 
+// 设置三维模型导出格式。
 void ExportSettingsViewModel::setExportModel3DFormat(int format) {
     if (m_exportModel3DFormat != format) {
         m_exportModel3DFormat = format;
@@ -132,6 +141,7 @@ void ExportSettingsViewModel::setExportModel3DFormat(int format) {
     }
 }
 
+// 设置三维模型路径模式并规范化取值。
 void ExportSettingsViewModel::setExportModel3DPathMode(int mode) {
     const int normalizedMode = ExportOptions::normalizePathMode(mode);
     if (m_exportModel3DPathMode != normalizedMode) {
@@ -141,6 +151,7 @@ void ExportSettingsViewModel::setExportModel3DPathMode(int mode) {
     }
 }
 
+// 设置是否导出预览图片。
 void ExportSettingsViewModel::setExportPreviewImages(bool enabled) {
     if (m_exportPreviewImages != enabled) {
         m_exportPreviewImages = enabled;
@@ -149,6 +160,7 @@ void ExportSettingsViewModel::setExportPreviewImages(bool enabled) {
     }
 }
 
+// 设置是否导出数据手册。
 void ExportSettingsViewModel::setExportDatasheet(bool enabled) {
     if (m_exportDatasheet != enabled) {
         m_exportDatasheet = enabled;
@@ -157,6 +169,7 @@ void ExportSettingsViewModel::setExportDatasheet(bool enabled) {
     }
 }
 
+// 设置是否覆盖已有导出文件。
 void ExportSettingsViewModel::setOverwriteExistingFiles(bool enabled) {
     if (m_overwriteExistingFiles != enabled) {
         m_overwriteExistingFiles = enabled;
@@ -165,6 +178,7 @@ void ExportSettingsViewModel::setOverwriteExistingFiles(bool enabled) {
     }
 }
 
+// 设置弱网络适配选项。
 void ExportSettingsViewModel::setWeakNetworkSupport(bool enabled) {
     if (m_weakNetworkSupport != enabled) {
         m_weakNetworkSupport = enabled;
@@ -173,6 +187,7 @@ void ExportSettingsViewModel::setWeakNetworkSupport(bool enabled) {
     }
 }
 
+// 设置库导出的追加或更新模式。
 void ExportSettingsViewModel::setExportMode(int mode) {
     if (m_exportMode != mode) {
         m_exportMode = mode;
@@ -182,6 +197,7 @@ void ExportSettingsViewModel::setExportMode(int mode) {
     }
 }
 
+// 设置调试模式，环境变量存在时由环境变量优先控制。
 void ExportSettingsViewModel::setDebugMode(bool enabled) {
     bool envDebugMode = qEnvironmentVariableIsSet("EASYKICONVERTER_DEBUG_MODE");
 
@@ -198,18 +214,25 @@ void ExportSettingsViewModel::setDebugMode(bool enabled) {
     }
 }
 
+// 绑定目标格式模型并同步目标格式相关限制。
 void ExportSettingsViewModel::setTargetModel(ExportTargetModel* model) {
     if (m_targetModel == model)
         return;
     m_targetModel = model;
     if (m_targetModel) {
         connect(m_targetModel, &ExportTargetModel::currentTargetChanged, this, [this]() {
+            if (m_targetModel && m_targetModel->currentIndex() == static_cast<int>(TargetEdaFormat::Xpedition)) {
+                setExportModel3D(false);
+                return;
+            }
             if (m_targetModel && m_targetModel->currentIndex() == static_cast<int>(TargetEdaFormat::Altium) &&
                 (m_exportModel3DFormat & ExportOptions::MODEL_3D_FORMAT_WRL)) {
                 // Altium PcbLib 只能可靠嵌入 STEP，切换目标时移除 WRL 位。
                 setExportModel3DFormat(ExportOptions::MODEL_3D_FORMAT_STEP);
             }
         });
+        if (m_targetModel->currentIndex() == static_cast<int>(TargetEdaFormat::Xpedition))
+            setExportModel3D(false);
         if (m_targetModel->currentIndex() == static_cast<int>(TargetEdaFormat::Altium) &&
             (m_exportModel3DFormat & ExportOptions::MODEL_3D_FORMAT_WRL)) {
             setExportModel3DFormat(ExportOptions::MODEL_3D_FORMAT_STEP);
@@ -217,6 +240,7 @@ void ExportSettingsViewModel::setTargetModel(ExportTargetModel* model) {
     }
 }
 
+// 设置是否导出符号描述信息。
 void ExportSettingsViewModel::setExportSymbolDescription(bool enabled) {
     if (m_exportSymbolDescription != enabled) {
         m_exportSymbolDescription = enabled;
@@ -224,6 +248,7 @@ void ExportSettingsViewModel::setExportSymbolDescription(bool enabled) {
     }
 }
 
+// 设置是否导出封装描述信息。
 void ExportSettingsViewModel::setExportFootprintDescription(bool enabled) {
     if (m_exportFootprintDescription != enabled) {
         m_exportFootprintDescription = enabled;
@@ -231,6 +256,7 @@ void ExportSettingsViewModel::setExportFootprintDescription(bool enabled) {
     }
 }
 
+// 设置符号库描述文本。
 void ExportSettingsViewModel::setSymbolLibraryDescription(const QString& desc) {
     if (m_symbolLibraryDescription != desc) {
         m_symbolLibraryDescription = desc;
@@ -238,6 +264,7 @@ void ExportSettingsViewModel::setSymbolLibraryDescription(const QString& desc) {
     }
 }
 
+// 设置封装库描述文本。
 void ExportSettingsViewModel::setFootprintLibraryDescription(const QString& desc) {
     if (m_footprintLibraryDescription != desc) {
         m_footprintLibraryDescription = desc;
@@ -245,6 +272,7 @@ void ExportSettingsViewModel::setFootprintLibraryDescription(const QString& desc
     }
 }
 
+// 设置封装库关键词文本。
 void ExportSettingsViewModel::setFootprintLibraryKeywords(const QString& keywords) {
     if (m_footprintLibraryKeywords != keywords) {
         m_footprintLibraryKeywords = keywords;
@@ -252,6 +280,7 @@ void ExportSettingsViewModel::setFootprintLibraryKeywords(const QString& keyword
     }
 }
 
+// 设置缓存目录，持久化配置后迁移已有缓存。
 void ExportSettingsViewModel::setCacheDir(const QString& path) {
     const QString normalizedPath = QDir::cleanPath(path);
     if (m_cacheDir != normalizedPath) {
@@ -263,6 +292,7 @@ void ExportSettingsViewModel::setCacheDir(const QString& path) {
     }
 }
 
+// 设置磁盘缓存上限并限制在允许范围内。
 void ExportSettingsViewModel::setDiskCacheLimitMB(int maxSizeMB) {
     const int normalizedSize = qBound(1, maxSizeMB, ConfigService::MAX_DISK_CACHE_LIMIT_MB);
     if (m_diskCacheLimitMB != normalizedSize) {
@@ -273,6 +303,7 @@ void ExportSettingsViewModel::setDiskCacheLimitMB(int maxSizeMB) {
     }
 }
 
+// 构建导出选项、预加载组件数据并启动导出。
 void ExportSettingsViewModel::startExport(const QStringList& componentIds) {
     qDebug() << "Starting export for" << componentIds.size() << "components";
 
@@ -306,6 +337,7 @@ void ExportSettingsViewModel::startExport(const QStringList& componentIds) {
     m_exportService->startPreload(componentIds);
 }
 
+// 将界面设置转换为导出服务使用的选项对象。
 void ExportSettingsViewModel::buildExportOptions() {
     ExportOptions options;
 
@@ -362,13 +394,15 @@ void ExportSettingsViewModel::buildExportOptions() {
     options.targetFormat =
         m_targetModel ? static_cast<TargetEdaFormat>(m_targetModel->currentIndex()) : TargetEdaFormat::KiCad;
 
+    const char* targetFormatName = options.targetFormat == TargetEdaFormat::Altium      ? "Altium"
+                                   : options.targetFormat == TargetEdaFormat::Xpedition ? "Xpedition"
+                                                                                        : "KiCad";
     qInfo() << "Export options:" << "OutputPath:" << options.outputPath << "LibName:" << options.libName
-            << "TargetFormat:" << (options.targetFormat == TargetEdaFormat::Altium ? "Altium" : "KiCad")
-            << "Symbol:" << options.exportSymbol << "Footprint:" << options.exportFootprint
-            << "3D Model:" << options.exportModel3D << "3D Model Format:" << options.exportModel3DFormat
-            << "(1=WRL, 2=STEP, 3=Both)" << "3D Model Path Mode:" << options.exportModel3DPathMode
-            << "(0=Relative, 1=Absolute)" << "Preview Images:" << options.exportPreviewImages
-            << "Datasheet:" << options.exportDatasheet
+            << "TargetFormat:" << targetFormatName << "Symbol:" << options.exportSymbol
+            << "Footprint:" << options.exportFootprint << "3D Model:" << options.exportModel3D
+            << "3D Model Format:" << options.exportModel3DFormat << "(1=WRL, 2=STEP, 3=Both)"
+            << "3D Model Path Mode:" << options.exportModel3DPathMode << "(0=Relative, 1=Absolute)"
+            << "Preview Images:" << options.exportPreviewImages << "Datasheet:" << options.exportDatasheet
             << "Client Weak Network Adaptation:" << options.weakNetworkSupport << "Update Mode:" << options.updateMode
             << "Debug Mode:" << options.debugMode << "Symbol Description:" << options.exportSymbolDescription
             << "Footprint Description:" << options.exportFootprintDescription
@@ -379,6 +413,7 @@ void ExportSettingsViewModel::buildExportOptions() {
     m_exportService->setOutputPath(absoluteOutputPath);
 }
 
+// 请求导出服务取消当前导出并更新界面状态。
 void ExportSettingsViewModel::cancelExport() {
     qDebug() << "Cancelling export";
 
@@ -391,6 +426,7 @@ void ExportSettingsViewModel::cancelExport() {
     setStatus("Export cancelled");
 }
 
+// 创建并打开当前输出目录。
 bool ExportSettingsViewModel::openOutputFolder() {
     if (m_outputPath.isEmpty()) {
         return false;
@@ -405,11 +441,13 @@ bool ExportSettingsViewModel::openOutputFolder() {
     return utils.openFolder(pathToOpen);
 }
 
+// 将预加载进度转换为界面状态文本。
 void ExportSettingsViewModel::handlePreloadProgressChanged(const PreloadProgress& progress) {
     Q_UNUSED(progress);
     setStatus(QString("Preloading... %1/%2").arg(progress.completedCount).arg(progress.totalCount));
 }
 
+// 处理预加载完成信号并进入实际导出阶段。
 void ExportSettingsViewModel::handlePreloadCompleted(int successCount, int failedCount) {
     qDebug() << "Preload completed: success=" << successCount << "failed=" << failedCount;
 
@@ -423,11 +461,13 @@ void ExportSettingsViewModel::handlePreloadCompleted(int successCount, int faile
     m_exportService->startExport();
 }
 
+// 处理整体导出进度变化并更新状态文本。
 void ExportSettingsViewModel::handleProgressChanged(const ExportOverallProgress& progress) {
     Q_UNUSED(progress);
     setStatus("Exporting...");
 }
 
+// 记录单个导出类型完成后的统计信息。
 void ExportSettingsViewModel::handleTypeCompleted(const QString& typeName,
                                                   int successCount,
                                                   int failedCount,
@@ -436,6 +476,7 @@ void ExportSettingsViewModel::handleTypeCompleted(const QString& typeName,
     qDebug() << "Type completed:" << typeName << "success=" << successCount << "failed=" << failedCount;
 }
 
+// 处理全部导出完成信号并更新成功或失败状态。
 void ExportSettingsViewModel::handleCompleted(int successCount, int failedCount) {
     qDebug() << "Export completed: success=" << successCount << "failed=" << failedCount;
     setIsExporting(false);
@@ -447,18 +488,21 @@ void ExportSettingsViewModel::handleCompleted(int successCount, int failedCount)
     }
 }
 
+// 处理导出取消信号并恢复空闲状态。
 void ExportSettingsViewModel::handleCancelled() {
     qDebug() << "Export cancelled";
     setIsExporting(false);
     setStatus("Export cancelled");
 }
 
+// 处理导出失败信号并向界面展示错误信息。
 void ExportSettingsViewModel::handleFailed(const QString& error) {
     qWarning() << "Export failed:" << error;
     setIsExporting(false);
     setStatus(QString("Export failed: %1").arg(error));
 }
 
+// 更新导出中状态并通知 QML 绑定。
 void ExportSettingsViewModel::setIsExporting(bool exporting) {
     if (m_isExporting != exporting) {
         m_isExporting = exporting;
@@ -466,6 +510,7 @@ void ExportSettingsViewModel::setIsExporting(bool exporting) {
     }
 }
 
+// 更新状态文本并通知 QML 绑定。
 void ExportSettingsViewModel::setStatus(const QString& status) {
     if (m_status != status) {
         m_status = status;
@@ -473,6 +518,7 @@ void ExportSettingsViewModel::setStatus(const QString& status) {
     }
 }
 
+// 从配置服务加载设置并仅对发生变化的属性发出通知。
 void ExportSettingsViewModel::loadFromConfig() {
     // 保存旧值以便比较，仅在值变化时发射信号（避免不必要的 QML 绑定刷新）
     const QString oldOutputPath = m_outputPath;
@@ -560,10 +606,12 @@ void ExportSettingsViewModel::loadFromConfig() {
         emit diskCacheLimitMBChanged();
 }
 
+// 请求配置服务保存当前设置。
 void ExportSettingsViewModel::saveConfig() {
     m_configService->saveConfig();
 }
 
+// 恢复界面设置的默认值并同步配置服务。
 void ExportSettingsViewModel::resetConfig() {
     m_outputPath = "";
     m_libName = "MyLibrary";

@@ -26,6 +26,14 @@ public:
                                 QAtomicInt* cancelled,
                                 bool weakNetwork,
                                 const MediaFetchCallback& onComplete) {
+        if (imageIndex < 0 || imageIndex >= 3) {
+            ComponentExportStatus::NetworkDiagnostics diag;
+            diag.url = imageUrl;
+            diag.errorString = QStringLiteral("Invalid preview image index");
+            onComplete(QByteArray(), diag);
+            return;
+        }
+
         ComponentCacheService* cache = ComponentCacheService::instance();
         if (!cache) {
             ComponentExportStatus::NetworkDiagnostics diag;
@@ -43,18 +51,15 @@ public:
             return;
         }
 
-        const QString previewFilePath = cache->previewImagePath(lcscId, imageIndex);
-        if (QFileInfo::exists(previewFilePath)) {
-            QFile file(previewFilePath);
-            if (file.open(QIODevice::ReadOnly)) {
-                ComponentExportStatus::NetworkDiagnostics diag;
-                diag.url = imageUrl;
-                diag.statusCode = 200;
-                diag.retryCount = 0;
-                diag.wasRateLimited = false;
-                onComplete(file.readAll(), diag);
-                return;
-            }
+        const QByteArray cachedImage = cache->loadPreviewImage(lcscId, imageIndex);
+        if (!cachedImage.isEmpty()) {
+            ComponentExportStatus::NetworkDiagnostics diag;
+            diag.url = imageUrl;
+            diag.statusCode = 200;
+            diag.retryCount = 0;
+            diag.wasRateLimited = false;
+            onComplete(cachedImage, diag);
+            return;
         }
 
         const RetryPolicy policy = RetryPolicy::fromProfile(RequestProfiles::previewImage(), weakNetwork);
@@ -68,14 +73,25 @@ public:
             diag.statusCode = result.statusCode;
             diag.retryCount = result.retryCount;
             diag.wasRateLimited = result.diagnostic.wasRateLimited;
+            diag.responseContentType = result.diagnostic.responseContentType;
+            diag.retryAfter = result.diagnostic.retryAfter;
+            diag.rateLimitRemaining = result.diagnostic.rateLimitRemaining;
+            diag.rateLimitReset = result.diagnostic.rateLimitReset;
+            diag.responseSummary = result.diagnostic.responseSummary;
+            diag.hasRateLimitHint = result.diagnostic.hasRateLimitHint;
             diag.latencyMs = result.elapsedMs;
 
             if ((cancelled && cancelled->loadRelaxed()) || result.wasCancelled) {
                 diag.errorString = QStringLiteral("Cancelled");
                 onComplete(QByteArray(), diag);
             } else if (result.success) {
-                cache->savePreviewImage(lcscId, result.data, imageIndex, gen);
-                onComplete(result.data, diag);
+                if (ComponentCacheService::isValidPreviewImageData(result.data)) {
+                    cache->savePreviewImage(lcscId, result.data, imageIndex, gen);
+                    onComplete(result.data, diag);
+                } else {
+                    diag.errorString = QStringLiteral("Invalid preview image data");
+                    onComplete(QByteArray(), diag);
+                }
             } else {
                 diag.errorString = result.error;
                 onComplete(QByteArray(), diag);
@@ -131,6 +147,12 @@ public:
             diag.statusCode = result.statusCode;
             diag.retryCount = result.retryCount;
             diag.wasRateLimited = result.diagnostic.wasRateLimited;
+            diag.responseContentType = result.diagnostic.responseContentType;
+            diag.retryAfter = result.diagnostic.retryAfter;
+            diag.rateLimitRemaining = result.diagnostic.rateLimitRemaining;
+            diag.rateLimitReset = result.diagnostic.rateLimitReset;
+            diag.responseSummary = result.diagnostic.responseSummary;
+            diag.hasRateLimitHint = result.diagnostic.hasRateLimitHint;
             diag.latencyMs = result.elapsedMs;
 
             if ((cancelled && cancelled->loadRelaxed()) || result.wasCancelled) {
@@ -140,8 +162,13 @@ public:
                 if (ext == QStringLiteral("pdf") && result.data.size() >= 5 && !result.data.startsWith("%PDF-")) {
                     ext = QStringLiteral("html");
                 }
-                cache->saveDatasheet(lcscId, result.data, ext, gen);
-                onComplete(result.data, diag);
+                if (ComponentCacheService::isValidDatasheetData(result.data, ext)) {
+                    cache->saveDatasheet(lcscId, result.data, ext, gen);
+                    onComplete(result.data, diag);
+                } else {
+                    diag.errorString = QStringLiteral("Invalid datasheet data");
+                    onComplete(QByteArray(), diag);
+                }
             } else {
                 diag.errorString = result.error;
                 onComplete(QByteArray(), diag);

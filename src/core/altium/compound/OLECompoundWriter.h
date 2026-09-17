@@ -13,8 +13,7 @@ namespace EasyKiConverter {
  * @details 仅支持写入，不支持读取。实现 OLE Structured Storage V3 格式（512 字节扇区）。
  *          用于生成 Altium Designer 可读取的 .SchLib / .PcbLib 文件。
  *
- * 参考：OpenMcdf (https://github.com/ironfede/openmcdf)
- * 规范：[MS-CFB] Compound File Binary File Format
+ * 遵循：[MS-CFB] Compound File Binary File Format
  */
 class OLECompoundWriter {
 public:
@@ -65,6 +64,22 @@ public:
      * @return 是否成功
      */
     bool writeStream(const QString& name, const QByteArray& data);
+
+    /**
+     * @brief 获取写入过程中是否发生结构错误
+     * @return true 表示此前的存储或流操作失败
+     */
+    bool hasError() const {
+        return !m_errorMessage.isEmpty();
+    }
+
+    /**
+     * @brief 获取最近一次结构错误说明
+     * @return 错误说明；没有错误时为空
+     */
+    QString errorString() const {
+        return m_errorMessage;
+    }
 
 private:
     /** @brief OLE 常量 */
@@ -119,10 +134,12 @@ private:
     void serializeFileHeader(QByteArray& header) const;
     void finalize();
     bool isValidEntryName(const QString& name) const;
+    void setError(const QString& message);
 
     // ---- 内部状态 ----
     bool m_initialized = false;
     bool m_finalized = false;
+    QString m_errorMessage;
     QVector<DirectoryEntry> m_directory;  ///< 目录条目列表
     QVector<StorageNode> m_nodes;  ///< 存储节点树
     QHash<QString, int> m_pathToNode;  ///< 路径 → 节点索引映射

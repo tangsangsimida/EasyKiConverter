@@ -72,6 +72,7 @@ uint8_t toAltiumPinOrientation(int easyedaRotation);
  * @return Altium 焊盘形状字节 (1=Round, 2=Rect, 9=RoundedRectangle)
  */
 inline uint8_t toAltiumPadShape(IR::PadShape shape) {
+    // 将 IR 焊盘形状收敛到 Altium 支持的圆形、矩形和圆角矩形编号。
     switch (shape) {
         case IR::PadShape::Ellipse:
         case IR::PadShape::Oval:
@@ -93,6 +94,7 @@ inline uint8_t toAltiumPadShape(IR::PadShape shape) {
  * @return Altium 引脚电气类型字节
  */
 inline uint8_t toAltiumElectricalType(IR::PinElectricalType type) {
+    // 将 IR 电气类型转换为 Altium 引脚电气类型编号。
     switch (type) {
         case IR::PinElectricalType::Input:
             return 0;  // Input
@@ -119,6 +121,7 @@ inline uint8_t toAltiumElectricalType(IR::PinElectricalType type) {
  * @return Altium 引脚方向字节 (0=Right, 1=Up, 2=Left, 3=Down)
  */
 inline uint8_t toAltiumPinOrientation(IR::PinDirection dir) {
+    // 将 IR 引脚方向转换为 Altium 的四向方向编号。
     switch (dir) {
         case IR::PinDirection::Right:
             return 0;
@@ -142,6 +145,7 @@ inline uint8_t toAltiumPinOrientation(IR::PinDirection dir) {
  *       此函数替代原 EasyedaLayerMap::fromLayerTypeToAltium()。
  */
 inline int fromLayerTypeToAltium(IR::LayerType layer) {
+    // 将统一层类型映射为 Altium 的 Protel 层编号。
     switch (layer) {
         case IR::LayerType::TopCopper:
             return 1;  // Top Layer
@@ -169,6 +173,8 @@ inline int fromLayerTypeToAltium(IR::LayerType layer) {
             return 57;  // Mechanical 1
         case IR::LayerType::BottomAssembly:
             return 58;  // Mechanical 2
+        case IR::LayerType::UserDefined:
+            return 57;  // Mechanical 1，承载 EasyEDA Dwgs.User/Cmts.User 等用户层图元
         default:
             return 0;
     }

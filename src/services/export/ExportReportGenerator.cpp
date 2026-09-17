@@ -12,6 +12,7 @@
 
 namespace EasyKiConverter {
 
+// 记录网络运行时统计，帮助导出报告关联网络阶段行为。
 void ExportReportGenerator::logNetworkStats(const QString& context) {
     const QString snapshot = NetworkClient::instance().formatRuntimeStats();
     qInfo().noquote() << QStringLiteral("ParallelExportService network runtime stats [%1]\n%2").arg(context, snapshot);
@@ -89,6 +90,55 @@ void ExportReportGenerator::writeDetailedReport(const QString& reason,
         out << "- Failed: " << typeProgress.failedCount << "\n";
         out << "- Skipped: " << typeProgress.skippedCount << "\n";
         out << "- In progress: " << typeProgress.inProgressCount << "\n";
+        if (!typeProgress.diagnostics.isEmpty()) {
+            out << "\n#### Exporter Diagnostics\n\n";
+            for (const QString& diagnostic : typeProgress.diagnostics)
+                out << "- " << diagnostic << "\n";
+        }
+        bool hasNonSuccessItems = false;
+        for (auto statusIt = typeProgress.itemStatus.cbegin(); statusIt != typeProgress.itemStatus.cend(); ++statusIt) {
+            const auto status = statusIt.value().status;
+            if (status == ExportItemStatus::Status::Failed || status == ExportItemStatus::Status::Skipped) {
+                hasNonSuccessItems = true;
+                break;
+            }
+        }
+        if (hasNonSuccessItems) {
+            out << "\n#### Failed or Skipped Items\n\n";
+            for (auto statusIt = typeProgress.itemStatus.cbegin(); statusIt != typeProgress.itemStatus.cend();
+                 ++statusIt) {
+                const ExportItemStatus& status = statusIt.value();
+                QString statusName;
+                if (status.status == ExportItemStatus::Status::Failed)
+                    statusName = QStringLiteral("failed");
+                else if (status.status == ExportItemStatus::Status::Skipped)
+                    statusName = QStringLiteral("skipped");
+                else
+                    continue;
+
+                const QString reasonText =
+                    status.errorMessage.isEmpty() ? QStringLiteral("未提供原因") : status.errorMessage;
+                out << "- `" << statusIt.key() << "`: " << statusName << " — " << reasonText << "\n";
+            }
+        }
+        bool hasDiagnostics = false;
+        for (auto statusIt = typeProgress.itemStatus.cbegin(); statusIt != typeProgress.itemStatus.cend(); ++statusIt) {
+            if (!statusIt.value().diagnostics.isEmpty()) {
+                hasDiagnostics = true;
+                break;
+            }
+        }
+        if (hasDiagnostics) {
+            out << "\n#### Input Diagnostics\n\n";
+            for (auto statusIt = typeProgress.itemStatus.cbegin(); statusIt != typeProgress.itemStatus.cend();
+                 ++statusIt) {
+                if (statusIt.value().diagnostics.isEmpty())
+                    continue;
+                out << "- `" << statusIt.key() << "`:\n";
+                for (const QString& diagnostic : statusIt.value().diagnostics)
+                    out << "  - " << diagnostic << "\n";
+            }
+        }
     }
 
     out << "\n## Weak Network Diagnostics\n\n";

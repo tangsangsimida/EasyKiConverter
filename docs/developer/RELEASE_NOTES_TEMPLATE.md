@@ -12,22 +12,24 @@ EasyKiConverter `<version>` 改善了 EasyEDA 到 KiCad/Altium 的库转换质�
 
 ## 下载
 
-| 平台 | 架构/格式 | 文件 |
-| --- | --- | --- |
-| Windows | x64 安装程序 | `EasyKiConverter-<version>-g<commit>-x64-setup.exe` |
-| Windows | x64 便携版 | `EasyKiConverter-<version>-g<commit>-win64.zip` |
-| Windows | ARM64 安装程序 | `EasyKiConverter-<version>-g<commit>-arm64-setup.exe` |
-| Windows | ARM64 便携版 | `EasyKiConverter-<version>-g<commit>-win64-arm64.zip` |
-| Windows | x64 MSIX | `EasyKiConverter-<version>-g<commit>-x64.msix` |
-| Windows | ARM64 MSIX | `EasyKiConverter-<version>-g<commit>-arm64.msix` |
-| Linux | x86_64 AppImage | `EasyKiConverter-<version>-g<commit>.x86_64.AppImage` |
-| Linux | ARM64 AppImage | `EasyKiConverter-<version>-g<commit>.aarch64.AppImage` |
-| Linux | x86_64 DEB/RPM/Arch | 对应架构安装包 |
-| Linux | ARM64 DEB/RPM/Arch | 对应架构安装包 |
-| macOS | Intel | `EasyKiConverter-<version>-g<commit>-intel.dmg` |
-| macOS | Apple Silicon | `EasyKiConverter-<version>-g<commit>-arm64.dmg` |
+| 平台 | 架构 | 格式 | 文件 |
+| --- | --- | --- | --- |
+| Windows | amd64 | MSIX | `EasyKiConverter-<version>-g<commit>-x64.msix` |
+| Windows | amd64 | 安装程序 | `EasyKiConverter-<version>-g<commit>-x64-setup.exe` |
+| Windows | amd64 | 便携版 | `EasyKiConverter-<version>-g<commit>-win64.zip` |
+| Windows | arm64 | MSIX | `EasyKiConverter-<version>-g<commit>-arm64.msix` |
+| Windows | arm64 | 安装程序 | `EasyKiConverter-<version>-g<commit>-arm64-setup.exe` |
+| Windows | arm64 | 便携版 | `EasyKiConverter-<version>-g<commit>-win64-arm64.zip` |
+| Linux | amd64 | AppImage | `EasyKiConverter-<version>-g<commit>.x86_64.AppImage` |
+| Linux | arm64 | AppImage | `EasyKiConverter-<version>-g<commit>.aarch64.AppImage` |
+| Linux | amd64 | DEB/RPM/Arch | 对应架构安装包 |
+| Linux | arm64 | DEB/RPM/Arch | 对应架构安装包 |
+| macOS | intel | DMG | `EasyKiConverter-<version>-g<commit>-intel.dmg` |
+| macOS | arm64 | DMG | `EasyKiConverter-<version>-g<commit>-arm64.dmg` |
 
 > 每个发布制品都提供对应的 `.sha256sum` 文件。下载后建议先验证文件完整性，再执行安装或运行。
+>
+> Windows 架构使用 `amd64` 和 `arm64` 标识；文件名中的 `x64` 对应 `amd64`，`arm64` 文件对应 Windows on Arm。
 
 ## 重要变化
 
@@ -104,4 +106,3 @@ Get-FileHash .\EasyKiConverter-<version>-g<commit>-x64-setup.exe -Algorithm SHA2
 - `<contributor>`
 
 构建提交：`<full commit SHA>`
-

@@ -25,6 +25,7 @@ These documents help other developers (or your future self) understand the proje
 - [Build Guide](developer/BUILD_en.md) - Build from source
 - [Contributing Guide](developer/CONTRIBUTING_en.md) - How to contribute code
 - [Architecture](developer/ARCHITECTURE_en.md) - Project architecture design
+- [Xpedition Export](developer/XPEDITION_EXPORT_en.md) - Xpedition ASCII symbol and footprint export scope, limitations, and verification
 - [Testing Guide](developer/TESTING_GUIDE_en.md) - Testing architecture & Mocking strategy
 - [BOM Parsing Guide](developer/BOM_PARSING_GUIDE_en.md) - BOM file parsing documentation
 - [Coding Style](developer/CODING_STYLE_en.md) - Code style guidelines

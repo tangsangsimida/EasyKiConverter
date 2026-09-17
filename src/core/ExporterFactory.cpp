@@ -5,6 +5,8 @@
 #include "core/kicad/Exporter3DModel.h"
 #include "core/kicad/ExporterFootprint.h"
 #include "core/kicad/ExporterSymbol.h"
+#include "core/xpedition/ExporterXpeditionFootprint.h"
+#include "core/xpedition/ExporterXpeditionSymbol.h"
 
 namespace EasyKiConverter {
 
@@ -12,11 +14,14 @@ namespace EasyKiConverter {
  * @brief 创建符号导出器
  */
 std::unique_ptr<ISymbolExporter> ExporterFactory::createSymbolExporter(TargetEdaFormat format) {
+    // 根据目标格式选择符号导出器实现，未知格式不创建实例。
     switch (format) {
         case TargetEdaFormat::KiCad:
             return std::make_unique<ExporterSymbol>();
         case TargetEdaFormat::Altium:
             return std::make_unique<ExporterAltiumSymbol>();
+        case TargetEdaFormat::Xpedition:
+            return std::make_unique<ExporterXpeditionSymbol>();
         default:
             return nullptr;
     }
@@ -26,11 +31,14 @@ std::unique_ptr<ISymbolExporter> ExporterFactory::createSymbolExporter(TargetEda
  * @brief 创建封装导出器
  */
 std::unique_ptr<IFootprintExporter> ExporterFactory::createFootprintExporter(TargetEdaFormat format) {
+    // 根据目标格式选择封装导出器实现，未知格式不创建实例。
     switch (format) {
         case TargetEdaFormat::KiCad:
             return std::make_unique<ExporterFootprint>();
         case TargetEdaFormat::Altium:
             return std::make_unique<ExporterAltiumFootprint>();
+        case TargetEdaFormat::Xpedition:
+            return std::make_unique<ExporterXpeditionFootprint>();
         default:
             return nullptr;
     }
@@ -43,6 +51,7 @@ std::unique_ptr<IFootprintExporter> ExporterFactory::createFootprintExporter(Tar
  * @note Altium 3D 模型（WRL/STEP）格式与 KiCad 通用，复用 KiCad 实现。
  */
 std::unique_ptr<IModel3DExporter> ExporterFactory::createModel3DExporter(TargetEdaFormat format, QObject* parent) {
+    // WRL/STEP 的三维模型导出器由支持该格式的目标格式共享。
     switch (format) {
         case TargetEdaFormat::KiCad:
         case TargetEdaFormat::Altium:

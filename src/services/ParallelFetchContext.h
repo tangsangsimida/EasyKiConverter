@@ -1,9 +1,11 @@
 #ifndef PARALLELFETCHCONTEXT_H
 #define PARALLELFETCHCONTEXT_H
 
+#include <QList>
 #include <QMap>
 #include <QMutex>
 #include <QObject>
+#include <QSet>
 #include <QString>
 
 namespace EasyKiConverter {
@@ -18,12 +20,13 @@ public:
 
     void start(int totalCount);
     void markCompleted(const QString& componentId, const ComponentData& data);
-    void markFailed(const QString& componentId);
+    void markFailed(const QString& componentId, const QString& error);
 
     bool isAllDone() const;
     int completedCount() const;
     int totalCount() const;
     QList<ComponentData> collectedData() const;
+    QMap<QString, QString> failedComponents() const;
 
 signals:
     void allCompleted(const QList<ComponentData>& data);
@@ -33,6 +36,8 @@ private:
 
 private:
     QMap<QString, ComponentData> m_collectedData;
+    QMap<QString, QString> m_failedComponents;
+    QSet<QString> m_finishedComponents;
     int m_totalCount;
     int m_completedCount;
     bool m_isAllDone;

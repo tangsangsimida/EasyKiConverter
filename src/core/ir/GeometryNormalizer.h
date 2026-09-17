@@ -18,6 +18,7 @@
 #include "core/utils/SvgPathParser.h"
 
 #include <QPointF>
+#include <QRegularExpression>
 #include <QString>
 #include <QStringList>
 
@@ -29,6 +30,20 @@ namespace IR {
  */
 namespace GeometryNormalizer {
 
+/**
+ * @brief 将来源线型字符串映射到通用线型枚举
+ * @param style 来源线型（如 solid、dashed、dotted）
+ * @return 通用线型
+ */
+inline StrokeStyle parseStrokeStyle(const QString& style) {
+    const QString normalized = style.trimmed().toLower();
+    if (normalized.contains(QStringLiteral("dash")))
+        return StrokeStyle::Dashed;
+    if (normalized.contains(QStringLiteral("dot")))
+        return StrokeStyle::Dotted;
+    return StrokeStyle::Solid;
+}
+
 // ==================== 坐标字符串解析 ====================
 
 /**
@@ -39,7 +54,7 @@ namespace GeometryNormalizer {
  */
 inline QList<QPointF> parseFlatPointString(const QString& pointsStr, double scaleFactor = EASYEDA_PX_TO_MM) {
     QList<QPointF> points;
-    const QStringList parts = pointsStr.trimmed().split(' ', Qt::SkipEmptyParts);
+    const QStringList parts = pointsStr.trimmed().split(QRegularExpression(QStringLiteral("\\s+")), Qt::SkipEmptyParts);
     for (int i = 0; i + 1 < parts.size(); i += 2) {
         bool ok1 = false, ok2 = false;
         const double x = parts[i].toDouble(&ok1);
@@ -59,7 +74,7 @@ inline QList<QPointF> parseFlatPointString(const QString& pointsStr, double scal
  */
 inline QList<QPointF> parseCommaSeparatedPoints(const QString& pointsStr, double scaleFactor = EASYEDA_PX_TO_MM) {
     QList<QPointF> points;
-    const QStringList pairs = pointsStr.trimmed().split(' ', Qt::SkipEmptyParts);
+    const QStringList pairs = pointsStr.trimmed().split(QRegularExpression(QStringLiteral("\\s+")), Qt::SkipEmptyParts);
     for (const auto& pair : pairs) {
         const QStringList xy = pair.split(',');
         if (xy.size() >= 2) {

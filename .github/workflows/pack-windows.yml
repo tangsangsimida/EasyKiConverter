@@ -266,14 +266,22 @@ jobs:
         if: matrix.type == 'portable'
         shell: pwsh
         run: |
+          $ErrorActionPreference = 'Stop'
           $executable = "$env:GITHUB_WORKSPACE\build\Package\portable\easykiconverter.exe"
           if (-not (Test-Path $executable)) {
             Write-Error "Portable executable not found: $executable"
             exit 1
           }
-          $process = Start-Process -FilePath $executable -ArgumentList @('--version') -Wait -NoNewWindow -PassThru
-          if ($process.ExitCode -ne 0) {
-            Write-Error "Portable executable smoke test failed with exit code: $($process.ExitCode)"
+          try {
+            $output = & $executable --version 2>&1 | Out-String
+            $exitCode = $LASTEXITCODE
+            Write-Host "Portable executable output:`n$output"
+          } catch {
+            Write-Error "Portable executable could not be started: $($_.Exception.Message)"
+            exit 1
+          }
+          if ($exitCode -ne 0) {
+            Write-Error "Portable executable smoke test failed with exit code: $exitCode"
             exit 1
           }
 

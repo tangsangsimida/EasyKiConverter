@@ -26,6 +26,7 @@ namespace {
 
 class BlockingRequestContext {
 public:
+    // 保存一次异步网络请求的结果并唤醒等待线程。
     void complete(const NetworkResult& result) {
         QMutexLocker locker(&m_mutex);
         if (m_finished) {
@@ -36,6 +37,7 @@ public:
         m_condition.wakeAll();
     }
 
+    // 阻塞读取网络请求结果，直到异步回调完成。
     NetworkResult wait() {
         QMutexLocker locker(&m_mutex);
         while (!m_finished) {
@@ -58,6 +60,7 @@ QMutex FetchWorker::s_rateLimitMutex;
 QDateTime FetchWorker::s_lastRateLimitTime;
 int FetchWorker::s_backoffMs = 0;
 
+// 初始化元器件获取任务及其可选的网络客户端。
 FetchWorker::FetchWorker(const QString& componentId,
                          bool need3DModel,
                          bool fetch3DOnly,
@@ -76,6 +79,7 @@ FetchWorker::FetchWorker(const QString& componentId,
 
 FetchWorker::~FetchWorker() = default;
 
+// 执行元器件、CAD 和可选三维模型的获取流程。
 void FetchWorker::run() {
     QElapsedTimer fetchTimer;
     fetchTimer.start();
@@ -282,9 +286,15 @@ QByteArray FetchWorker::httpGet(const QString& url,
             diag.url = result.diagnostic.url.isEmpty() ? url : result.diagnostic.url;
             diag.statusCode = result.statusCode;
             diag.errorString = result.success ? QString() : result.error;
+            diag.responseContentType = result.diagnostic.responseContentType;
+            diag.retryAfter = result.diagnostic.retryAfter;
+            diag.rateLimitRemaining = result.diagnostic.rateLimitRemaining;
+            diag.rateLimitReset = result.diagnostic.rateLimitReset;
+            diag.responseSummary = result.diagnostic.responseSummary;
             diag.retryCount = result.retryCount;
             diag.latencyMs = result.elapsedMs;
             diag.wasRateLimited = result.diagnostic.wasRateLimited;
+            diag.hasRateLimitHint = result.diagnostic.hasRateLimitHint;
             status->networkDiagnostics.append(diag);
         }
 
@@ -350,6 +360,7 @@ QByteArray FetchWorker::httpGet(const QString& url,
     return finishResult(result);
 }
 
+// 解压获取到的 ZIP 模型数据并合并其中的内容。
 QByteArray FetchWorker::decompressZip(const QByteArray& zipData) {
     if (zipData.size() < 30) {
         qWarning() << "Invalid ZIP data size";
@@ -392,6 +403,7 @@ QByteArray FetchWorker::decompressZip(const QByteArray& zipData) {
     return result;
 }
 
+// 从 CAD JSON 中提取三维模型标识并获取模型文件。
 bool FetchWorker::fetch3DModelData(QSharedPointer<ComponentExportStatus> status) {
     QString uuid;
 
@@ -517,6 +529,7 @@ bool FetchWorker::fetch3DModelData(QSharedPointer<ComponentExportStatus> status)
     return true;
 }
 
+// 终止当前任务并取消尚未完成的网络请求。
 void FetchWorker::abort() {
     if (m_isAborted.testAndSetRelaxed(0, 1)) {
         qDebug() << "FetchWorker abort requested for:" << m_componentId;
@@ -528,6 +541,7 @@ void FetchWorker::abort() {
     }
 }
 
+// 根据重试次数计算带抖动的等待时间。
 int FetchWorker::calculateRetryDelay(int retryCount) {
     int baseDelay;
     if (retryCount >= 0 && retryCount < static_cast<int>(sizeof(RETRY_DELAYS_MS) / sizeof(RETRY_DELAYS_MS[0]))) {

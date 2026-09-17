@@ -19,6 +19,7 @@
 #include <QJsonParseError>
 #include <QMutexLocker>
 #include <QRegularExpression>
+#include <QSet>
 #include <QThread>
 
 #include <cmath>
@@ -32,6 +33,7 @@ constexpr double EASYEDA_UNIT_TO_MM = 0.254;  // 逆向转换用，正向请用 
 constexpr double EASYEDA_Z_OFFSET_BIAS = 0.000001;  // 避免对齐到精确零值导致 KiCad 忽略偏移
 constexpr auto FP_TYPE_SMD = "smd";
 
+// 从 STEP 顶点计算模型包围盒中心，并以最低 Z 作为对齐基准。
 bool calculateStepGeometryCenter(const QByteArray& stepData, Model3DBase* center) {
     if (stepData.isEmpty() || center == nullptr) {
         return false;
@@ -118,6 +120,7 @@ bool calculateStepGeometryCenter(const QByteArray& stepData, Model3DBase* center
     return true;
 }
 
+// 根据 WRL 和 STEP 的最低 Z 坐标计算模型对齐偏移。
 double calculateStepZOffset(double wrlDisplayMinZ, double stepMinZ) {
     if (wrlDisplayMinZ == std::numeric_limits<double>::max()) {
         return stepMinZ > MODEL_Z_OFFSET_EPSILON_MM ? -stepMinZ : 0.0;
@@ -127,6 +130,7 @@ double calculateStepZOffset(double wrlDisplayMinZ, double stepMinZ) {
     return qAbs(offset) < MODEL_Z_OFFSET_EPSILON_MM ? 0.0 : offset;
 }
 
+// 从 CAD 原始 JSON 中读取指定三维模型的源 Z 坐标并换算为毫米。
 bool readModelSourceZMm(const QByteArray& cadJsonRaw, const QString& modelUuid, double* zMm) {
     if (cadJsonRaw.isEmpty() || modelUuid.isEmpty() || zMm == nullptr) {
         return false;
@@ -187,6 +191,7 @@ bool readModelSourceZMm(const QByteArray& cadJsonRaw, const QString& modelUuid, 
     return false;
 }
 
+// 计算贴片封装 WRL 显示坐标与源模型坐标之间的基础偏移。
 double calculateWrlBaseZOffset(const QString& fpType, double wrlDisplayMinZ, double sourceZMm) {
     if (fpType != QLatin1String(FP_TYPE_SMD) || wrlDisplayMinZ == std::numeric_limits<double>::max()) {
         return 0.0;
@@ -196,13 +201,16 @@ double calculateWrlBaseZOffset(const QString& fpType, double wrlDisplayMinZ, dou
     return offset > MODEL_Z_OFFSET_EPSILON_MM ? offset : 0.0;
 }
 
+// 将毫米偏移按 EasyEDA 单位和偏置规则转换为导出值。
 double zOffsetMmToEasyEdaUnits(double zOffsetMm) {
     const double roundedOffset = std::round(zOffsetMm * 100.0) / 100.0;
     return -(roundedOffset - EASYEDA_Z_OFFSET_BIAS) / EASYEDA_UNIT_TO_MM;
 }
 }  // namespace
 
+// 初始化封装导出阶段，限制并发以保证库级写入顺序稳定。
 FootprintExportStage::FootprintExportStage(QObject* parent)
+    // 使用单并发写入，避免同一库文件的并发修改。
     : ExportTypeStage("Footprint", 1, parent) {  // maxConcurrent=1 因为是库级别导出
 }
 
@@ -210,6 +218,7 @@ FootprintExportStage::~FootprintExportStage() {
     waitForWorkerThread(m_workerThread, 30000);
 }
 
+// 初始化封装导出进度并启动库级导出线程。
 void FootprintExportStage::start(const QStringList& componentIds,
                                  const QMap<QString, QSharedPointer<ComponentData>>& cachedData) {
     if (m_isExporting.load()) {
@@ -254,6 +263,7 @@ void FootprintExportStage::start(const QStringList& componentIds,
     m_workerThread->start();
 }
 
+// 请求取消封装导出并回滚尚未提交的临时文件。
 void FootprintExportStage::cancel() {
     if (!m_isExporting.load()) {
         return;
@@ -268,6 +278,7 @@ void FootprintExportStage::cancel() {
     qDebug() << "FootprintExportStage: Cancelled";
 }
 
+// 等待封装导出线程结束，并同步阶段运行状态。
 bool FootprintExportStage::waitForFinished(int timeoutMs) {
     const bool finished = waitForWorkerThread(m_workerThread, timeoutMs);
     if (finished) {
@@ -284,9 +295,54 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
     const uint64_t gen = ComponentCacheService::instance()->currentGeneration();
 
     QList<FootprintData> footprintList;
+    QStringList collectedIds;
     QStringList failedIds;
     int successCount = 0;
     int skippedCount = 0;
+
+    // 统一更新阶段进度，确保库级导出与普通 Worker 阶段提供一致的快照。
+    const auto publishItemStatus = [this](const QString& componentId, const ExportItemStatus& status) {
+        ExportTypeProgress progressSnapshot;
+        {
+            QMutexLocker locker(&m_progressMutex);
+            auto item = m_progress.itemStatus.find(componentId);
+            if (item == m_progress.itemStatus.end())
+                return;
+            item.value() = status;
+            m_progress.completedCount = 0;
+            m_progress.successCount = 0;
+            m_progress.failedCount = 0;
+            m_progress.skippedCount = 0;
+            m_progress.inProgressCount = 0;
+            for (const ExportItemStatus& itemStatus : std::as_const(m_progress.itemStatus)) {
+                if (itemStatus.status == ExportItemStatus::Status::Success) {
+                    ++m_progress.successCount;
+                } else if (itemStatus.status == ExportItemStatus::Status::Failed) {
+                    ++m_progress.failedCount;
+                } else if (itemStatus.status == ExportItemStatus::Status::Skipped) {
+                    ++m_progress.skippedCount;
+                } else if (itemStatus.status == ExportItemStatus::Status::InProgress) {
+                    ++m_progress.inProgressCount;
+                }
+            }
+            m_progress.completedCount = m_progress.successCount + m_progress.failedCount + m_progress.skippedCount;
+            progressSnapshot = m_progress;
+        }
+        emit itemStatusChanged(componentId, status);
+        emit progressChanged(progressSnapshot);
+    };
+
+    // Altium 将 3D 模型嵌入封装库，封装阶段提前失败时也必须结束对应的 3D 状态。
+    const auto publishAltiumModelFailure = [this](const QString& componentId, const QString& errorMessage) {
+        if (m_options.targetFormat != TargetEdaFormat::Altium || !m_options.exportModel3D) {
+            return;
+        }
+        ExportItemStatus modelStatus;
+        modelStatus.status = ExportItemStatus::Status::Failed;
+        modelStatus.errorMessage = errorMessage;
+        modelStatus.endTime = QDateTime::currentDateTime();
+        emit embeddedModel3DStatusChanged(componentId, modelStatus);
+    };
 
     for (const QString& componentId : componentIds) {
         if (m_cancelled.load()) {
@@ -301,7 +357,8 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
             ExportItemStatus status;
             status.status = ExportItemStatus::Status::Failed;
             status.errorMessage = "No component data";
-            emit itemStatusChanged(componentId, status);
+            publishItemStatus(componentId, status);
+            publishAltiumModelFailure(componentId, QStringLiteral("No component data"));
             continue;
         }
 
@@ -313,12 +370,13 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
             ExportItemStatus status;
             status.status = ExportItemStatus::Status::Failed;
             status.errorMessage = "No footprint data";
-            emit itemStatusChanged(componentId, status);
+            publishItemStatus(componentId, status);
+            publishAltiumModelFailure(componentId, QStringLiteral("No footprint data"));
             continue;
         }
 
         FootprintData footprint = *data->footprintData();
-        if (m_options.needsModel3DStep()) {
+        if (m_options.needsEmbeddedModel3DStep()) {
             Model3DData model3D = footprint.model3D();
             // 优先使用 CadDataLoader 设置的 head.uuid_3d（规范 3D 模型 UUID），
             // 因为 SVGNODE 的 attrs.uuid 可能是 outline 形状 UUID 而非 3D 模型 UUID。
@@ -333,32 +391,80 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
                 if (stepData.isEmpty()) {
                     stepData = ComponentCacheService::instance()->loadModel3D(model3D.uuid(), QStringLiteral("step"));
                 }
+                if (!stepData.isEmpty() && !Exporter3DModel::hasUsableStepData(stepData)) {
+                    qWarning() << "FootprintExportStage: Ignoring malformed cached STEP for" << componentId << "uuid"
+                               << model3D.uuid();
+                    stepData.clear();
+                }
+                if (!stepData.isEmpty()) {
+                    // 预加载或缓存中的有效 STEP 统一写回公共缓存，保持后续导出可复用。
+                    ComponentCacheService::instance()->saveModel3D(
+                        model3D.uuid(), stepData, QStringLiteral("step"), gen);
+                }
                 if (stepData.isEmpty()) {
                     Exporter3DModel modelExporter;
                     if (modelExporter.downloadStepDataSync(model3D.uuid(), &stepData) && !stepData.isEmpty()) {
-                        ComponentCacheService::instance()->saveModel3D(
-                            model3D.uuid(), stepData, QStringLiteral("step"), gen);
+                        if (Exporter3DModel::hasUsableStepData(stepData)) {
+                            ComponentCacheService::instance()->saveModel3D(
+                                model3D.uuid(), stepData, QStringLiteral("step"), gen);
+                        }
                     }
+                }
+                if (!stepData.isEmpty() && !Exporter3DModel::hasUsableStepData(stepData)) {
+                    qWarning() << "FootprintExportStage: Rejecting invalid downloaded STEP for" << componentId << "uuid"
+                               << model3D.uuid();
+                    stepData.clear();
                 }
 
                 Model3DBase geometryCenter;
-                if (calculateStepGeometryCenter(stepData, &geometryCenter)) {
+                if (!stepData.isEmpty()) {
+                    const bool hasGeometryCenter = calculateStepGeometryCenter(stepData, &geometryCenter);
+                    if (!hasGeometryCenter) {
+                        qWarning() << "FootprintExportStage: STEP geometry center unavailable for" << componentId
+                                   << "using zero offset";
+                    }
                     QByteArray objData = data->model3DObjRaw();
                     if (objData.isEmpty() && data->model3DData()) {
                         objData = data->model3DData()->rawObj().toUtf8();
                     }
+                    if (!objData.isEmpty() && !Exporter3DModel::hasUsableObjGeometry(objData)) {
+                        qWarning() << "FootprintExportStage: Ignoring malformed OBJ data for" << componentId << "uuid"
+                                   << model3D.uuid();
+                        objData.clear();
+                    }
+                    if (!objData.isEmpty()) {
+                        // 预加载或缓存中的有效 OBJ 统一写回公共缓存，供后续偏移计算复用。
+                        ComponentCacheService::instance()->saveModel3D(
+                            model3D.uuid(), objData, QStringLiteral("obj"), gen);
+                    }
                     if (objData.isEmpty()) {
                         objData = ComponentCacheService::instance()->loadModel3D(model3D.uuid(), QStringLiteral("obj"));
+                    }
+                    if (!objData.isEmpty() && !Exporter3DModel::hasUsableObjGeometry(objData)) {
+                        qWarning() << "FootprintExportStage: Ignoring malformed cached OBJ for" << componentId << "uuid"
+                                   << model3D.uuid();
+                        objData.clear();
                     }
                     QByteArray wrlData;
                     if (objData.isEmpty()) {
                         wrlData = ComponentCacheService::instance()->loadModel3D(model3D.uuid(), QStringLiteral("wrl"));
                     }
+                    if (!wrlData.isEmpty() && !Exporter3DModel::hasUsableWrlGeometry(wrlData)) {
+                        qWarning() << "FootprintExportStage: Ignoring malformed cached WRL for" << componentId << "uuid"
+                                   << model3D.uuid();
+                        wrlData.clear();
+                    }
                     if (objData.isEmpty() && wrlData.isEmpty()) {
                         Exporter3DModel modelExporter;
                         if (modelExporter.downloadObjDataSync(model3D.uuid(), &objData) && !objData.isEmpty()) {
-                            ComponentCacheService::instance()->saveModel3D(
-                                model3D.uuid(), objData, QStringLiteral("obj"), gen);
+                            if (!Exporter3DModel::hasUsableObjGeometry(objData)) {
+                                qWarning() << "FootprintExportStage: Rejecting invalid downloaded OBJ for"
+                                           << componentId << "uuid" << model3D.uuid();
+                                objData.clear();
+                            } else {
+                                ComponentCacheService::instance()->saveModel3D(
+                                    model3D.uuid(), objData, QStringLiteral("obj"), gen);
+                            }
                         }
                     }
 
@@ -405,11 +511,15 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
         }
 
         footprintList.append(footprint);
+        collectedIds.append(componentId);
         successCount++;
 
         ExportItemStatus status;
         status.status = ExportItemStatus::Status::Success;
-        emit itemStatusChanged(componentId, status);
+        status.diagnostics = footprint.validationErrors();
+        if (!status.diagnostics.isEmpty())
+            qWarning() << "FootprintExportStage: Input diagnostics for" << componentId << status.diagnostics;
+        publishItemStatus(componentId, status);
 
         if (m_options.targetFormat == TargetEdaFormat::Altium && m_options.exportModel3D) {
             ExportItemStatus modelStatus;
@@ -423,6 +533,35 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
         }
 
         qDebug() << "FootprintExportStage: Collected footprint for" << componentId;
+    }
+
+    if (m_options.targetFormat == TargetEdaFormat::Altium) {
+        // Altium PcbLib 要求封装名称（不区分大小写）唯一。实际 BOM 中多个
+        // 元件经常共用同一个封装，例如多个 C0603，但它们仍可能关联不同
+        // 的元件数据或三维模型，因此不能简单丢弃重复项。
+        QSet<QString> usedNames;
+        for (int index = 0; index < footprintList.size(); ++index) {
+            FootprintData& footprint = footprintList[index];
+            FootprintInfo info = footprint.info();
+            const QString baseName = info.name.trimmed();
+            QString uniqueName = baseName;
+            int suffix = 1;
+            while (usedNames.contains(uniqueName.toCaseFolded())) {
+                const QString componentId = collectedIds.value(index);
+                uniqueName = QStringLiteral("%1_%2").arg(baseName, componentId);
+                if (suffix > 1)
+                    uniqueName += QStringLiteral("_%1").arg(suffix);
+                ++suffix;
+            }
+
+            if (uniqueName != info.name) {
+                info.name = uniqueName;
+                footprint.setInfo(info);
+                qWarning() << "FootprintExportStage: Renamed duplicate Altium footprint" << baseName << "to"
+                           << uniqueName;
+            }
+            usedNames.insert(uniqueName.toCaseFolded());
+        }
     }
 
     if (m_cancelled.load()) {
@@ -441,16 +580,28 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
     }
 
     // 标记所有已收集的封装为失败（参照 SymbolExportStage 的 failCollectedSymbols 模式）
-    const auto failCollectedFootprints = [this, &failedIds, &successCount](const QString& errorMessage) {
-        for (const auto& fp : failedIds) {
-            ExportItemStatus status;
-            status.status = ExportItemStatus::Status::Failed;
-            status.errorMessage = errorMessage;
-            status.endTime = QDateTime::currentDateTime();
-            emit itemStatusChanged(fp, status);
-        }
-        successCount = 0;
-    };
+    const auto failCollectedFootprints =
+        [this, &collectedIds, &failedIds, &successCount, &publishItemStatus](const QString& errorMessage) {
+            for (const QString& componentId : collectedIds) {
+                failedIds.append(componentId);
+                ExportItemStatus status;
+                status.status = ExportItemStatus::Status::Failed;
+                status.errorMessage = errorMessage;
+                status.endTime = QDateTime::currentDateTime();
+                publishItemStatus(componentId, status);
+
+                // Altium 的 3D 状态可能已经在收集阶段报告成功，但最终 PcbLib
+                // 写入或提交失败时，模型实际上没有进入最终库，必须同步回写失败。
+                if (m_options.targetFormat == TargetEdaFormat::Altium && m_options.exportModel3D) {
+                    ExportItemStatus modelStatus;
+                    modelStatus.status = ExportItemStatus::Status::Failed;
+                    modelStatus.errorMessage = QStringLiteral("Altium PcbLib 导出失败，3D 模型未写入最终库");
+                    modelStatus.endTime = status.endTime;
+                    emit embeddedModel3DStatusChanged(componentId, modelStatus);
+                }
+            }
+            successCount = 0;
+        };
 
     // 统一的中止导出 lambda
     const auto abortExport = [&](const QString& errorMessage) {
@@ -459,7 +610,7 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
         m_tempManager.rollbackAll();
         m_isExporting.store(false);
         m_isRunning.store(false);
-        emit completed(0, footprintList.size(), 0);
+        emit completed(0, failedIds.size(), skippedCount);
     };
 
     QString libName = m_options.libName.isEmpty() ? QStringLiteral("EasyKiConverter") : m_options.libName;
@@ -494,6 +645,13 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
         finalPath = outputDir + QDir::separator() + libName + fileExt;
         tempPath = m_tempManager.createSymbolTempPath(libName, fileExt);
     }
+
+    if (m_options.targetFormat == TargetEdaFormat::Altium && QFile::exists(finalPath) &&
+        (!m_options.overwriteExistingFiles || m_options.updateMode)) {
+        abortExport(QStringLiteral("Altium PcbLib 暂不支持在已有库上追加或更新，已拒绝覆盖: %1").arg(finalPath));
+        return;
+    }
+
     if (tempPath.isEmpty()) {
         abortExport(QStringLiteral("Failed to create temp path"));
         return;
@@ -525,8 +683,8 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
     bool exportSuccess = false;
     QString libraryDescription = m_options.footprintLibraryDescription;
     {
-        const bool preferWrl = m_options.needsModel3DWrl();
-        const bool exportStep = m_options.needsModel3DStep();
+        const bool preferWrl = m_options.needsModel3DWrl() && m_options.targetFormat != TargetEdaFormat::Altium;
+        const bool exportStep = m_options.needsEmbeddedModel3DStep();
         QString libraryKeywords = m_options.footprintLibraryKeywords;
         // 转换旧类型列表到 IR 类型
         QList<IR::FootprintComponentIR> irFootprintList;
@@ -544,6 +702,17 @@ void FootprintExportStage::doLibraryExport(const QStringList& componentIds,
                                              libraryKeywords,
                                              m_options.exportModel3DPathMode == ExportOptions::MODEL_3D_PATH_ABSOLUTE,
                                              outputDir);
+        const QStringList exporterDiagnostics = exporter->diagnostics();
+        if (!exporterDiagnostics.isEmpty()) {
+            QMutexLocker locker(&m_progressMutex);
+            for (const QString& diagnostic : exporterDiagnostics) {
+                if (!m_progress.diagnostics.contains(diagnostic))
+                    m_progress.diagnostics.append(diagnostic);
+            }
+            const ExportTypeProgress progressSnapshot = m_progress;
+            locker.unlock();
+            emit progressChanged(progressSnapshot);
+        }
         qDebug() << "FootprintExportStage: exportFootprintLibrary result:" << exportSuccess;
     }
 

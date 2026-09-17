@@ -6,6 +6,7 @@
 - `build.yml` - 构建和测试 (所有平台)
 - `actionlint.yml` - GitHub Actions 工作流检查
 - `clang-format.yml` - 代码格式检查
+- `comment-policy.yml` - 源码注释率与注释策略检查
 - `security.yml` - 安全检查
 
 ### 持续部署 (CD)
@@ -37,6 +38,7 @@
 | build.yml | ✓ | ✓ | ✗ | ✗ | ✓ |
 | actionlint.yml | ✓ | ✓ | ✗ | ✗ | ✓ |
 | clang-format.yml | ✓ | ✓ | ✗ | ✗ | ✓ |
+| comment-policy.yml | ✗ | ✓ | ✗ | ✗ | ✗ |
 | security.yml | ✗ | ✓ | ✗ | ✓ | ✗ |
 | pack-linux.yml | ✗ | ✗ | ✓ | ✗ | ✓ |
 | pack-macos.yml | ✗ | ✗ | ✓ | ✗ | ✓ |

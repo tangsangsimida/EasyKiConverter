@@ -41,15 +41,6 @@ void Model3DExportStage::start(const QStringList& componentIds,
     QString outputDir = baseOutputDir + QDir::separator() + libName + QStringLiteral(".3dmodels");
 
     QDir dir;
-    if (!dir.mkpath(outputDir)) {
-        qCritical() << "Model3DExportStage: Failed to create output directory:" << outputDir;
-        m_isExporting.store(false);
-        emit completed(0, 0, 0);
-        return;
-    }
-
-    m_tempManager.setOutputPath(outputDir);
-
     const bool needWrl = m_options.needsModel3DWrl();
     const bool needStep = m_options.needsModel3DStep();
 
@@ -58,20 +49,47 @@ void Model3DExportStage::start(const QStringList& componentIds,
 
     const auto hasModel3DUuid = [&cachedData](const QString& componentId) {
         auto it = cachedData.constFind(componentId);
-        if (it != cachedData.constEnd() && it.value() && it.value()->model3DData() &&
-            !it.value()->model3DData()->uuid().isEmpty()) {
-            return true;
+        if (it != cachedData.constEnd() && it.value()) {
+            if (it.value()->model3DData() && !it.value()->model3DData()->uuid().isEmpty())
+                return true;
+            if (it.value()->footprintData() && !it.value()->footprintData()->model3D().uuid().isEmpty())
+                return true;
         }
 
         QSharedPointer<ComponentData> cachedComponent =
             ComponentCacheService::instance()->loadComponentData(componentId);
-        return cachedComponent && cachedComponent->model3DData() && !cachedComponent->model3DData()->uuid().isEmpty();
+        if (!cachedComponent)
+            return false;
+        if (cachedComponent->model3DData() && !cachedComponent->model3DData()->uuid().isEmpty())
+            return true;
+        return cachedComponent->footprintData() && !cachedComponent->footprintData()->model3D().uuid().isEmpty();
     };
 
     m_componentPaths.clear();
+    m_skippedComponents.clear();
+    m_preflightErrors.clear();
+
+    // 输出目录创建失败时仍然交给基类建立逐项状态，避免主服务留下 Pending 项。
+    if (!dir.exists(outputDir) && !dir.mkpath(outputDir)) {
+        qCritical() << "Model3DExportStage: Failed to create output directory:" << outputDir;
+        const QString error = QStringLiteral("Failed to create 3D model output directory");
+        for (const QString& componentId : componentIds)
+            m_preflightErrors.insert(componentId, error);
+        m_isExporting.store(true);
+        ExportTypeStage::start(componentIds, cachedData);
+        return;
+    }
+
+    m_tempManager.setOutputPath(outputDir);
+
     for (const QString& componentId : componentIds) {
+        if (!needWrl && !needStep) {
+            m_skippedComponents.insert(componentId);
+            continue;
+        }
         if ((needWrl || needStep) && !hasModel3DUuid(componentId)) {
             qDebug() << "Model3DExportStage: No 3D model UUID, skipping temp paths for" << componentId;
+            m_skippedComponents.insert(componentId);
             continue;
         }
 
@@ -85,11 +103,14 @@ void Model3DExportStage::start(const QStringList& componentIds,
                 m_tempManager.createTempFilePath(componentId + QStringLiteral("_step"), QStringLiteral(".step"));
         }
 
-        if ((needWrl && !paths.wrlTempPath.isEmpty()) || (needStep && !paths.stepTempPath.isEmpty())) {
+        const bool hasAllRequiredTempPaths =
+            (!needWrl || !paths.wrlTempPath.isEmpty()) && (!needStep || !paths.stepTempPath.isEmpty());
+        if (hasAllRequiredTempPaths) {
             m_componentPaths[componentId] = paths;
         } else if (needWrl || needStep) {
             qWarning() << "Model3DExportStage: Failed to create temp path for component:" << componentId
                        << "needWrl:" << needWrl << "needStep:" << needStep;
+            m_preflightErrors.insert(componentId, QStringLiteral("Failed to create 3D model temporary path"));
         }
     }
 
@@ -99,6 +120,7 @@ void Model3DExportStage::start(const QStringList& componentIds,
     ExportTypeStage::start(componentIds, cachedData);
 }
 
+// 取消三维模型导出并回滚尚未提交的临时文件。
 void Model3DExportStage::cancel() {
     if (!m_isRunning.load() && !m_isExporting.load()) {
         return;
@@ -123,16 +145,31 @@ void Model3DExportStage::cancel() {
     qDebug() << "Model3DExportStage: cancelled";
 }
 
+// 创建三维模型导出 Worker。
 QObject* Model3DExportStage::createWorker() {
     return new Model3DExportWorker();
 }
 
+// 为有有效三维数据的元器件准备输出路径并提交 Worker。
 void Model3DExportStage::startWorker(QObject* worker,
                                      const QString& componentId,
                                      const QSharedPointer<ComponentData>& data) {
     auto* exportWorker = qobject_cast<Model3DExportWorker*>(worker);
     if (!exportWorker) {
         qWarning() << "Model3DExportStage: Failed to cast worker to Model3DExportWorker";
+        return;
+    }
+
+    if (m_skippedComponents.contains(componentId)) {
+        completeSkippedItemProgress(exportWorker, componentId, QStringLiteral("No 3D model or format selected"));
+        delete exportWorker;
+        return;
+    }
+
+    const auto preflightError = m_preflightErrors.constFind(componentId);
+    if (preflightError != m_preflightErrors.cend()) {
+        completeItemProgress(exportWorker, componentId, false, preflightError.value());
+        delete exportWorker;
         return;
     }
 

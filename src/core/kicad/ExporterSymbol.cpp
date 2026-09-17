@@ -17,6 +17,7 @@ ExporterSymbol::ExporterSymbol() {}
 
 ExporterSymbol::~ExporterSymbol() {}
 
+// 导出单个符号文件并写入完整的 KiCad 符号定义。
 bool ExporterSymbol::exportSymbol(const IR::SymbolComponentIR& symbol, const QString& filePath) {
     QFile file(filePath);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
@@ -330,6 +331,7 @@ bool ExporterSymbol::exportSymbolLibrary(const QList<IR::SymbolComponentIR>& sym
                     for (int j = 0; j < line.length(); ++j) {
                         if (line[j] == '(')
                             nestedBraceCount++;
+                        // 遇到右括号时收敛被跳过符号的嵌套层级。
                         else if (line[j] == ')') {
                             nestedBraceCount--;
                             if (nestedBraceCount == 0) {
@@ -363,6 +365,7 @@ bool ExporterSymbol::exportSymbolLibrary(const QList<IR::SymbolComponentIR>& sym
     return true;
 }
 
+// 生成 KiCad 符号库头部并选择兼容的文件版本。
 QString ExporterSymbol::generateHeader(const QString& libName) const {
     Q_UNUSED(libName);
     QString version = m_detectedVersion.isEmpty() ? "20211014" : m_detectedVersion;
@@ -375,6 +378,7 @@ QString ExporterSymbol::generateHeader(const QString& libName) const {
     return header;
 }
 
+// 生成单个符号的属性、图形和引脚内容。
 QString ExporterSymbol::generateSymbolContent(const IR::SymbolComponentIR& symbol, const QString& libName) const {
     QString content;
 
@@ -385,64 +389,67 @@ QString ExporterSymbol::generateSymbolContent(const IR::SymbolComponentIR& symbo
     content += "    (on_board yes)\n";
 
     /**
-     * @brief 根据完整符号几何计算稳定原点
-     * @details 原点取主体与引脚几何包围盒中心，不依赖引脚输入顺序。
+     * @brief 确定符号导出的坐标原点
+     * @details 已按来源逻辑原点归一化的符号必须保持该原点；旧的直接构造 IR
+     *          数据没有原点标记时，继续使用几何包围盒中心作为兼容回退。
      */
     double originX = 0.0;
     double originY = 0.0;
     const QList<IR::SymbolPinIR>& pins = symbol.pins;
-    double minOriginX = std::numeric_limits<double>::max();
-    double minOriginY = std::numeric_limits<double>::max();
-    double maxOriginX = -std::numeric_limits<double>::max();
-    double maxOriginY = -std::numeric_limits<double>::max();
-    auto includeOriginPoint = [&](double x, double y) {
-        minOriginX = qMin(minOriginX, x);
-        minOriginY = qMin(minOriginY, y);
-        maxOriginX = qMax(maxOriginX, x);
-        maxOriginY = qMax(maxOriginY, y);
-    };
-    for (const auto& pin : pins) {
-        includeOriginPoint(pin.position.x(), pin.position.y());
-        const double dx = pin.direction == IR::PinDirection::Right  ? pin.length
-                          : pin.direction == IR::PinDirection::Left ? -pin.length
-                                                                    : 0.0;
-        const double dy = pin.direction == IR::PinDirection::Up     ? pin.length
-                          : pin.direction == IR::PinDirection::Down ? -pin.length
-                                                                    : 0.0;
-        includeOriginPoint(pin.position.x() + dx, pin.position.y() + dy);
-    }
-    for (const auto& rect : symbol.rectangles) {
-        includeOriginPoint(rect.x0, rect.y0);
-        includeOriginPoint(rect.x1, rect.y1);
-    }
-    for (const auto& circle : symbol.circles) {
-        includeOriginPoint(circle.center.x() - circle.radius, circle.center.y() - circle.radius);
-        includeOriginPoint(circle.center.x() + circle.radius, circle.center.y() + circle.radius);
-    }
-    for (const auto& ellipse : symbol.ellipses) {
-        includeOriginPoint(ellipse.center.x() - ellipse.radiusX, ellipse.center.y() - ellipse.radiusY);
-        includeOriginPoint(ellipse.center.x() + ellipse.radiusX, ellipse.center.y() + ellipse.radiusY);
-    }
-    for (const auto& arc : symbol.arcs) {
-        includeOriginPoint(arc.startPoint.x(), arc.startPoint.y());
-        includeOriginPoint(arc.midPoint.x(), arc.midPoint.y());
-        includeOriginPoint(arc.endPoint.x(), arc.endPoint.y());
-    }
-    for (const auto& polyline : symbol.polylines) {
-        for (const QPointF& point : polyline.points)
-            includeOriginPoint(point.x(), point.y());
-    }
-    for (const auto& polygon : symbol.polygons) {
-        for (const QPointF& point : polygon.points)
-            includeOriginPoint(point.x(), point.y());
-    }
-    for (const auto& path : symbol.paths) {
-        for (const QPointF& point : path.points)
-            includeOriginPoint(point.x(), point.y());
-    }
-    if (minOriginX <= maxOriginX) {
-        originX = (minOriginX + maxOriginX) / 2.0;
-        originY = (minOriginY + maxOriginY) / 2.0;
+    if (!symbol.preserveLogicalOrigin) {
+        double minOriginX = std::numeric_limits<double>::max();
+        double minOriginY = std::numeric_limits<double>::max();
+        double maxOriginX = -std::numeric_limits<double>::max();
+        double maxOriginY = -std::numeric_limits<double>::max();
+        auto includeOriginPoint = [&](double x, double y) {
+            minOriginX = qMin(minOriginX, x);
+            minOriginY = qMin(minOriginY, y);
+            maxOriginX = qMax(maxOriginX, x);
+            maxOriginY = qMax(maxOriginY, y);
+        };
+        for (const auto& pin : pins) {
+            includeOriginPoint(pin.position.x(), pin.position.y());
+            const double dx = pin.direction == IR::PinDirection::Right  ? pin.length
+                              : pin.direction == IR::PinDirection::Left ? -pin.length
+                                                                        : 0.0;
+            const double dy = pin.direction == IR::PinDirection::Up     ? pin.length
+                              : pin.direction == IR::PinDirection::Down ? -pin.length
+                                                                        : 0.0;
+            includeOriginPoint(pin.position.x() + dx, pin.position.y() + dy);
+        }
+        for (const auto& rect : symbol.rectangles) {
+            includeOriginPoint(rect.x0, rect.y0);
+            includeOriginPoint(rect.x1, rect.y1);
+        }
+        for (const auto& circle : symbol.circles) {
+            includeOriginPoint(circle.center.x() - circle.radius, circle.center.y() - circle.radius);
+            includeOriginPoint(circle.center.x() + circle.radius, circle.center.y() + circle.radius);
+        }
+        for (const auto& ellipse : symbol.ellipses) {
+            includeOriginPoint(ellipse.center.x() - ellipse.radiusX, ellipse.center.y() - ellipse.radiusY);
+            includeOriginPoint(ellipse.center.x() + ellipse.radiusX, ellipse.center.y() + ellipse.radiusY);
+        }
+        for (const auto& arc : symbol.arcs) {
+            includeOriginPoint(arc.startPoint.x(), arc.startPoint.y());
+            includeOriginPoint(arc.midPoint.x(), arc.midPoint.y());
+            includeOriginPoint(arc.endPoint.x(), arc.endPoint.y());
+        }
+        for (const auto& polyline : symbol.polylines) {
+            for (const QPointF& point : polyline.points)
+                includeOriginPoint(point.x(), point.y());
+        }
+        for (const auto& polygon : symbol.polygons) {
+            for (const QPointF& point : polygon.points)
+                includeOriginPoint(point.x(), point.y());
+        }
+        for (const auto& path : symbol.paths) {
+            for (const QPointF& point : path.points)
+                includeOriginPoint(point.x(), point.y());
+        }
+        if (minOriginX <= maxOriginX) {
+            originX = (minOriginX + maxOriginX) / 2.0;
+            originY = (minOriginY + maxOriginY) / 2.0;
+        }
     }
 
     // 设置原点偏移，使所有图形元素相对于该点定位
@@ -720,6 +727,7 @@ QString ExporterSymbol::generateSymbolContent(const IR::SymbolComponentIR& symbo
     return content;
 }
 
+// 生成指定多部件单元的图形内容。
 QString ExporterSymbol::generatePartDrawings(const IR::SymbolComponentIR& symbol, int partIdx) const {
     QString content;
     for (const auto& rect : symbol.rectangles) {

@@ -31,6 +31,7 @@ private:
 
 private slots:
 
+    // 验证元件编号校验只接受有效的 LCSC 编号。
     void validateIdAcceptsOnlyLcscComponentIds() {
         QVERIFY(BomParser::validateId(QStringLiteral("C1234")));
         QVERIFY(BomParser::validateId(QStringLiteral("c13564")));
@@ -41,6 +42,7 @@ private slots:
         QVERIFY(!BomParser::validateId(QStringLiteral("C0603")));
     }
 
+    // 验证 CSV 解析会规范化、去重并过滤无效编号。
     void parseCsvNormalizesDeduplicatesAndFiltersIds() {
         BomParser parser;
         const QString fixturePath = TestPaths::fixturePath(QStringLiteral("bom/mixed_components.csv"));
@@ -50,6 +52,7 @@ private slots:
         QCOMPARE(ids, QStringList({QStringLiteral("C23186"), QStringLiteral("C23166"), QStringLiteral("C13564")}));
     }
 
+    // 验证 CSV 解析会跳过空单元格并读取带引号的编号。
     void parseCsvSkipsEmptyCellsAndReadsQuotedIds() {
         QTemporaryDir tempDir;
         QVERIFY(tempDir.isValid());
@@ -67,6 +70,39 @@ private slots:
         QCOMPARE(parser.parse(filePath), QStringList({QStringLiteral("C21190"), QStringLiteral("C14663")}));
     }
 
+    // 验证带引号逗号字段后面的编号仍能被正确提取。
+    void parseCsvPreservesIdsAfterQuotedCommaFields() {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        const QString filePath = createTempCsv(tempDir,
+                                               QStringLiteral("quoted-comma.csv"),
+                                               {QStringLiteral("Designator,Comment,LCSC Part"),
+                                                QStringLiteral("C1,\"resistor, 1%\",C21190"),
+                                                QStringLiteral("C2,\"quoted \"\"note\"\"\",C14663")});
+        QVERIFY2(!filePath.isEmpty(), "Failed to create temp CSV");
+
+        BomParser parser;
+        QCOMPARE(parser.parse(filePath), QStringList({QStringLiteral("C21190"), QStringLiteral("C14663")}));
+    }
+
+    // 验证跨行引号字段不会影响后续编号解析。
+    void parseCsvPreservesIdsAfterMultilineQuotedFields() {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        const QString filePath = createTempCsv(tempDir,
+                                               QStringLiteral("multiline.csv"),
+                                               {QStringLiteral("Designator,Comment,LCSC Part"),
+                                                QStringLiteral("C1,\"first line\nsecond line\",C21190"),
+                                                QStringLiteral("C2,normal,C14663")});
+        QVERIFY2(!filePath.isEmpty(), "Failed to create temp CSV");
+
+        BomParser parser;
+        QCOMPARE(parser.parse(filePath), QStringList({QStringLiteral("C21190"), QStringLiteral("C14663")}));
+    }
+
+    // 验证不支持格式和缺失文件均返回空结果。
     void parseUnsupportedOrMissingFilesReturnsEmptyList() {
         QTemporaryDir tempDir;
         QVERIFY(tempDir.isValid());
@@ -80,6 +116,7 @@ private slots:
         QVERIFY(parser.parse(tempDir.filePath(QStringLiteral("missing.csv"))).isEmpty());
     }
 
+    // 验证文件读取器通过 BOM 解析器读取 CSV 编号。
     void fileReaderReadBomFileUsesBomParser() {
         QString error;
         const QString fixturePath = TestPaths::fixturePath(QStringLiteral("bom/mixed_components.csv"));
@@ -90,6 +127,7 @@ private slots:
         QCOMPARE(ids, QStringList({QStringLiteral("C23186"), QStringLiteral("C23166"), QStringLiteral("C13564")}));
     }
 
+    // 验证文件读取器能报告没有有效编号的输入文件。
     void fileReaderReadBomFileReportsNoValidIds() {
         QTemporaryDir tempDir;
         QVERIFY(tempDir.isValid());
@@ -109,6 +147,7 @@ private slots:
         QVERIFY(error.contains(QStringLiteral("BOM 表中没有找到有效的元器件编号")));
     }
 
+    // 验证文件读取器能报告不存在的输入文件。
     void fileReaderReadBomFileReportsMissingInput() {
         QString error;
         const QStringList ids = FileReader::readBomFile(QStringLiteral("/nonexistent/bom.csv"), error);
@@ -119,6 +158,7 @@ private slots:
 
     // === XLSX 测试 ===
 
+    // 验证 XLSX 解析结果只包含有效的 LCSC 编号。
     void parseXlsxFiltersComponentIds() {
         const QString xlsxPath = TestPaths::fixturePath(QStringLiteral("bom/testbom.xlsx"));
 
@@ -132,6 +172,7 @@ private slots:
         }
     }
 
+    // 验证 XLSX 解析结果已完成编号去重。
     void parseXlsxDeduplicatesIds() {
         const QString xlsxPath = TestPaths::fixturePath(QStringLiteral("bom/testbom.xlsx"));
 
@@ -143,6 +184,7 @@ private slots:
         QCOMPARE(ids.size(), uniqueIds.size());
     }
 
+    // 验证文件读取器能够读取 XLSX BOM 文件。
     void fileReaderReadBomFileXlsx() {
         const QString xlsxPath = TestPaths::fixturePath(QStringLiteral("bom/testbom.xlsx"));
 

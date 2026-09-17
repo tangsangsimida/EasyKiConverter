@@ -43,7 +43,9 @@
 这类文档记录了项目的演进过程和未来方向，帮助团队做出正确的战略决策。
 
 - [项目路线图](project/ROADMAP.md) - 未来发展方向
+- [通用 EDA 库转换器规划](project/UNIVERSAL_EDA_LIBRARY_CONVERTER.md) - 基于统一 IR 的库格式转换目标与边界
 - [项目路线图 (英文)](project/ROADMAP_en.md) - Roadmap
+- [通用 EDA 库转换器规划 (英文)](project/UNIVERSAL_EDA_LIBRARY_CONVERTER_en.md) - Universal EDA library conversion plan
 - [架构决策记录](project/adr/README.md) - 技术决策记录
 
 ### 历史分析报告（归档）

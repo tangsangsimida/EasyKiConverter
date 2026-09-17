@@ -18,6 +18,7 @@ QJsonObject SymbolShapeSerializer::toJson(const SymbolBBox& bbox) {
     return json;
 }
 
+// 从 JSON 恢复符号边界框及其可选的头部中心。
 bool SymbolShapeSerializer::fromJson(SymbolBBox& bbox, const QJsonObject& json) {
     bbox.x = json["x"].toDouble(0.0);
     bbox.y = json["y"].toDouble(0.0);
@@ -48,6 +49,7 @@ QJsonObject SymbolShapeSerializer::toJson(const SymbolRectangle& rect) {
     return json;
 }
 
+// 从 JSON 恢复矩形的位置、圆角、描边和填充属性。
 bool SymbolShapeSerializer::fromJson(SymbolRectangle& rect, const QJsonObject& json) {
     rect.posX = json["pos_x"].toDouble(0.0);
     rect.posY = json["pos_y"].toDouble(0.0);
@@ -80,6 +82,7 @@ QJsonObject SymbolShapeSerializer::toJson(const SymbolCircle& circle) {
     return json;
 }
 
+// 从 JSON 恢复圆形的中心、半径、描边和填充属性。
 bool SymbolShapeSerializer::fromJson(SymbolCircle& circle, const QJsonObject& json) {
     circle.centerX = json["center_x"].toDouble(0.0);
     circle.centerY = json["center_y"].toDouble(0.0);
@@ -115,6 +118,7 @@ QJsonObject SymbolShapeSerializer::toJson(const SymbolArc& arc) {
     return json;
 }
 
+// 从 JSON 恢复圆弧路径、辅助点和图形样式属性。
 bool SymbolShapeSerializer::fromJson(SymbolArc& arc, const QJsonObject& json) {
     if (json.contains("path") && json["path"].isArray()) {
         QJsonArray pathArray = json["path"].toArray();
@@ -154,6 +158,7 @@ QJsonObject SymbolShapeSerializer::toJson(const SymbolEllipse& ellipse) {
     return json;
 }
 
+// 从 JSON 恢复椭圆中心、半径和图形样式属性。
 bool SymbolShapeSerializer::fromJson(SymbolEllipse& ellipse, const QJsonObject& json) {
     ellipse.centerX = json["center_x"].toDouble(0.0);
     ellipse.centerY = json["center_y"].toDouble(0.0);
@@ -182,6 +187,7 @@ QJsonObject SymbolShapeSerializer::toJson(const SymbolPolyline& polyline) {
     return json;
 }
 
+// 从 JSON 恢复折线坐标文本和图形样式属性。
 bool SymbolShapeSerializer::fromJson(SymbolPolyline& polyline, const QJsonObject& json) {
     polyline.points = json["points"].toString();
     polyline.strokeColor = json["stroke_color"].toString();
@@ -207,6 +213,7 @@ QJsonObject SymbolShapeSerializer::toJson(const SymbolPolygon& polygon) {
     return json;
 }
 
+// 从 JSON 恢复多边形坐标文本和图形样式属性。
 bool SymbolShapeSerializer::fromJson(SymbolPolygon& polygon, const QJsonObject& json) {
     polygon.points = json["points"].toString();
     polygon.strokeColor = json["stroke_color"].toString();
@@ -232,6 +239,7 @@ QJsonObject SymbolShapeSerializer::toJson(const SymbolPath& path) {
     return json;
 }
 
+// 从 JSON 恢复路径命令文本和图形样式属性。
 bool SymbolShapeSerializer::fromJson(SymbolPath& path, const QJsonObject& json) {
     path.paths = json["paths"].toString();
     path.strokeColor = json["stroke_color"].toString();
@@ -240,6 +248,36 @@ bool SymbolShapeSerializer::fromJson(SymbolPath& path, const QJsonObject& json) 
     path.fillColor = json["fill_color"].toBool(false);
     path.id = json["id"].toString();
     path.isLocked = json["is_locked"].toBool(false);
+    return true;
+}
+
+// ==================== SymbolImage ====================
+
+QJsonObject SymbolShapeSerializer::toJson(const SymbolImage& image) {
+    QJsonObject json;
+    json["pos_x"] = image.posX;
+    json["pos_y"] = image.posY;
+    json["width"] = image.width;
+    json["height"] = image.height;
+    json["rotation"] = image.rotation;
+    json["source"] = image.source;
+    json["file_name"] = image.fileName;
+    json["data_base64"] = QString::fromLatin1(image.data.toBase64());
+    json["is_locked"] = image.isLocked;
+    return json;
+}
+
+// 从 JSON 恢复图片位置、资源标识和嵌入数据。
+bool SymbolShapeSerializer::fromJson(SymbolImage& image, const QJsonObject& json) {
+    image.posX = json["pos_x"].toDouble(0.0);
+    image.posY = json["pos_y"].toDouble(0.0);
+    image.width = json["width"].toDouble(0.0);
+    image.height = json["height"].toDouble(0.0);
+    image.rotation = json["rotation"].toDouble(0.0);
+    image.source = json["source"].toString();
+    image.fileName = json["file_name"].toString();
+    image.data = QByteArray::fromBase64(json["data_base64"].toString().toLatin1());
+    image.isLocked = json["is_locked"].toBool(false);
     return true;
 }
 
@@ -266,6 +304,7 @@ QJsonObject SymbolShapeSerializer::toJson(const SymbolText& text) {
     return json;
 }
 
+// 从 JSON 恢复文本内容、排版参数和显示状态。
 bool SymbolShapeSerializer::fromJson(SymbolText& text, const QJsonObject& json) {
     text.mark = json["mark"].toString();
     text.posX = json["pos_x"].toDouble(0.0);

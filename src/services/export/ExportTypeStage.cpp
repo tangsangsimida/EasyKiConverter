@@ -8,7 +8,10 @@
 
 namespace EasyKiConverter {
 
+// 初始化导出阶段的线程池、类型名称和完成状态回调。
+/** @brief 初始化导出阶段的线程池、类型名称和完成状态回调。 */
 ExportTypeStage::ExportTypeStage(const QString& typeName, int maxConcurrent, QObject* parent)
+    // 初始化 QObject 基类和阶段名称成员。
     : QObject(parent), m_typeName(typeName) {
     m_threadPool.setMaxThreadCount(maxConcurrent);
     m_threadPool.setExpiryTimeout(60000);
@@ -88,6 +91,7 @@ void ExportTypeStage::start(const QStringList& componentIds,
     qDebug() << "ExportTypeStage:" << m_typeName << "initial batch started, pending:" << m_pendingComponents.size();
 }
 
+// 从待处理队列取出一个元器件并创建对应的导出 Worker。
 void ExportTypeStage::startNextWorker() {
     if (m_cancelled.load()) {
         return;
@@ -132,6 +136,7 @@ void ExportTypeStage::startNextWorker() {
     startWorker(worker, componentId, data);
 }
 
+// 取消待处理任务并保留活跃 Worker 的收敛过程。
 void ExportTypeStage::cancel() {
     if (!m_isRunning.load()) {
         return;
@@ -154,6 +159,7 @@ void ExportTypeStage::cancel() {
     qDebug() << "ExportTypeStage:" << m_typeName << "cancelled";
 }
 
+// 等待线程池退出并清理阶段内部的任务状态。
 bool ExportTypeStage::waitForFinished(int timeoutMs) {
     m_cancelled.store(true);
     m_threadPool.clear();
@@ -173,6 +179,7 @@ bool ExportTypeStage::waitForFinished(int timeoutMs) {
     return true;
 }
 
+// 等待库级导出线程退出，并在成功后清空线程指针。
 bool ExportTypeStage::waitForWorkerThread(QThread*& thread, int timeoutMs) {
     m_cancelled.store(true);
 
@@ -193,20 +200,24 @@ bool ExportTypeStage::waitForWorkerThread(QThread*& thread, int timeoutMs) {
     return true;
 }
 
+// 返回受互斥锁保护的进度快照。
 ExportTypeProgress ExportTypeStage::getProgress() const {
     QMutexLocker locker(&m_progressMutex);
     return m_progress;
 }
 
+// 查询阶段是否仍有未完成的导出任务。
 bool ExportTypeStage::isRunning() const {
     return m_isRunning.load();
 }
 
+// 查询是否仍有已提交但尚未回调完成的 Worker。
 bool ExportTypeStage::hasActiveWorkers() const {
     QMutexLocker locker(&m_workerMutex);
     return !m_activeWorkers.isEmpty();
 }
 
+// 为一个元器件创建待处理状态记录。
 void ExportTypeStage::initItemProgress(const QString& componentId) {
     QMutexLocker locker(&m_progressMutex);
     ExportItemStatus status;
@@ -285,6 +296,55 @@ void ExportTypeStage::completeItemProgress(QObject* worker,
     if (shouldStartNext && !m_cancelled.load()) {
         startNextWorker();
     }
+}
+
+// 完成一个无需执行导出的元器件，并将其计入跳过统计。
+void ExportTypeStage::completeSkippedItemProgress(QObject* worker, const QString& componentId, const QString& reason) {
+    bool shouldStartNext = false;
+    bool hasActiveWorkers = false;
+    {
+        QMutexLocker workerLocker(&m_workerMutex);
+        if (worker)
+            m_activeWorkers.remove(worker);
+        shouldStartNext = !m_pendingComponents.isEmpty();
+        hasActiveWorkers = !m_activeWorkers.isEmpty();
+    }
+
+    ExportItemStatus statusSnapshot;
+    ExportTypeProgress progressSnapshot;
+    bool shouldComplete = false;
+    {
+        QMutexLocker locker(&m_progressMutex);
+        auto it = m_progress.itemStatus.find(componentId);
+        if (it == m_progress.itemStatus.end())
+            return;
+
+        ExportItemStatus& status = it.value();
+        status.status = ExportItemStatus::Status::Skipped;
+        status.errorMessage = reason;
+        status.endTime = QDateTime::currentDateTime();
+        statusSnapshot = status;
+
+        ++m_progress.completedCount;
+        ++m_progress.skippedCount;
+        --m_progress.inProgressCount;
+        progressSnapshot = m_progress;
+
+        const bool cancelledAndDrained = m_cancelled.load() && !hasActiveWorkers && !shouldStartNext;
+        shouldComplete = m_progress.completedCount >= m_progress.totalCount || cancelledAndDrained;
+    }
+
+    emit itemStatusChanged(componentId, statusSnapshot);
+    emit progressChanged(progressSnapshot);
+
+    if (shouldComplete) {
+        m_isRunning.store(false);
+        emit completed(progressSnapshot.successCount, progressSnapshot.failedCount, progressSnapshot.skippedCount);
+        return;
+    }
+
+    if (shouldStartNext && !m_cancelled.load())
+        startNextWorker();
 }
 
 }  // namespace EasyKiConverter

@@ -23,12 +23,15 @@ void PreviewImagesExportWorker::setData(const QString& componentId,
     m_componentId = componentId;
     m_data = data;
     m_options = options;
+    m_cacheGeneration = ComponentCacheService::instance()->currentGeneration();
 }
 
+// 更新预览图导出选项。
 void PreviewImagesExportWorker::setOptions(const struct ExportOptions& options) {
     m_options = options;
 }
 
+// 执行预览图缓存读取、必要时下载并写入输出文件。
 void PreviewImagesExportWorker::run() {
     if (m_cancelled.load()) {
         emit completed(m_componentId, false, QStringLiteral("Cancelled"));
@@ -45,19 +48,24 @@ void PreviewImagesExportWorker::run() {
     // 检查预览图数据是否可用
     QList<QByteArray> previewDataList = m_data->previewImageData();
 
-    // 如果内存中没有预览图数据，尝试从磁盘缓存加载
-    if (previewDataList.isEmpty()) {
-        ComponentCacheService* cache = ComponentCacheService::instance();
-        for (int i = 0; i < 3; ++i) {  // 最多尝试加载3张预览图
-            QByteArray imageData = cache->loadPreviewImage(m_componentId, i);
-            if (imageData.isEmpty()) {
-                break;
-            }
+    // 用磁盘缓存补齐内存列表中的空槽位，避免部分回调形成的空洞阻断缓存复用。
+    ComponentCacheService* cache = ComponentCacheService::instance();
+    QList<QByteArray> cachedPreviewData(3);
+    for (int i = 0; i < cachedPreviewData.size(); ++i) {
+        if (i < previewDataList.size() && !previewDataList.at(i).isEmpty()) {
+            cachedPreviewData[i] = previewDataList.at(i);
+            continue;
+        }
+        cachedPreviewData[i] = cache->loadPreviewImage(m_componentId, i);
+    }
+    previewDataList.clear();
+    for (const QByteArray& imageData : std::as_const(cachedPreviewData)) {
+        if (!imageData.isEmpty()) {
             previewDataList.append(imageData);
         }
-        qDebug() << "PreviewImagesExportWorker: Loaded" << previewDataList.size() << "preview images from cache for"
-                 << m_componentId;
     }
+    qDebug() << "PreviewImagesExportWorker: Loaded" << previewDataList.size() << "preview images from cache for"
+             << m_componentId;
 
     // 如果缓存被清空，但内存里仍保留了预览图 URL，则在导出阶段直接回补下载。
     if (previewDataList.isEmpty()) {
@@ -65,8 +73,13 @@ void PreviewImagesExportWorker::run() {
         if (!previewUrls.isEmpty()) {
             ComponentCacheService* cache = ComponentCacheService::instance();
             for (int i = 0; i < previewUrls.size(); ++i) {
-                const QByteArray imageData = cache->downloadPreviewImage(
-                    m_componentId, previewUrls[i], i, nullptr, nullptr, m_options.weakNetworkSupport);
+                const QByteArray imageData = cache->downloadPreviewImage(m_componentId,
+                                                                         previewUrls[i],
+                                                                         i,
+                                                                         nullptr,
+                                                                         nullptr,
+                                                                         m_options.weakNetworkSupport,
+                                                                         m_cacheGeneration);
                 if (!imageData.isEmpty()) {
                     previewDataList.append(imageData);
                 }
@@ -190,6 +203,7 @@ void PreviewImagesExportWorker::run() {
     }
 }
 
+// 设置取消标志，使正在执行的导出尽快停止。
 void PreviewImagesExportWorker::cancel() {
     m_cancelled.store(true);
 }

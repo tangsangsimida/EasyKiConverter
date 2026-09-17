@@ -9,7 +9,7 @@ Card {
     property var exportProgressController
     property var exportSettingsController
     title: qsTranslate("MainWindow", "导出统计")
-    visible: exportStatisticsCard.exportProgressController && exportStatisticsCard.exportProgressController.hasCompletedExport
+    visible: exportStatisticsCard.exportProgressController ? exportStatisticsCard.exportProgressController.hasCompletedExport : false
     ColumnLayout {
         width: parent.width
         spacing: AppStyle.spacing.md
@@ -156,7 +156,7 @@ Card {
                 textColor: AppStyle.colors.textPrimary
                 hoverColor: AppStyle.colors.border
                 pressedColor: AppStyle.colors.borderFocus
-                visible: exportStatisticsCard.exportSettingsController && exportStatisticsCard.exportSettingsController.debugMode
+                visible: exportStatisticsCard.exportSettingsController ? exportStatisticsCard.exportSettingsController.debugMode : false
                 onClicked: {
                     if (exportStatisticsCard.exportProgressController) {
                         Qt.openUrlExternally(exportStatisticsCard.exportProgressController.cacheDirUrl);

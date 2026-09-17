@@ -122,11 +122,7 @@ Once usable build infrastructure is available, add an independent Qt, toolchain,
 
 #### 1. Install Qt
 
-```bash
-brew install qt@6
-```
-
-Or download Qt installer from https://www.qt.io/download
+Download Qt 6.10.2 or newer from https://www.qt.io/download and install it into a project-specific directory. Do not use Homebrew Qt, `/usr/local/Qt`, or the system Qt installation. Before configuring the project, set `Qt6_DIR`, `CMAKE_PREFIX_PATH`, and `PATH` to that standalone Qt directory.
 
 #### 2. Install CMake
 
@@ -173,8 +169,9 @@ sudo apt-get install zlib1g-dev
 ### Linux (Arch Linux)
 
 ```bash
-# Install all dependencies
-sudo pacman -S --needed base-devel cmake ninja qt6-base qt6-declarative qt6-svg qt6-shadertools qt6-tools zlib
+# Install compiler and build dependencies. Qt must come from the standalone
+# project-specific installation described above, not from system packages.
+sudo pacman -S --needed base-devel cmake ninja zlib
 ```
 
 ## Building the Project
@@ -209,12 +206,18 @@ cmake --build . --config Release
 ### macOS
 
 ```bash
+# Set the project-specific Qt root (replace with the actual install path).
+export PROJECT_QT_ROOT=/path/to/project/Qt/6.10.2/macos
+export Qt6_DIR="$PROJECT_QT_ROOT/lib/cmake/Qt6"
+export CMAKE_PREFIX_PATH="$PROJECT_QT_ROOT"
+export PATH="$PROJECT_QT_ROOT/bin:$PATH"
+
 # Create build directory
 mkdir build
 cd build
 
 # Configure project
-cmake .. -DCMAKE_PREFIX_PATH="/usr/local/Qt-6.10.2"
+cmake .. -DCMAKE_PREFIX_PATH="$PROJECT_QT_ROOT"
 
 # Build project (Debug version)
 cmake --build . --config Debug

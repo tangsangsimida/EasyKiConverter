@@ -194,7 +194,7 @@ public:
      * @brief 判断是否为元件外形层（边界层
          *
      * 元件外形层用于布局避让，应映射F.CrtYd 或 B.CrtYd
-     * 参LCKiConverter: src/jlc/pro_footprint.ts isCourtYard()
+     * EasyEDA 元件外形层用于布局避让。
      *
      * @param easyedaLayerId 嘉立EDA 图层 ID
      * @return bool 是否为元件外形层
@@ -221,7 +221,7 @@ public:
      * @brief 获取元件外形层对应的 KiCad 图层
      *
      * 元件外形层应映射F.CrtYd（顶层）或 B.CrtYd（底层）
-     * 参LCKiConverter: src/jlc/pro_footprint.ts isCourtYard()
+     * 元件外形层用于布局避让，并映射到正面边界层。
      *
      * @param easyedaLayerId 嘉立EDA 图层 ID
      * @return QString KiCad 图层名称，如果不是元件外形层则返回空字符串

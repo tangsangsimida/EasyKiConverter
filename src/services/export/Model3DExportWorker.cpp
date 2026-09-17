@@ -11,9 +11,24 @@
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
+#include <QMutex>
+#include <QMutexLocker>
 #include <QtConcurrent>
 
 namespace EasyKiConverter {
+
+namespace {
+
+/**
+ * @brief 返回模型下载临界区，避免相同 UUID 并发穿透缓存。
+ * @return 进程内共享的模型下载互斥量。
+ */
+QMutex& modelDownloadMutex() {
+    static QMutex mutex;
+    return mutex;
+}
+
+}  // namespace
 
 Model3DExportWorker::Model3DExportWorker(QObject* parent) : QObject(parent) {
     setAutoDelete(false);
@@ -27,18 +42,21 @@ void Model3DExportWorker::setData(const QString& componentId,
     m_componentId = componentId;
     m_data = data;
     m_options = options;
+    m_cacheGeneration = ComponentCacheService::instance()->currentGeneration();
 }
 
+// 更新 Worker 使用的三维导出选项。
 void Model3DExportWorker::setOptions(const struct ExportOptions& options) {
     m_options = options;
 }
 
+// 从组件数据或缓存解析模型并完成选定格式的导出。
 void Model3DExportWorker::run() {
     if (m_cancelled.load()) {
         emit completed(m_componentId, false, QStringLiteral("Cancelled"));
         return;
     }
-    const uint64_t gen = ComponentCacheService::instance()->currentGeneration();
+    const uint64_t gen = m_cacheGeneration;
 
     if (!m_data) {
         emit completed(m_componentId, false, QStringLiteral("No data available"));
@@ -47,15 +65,27 @@ void Model3DExportWorker::run() {
 
     qDebug() << "Model3DExportWorker: Exporting" << m_componentId;
 
-    QString uuid;
-    if (m_data->model3DData()) {
-        uuid = m_data->model3DData()->uuid();
+    Model3DData sourceModel;
+    if (m_data->model3DData())
+        sourceModel = *m_data->model3DData();
+    if (sourceModel.uuid().isEmpty() && m_data->footprintData()) {
+        const Model3DData footprintModel = m_data->footprintData()->model3D();
+        if (!footprintModel.uuid().isEmpty())
+            sourceModel = footprintModel;
     }
+
+    QString uuid = sourceModel.uuid();
     if (uuid.isEmpty()) {
         QSharedPointer<ComponentData> cachedComponent =
             ComponentCacheService::instance()->loadComponentData(m_componentId);
-        if (cachedComponent && cachedComponent->model3DData()) {
-            uuid = cachedComponent->model3DData()->uuid();
+        if (cachedComponent) {
+            if (cachedComponent->model3DData()) {
+                sourceModel = *cachedComponent->model3DData();
+            }
+            if (sourceModel.uuid().isEmpty() && cachedComponent->footprintData()) {
+                sourceModel = cachedComponent->footprintData()->model3D();
+            }
+            uuid = sourceModel.uuid();
         }
     }
     if (uuid.isEmpty()) {
@@ -85,10 +115,7 @@ void Model3DExportWorker::run() {
     Exporter3DModel exporter;
 
     // 获取模型名称用于命名文件（仅在需要时）
-    QString modelName;
-    if (m_data && m_data->model3DData()) {
-        modelName = m_data->model3DData()->name();
-    }
+    QString modelName = sourceModel.name();
     if (modelName.isEmpty()) {
         modelName = m_componentId;
     } else {
@@ -147,14 +174,12 @@ void Model3DExportWorker::run() {
     // 只有在没有 OBJ 且不能下载时才复用 WRL 缓存，封装阶段会按该 WRL 的实际几何计算 STEP 偏移。
     // STEP 文件保持服务器原始坐标系，不使用派生缓存。
 
-    auto buildModelData = [this, &uuid]() {
+    auto buildModelData = [&uuid, &sourceModel]() {
         Model3DData modelData;
         modelData.setUuid(uuid);
-        if (m_data && m_data->model3DData()) {
-            modelData.setName(m_data->model3DData()->name());
-            modelData.setTranslation(m_data->model3DData()->translation());
-            modelData.setRotation(m_data->model3DData()->rotation());
-        }
+        modelData.setName(sourceModel.name());
+        modelData.setTranslation(sourceModel.translation());
+        modelData.setRotation(sourceModel.rotation());
         return modelData;
     };
 
@@ -162,23 +187,55 @@ void Model3DExportWorker::run() {
     // 只在需要 WRL 时导出
     if (needWrl) {
         QByteArray objData;
+        bool usedWrlCache = false;
         if (m_data && !m_data->model3DObjRaw().isEmpty()) {
             objData = m_data->model3DObjRaw();
         }
-        if (objData.isEmpty()) {
-            objData = cache->loadModel3D(uuid, QStringLiteral("obj"));
+        if (!objData.isEmpty() && !Exporter3DModel::hasUsableObjGeometry(objData)) {
+            qWarning() << "Model3DExportWorker: Ignoring malformed OBJ data for" << m_componentId << "uuid" << uuid;
+            objData.clear();
         }
-        if (objData.isEmpty() && cache->hasModel3DCached(uuid, QStringLiteral("wrl")) &&
-            cache->copyModel3DToFile(uuid, QStringLiteral("wrl"), wrlWritePath)) {
-            qDebug() << "Model3DExportWorker: WRL cache fallback for" << uuid;
-        } else if (objData.isEmpty() && !exporter.downloadObjDataSync(uuid, &objData, &error)) {
-            if (error.isEmpty()) {
-                error = QStringLiteral("Failed to download OBJ data for WRL export");
+        if (!objData.isEmpty()) {
+            // 预加载阶段已经取得有效 OBJ 时也写入公共缓存，避免后续导出重复下载。
+            cache->saveModel3D(uuid, objData, QStringLiteral("obj"), gen);
+        }
+        if (objData.isEmpty()) {
+            QMutexLocker downloadLocker(&modelDownloadMutex());
+            objData = cache->loadModel3D(uuid, QStringLiteral("obj"));
+            if (!objData.isEmpty() && !Exporter3DModel::hasUsableObjGeometry(objData)) {
+                qWarning() << "Model3DExportWorker: Ignoring malformed cached OBJ for" << m_componentId << "uuid"
+                           << uuid;
+                objData.clear();
             }
+            const QByteArray cachedWrl = cache->loadModel3D(uuid, QStringLiteral("wrl"));
+            if (objData.isEmpty() && !cachedWrl.isEmpty() && Exporter3DModel::hasUsableWrlGeometry(cachedWrl) &&
+                cache->copyModel3DToFile(uuid, QStringLiteral("wrl"), wrlWritePath)) {
+                usedWrlCache = true;
+                qDebug() << "Model3DExportWorker: WRL cache fallback for" << uuid;
+            } else if (objData.isEmpty() && !cachedWrl.isEmpty()) {
+                qWarning() << "Model3DExportWorker: Ignoring malformed cached WRL for" << m_componentId << "uuid"
+                           << uuid;
+            }
+            if (objData.isEmpty() && !usedWrlCache && !exporter.downloadObjDataSync(uuid, &objData, &error)) {
+                if (error.isEmpty()) {
+                    error = QStringLiteral("Failed to download OBJ data for WRL export");
+                }
+            }
+            if (!objData.isEmpty() && !Exporter3DModel::hasUsableObjGeometry(objData)) {
+                qWarning() << "Model3DExportWorker: Rejecting invalid downloaded OBJ for" << m_componentId << "uuid"
+                           << uuid;
+                objData.clear();
+                error = QStringLiteral("Downloaded OBJ data has no usable geometry");
+            }
+            if (!objData.isEmpty()) {
+                cache->saveModel3D(uuid, objData, QStringLiteral("obj"), gen);
+            }
+        }
+        if (usedWrlCache) {
+            // 已复制缓存中的 WRL，无需再次转换 OBJ。
         } else if (objData.isEmpty()) {
             error = QStringLiteral("OBJ data is empty for WRL export");
         } else {
-            cache->saveModel3D(uuid, objData, QStringLiteral("obj"), gen);
             Model3DData modelData = buildModelData();
             modelData.setRawObj(QString::fromUtf8(objData));
             IR::Model3DIR modelIR = IR::toModel3DIR(modelData);
@@ -195,27 +252,51 @@ void Model3DExportWorker::run() {
     }
     // STEP 文件保持服务器原始坐标系，优先使用磁盘缓存
     if (error.isEmpty() && needStep && !m_cancelled.load()) {
-        QByteArray stepData;
+        QByteArray stepData = sourceModel.step();
+        if (!stepData.isEmpty() && !Exporter3DModel::hasUsableStepData(stepData)) {
+            qWarning() << "Model3DExportWorker: Ignoring malformed preloaded STEP for" << m_componentId << "uuid"
+                       << uuid;
+            stepData.clear();
+        }
+        if (!stepData.isEmpty()) {
+            // 预加载阶段已经取得有效 STEP 时写入公共缓存，避免后续导出重复下载。
+            cache->saveModel3D(uuid, stepData, QStringLiteral("step"), gen);
+        }
 
-        if (cache->copyModel3DToFile(uuid, QStringLiteral("step"), stepWritePath)) {
-            qDebug() << "Model3DExportWorker: STEP cache hit for" << m_componentId << "uuid" << uuid;
-        } else if (!m_cancelled.load()) {
-            if (!exporter.downloadStepDataSync(uuid, &stepData, &error)) {
-                if (error.isEmpty()) {
+        bool stepCacheHit = false;
+        if (stepData.isEmpty()) {
+            QMutexLocker downloadLocker(&modelDownloadMutex());
+            const QByteArray cachedStep = cache->loadModel3D(uuid, QStringLiteral("step"));
+            if (!cachedStep.isEmpty() && Exporter3DModel::hasUsableStepData(cachedStep)) {
+                stepCacheHit = cache->copyModel3DToFile(uuid, QStringLiteral("step"), stepWritePath);
+            } else if (!cachedStep.isEmpty()) {
+                qWarning() << "Model3DExportWorker: Ignoring malformed cached STEP for" << m_componentId << "uuid"
+                           << uuid;
+            }
+            if (!stepCacheHit && !m_cancelled.load()) {
+                if (!exporter.downloadStepDataSync(uuid, &stepData, &error) && error.isEmpty()) {
                     error = QStringLiteral("Failed to download STEP data");
                 }
-            }
-
-            if (!stepData.isEmpty()) {
-                Model3DData modelData = buildModelData();
-                modelData.setStep(stepData);
-                IR::Model3DIR modelIR = IR::toModel3DIR(modelData);
-                if (!exporter.exportToStep(modelIR, stepWritePath)) {
-                    error = QStringLiteral("Failed to write STEP file");
-                } else {
-                    cache->saveModel3D(uuid, stepData, QStringLiteral("step"), gen);
-                    qDebug() << "Model3DExportWorker: Saved STEP to cache for" << m_componentId << "uuid" << uuid;
+                if (!stepData.isEmpty() && !Exporter3DModel::hasUsableStepData(stepData)) {
+                    qWarning() << "Model3DExportWorker: Rejecting invalid downloaded STEP for" << m_componentId
+                               << "uuid" << uuid;
+                    stepData.clear();
+                    error = QStringLiteral("Downloaded STEP data has invalid structure");
                 }
+                if (!stepData.isEmpty()) {
+                    cache->saveModel3D(uuid, stepData, QStringLiteral("step"), gen);
+                }
+            }
+        }
+
+        if (stepCacheHit) {
+            qDebug() << "Model3DExportWorker: STEP cache hit for" << m_componentId << "uuid" << uuid;
+        } else if (!stepData.isEmpty()) {
+            Model3DData modelData = buildModelData();
+            modelData.setStep(stepData);
+            IR::Model3DIR modelIR = IR::toModel3DIR(modelData);
+            if (!exporter.exportToStep(modelIR, stepWritePath)) {
+                error = QStringLiteral("Failed to write STEP file");
             }
         }
     }
@@ -242,11 +323,13 @@ void Model3DExportWorker::run() {
     emit completed(m_componentId, false, error);
 }
 
+// 将下载错误转换为统一的 Worker 完成失败信号。
 void Model3DExportWorker::onDownloadError(const QString& error) {
     qCritical("%s", qPrintable(QString("Model3DExportWorker: Download error: %1").arg(error)));
     emit completed(m_componentId, false, error);
 }
 
+// 设置取消标志，让正在执行的模型任务尽快停止。
 void Model3DExportWorker::cancel() {
     m_cancelled.store(true);
 }

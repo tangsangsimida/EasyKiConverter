@@ -8,6 +8,8 @@
 #include <QFileInfo>
 
 #include <climits>
+#include <cmath>
+#include <limits>
 
 namespace EasyKiConverter {
 
@@ -17,9 +19,11 @@ namespace EasyKiConverter {
 bool ExporterAltiumFootprint::exportFootprint(const IR::FootprintComponentIR& footprint,
                                               const QString& filePath,
                                               const QString& model3DPath) {
+    m_diagnostics.clear();
     QList<AltiumPcbComponent> components;
     components.append(convertFootprint(footprint, model3DPath));
     bool ok = m_writer.write(components, filePath);
+    m_diagnostics = m_writer.diagnostics();
     if (!ok) {
         qWarning() << "ExporterAltiumFootprint: Failed to write footprint to" << filePath;
     }
@@ -38,12 +42,14 @@ bool ExporterAltiumFootprint::exportFootprintLibrary(const QList<IR::FootprintCo
                                                      const QString& libraryKeywords,
                                                      bool useAbsolutePaths,
                                                      const QString& model3DBaseDir) {
+    m_diagnostics.clear();
     QList<AltiumPcbComponent> components;
     for (const IR::FootprintComponentIR& fp : footprints) {
         // 对于库级别导出，3D 模型路径在后续处理
         components.append(convertFootprint(fp));
     }
     bool ok = m_writer.write(components, filePath, libName);
+    m_diagnostics = m_writer.diagnostics();
     if (!ok) {
         qWarning() << "ExporterAltiumFootprint: Failed to write footprint library to" << filePath;
     }
@@ -147,8 +153,10 @@ AltiumPcbComponent ExporterAltiumFootprint::convertFootprint(const IR::Footprint
                 model.rotY = rot.y;
                 model.rotZ = rot.z;
                 const auto& translation = model3d.translation();
-                model.x = AltiumCoord::mmToRaw(translation.x);
-                model.y = AltiumCoord::mmToRaw(translation.y);
+                const auto& stepOffset = model3d.stepOffsetMm();
+                model.x = AltiumCoord::mmToRaw(translation.x + stepOffset.x);
+                model.y = AltiumCoord::mmToRaw(translation.y + stepOffset.y);
+                model.dz = translation.z + stepOffset.z;
                 component.models.append(model);
             }
         }
@@ -356,7 +364,21 @@ void ExporterAltiumFootprint::centerComponent(AltiumPcbComponent& component) {
     }
 
     // 计算包围盒（使用焊盘位置和走线端点）
-    int minX = INT_MAX, minY = INT_MAX, maxX = INT_MIN, maxY = INT_MIN;
+    qint64 minX = std::numeric_limits<qint64>::max();
+    qint64 minY = std::numeric_limits<qint64>::max();
+    qint64 maxX = std::numeric_limits<qint64>::lowest();
+    qint64 maxY = std::numeric_limits<qint64>::lowest();
+    const auto toBoundedCoordinate = [](double value) {
+        if (!std::isfinite(value))
+            return qint64(0);
+        constexpr double maxValue = static_cast<double>(std::numeric_limits<qint64>::max());
+        constexpr double minValue = static_cast<double>(std::numeric_limits<qint64>::min());
+        if (value >= maxValue)
+            return std::numeric_limits<qint64>::max();
+        if (value <= minValue)
+            return std::numeric_limits<qint64>::min();
+        return static_cast<qint64>(value);
+    };
 
     for (const auto& pad : component.pads) {
         minX = qMin(minX, pad.locationX);
@@ -371,10 +393,10 @@ void ExporterAltiumFootprint::centerComponent(AltiumPcbComponent& component) {
         maxY = qMax(maxY, qMax(track.startY, track.endY));
     }
     for (const auto& arc : component.arcs) {
-        minX = qMin(minX, arc.centerX - arc.radius);
-        minY = qMin(minY, arc.centerY - arc.radius);
-        maxX = qMax(maxX, arc.centerX + arc.radius);
-        maxY = qMax(maxY, arc.centerY + arc.radius);
+        minX = qMin(minX, static_cast<qint64>(arc.centerX) - arc.radius);
+        minY = qMin(minY, static_cast<qint64>(arc.centerY) - arc.radius);
+        maxX = qMax(maxX, static_cast<qint64>(arc.centerX) + arc.radius);
+        maxY = qMax(maxY, static_cast<qint64>(arc.centerY) + arc.radius);
     }
     for (const auto& fill : component.fills) {
         minX = qMin(minX, qMin(fill.corner1X, fill.corner2X));
@@ -438,7 +460,7 @@ void ExporterAltiumFootprint::centerComponent(AltiumPcbComponent& component) {
 
 /**
  * @brief 从封装包围盒和 3D 模型生成 ComponentBody
- * @details 在 MECHANICAL1 层创建矩形轮廓，关联嵌入的 STEP 模型。
+ * @details 在 MECHANICAL1 层为每个嵌入的 STEP 模型创建一个矩形轮廓。
  *          轮廓基于所有图元的包围盒生成。
  */
 void ExporterAltiumFootprint::generateComponentBody(AltiumPcbComponent& component) {
@@ -446,7 +468,21 @@ void ExporterAltiumFootprint::generateComponentBody(AltiumPcbComponent& componen
         return;
 
     // 计算包围盒（复用 centerComponent 的逻辑）
-    int minX = INT_MAX, minY = INT_MAX, maxX = INT_MIN, maxY = INT_MIN;
+    qint64 minX = std::numeric_limits<qint64>::max();
+    qint64 minY = std::numeric_limits<qint64>::max();
+    qint64 maxX = std::numeric_limits<qint64>::lowest();
+    qint64 maxY = std::numeric_limits<qint64>::lowest();
+    const auto toBoundedCoordinate = [](double value) {
+        if (!std::isfinite(value))
+            return qint64(0);
+        constexpr double maxValue = static_cast<double>(std::numeric_limits<qint64>::max());
+        constexpr double minValue = static_cast<double>(std::numeric_limits<qint64>::min());
+        if (value >= maxValue)
+            return std::numeric_limits<qint64>::max();
+        if (value <= minValue)
+            return std::numeric_limits<qint64>::min();
+        return static_cast<qint64>(value);
+    };
 
     for (const auto& pad : component.pads) {
         minX = qMin(minX, pad.locationX);
@@ -461,10 +497,10 @@ void ExporterAltiumFootprint::generateComponentBody(AltiumPcbComponent& componen
         maxY = qMax(maxY, qMax(track.startY, track.endY));
     }
     for (const auto& arc : component.arcs) {
-        minX = qMin(minX, arc.centerX - arc.radius);
-        minY = qMin(minY, arc.centerY - arc.radius);
-        maxX = qMax(maxX, arc.centerX + arc.radius);
-        maxY = qMax(maxY, arc.centerY + arc.radius);
+        minX = qMin(minX, static_cast<qint64>(arc.centerX) - arc.radius);
+        minY = qMin(minY, static_cast<qint64>(arc.centerY) - arc.radius);
+        maxX = qMax(maxX, static_cast<qint64>(arc.centerX) + arc.radius);
+        maxY = qMax(maxY, static_cast<qint64>(arc.centerY) + arc.radius);
     }
     for (const auto& fill : component.fills) {
         minX = qMin(minX, qMin(fill.corner1X, fill.corner2X));
@@ -474,48 +510,59 @@ void ExporterAltiumFootprint::generateComponentBody(AltiumPcbComponent& componen
     }
     for (const auto& region : component.regions) {
         for (const QPointF& v : region.vertices) {
-            minX = qMin(minX, static_cast<int>(v.x()));
-            minY = qMin(minY, static_cast<int>(v.y()));
-            maxX = qMax(maxX, static_cast<int>(v.x()));
-            maxY = qMax(maxY, static_cast<int>(v.y()));
+            const qint64 x = toBoundedCoordinate(v.x());
+            const qint64 y = toBoundedCoordinate(v.y());
+            minX = qMin(minX, x);
+            minY = qMin(minY, y);
+            maxX = qMax(maxX, x);
+            maxY = qMax(maxY, y);
         }
     }
 
-    if (minX == INT_MAX)
+    if (minX == std::numeric_limits<qint64>::max())
         return;  // 无图元，无法生成轮廓
 
-    // 生成稳定的模型 ID（基于封装名称）
-    QString seed = component.name + "|body";
-    QByteArray seedBytes = seed.toUtf8();
-    uint64_t hash = 0xCBF29CE484222325ULL;
-    for (char byte : seedBytes) {
-        hash ^= static_cast<uint8_t>(byte);
-        hash *= 0x100000001B3ULL;
+    const auto makeModelId = [&component](int modelIndex) {
+        const QString seed = modelIndex == 0 ? component.name + QStringLiteral("|body")
+                                             : component.name + QStringLiteral("|body|") + QString::number(modelIndex);
+        const QByteArray seedBytes = seed.toUtf8();
+        uint64_t hash = 0xCBF29CE484222325ULL;
+        for (char byte : seedBytes) {
+            hash ^= static_cast<uint8_t>(byte);
+            hash *= 0x100000001B3ULL;
+        }
+        return QString("{%1-%2-%3-%4-%5}")
+            .arg((hash >> 32) & 0xFFFFFFFF, 8, 16, QChar('0'))
+            .arg((hash >> 16) & 0xFFFF, 4, 16, QChar('0'))
+            .arg(hash & 0xFFFF, 4, 16, QChar('0'))
+            .arg(((~hash) >> 48) & 0xFFFF, 4, 16, QChar('0'))
+            .arg((~hash) & 0xFFFFFFFFFFFFLL, 12, 16, QChar('0'))
+            .toUpper();
+    };
+
+    // 每个模型都需要独立的 ComponentBody，否则虽然模型数据写入了 Library/Models，
+    // Altium 仍然只会通过第一个元件体显示第一个模型。
+    for (int modelIndex = 0; modelIndex < component.models.size(); ++modelIndex) {
+        auto& model = component.models[modelIndex];
+        const QString modelId = makeModelId(modelIndex);
+        model.id = modelId;
+
+        AltiumPcbComponentBody body;
+        body.modelId = modelId;
+        body.modelName = model.name;
+        body.model2dRotX = model.x;
+        body.model2dRotY = model.y;
+        body.model3dRotX = model.rotX;
+        body.model3dRotY = model.rotY;
+        body.model3dRotZ = model.rotZ;
+        body.model3dDzRaw = AltiumCoord::mmToRaw(model.dz);
+        body.overallHeightRaw = AltiumCoord::mmToRaw(qMax(component.height, 0.2));
+
+        // 矩形轮廓
+        body.outline = {QPointF(minX, minY), QPointF(maxX, minY), QPointF(maxX, maxY), QPointF(minX, maxY)};
+
+        component.bodies.append(body);
     }
-    QString modelId = QString("{%1-%2-%3-%4-%5}")
-                          .arg((hash >> 32) & 0xFFFFFFFF, 8, 16, QChar('0'))
-                          .arg((hash >> 16) & 0xFFFF, 4, 16, QChar('0'))
-                          .arg(hash & 0xFFFF, 4, 16, QChar('0'))
-                          .arg(((~hash) >> 48) & 0xFFFF, 4, 16, QChar('0'))
-                          .arg((~hash) & 0xFFFFFFFFFFFFLL, 12, 16, QChar('0'))
-                          .toUpper();
-    component.models.first().id = modelId;
-
-    AltiumPcbComponentBody body;
-    body.modelId = modelId;
-    body.modelName = component.models.first().name;
-    body.model2dRotX = component.models.first().x;
-    body.model2dRotY = component.models.first().y;
-    body.model3dRotX = component.models.first().rotX;
-    body.model3dRotY = component.models.first().rotY;
-    body.model3dRotZ = component.models.first().rotZ;
-    body.model3dDzRaw = AltiumCoord::mmToRaw(component.models.first().dz);
-    body.overallHeightRaw = AltiumCoord::mmToRaw(qMax(component.height, 0.2));
-
-    // 矩形轮廓
-    body.outline = {QPointF(minX, minY), QPointF(maxX, minY), QPointF(maxX, maxY), QPointF(minX, maxY)};
-
-    component.bodies.append(body);
 }
 
 }  // namespace EasyKiConverter

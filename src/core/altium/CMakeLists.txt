@@ -16,11 +16,21 @@ target_sources(EasyKiConverterAltium
         writers/AltiumPcbLibWriter.h
         writers/AltiumPcbLibWriter.cpp
 
+        # 读取器
+        readers/AltiumPcbLibReader.h
+        readers/AltiumPcbLibReader.cpp
+        readers/AltiumSchLibReader.h
+        readers/AltiumSchLibReader.cpp
+
         # OLE 复合文档
+        compound/OLECompoundReader.h
+        compound/OLECompoundReader.cpp
         compound/OLECompoundWriter.h
         compound/OLECompoundWriter.cpp
 
         # 工具类
+        utils/AltiumBinaryReader.h
+        utils/AltiumBinaryReader.cpp
         utils/AltiumBinaryWriter.h
         utils/AltiumBinaryWriter.cpp
         utils/AltiumCoord.h
@@ -45,3 +55,9 @@ target_link_libraries(EasyKiConverterAltium
         EasyKiConverterModels
         EasyKiConverterIR
 )
+
+if(TARGET ZLIB::ZLIB)
+    target_link_libraries(EasyKiConverterAltium PUBLIC ZLIB::ZLIB)
+else()
+    target_link_libraries(EasyKiConverterAltium PUBLIC ${ZLIB_LIBRARY})
+endif()

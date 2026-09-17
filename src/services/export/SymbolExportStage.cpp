@@ -17,7 +17,9 @@
 
 namespace EasyKiConverter {
 
+// 初始化符号导出阶段，限制并发以保证库级写入顺序稳定。
 SymbolExportStage::SymbolExportStage(QObject* parent)
+    // 使用单并发写入，避免同一库文件的并发修改。
     : ExportTypeStage("Symbol", 1, parent) {  // maxConcurrent=1 因为是库级别导出
 }
 
@@ -25,6 +27,7 @@ SymbolExportStage::~SymbolExportStage() {
     waitForWorkerThread(m_workerThread, 30000);
 }
 
+// 初始化符号导出进度并启动库级导出线程。
 void SymbolExportStage::start(const QStringList& componentIds,
                               const QMap<QString, QSharedPointer<ComponentData>>& cachedData) {
     if (m_isExporting.load()) {
@@ -69,6 +72,7 @@ void SymbolExportStage::start(const QStringList& componentIds,
     m_workerThread->start();
 }
 
+// 请求取消符号导出并回滚尚未提交的临时文件。
 void SymbolExportStage::cancel() {
     if (!m_isExporting.load()) {
         return;
@@ -83,6 +87,7 @@ void SymbolExportStage::cancel() {
     qDebug() << "SymbolExportStage: Cancelled";
 }
 
+// 等待符号导出线程结束，并同步阶段运行状态。
 bool SymbolExportStage::waitForFinished(int timeoutMs) {
     const bool finished = waitForWorkerThread(m_workerThread, timeoutMs);
     if (finished) {
@@ -138,6 +143,10 @@ void SymbolExportStage::doLibraryExport(const QStringList& componentIds,
 
         ExportItemStatus status;
         status.status = ExportItemStatus::Status::Success;
+        status.diagnostics = data->symbolData()->validationErrors();
+        if (!status.diagnostics.isEmpty()) {
+            qWarning() << "SymbolExportStage: Input diagnostics for" << componentId << status.diagnostics;
+        }
         emit itemStatusChanged(componentId, status);
 
         if (m_options.debugMode) {
@@ -284,6 +293,17 @@ void SymbolExportStage::doLibraryExport(const QStringList& componentIds,
         }
         exportSuccess = exporter->exportSymbolLibrary(
             irSymbolList, libName, tempPath, appendMode, m_options.updateMode, libraryDescription);
+        const QStringList exporterDiagnostics = exporter->diagnostics();
+        if (!exporterDiagnostics.isEmpty()) {
+            QMutexLocker locker(&m_progressMutex);
+            for (const QString& diagnostic : exporterDiagnostics) {
+                if (!m_progress.diagnostics.contains(diagnostic))
+                    m_progress.diagnostics.append(diagnostic);
+            }
+            const ExportTypeProgress progressSnapshot = m_progress;
+            locker.unlock();
+            emit progressChanged(progressSnapshot);
+        }
     }
 
     if (m_cancelled.load()) {

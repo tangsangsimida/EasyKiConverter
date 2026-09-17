@@ -204,6 +204,7 @@ private:
     mutable QMutex m_mutex;  ///< 保护临时文件集合
     QSet<QString> m_tempFiles;  ///< 注册的临时文件集合
     QString m_tempDirName = QStringLiteral(".tmp");  ///< 临时目录名称
+    QString m_registeredTempDirectory;  ///< 当前实例登记的共享临时目录
 };
 
 }  // namespace EasyKiConverter

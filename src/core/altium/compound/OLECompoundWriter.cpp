@@ -25,6 +25,7 @@ OLECompoundWriter::~OLECompoundWriter() = default;
 bool OLECompoundWriter::create() {
     m_initialized = false;
     m_finalized = false;
+    m_errorMessage.clear();
     m_directory.clear();
     m_nodes.clear();
     m_pathToNode.clear();
@@ -80,6 +81,7 @@ int OLECompoundWriter::createDirectoryEntry(const QString& name, ObjectType type
  */
 bool OLECompoundWriter::addStorage(const QString& parentPath, const QString& name) {
     if (!m_initialized || m_finalized || !isValidEntryName(name) || !m_pathToNode.contains(parentPath)) {
+        setError(QStringLiteral("无法创建存储: %1/%2").arg(parentPath, name));
         return false;
     }
 
@@ -87,6 +89,7 @@ bool OLECompoundWriter::addStorage(const QString& parentPath, const QString& nam
 
     const QString foldedPath = fullPath.toCaseFolded();
     if (m_entryPaths.contains(foldedPath)) {
+        setError(QStringLiteral("存储路径重复: %1").arg(fullPath));
         return false;
     }
 
@@ -129,12 +132,14 @@ bool OLECompoundWriter::addStorage(const QString& name) {
  */
 bool OLECompoundWriter::writeStream(const QString& storagePath, const QString& streamName, const QByteArray& data) {
     if (!m_initialized || m_finalized || !isValidEntryName(streamName) || !m_pathToNode.contains(storagePath)) {
+        setError(QStringLiteral("无法写入流: %1/%2").arg(storagePath, streamName));
         return false;
     }
 
     const QString fullPath = storagePath.isEmpty() ? streamName : storagePath + "/" + streamName;
     const QString foldedPath = fullPath.toCaseFolded();
     if (m_entryPaths.contains(foldedPath)) {
+        setError(QStringLiteral("流路径重复: %1").arg(fullPath));
         return false;
     }
 
@@ -148,9 +153,16 @@ bool OLECompoundWriter::writeStream(const QString& storagePath, const QString& s
     return true;
 }
 
+// 校验目录或流名称，确保其可安全编码为 OLE 目录条目。
 bool OLECompoundWriter::isValidEntryName(const QString& name) const {
     return !name.isEmpty() && name.size() <= 31 && !name.contains('/') && !name.contains('\\') && !name.contains(':') &&
            !name.contains('!') && !name.contains(QChar::Null);
+}
+
+// 记录写入过程中的首个结构错误，保留后续诊断的根因。
+void OLECompoundWriter::setError(const QString& message) {
+    if (m_errorMessage.isEmpty())
+        m_errorMessage = message;
 }
 
 /**
@@ -786,6 +798,11 @@ void OLECompoundWriter::finalize() {
 bool OLECompoundWriter::saveToFile(const QString& filePath) {
     if (!m_initialized) {
         qWarning() << "OLECompoundWriter::saveToFile: Not initialized";
+        return false;
+    }
+
+    if (hasError()) {
+        qWarning() << "OLECompoundWriter::saveToFile: Aborted due to structure error:" << errorString();
         return false;
     }
 

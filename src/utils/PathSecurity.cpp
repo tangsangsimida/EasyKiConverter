@@ -6,19 +6,51 @@
 
 namespace EasyKiConverter {
 
+// 校验单个文件名或目录名是否符合跨平台安全规则。
 bool PathSecurity::isValidPathComponent(const QString& name) {
-    if (name.isEmpty())
+    if (name.isEmpty() || name == QStringLiteral(".") || name == QStringLiteral(".."))
         return false;
-    // 检查是否包含路径分隔符 (正斜杠和反斜杠)
-    // 使用 QChar(0x5C) 表示反斜杠，避免字面量转义问题
-    if (name.contains('/') || name.contains(QChar(0x5C)))
+
+    // 路径组件不能包含分隔符或 Windows 保留字符。
+    static const QRegularExpression illegalChars(QStringLiteral(R"([\\/:*?"<>|])"));
+    if (name.contains(illegalChars))
         return false;
-    // 检查是否包含路径遍历
-    if (name == ".." || name == ".")
+
+    // 控制字符（包括 NUL）不能安全地出现在文件名中。
+    for (const QChar character : name) {
+        const ushort codePoint = character.unicode();
+        if (codePoint < 0x20 || codePoint == 0x7F)
+            return false;
+    }
+
+    // Windows 会忽略文件名末尾的空格和句点，可能导致路径碰撞。
+    if (name.endsWith(QChar(' ')) || name.endsWith(QChar('.')))
         return false;
+
+    // 这些名称即使带扩展名，在 Windows 上仍属于设备名。
+    QString deviceName = name;
+    const qsizetype extensionStart = deviceName.indexOf(QChar('.'));
+    if (extensionStart >= 0)
+        deviceName.truncate(extensionStart);
+    static const QStringList reservedNames = {
+        QStringLiteral("CON"),  QStringLiteral("PRN"),  QStringLiteral("AUX"),  QStringLiteral("NUL"),
+        QStringLiteral("COM1"), QStringLiteral("COM2"), QStringLiteral("COM3"), QStringLiteral("COM4"),
+        QStringLiteral("COM5"), QStringLiteral("COM6"), QStringLiteral("COM7"), QStringLiteral("COM8"),
+        QStringLiteral("COM9"), QStringLiteral("LPT1"), QStringLiteral("LPT2"), QStringLiteral("LPT3"),
+        QStringLiteral("LPT4"), QStringLiteral("LPT5"), QStringLiteral("LPT6"), QStringLiteral("LPT7"),
+        QStringLiteral("LPT8"), QStringLiteral("LPT9")};
+    if (reservedNames.contains(deviceName, Qt::CaseInsensitive))
+        return false;
+
+    // 零宽字符可能造成显示内容与实际路径不一致。
+    if (name.contains(QChar(0x200B)) || name.contains(QChar(0x200C)) || name.contains(QChar(0x200D)) ||
+        name.contains(QChar(0xFEFF)))
+        return false;
+
     return true;
 }
 
+// 使用规范化字符串前缀检查目标路径是否位于基准目录内。
 bool PathSecurity::isSafePath(const QString& fullPath, const QString& baseDir) {
     if (fullPath.isEmpty() || baseDir.isEmpty()) {
         qWarning() << "isSafePath: received empty path";
@@ -89,6 +121,7 @@ bool PathSecurity::isSafePath(const QString& fullPath, const QString& baseDir) {
     return isSafe;
 }
 
+// 解析符号链接后检查目标路径是否安全地位于基准目录内。
 bool PathSecurity::isSafePathCanonical(const QString& fullPath, const QString& baseDir) {
     if (fullPath.isEmpty() || baseDir.isEmpty()) {
         qWarning() << "isSafePathCanonical: received empty path";
@@ -134,6 +167,7 @@ bool PathSecurity::isSafePathCanonical(const QString& fullPath, const QString& b
     return isSafe;
 }
 
+// 获取路径的 canonical 形式，并为不存在的路径拼接最近存在父目录。
 QString PathSecurity::canonicalizePath(const QString& path) {
     QFileInfo info(path);
 
@@ -174,6 +208,7 @@ QString PathSecurity::canonicalizePath(const QString& path) {
     return QDir::fromNativeSeparators(canonCurrent + "/" + remaining);
 }
 
+// 清洗文件名中的非法字符、控制字符和系统保留名称。
 QString PathSecurity::sanitizeFilename(const QString& name) {
     QString safeName = name;
 
@@ -210,6 +245,7 @@ QString PathSecurity::sanitizeFilename(const QString& name) {
     return safeName;
 }
 
+// 在文件数量上限保护下安全递归删除目录。
 bool PathSecurity::safeRemoveRecursively(const QString& path, int maxFileCount) {
     QDir dir(path);
     if (!dir.exists())
@@ -226,6 +262,7 @@ bool PathSecurity::safeRemoveRecursively(const QString& path, int maxFileCount) 
     return dir.removeRecursively();
 }
 
+// 递归统计目录项数量，并在达到上限时提前停止。
 int PathSecurity::countFilesRecursively(const QString& path, int limit, int currentCount) {
     if (currentCount >= limit)
         return currentCount;

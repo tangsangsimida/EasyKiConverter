@@ -3,6 +3,7 @@
 #include "core/easyeda/EasyedaFootprintImporter.h"
 #include "core/easyeda/EasyedaSymbolImporter.h"
 #include "models/ComponentData.h"
+#include "models/Model3DData.h"
 #include "services/ComponentCacheService.h"
 
 #include <QDir>
@@ -15,10 +16,38 @@
 
 namespace EasyKiConverter {
 
+namespace {
+
+/**
+ * @brief 在磁盘缓存缺少独立模型时，从封装模型恢复三维模型元数据。
+ * @param data 待补齐的元器件数据。
+ */
+void restoreModel3DFromFootprint(ComponentData& data) {
+    if (data.model3DData() && !data.model3DData()->uuid().isEmpty())
+        return;
+    if (!data.footprintData())
+        return;
+
+    const Model3DData footprintModel = data.footprintData()->model3D();
+    if (footprintModel.uuid().isEmpty())
+        return;
+
+    auto model3DData = QSharedPointer<Model3DData>::create();
+    model3DData->setUuid(footprintModel.uuid());
+    model3DData->setName(footprintModel.name());
+    model3DData->setTranslation(footprintModel.translation());
+    model3DData->setRotation(footprintModel.rotation());
+    data.setModel3DData(model3DData);
+}
+
+}  // namespace
+
+/** @brief 返回指定导出类型的默认输出目录。 */
 QString ExportWorkerHelpers::defaultOutputDir(const QString& subdir) {
     return QDir::currentPath() + QStringLiteral("/export/") + subdir;
 }
 
+/** @brief 创建并返回导出输出目录。 */
 QString ExportWorkerHelpers::ensureOutputDir(const struct ExportOptions& options, const QString& subdir) {
     QString outputDir = options.outputPath;
     if (outputDir.isEmpty()) {
@@ -31,16 +60,19 @@ QString ExportWorkerHelpers::ensureOutputDir(const struct ExportOptions& options
     return outputDir;
 }
 
+/** @brief 根据元器件编号构造导出文件路径。 */
 QString ExportWorkerHelpers::buildFilePath(const QString& componentId,
                                            const QString& outputDir,
                                            const QString& fileExtension) {
     return outputDir + QStringLiteral("/") + componentId + fileExtension;
 }
 
+/** @brief 判断已有文件是否应因禁止覆盖而跳过。 */
 bool ExportWorkerHelpers::shouldSkipExisting(const QString& filePath, const struct ExportOptions& options) {
     return QFile::exists(filePath) && !options.overwriteExistingFiles;
 }
 
+/** @brief 加载磁盘缓存中的元器件、CAD 数据和三维模型。 */
 QSharedPointer<ComponentData> ExportWorkerHelpers::loadDiskCachedComponentData(const QString& componentId) {
     ComponentCacheService* cache = ComponentCacheService::instance();
     QSharedPointer<ComponentData> cachedData = cache->loadComponentData(componentId);
@@ -63,6 +95,8 @@ QSharedPointer<ComponentData> ExportWorkerHelpers::loadDiskCachedComponentData(c
         cachedData->setCadJsonRaw(cadJsonData);
     }
 
+    restoreModel3DFromFootprint(*cachedData);
+
     // 加载 3D 模型 OBJ 原始数据
     if (cachedData->model3DData() && !cachedData->model3DData()->uuid().isEmpty()) {
         const QByteArray model3DObjData = cache->loadModel3D(cachedData->model3DData()->uuid(), QStringLiteral("obj"));
@@ -79,6 +113,7 @@ QSharedPointer<ComponentData> ExportWorkerHelpers::loadDiskCachedComponentData(c
     return cachedData;
 }
 
+/** @brief 使用回退数据补齐目标元器件的缺失字段。 */
 void ExportWorkerHelpers::mergeComponentData(ComponentData& target, const QSharedPointer<ComponentData>& fallback) {
     if (!fallback) {
         return;
@@ -142,6 +177,7 @@ void ExportWorkerHelpers::mergeComponentData(ComponentData& target, const QShare
     }
 }
 
+/** @brief 根据各元器件状态重新计算导出阶段计数。 */
 void ExportWorkerHelpers::recomputeTypeProgressCounts(ExportTypeProgress& progress) {
     progress.completedCount = 0;
     progress.successCount = 0;
@@ -149,7 +185,9 @@ void ExportWorkerHelpers::recomputeTypeProgressCounts(ExportTypeProgress& progre
     progress.skippedCount = 0;
     progress.inProgressCount = 0;
 
+    // 按每个元器件的最终状态累加阶段统计。
     for (auto it = progress.itemStatus.cbegin(); it != progress.itemStatus.cend(); ++it) {
+        // 根据当前状态累加完成、成功、失败和跳过数量。
         switch (it.value().status) {
             case ExportItemStatus::Status::Pending:
                 break;

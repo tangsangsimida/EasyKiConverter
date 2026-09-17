@@ -48,6 +48,7 @@ QJsonObject FootprintDataSerializer::toJson(const FootprintInfo& info) {
     return json;
 }
 
+// 从 JSON 恢复封装基本信息及其来源字段。
 bool FootprintDataSerializer::fromJson(FootprintInfo& info, const QJsonObject& json) {
     info.name = json["name"].toString();
     info.type = json["type"].toString();
@@ -99,6 +100,7 @@ QJsonObject FootprintDataSerializer::toJson(const FootprintBBox& bbox) {
     return json;
 }
 
+// 从 JSON 恢复封装边界框的坐标和尺寸。
 bool FootprintDataSerializer::fromJson(FootprintBBox& bbox, const QJsonObject& json) {
     bbox.x = json["x"].toDouble();
     bbox.y = json["y"].toDouble();
@@ -130,6 +132,7 @@ QJsonObject FootprintDataSerializer::toJson(const FootprintPad& pad) {
     return json;
 }
 
+// 从 JSON 恢复焊盘的几何、层、网络和钻孔属性。
 bool FootprintDataSerializer::fromJson(FootprintPad& pad, const QJsonObject& json) {
     pad.shape = json["shape"].toString();
     pad.centerX = json["center_x"].toDouble();
@@ -163,6 +166,7 @@ QJsonObject FootprintDataSerializer::toJson(const FootprintTrack& track) {
     return json;
 }
 
+// 从 JSON 恢复铜线路径的几何和网络属性。
 bool FootprintDataSerializer::fromJson(FootprintTrack& track, const QJsonObject& json) {
     track.strokeWidth = json["stroke_width"].toDouble();
     track.layerId = json["layer_id"].toInt();
@@ -185,6 +189,7 @@ QJsonObject FootprintDataSerializer::toJson(const FootprintHole& hole) {
     return json;
 }
 
+// 从 JSON 恢复孔的中心、半径和锁定状态。
 bool FootprintDataSerializer::fromJson(FootprintHole& hole, const QJsonObject& json) {
     hole.centerX = json["center_x"].toDouble();
     hole.centerY = json["center_y"].toDouble();
@@ -208,6 +213,7 @@ QJsonObject FootprintDataSerializer::toJson(const FootprintCircle& circle) {
     return json;
 }
 
+// 从 JSON 恢复圆形图元的几何、层和锁定属性。
 bool FootprintDataSerializer::fromJson(FootprintCircle& circle, const QJsonObject& json) {
     circle.cx = json["cx"].toDouble();
     circle.cy = json["cy"].toDouble();
@@ -234,6 +240,7 @@ QJsonObject FootprintDataSerializer::toJson(const FootprintRectangle& rect) {
     return json;
 }
 
+// 从 JSON 恢复矩形图元的几何、层和锁定属性。
 bool FootprintDataSerializer::fromJson(FootprintRectangle& rect, const QJsonObject& json) {
     rect.x = json["x"].toDouble();
     rect.y = json["y"].toDouble();
@@ -260,6 +267,7 @@ QJsonObject FootprintDataSerializer::toJson(const FootprintArc& arc) {
     return json;
 }
 
+// 从 JSON 恢复圆弧图元的路径、层和锁定属性。
 bool FootprintDataSerializer::fromJson(FootprintArc& arc, const QJsonObject& json) {
     arc.strokeWidth = json["stroke_width"].toDouble();
     arc.layerId = json["layer_id"].toInt();
@@ -292,6 +300,7 @@ QJsonObject FootprintDataSerializer::toJson(const FootprintText& text) {
     return json;
 }
 
+// 从 JSON 恢复文本图元的内容、位置、样式和可见属性。
 bool FootprintDataSerializer::fromJson(FootprintText& text, const QJsonObject& json) {
     text.type = json["type"].toString();
     text.centerX = json["center_x"].toDouble();
@@ -323,6 +332,7 @@ QJsonObject FootprintDataSerializer::toJson(const FootprintSolidRegion& region) 
     return json;
 }
 
+// 从 JSON 恢复实心区域的路径、填充方式和禁止布线属性。
 bool FootprintDataSerializer::fromJson(FootprintSolidRegion& region, const QJsonObject& json) {
     region.path = json["path"].toString();
     region.layerId = json["layer_id"].toInt();
@@ -345,6 +355,7 @@ QJsonObject FootprintDataSerializer::toJson(const FootprintOutline& outline) {
     return json;
 }
 
+// 从 JSON 恢复封装轮廓的路径、层和线宽属性。
 bool FootprintDataSerializer::fromJson(FootprintOutline& outline, const QJsonObject& json) {
     outline.path = json["path"].toString();
     outline.layerId = json["layer_id"].toInt();
@@ -367,6 +378,7 @@ QJsonObject FootprintDataSerializer::toJson(const LayerDefinition& layer) {
     return json;
 }
 
+// 从 JSON 恢复层定义的标识、显示和制造属性。
 bool FootprintDataSerializer::fromJson(LayerDefinition& layer, const QJsonObject& json) {
     layer.layerId = json["layer_id"].toInt();
     layer.name = json["name"].toString();
@@ -387,6 +399,7 @@ QJsonObject FootprintDataSerializer::toJson(const ObjectVisibility& visibility) 
     return json;
 }
 
+// 从 JSON 恢复对象类型及其启用、可见状态。
 bool FootprintDataSerializer::fromJson(ObjectVisibility& visibility, const QJsonObject& json) {
     visibility.objectType = json["object_type"].toString();
     visibility.isEnabled = json["is_enabled"].toBool();
@@ -481,10 +494,12 @@ QJsonObject FootprintDataSerializer::toJson(const FootprintData& data) {
         objectVisibilitiesArray.append(toJson(visibility));
     }
     json["object_visibilities"] = objectVisibilitiesArray;
+    json["validation_errors"] = QJsonArray::fromStringList(data.validationErrors());
 
     return json;
 }
 
+// 按数据类别逐项恢复完整封装，并保留可诊断的导入错误。
 bool FootprintDataSerializer::fromJson(FootprintData& data, const QJsonObject& json) {
     // 读取基本信息
     if (json.contains("info") && json["info"].isObject()) {
@@ -669,6 +684,11 @@ bool FootprintDataSerializer::fromJson(FootprintData& data, const QJsonObject& j
             }
         }
         data.setObjectVisibilities(objectVisibilities);
+    }
+
+    if (json.contains("validation_errors") && json["validation_errors"].isArray()) {
+        for (const QJsonValue& value : json["validation_errors"].toArray())
+            data.addValidationError(value.toString());
     }
 
     return true;

@@ -130,75 +130,117 @@ static bool fromJson(SymbolText& text, const QJsonObject& json) {
     return SymbolShapeSerializer::fromJson(text, json);
 }
 
+static QJsonObject graphicOrderToJson(const SymbolGraphicOrder& order) {
+    QJsonObject json;
+    json["type"] = order.type;
+    json["index"] = order.index;
+    return json;
+}
+
+static bool graphicOrderFromJson(SymbolGraphicOrder& order, const QJsonObject& json) {
+    order.type = json["type"].toString();
+    order.index = json["index"].toInt(-1);
+    // 保留 -1 等无效索引，供 validationErrors() 报告源数据中的损坏引用，
+    // 避免缓存往返时把未知或未解析的图元静默丢弃。
+    return !order.type.isEmpty() && order.index >= -1;
+}
+
 // Class method definitions for shape types (also delegate to SymbolShapeSerializer)
 QJsonObject SymbolDataSerializer::toJson(const SymbolBBox& bbox) {
     return SymbolShapeSerializer::toJson(bbox);
 }
 
+// 委托统一图形序列化器恢复符号边界框。
 bool SymbolDataSerializer::fromJson(SymbolBBox& bbox, const QJsonObject& json) {
     return SymbolShapeSerializer::fromJson(bbox, json);
 }
 
+// 委托统一图形序列化器序列化矩形图元。
 QJsonObject SymbolDataSerializer::toJson(const SymbolRectangle& rect) {
     return SymbolShapeSerializer::toJson(rect);
 }
 
+// 委托统一图形序列化器恢复矩形图元。
 bool SymbolDataSerializer::fromJson(SymbolRectangle& rect, const QJsonObject& json) {
     return SymbolShapeSerializer::fromJson(rect, json);
 }
 
+// 委托统一图形序列化器序列化圆形图元。
 QJsonObject SymbolDataSerializer::toJson(const SymbolCircle& circle) {
     return SymbolShapeSerializer::toJson(circle);
 }
 
+// 委托统一图形序列化器恢复圆形图元。
 bool SymbolDataSerializer::fromJson(SymbolCircle& circle, const QJsonObject& json) {
     return SymbolShapeSerializer::fromJson(circle, json);
 }
 
+// 委托统一图形序列化器序列化圆弧图元。
 QJsonObject SymbolDataSerializer::toJson(const SymbolArc& arc) {
     return SymbolShapeSerializer::toJson(arc);
 }
 
+// 委托统一图形序列化器恢复圆弧图元。
 bool SymbolDataSerializer::fromJson(SymbolArc& arc, const QJsonObject& json) {
     return SymbolShapeSerializer::fromJson(arc, json);
 }
 
+// 委托统一图形序列化器序列化椭圆图元。
 QJsonObject SymbolDataSerializer::toJson(const SymbolEllipse& ellipse) {
     return SymbolShapeSerializer::toJson(ellipse);
 }
 
+// 委托统一图形序列化器恢复椭圆图元。
 bool SymbolDataSerializer::fromJson(SymbolEllipse& ellipse, const QJsonObject& json) {
     return SymbolShapeSerializer::fromJson(ellipse, json);
 }
 
+// 委托统一图形序列化器序列化折线图元。
 QJsonObject SymbolDataSerializer::toJson(const SymbolPolyline& polyline) {
     return SymbolShapeSerializer::toJson(polyline);
 }
 
+// 委托统一图形序列化器恢复折线图元。
 bool SymbolDataSerializer::fromJson(SymbolPolyline& polyline, const QJsonObject& json) {
     return SymbolShapeSerializer::fromJson(polyline, json);
 }
 
+// 委托统一图形序列化器序列化多边形图元。
 QJsonObject SymbolDataSerializer::toJson(const SymbolPolygon& polygon) {
     return SymbolShapeSerializer::toJson(polygon);
 }
 
+// 委托统一图形序列化器恢复多边形图元。
 bool SymbolDataSerializer::fromJson(SymbolPolygon& polygon, const QJsonObject& json) {
     return SymbolShapeSerializer::fromJson(polygon, json);
 }
 
+// 委托统一图形序列化器序列化路径图元。
 QJsonObject SymbolDataSerializer::toJson(const SymbolPath& path) {
     return SymbolShapeSerializer::toJson(path);
 }
 
+// 委托统一图形序列化器恢复路径图元。
 bool SymbolDataSerializer::fromJson(SymbolPath& path, const QJsonObject& json) {
     return SymbolShapeSerializer::fromJson(path, json);
 }
 
+// 委托统一图形序列化器序列化图片图元。
+QJsonObject SymbolDataSerializer::toJson(const SymbolImage& image) {
+    return SymbolShapeSerializer::toJson(image);
+}
+
+// 委托统一图形序列化器恢复图片图元。
+bool SymbolDataSerializer::fromJson(SymbolImage& image, const QJsonObject& json) {
+    return SymbolShapeSerializer::fromJson(image, json);
+}
+
+// 委托统一图形序列化器序列化文本图元。
 QJsonObject SymbolDataSerializer::toJson(const SymbolText& text) {
     return SymbolShapeSerializer::toJson(text);
 }
 
+// 委托统一图形序列化器恢复文本图元。
 bool SymbolDataSerializer::fromJson(SymbolText& text, const QJsonObject& json) {
     return SymbolShapeSerializer::fromJson(text, json);
 }
@@ -208,6 +250,7 @@ QJsonObject SymbolDataSerializer::toJson(const SymbolPin& pin) {
     return SymbolPinSerializer::toJson(pin);
 }
 
+// 委托引脚序列化器恢复符号引脚及其显示属性。
 bool SymbolDataSerializer::fromJson(SymbolPin& pin, const QJsonObject& json) {
     return SymbolPinSerializer::fromJson(pin, json);
 }
@@ -224,6 +267,7 @@ QJsonObject SymbolDataSerializer::toJson(const SymbolInfo& info) {
     json["datasheet"] = info.datasheet;
     json["lcsc_id"] = info.lcscId;
     json["jlc_id"] = info.jlcId;
+    json["aliases"] = QJsonArray::fromStringList(info.aliases);
 
     // EasyEDA API 原始字段
     json["uuid"] = info.uuid;
@@ -262,6 +306,7 @@ QJsonObject SymbolDataSerializer::toJson(const SymbolInfo& info) {
     return json;
 }
 
+// 从 JSON 恢复符号基本信息、来源字段和供应商字段。
 bool SymbolDataSerializer::fromJson(SymbolInfo& info, const QJsonObject& json) {
     info.name = json["name"].toString();
     info.prefix = json["prefix"].toString();
@@ -271,6 +316,9 @@ bool SymbolDataSerializer::fromJson(SymbolInfo& info, const QJsonObject& json) {
     info.datasheet = json["datasheet"].toString();
     info.lcscId = json["lcsc_id"].toString();
     info.jlcId = json["jlc_id"].toString();
+    info.aliases.clear();
+    for (const QJsonValue& alias : json["aliases"].toArray())
+        info.aliases.append(alias.toString());
 
     // EasyEDA API 原始字段
     info.uuid = json["uuid"].toString();
@@ -316,6 +364,7 @@ QJsonObject SymbolDataSerializer::toJson(const SymbolPart& part) {
     json["unit_number"] = part.unitNumber;
     json["origin_x"] = part.originX;
     json["origin_y"] = part.originY;
+    json["common_to_all_parts"] = part.commonToAllParts;
 
     QJsonArray pinsArray;
     for (const SymbolPin& pin : part.pins) {
@@ -365,19 +414,31 @@ QJsonObject SymbolDataSerializer::toJson(const SymbolPart& part) {
     }
     json["paths"] = pathsArray;
 
+    QJsonArray imagesArray;
+    for (const SymbolImage& image : part.images)
+        imagesArray.append(toJson(image));
+    json["images"] = imagesArray;
+
     QJsonArray textsArray;
     for (const SymbolText& text : part.texts) {
         textsArray.append(toJson(text));
     }
     json["texts"] = textsArray;
 
+    QJsonArray graphicOrderArray;
+    for (const SymbolGraphicOrder& order : part.graphicOrder)
+        graphicOrderArray.append(graphicOrderToJson(order));
+    json["graphic_order"] = graphicOrderArray;
+
     return json;
 }
 
+// 从 JSON 恢复多部分符号的元数据、图元集合和绘制顺序。
 bool SymbolDataSerializer::fromJson(SymbolPart& part, const QJsonObject& json) {
     part.unitNumber = json["unit_number"].toInt(0);
     part.originX = json["origin_x"].toDouble(0.0);
     part.originY = json["origin_y"].toDouble(0.0);
+    part.commonToAllParts = json["common_to_all_parts"].toBool(false);
 
     if (json.contains("pins")) {
         QJsonArray pinsArray = json["pins"].toArray();
@@ -467,6 +528,16 @@ bool SymbolDataSerializer::fromJson(SymbolPart& part, const QJsonObject& json) {
         }
     }
 
+    if (json.contains("images")) {
+        QJsonArray imagesArray = json["images"].toArray();
+        part.images.clear();
+        for (const QJsonValue& value : imagesArray) {
+            SymbolImage image;
+            if (fromJson(image, value.toObject()))
+                part.images.append(image);
+        }
+    }
+
     if (json.contains("texts")) {
         QJsonArray textsArray = json["texts"].toArray();
         part.texts.clear();
@@ -475,6 +546,15 @@ bool SymbolDataSerializer::fromJson(SymbolPart& part, const QJsonObject& json) {
             if (fromJson(text, value.toObject())) {
                 part.texts.append(text);
             }
+        }
+    }
+
+    if (json.contains("graphic_order") && json["graphic_order"].isArray()) {
+        part.graphicOrder.clear();
+        for (const QJsonValue& value : json["graphic_order"].toArray()) {
+            SymbolGraphicOrder order;
+            if (value.isObject() && graphicOrderFromJson(order, value.toObject()))
+                part.graphicOrder.append(order);
         }
     }
 
@@ -536,11 +616,21 @@ QJsonObject SymbolDataSerializer::toJson(const SymbolData& data) {
     }
     json["paths"] = pathsArray;
 
+    QJsonArray imagesArray;
+    for (const SymbolImage& image : data.images())
+        imagesArray.append(toJson(image));
+    json["images"] = imagesArray;
+
     QJsonArray textsArray;
     for (const SymbolText& text : data.texts()) {
         textsArray.append(toJson(text));
     }
     json["texts"] = textsArray;
+
+    QJsonArray graphicOrderArray;
+    for (const SymbolGraphicOrder& order : data.graphicOrder())
+        graphicOrderArray.append(graphicOrderToJson(order));
+    json["graphic_order"] = graphicOrderArray;
 
     QJsonArray partsArray;
     for (const SymbolPart& part : data.parts()) {
@@ -551,6 +641,7 @@ QJsonObject SymbolDataSerializer::toJson(const SymbolData& data) {
     return json;
 }
 
+// 按数据类别恢复完整符号，并保留各类图元的结构关系。
 bool SymbolDataSerializer::fromJson(SymbolData& data, const QJsonObject& json) {
     // 读取信息
     if (json.contains("info") && json["info"].isObject()) {
@@ -692,6 +783,19 @@ bool SymbolDataSerializer::fromJson(SymbolData& data, const QJsonObject& json) {
         data.setPaths(paths);
     }
 
+    // 读取图片
+    if (json.contains("images") && json["images"].isArray()) {
+        QList<SymbolImage> images;
+        for (const QJsonValue& value : json["images"].toArray()) {
+            if (value.isObject()) {
+                SymbolImage image;
+                if (fromJson(image, value.toObject()))
+                    images.append(image);
+            }
+        }
+        data.setImages(images);
+    }
+
     // 读取文本
     if (json.contains("texts") && json["texts"].isArray()) {
         QJsonArray textsArray = json["texts"].toArray();
@@ -705,6 +809,16 @@ bool SymbolDataSerializer::fromJson(SymbolData& data, const QJsonObject& json) {
             }
         }
         data.setTexts(texts);
+    }
+
+    if (json.contains("graphic_order") && json["graphic_order"].isArray()) {
+        QList<SymbolGraphicOrder> graphicOrder;
+        for (const QJsonValue& value : json["graphic_order"].toArray()) {
+            SymbolGraphicOrder order;
+            if (value.isObject() && graphicOrderFromJson(order, value.toObject()))
+                graphicOrder.append(order);
+        }
+        data.setGraphicOrder(graphicOrder);
     }
 
     // 读取多部分符号的部分

@@ -10,11 +10,13 @@
 #include <QDebug>
 #include <QJsonArray>
 #include <QJsonDocument>
+#include <QUrl>
 
 namespace EasyKiConverter {
 
 EasyedaSymbolImporter::EasyedaSymbolImporter() {}
 
+// 从 EasyEDA CAD JSON 导入符号元数据、单部分或多部分图元及原始顺序。
 QSharedPointer<SymbolData> EasyedaSymbolImporter::importSymbolData(const QJsonObject& cadData) {
     auto symbolData = QSharedPointer<SymbolData>::create();
 
@@ -33,6 +35,18 @@ QSharedPointer<SymbolData> EasyedaSymbolImporter::importSymbolData(const QJsonOb
     info.smt = cadData["SMT"].toBool(false);
     info.updateTime = cadData["updateTime"].toVariant().toLongLong();
     info.updatedAt = cadData["updated_at"].toString();
+
+    // 兼容 API 返回的 aliases 数组或逗号分隔字符串。
+    const QJsonValue aliasesValue = cadData.value(QStringLiteral("aliases"));
+    if (aliasesValue.isArray()) {
+        for (const QJsonValue& alias : aliasesValue.toArray())
+            if (!alias.toString().trimmed().isEmpty())
+                info.aliases.append(alias.toString().trimmed());
+    } else if (aliasesValue.isString()) {
+        for (const QString& alias : aliasesValue.toString().split(',', Qt::SkipEmptyParts))
+            if (!alias.trimmed().isEmpty())
+                info.aliases.append(alias.trimmed());
+    }
 
     // 导入符号信息（从 dataStr.head.c_para 中获取）
     if (cadData.contains("dataStr")) {
@@ -64,6 +78,9 @@ QSharedPointer<SymbolData> EasyedaSymbolImporter::importSymbolData(const QJsonOb
                 info.supplier = c_para["Supplier"].toString();
                 info.manufacturerPart = c_para["Manufacturer Part"].toString();
                 info.jlcpcbPartClass = c_para["JLCPCB Part Class"].toString();
+                const QString alias = c_para.value(QStringLiteral("Alias")).toString().trimmed();
+                if (!alias.isEmpty() && !info.aliases.contains(alias))
+                    info.aliases.append(alias);
             }
         }
 
@@ -127,6 +144,10 @@ QSharedPointer<SymbolData> EasyedaSymbolImporter::importSymbolData(const QJsonOb
 
                         SymbolPart part;
                         part.unitNumber = i;
+                        part.commonToAllParts = subpart.value(QStringLiteral("commonToAllParts")).toBool(false) ||
+                                                subpart.value(QStringLiteral("common_to_all_parts")).toBool(false) ||
+                                                subpart.value(QStringLiteral("isCommon")).toBool(false) ||
+                                                subpart.value(QStringLiteral("is_common")).toBool(false);
 
                         // 设置子部分的坐标原点（从 EasyEDA head 字段）
                         if (subpartDataStr.contains("head")) {
@@ -154,32 +175,54 @@ QSharedPointer<SymbolData> EasyedaSymbolImporter::importSymbolData(const QJsonOb
                                 if (designator == "P") {
                                     // 导入引脚
                                     SymbolPin pin = importPinData(shapeString);
+                                    part.graphicOrder.append({designator, static_cast<int>(part.pins.size())});
                                     part.pins.append(pin);
                                 } else if (designator == "R") {
                                     // 导入矩形
                                     SymbolRectangle rectangle = importRectangleData(shapeString);
+                                    part.graphicOrder.append({designator, static_cast<int>(part.rectangles.size())});
                                     part.rectangles.append(rectangle);
                                 } else if (designator == "C") {
                                     SymbolCircle circle = importCircleData(shapeString);
+                                    part.graphicOrder.append({designator, static_cast<int>(part.circles.size())});
                                     part.circles.append(circle);
                                 } else if (designator == "A") {
                                     SymbolArc arc = importArcData(shapeString);
+                                    part.graphicOrder.append({designator, static_cast<int>(part.arcs.size())});
                                     part.arcs.append(arc);
                                 } else if (designator == "PL") {
                                     SymbolPolyline polyline = importPolylineData(shapeString);
+                                    part.graphicOrder.append({designator, static_cast<int>(part.polylines.size())});
                                     part.polylines.append(polyline);
                                 } else if (designator == "PG") {
                                     SymbolPolygon polygon = importPolygonData(shapeString);
+                                    part.graphicOrder.append({designator, static_cast<int>(part.polygons.size())});
                                     part.polygons.append(polygon);
                                 } else if (designator == "PT") {
                                     SymbolPath path = importPathData(shapeString);
+                                    part.graphicOrder.append({designator, static_cast<int>(part.paths.size())});
                                     part.paths.append(path);
+                                } else if (designator == "I") {
+                                    SymbolImage image = importImageData(shapeString);
+                                    part.graphicOrder.append({designator, static_cast<int>(part.images.size())});
+                                    part.images.append(image);
                                 } else if (designator == "T") {
                                     SymbolText text = importTextData(shapeString);
+                                    part.graphicOrder.append({designator, static_cast<int>(part.texts.size())});
                                     part.texts.append(text);
                                 } else if (designator == "E") {
                                     SymbolEllipse ellipse = importEllipseData(shapeString);
+                                    part.graphicOrder.append({designator, static_cast<int>(part.ellipses.size())});
                                     part.ellipses.append(ellipse);
+                                } else {
+                                    const QString diagnostic =
+                                        QStringLiteral("EasyEDA 符号 Part %1 包含不支持的图元类型 %2")
+                                            .arg(i)
+                                            .arg(designator);
+                                    qWarning().noquote() << diagnostic;
+                                    // 保留无效顺序引用，使后续 validationErrors() 和导出诊断能够指出
+                                    // 被忽略的源图元，而不是让它静默消失。
+                                    part.graphicOrder.append({designator, -1});
                                 }
                             }
                         }
@@ -221,43 +264,61 @@ QSharedPointer<SymbolData> EasyedaSymbolImporter::importSymbolData(const QJsonOb
                     // 导入引脚
                     SymbolPin pin = importPinData(shapeString);
                     qDebug() << "  -> Pin parsed, name:" << pin.name.text;
+                    symbolData->addGraphicOrder({designator, static_cast<int>(symbolData->pins().size())});
                     symbolData->addPin(pin);
                     qDebug() << "  -> Added pin:" << pin.name.text;
                 } else if (designator == "R") {
                     // 导入矩形
                     SymbolRectangle rectangle = importRectangleData(shapeString);
+                    symbolData->addGraphicOrder({designator, static_cast<int>(symbolData->rectangles().size())});
                     symbolData->addRectangle(rectangle);
                     qDebug() << "  -> Added rectangle";
                 } else if (designator == "C") {
                     SymbolCircle circle = importCircleData(shapeString);
+                    symbolData->addGraphicOrder({designator, static_cast<int>(symbolData->circles().size())});
                     symbolData->addCircle(circle);
                     qDebug() << "  -> Added circle";
                 } else if (designator == "A") {
                     SymbolArc arc = importArcData(shapeString);
+                    symbolData->addGraphicOrder({designator, static_cast<int>(symbolData->arcs().size())});
                     symbolData->addArc(arc);
                     qDebug() << "  -> Added arc";
                 } else if (designator == "PL") {
                     SymbolPolyline polyline = importPolylineData(shapeString);
+                    symbolData->addGraphicOrder({designator, static_cast<int>(symbolData->polylines().size())});
                     symbolData->addPolyline(polyline);
                     qDebug() << "  -> Added polyline";
                 } else if (designator == "PG") {
                     SymbolPolygon polygon = importPolygonData(shapeString);
+                    symbolData->addGraphicOrder({designator, static_cast<int>(symbolData->polygons().size())});
                     symbolData->addPolygon(polygon);
                     qDebug() << "  -> Added polygon";
                 } else if (designator == "PT") {
                     SymbolPath path = importPathData(shapeString);
+                    symbolData->addGraphicOrder({designator, static_cast<int>(symbolData->paths().size())});
                     symbolData->addPath(path);
                     qDebug() << "  -> Added path";
+                } else if (designator == "I") {
+                    SymbolImage image = importImageData(shapeString);
+                    symbolData->addGraphicOrder({designator, static_cast<int>(symbolData->images().size())});
+                    symbolData->addImage(image);
+                    qDebug() << "  -> Added image";
                 } else if (designator == "T") {
                     SymbolText text = importTextData(shapeString);
+                    symbolData->addGraphicOrder({designator, static_cast<int>(symbolData->texts().size())});
                     symbolData->addText(text);
                     qDebug() << "  -> Added text:" << text.text;
                 } else if (designator == "E") {
                     SymbolEllipse ellipse = importEllipseData(shapeString);
+                    symbolData->addGraphicOrder({designator, static_cast<int>(symbolData->ellipses().size())});
                     symbolData->addEllipse(ellipse);
                     qDebug() << "  -> Added ellipse";
                 } else {
-                    qDebug() << "  -> Unknown designator:" << designator;
+                    const QString diagnostic = QStringLiteral("EasyEDA 符号包含不支持的图元类型 %1").arg(designator);
+                    qWarning().noquote() << diagnostic;
+                    // 保留无效顺序引用，使后续 validationErrors() 和导出诊断能够指出
+                    // 被忽略的源图元，而不是让它静默消失。
+                    symbolData->addGraphicOrder({designator, -1});
                 }
             }
 
@@ -274,6 +335,7 @@ QSharedPointer<SymbolData> EasyedaSymbolImporter::importSymbolData(const QJsonOb
     return symbolData;
 }
 
+// 解析引脚记录中的名称、编号、方向、电气类型和显示属性。
 SymbolPin EasyedaSymbolImporter::importPinData(const QString& pinData) {
     SymbolPin pin;
     QList<QStringList> segments = parsePinDataString(pinData);
@@ -349,6 +411,7 @@ SymbolPin EasyedaSymbolImporter::importPinData(const QString& pinData) {
     return pin;
 }
 
+// 解析符号矩形图元的边界、线宽、填充和部件归属。
 SymbolRectangle EasyedaSymbolImporter::importRectangleData(const QString& rectangleData) {
     SymbolRectangle rectangle;
     QStringList fields = EasyedaUtils::parseDataString(rectangleData);
@@ -371,6 +434,7 @@ SymbolRectangle EasyedaSymbolImporter::importRectangleData(const QString& rectan
     return rectangle;
 }
 
+// 解析符号圆形图元的圆心、半径和绘制属性。
 SymbolCircle EasyedaSymbolImporter::importCircleData(const QString& circleData) {
     SymbolCircle circle;
     QStringList fields = EasyedaUtils::parseDataString(circleData);
@@ -390,6 +454,7 @@ SymbolCircle EasyedaSymbolImporter::importCircleData(const QString& circleData) 
     return circle;
 }
 
+// 解析符号弧线图元的圆心、半径、角度和绘制属性。
 SymbolArc EasyedaSymbolImporter::importArcData(const QString& arcData) {
     SymbolArc arc;
     QStringList fields = EasyedaUtils::parseDataString(arcData);
@@ -418,6 +483,7 @@ SymbolArc EasyedaSymbolImporter::importArcData(const QString& arcData) {
     return arc;
 }
 
+// 解析符号椭圆图元的中心、半径、角度和部件归属。
 SymbolEllipse EasyedaSymbolImporter::importEllipseData(const QString& ellipseData) {
     SymbolEllipse ellipse;
     QStringList fields = EasyedaUtils::parseDataString(ellipseData);
@@ -438,6 +504,7 @@ SymbolEllipse EasyedaSymbolImporter::importEllipseData(const QString& ellipseDat
     return ellipse;
 }
 
+// 解析符号折线图元的顶点、线宽、样式和填充属性。
 SymbolPolyline EasyedaSymbolImporter::importPolylineData(const QString& polylineData) {
     SymbolPolyline polyline;
     QStringList fields = EasyedaUtils::parseDataString(polylineData);
@@ -455,6 +522,7 @@ SymbolPolyline EasyedaSymbolImporter::importPolylineData(const QString& polyline
     return polyline;
 }
 
+// 解析符号多边形图元的顶点、线型、颜色和部件归属。
 SymbolPolygon EasyedaSymbolImporter::importPolygonData(const QString& polygonData) {
     SymbolPolygon polygon;
     QStringList fields = EasyedaUtils::parseDataString(polygonData);
@@ -472,6 +540,7 @@ SymbolPolygon EasyedaSymbolImporter::importPolygonData(const QString& polygonDat
     return polygon;
 }
 
+// 解析 SVG 路径图元并保留其原始路径字符串和绘制属性。
 SymbolPath EasyedaSymbolImporter::importPathData(const QString& pathData) {
     SymbolPath path;
     QStringList fields = EasyedaUtils::parseDataString(pathData);
@@ -489,6 +558,49 @@ SymbolPath EasyedaSymbolImporter::importPathData(const QString& pathData) {
     return path;
 }
 
+// 解析符号图片图元的位置、边界、数据 URL 和显示属性。
+SymbolImage EasyedaSymbolImporter::importImageData(const QString& imageData) {
+    SymbolImage image;
+    const QStringList fields = EasyedaUtils::parseDataString(imageData);
+    if (fields.size() < 7)
+        return image;
+
+    image.posX = fields[1].toDouble();
+    image.posY = fields[2].toDouble();
+    image.width = fields[3].toDouble();
+    image.height = fields[4].toDouble();
+    image.rotation = fields[5].toDouble();
+    image.source = fields[6];
+    image.isLocked = fields.size() > 7 ? EasyedaUtils::stringToBool(fields[7]) : false;
+
+    if (image.source.startsWith(QStringLiteral("data:"), Qt::CaseInsensitive)) {
+        const int comma = image.source.indexOf(',');
+        if (comma > 5) {
+            const QString metadata = image.source.mid(5, comma - 5);
+            const QByteArray payload = image.source.mid(comma + 1).toUtf8();
+            if (metadata.contains(QStringLiteral(";base64"), Qt::CaseInsensitive))
+                image.data = QByteArray::fromBase64(payload);
+            else
+                image.data = QUrl::fromPercentEncoding(payload).toUtf8();
+
+            const QString mimeType = metadata.section(';', 0, 0).toLower();
+            QString extension;
+            if (mimeType == QStringLiteral("image/svg+xml"))
+                extension = QStringLiteral("svg");
+            else if (mimeType.startsWith(QStringLiteral("image/")))
+                extension = mimeType.mid(6);
+            image.fileName =
+                extension.isEmpty() ? QStringLiteral("image.bin") : QStringLiteral("image.%1").arg(extension);
+        }
+    } else {
+        image.fileName = QUrl(image.source).fileName();
+        if (image.fileName.isEmpty())
+            image.fileName = image.source;
+    }
+    return image;
+}
+
+// 解析符号文本图元的内容、字体、位置、方向和显示属性。
 SymbolText EasyedaSymbolImporter::importTextData(const QString& textData) {
     SymbolText text;
     QStringList fields = EasyedaUtils::parseDataString(textData);
@@ -518,6 +630,7 @@ SymbolText EasyedaSymbolImporter::importTextData(const QString& textData) {
     return text;
 }
 
+// 将引脚复合字段拆分为可独立读取的键值列表，并保留字段顺序。
 QList<QStringList> EasyedaSymbolImporter::parsePinDataString(const QString& pinData) const {
     QList<QStringList> result;
     QStringList segments;

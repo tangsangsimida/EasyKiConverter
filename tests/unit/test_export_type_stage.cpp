@@ -1,10 +1,17 @@
 #include "models/ComponentData.h"
+#include "services/ComponentCacheService.h"
 #include "services/export/ExportTypeStage.h"
 #include "services/export/FootprintExportStage.h"
+#include "services/export/Model3DExportStage.h"
+#include "services/export/Model3DExportWorker.h"
+#include "services/export/PreviewImagesExportWorker.h"
 #include "services/export/SymbolExportStage.h"
 
+#include <QBuffer>
 #include <QDir>
 #include <QFile>
+#include <QImage>
+#include <QSet>
 #include <QSignalSpy>
 #include <QTemporaryDir>
 #include <QtTest/QtTest>
@@ -63,8 +70,10 @@ protected:
 
 class ConcurrentStage final : public ExportTypeStage {
 public:
+    /** @brief 创建用于验证并发限制的测试阶段。 */
     explicit ConcurrentStage(int maxConcurrent) : ExportTypeStage("Concurrent", maxConcurrent, nullptr) {}
 
+    /** @brief 返回测试阶段观察到的最大并发 Worker 数。 */
     int maxStartedWorkers() const {
         return m_maxStartedWorkers;
     }
@@ -97,6 +106,50 @@ class TestExportTypeStage : public QObject {
 
 private slots:
 
+    /** @brief 验证预览图缓存缺少前置索引时仍会导出后续图片。 */
+    void previewImageExportLoadsNonContiguousCacheEntries() {
+        QTemporaryDir outputDir;
+        QTemporaryDir cacheDir;
+        QVERIFY(outputDir.isValid());
+        QVERIFY(cacheDir.isValid());
+
+        ComponentCacheService* cache = ComponentCacheService::instance();
+        const QString previousCacheDir = cache->cacheDir();
+        cache->setCacheDir(cacheDir.path());
+        cache->clearAllCache();
+
+        QImage image(2, 2, QImage::Format_RGB32);
+        image.fill(Qt::green);
+        QBuffer buffer;
+        QVERIFY(buffer.open(QIODevice::WriteOnly));
+        QVERIFY(image.save(&buffer, "PNG"));
+        cache->savePreviewImage(QStringLiteral("C45001"), buffer.data(), 1);
+
+        auto component = QSharedPointer<ComponentData>::create();
+        component->setLcscId(QStringLiteral("C45001"));
+        component->setPreviewImageData({QByteArray(), QByteArray()});
+
+        ExportOptions options;
+        options.outputPath = outputDir.path();
+        options.libName = QStringLiteral("NonContiguousPreview");
+        options.overwriteExistingFiles = true;
+
+        PreviewImagesExportWorker worker;
+        QSignalSpy completedSpy(&worker, &PreviewImagesExportWorker::completed);
+        worker.setData(QStringLiteral("C45001"), component, options);
+        worker.run();
+
+        QCOMPARE(completedSpy.count(), 1);
+        QVERIFY(completedSpy.at(0).at(1).toBool());
+        const QString exportedPath = outputDir.path() + QDir::separator() +
+                                     QStringLiteral("NonContiguousPreview.preview") + QDir::separator() +
+                                     QStringLiteral("C45001_preview_1.png");
+        QVERIFY(QFileInfo::exists(exportedPath));
+
+        cache->setCacheDir(previousCacheDir);
+    }
+
+    // 验证每个组件都能收到开始和完成状态。
     void emitsItemStatusForEveryComponentIncludingLast() {
         ImmediateSuccessStage stage;
         QSignalSpy itemSpy(&stage, &ExportTypeStage::itemStatusChanged);
@@ -121,6 +174,7 @@ private slots:
         QCOMPARE(progress.failedCount, 0);
     }
 
+    // 验证 completed 信号发出时阶段已经退出运行状态。
     void completedSignalSeesStageNotRunning() {
         ImmediateSuccessStage stage;
         bool wasRunningWhenCompleted = true;
@@ -137,6 +191,7 @@ private slots:
         QVERIFY(!stage.isRunning());
     }
 
+    // 验证取消阶段会等待活跃 Worker 完成后再结束。
     void cancelledStageStaysRunningUntilActiveWorkersDrain() {
         DeferredStage stage;
         QSignalSpy completedSpy(&stage, &ExportTypeStage::completed);
@@ -156,6 +211,7 @@ private slots:
         QCOMPARE(completedSpy.count(), 1);
     }
 
+    // 验证非覆盖模式会保留已有封装文件。
     void footprintLibraryExportPreservesExistingFilesWhenNotOverwriting() {
         QTemporaryDir tempDir;
         QVERIFY(tempDir.isValid());
@@ -193,6 +249,7 @@ private slots:
         QVERIFY(QFile::exists(prettyDir + QDir::separator() + QStringLiteral("NewPackage.kicad_mod")));
     }
 
+    // 验证封装导出可以生成绝对路径的三维模型引用。
     void footprintLibraryExportCanUseAbsolute3DModelPaths() {
         QTemporaryDir tempDir;
         QVERIFY(tempDir.isValid());
@@ -235,6 +292,7 @@ private slots:
                  "Footprint should not contain a relative 3D model path in absolute mode");
     }
 
+    // 验证封装导出默认使用相对路径的三维模型引用。
     void footprintLibraryExportUsesRelative3DModelPathsByDefault() {
         QTemporaryDir tempDir;
         QVERIFY(tempDir.isValid());
@@ -274,6 +332,354 @@ private slots:
         QVERIFY2(!content.contains(absolutePrefix), "Footprint should not contain absolute paths in relative mode");
     }
 
+    /**
+     * @brief 验证 Altium PcbLib 不会静默覆盖已有库
+     */
+    void altiumFootprintExportRejectsUnsupportedLibraryMerge() {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        const QString libName = QStringLiteral("ExistingPcbLib");
+        const QString outputPath = tempDir.path() + QDir::separator() + libName + QStringLiteral(".PcbLib");
+        QFile existingFile(outputPath);
+        QVERIFY(existingFile.open(QIODevice::WriteOnly));
+        const QByteArray originalData = QByteArrayLiteral("existing-pcblib");
+        QCOMPARE(existingFile.write(originalData), originalData.size());
+        existingFile.close();
+
+        FootprintExportStage stage;
+        ExportOptions options;
+        options.outputPath = tempDir.path();
+        options.libName = libName;
+        options.targetFormat = TargetEdaFormat::Altium;
+        options.overwriteExistingFiles = false;
+        stage.setOptions(options);
+
+        QMap<QString, QSharedPointer<ComponentData>> cachedData;
+        cachedData[QStringLiteral("C9100")] = makeFootprintComponent(QStringLiteral("C9100"), QStringLiteral("PKG"));
+
+        QSignalSpy completedSpy(&stage, &FootprintExportStage::completed);
+        stage.start({QStringLiteral("C9100")}, cachedData);
+        QVERIFY2(completedSpy.wait(3000), "Altium footprint export should reject existing library merge");
+        QCOMPARE(completedSpy.count(), 1);
+        QCOMPARE(completedSpy.at(0).at(0).toInt(), 0);
+        QCOMPARE(completedSpy.at(0).at(1).toInt(), 1);
+
+        QVERIFY(existingFile.open(QIODevice::ReadOnly));
+        QCOMPARE(existingFile.readAll(), originalData);
+        existingFile.close();
+    }
+
+    /**
+     * @brief 验证 Altium 封装库整体写入失败时所有已收集组件都会标记失败。
+     */
+    void altiumFootprintLibraryFailureMarksCollectedComponents() {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        FootprintExportStage stage;
+        ExportOptions options;
+        options.outputPath = tempDir.path();
+        options.libName = QStringLiteral("InvalidPcbLib");
+        options.targetFormat = TargetEdaFormat::Altium;
+        options.overwriteExistingFiles = true;
+        stage.setOptions(options);
+
+        QMap<QString, QSharedPointer<ComponentData>> cachedData;
+        cachedData[QStringLiteral("C9101")] = makeFootprintComponent(QStringLiteral("C9101"), QStringLiteral("VALID"));
+        cachedData[QStringLiteral("C9102")] =
+            makeFootprintComponent(QStringLiteral("C9102"), QStringLiteral("INVALID"));
+        FootprintInfo invalidInfo = cachedData[QStringLiteral("C9102")]->footprintData()->info();
+        invalidInfo.name.clear();
+        cachedData[QStringLiteral("C9102")]->footprintData()->setInfo(invalidInfo);
+
+        QSignalSpy completedSpy(&stage, &FootprintExportStage::completed);
+        QSignalSpy itemSpy(&stage, &FootprintExportStage::itemStatusChanged);
+        stage.start({QStringLiteral("C9101"), QStringLiteral("C9102")}, cachedData);
+
+        QVERIFY2(completedSpy.wait(3000), "Altium footprint export should complete with failure");
+        QCOMPARE(completedSpy.count(), 1);
+        QCOMPARE(completedSpy.at(0).at(0).toInt(), 0);
+        QCOMPARE(completedSpy.at(0).at(1).toInt(), 2);
+
+        QSet<QString> failedComponents;
+        for (const QList<QVariant>& arguments : itemSpy) {
+            const ExportItemStatus status = qvariant_cast<ExportItemStatus>(arguments.at(1));
+            if (status.status == ExportItemStatus::Status::Failed)
+                failedComponents.insert(arguments.at(0).toString());
+        }
+        QCOMPARE(failedComponents, QSet<QString>({QStringLiteral("C9101"), QStringLiteral("C9102")}));
+    }
+
+    // 验证 Altium 封装阶段优先使用缓存 STEP，并报告嵌入成功。
+    void altiumFootprintUsesCachedStepModel() {
+        QTemporaryDir outputDir;
+        QTemporaryDir cacheDir;
+        QVERIFY(outputDir.isValid());
+        QVERIFY(cacheDir.isValid());
+
+        ComponentCacheService* cache = ComponentCacheService::instance();
+        const QString previousCacheDir = cache->cacheDir();
+        cache->setCacheDir(cacheDir.path());
+        cache->clearAllCache();
+
+        const QString componentId = QStringLiteral("C12345");
+        const QString modelUuid = QStringLiteral("cached-step-model");
+        const QByteArray stepData = QByteArrayLiteral("ISO-10303-21;\nDATA;\nENDSEC;\nEND-ISO-10303-21;\n");
+        cache->saveModel3D(modelUuid, stepData, QStringLiteral("step"));
+        cache->saveModel3D(modelUuid, QByteArrayLiteral("<html>cached error</html>"), QStringLiteral("obj"));
+        cache->saveModel3D(
+            modelUuid,
+            QByteArrayLiteral("#VRML V2.0 utf8\n"
+                              "Shape { geometry IndexedFaceSet { coord Coordinate { point [0 0 0, 1 0 0, 0 1 0] } "
+                              "coordIndex [0 1 2 -1] } }\n"),
+            QStringLiteral("wrl"));
+
+        auto component = makeFootprintComponent(componentId, QStringLiteral("CACHED_PKG"), QStringLiteral("CACHED"));
+        Model3DData model = component->footprintData()->model3D();
+        model.setUuid(modelUuid);
+        component->footprintData()->setModel3D(model);
+        auto componentModel = QSharedPointer<Model3DData>::create(model);
+        componentModel->setRawObj(QStringLiteral("<html>component error</html>"));
+        component->setModel3DData(componentModel);
+
+        FootprintExportStage stage;
+        ExportOptions options;
+        options.outputPath = outputDir.path();
+        options.libName = QStringLiteral("CachedAltium");
+        options.targetFormat = TargetEdaFormat::Altium;
+        options.exportModel3D = true;
+        options.exportModel3DFormat = ExportOptions::MODEL_3D_FORMAT_WRL;
+        options.overwriteExistingFiles = true;
+        stage.setOptions(options);
+
+        QMap<QString, QSharedPointer<ComponentData>> cachedData;
+        cachedData.insert(componentId, component);
+        QSignalSpy completedSpy(&stage, &FootprintExportStage::completed);
+        QSignalSpy modelSpy(&stage, &FootprintExportStage::embeddedModel3DStatusChanged);
+        stage.start({componentId}, cachedData);
+
+        QVERIFY2(completedSpy.wait(3000), "Altium cached STEP export should complete");
+        QCOMPARE(completedSpy.count(), 1);
+        QCOMPARE(completedSpy.at(0).at(0).toInt(), 1);
+        QCOMPARE(completedSpy.at(0).at(1).toInt(), 0);
+        QCOMPARE(modelSpy.count(), 1);
+        const ExportItemStatus modelStatus = qvariant_cast<ExportItemStatus>(modelSpy.at(0).at(1));
+        QCOMPARE(modelStatus.status, ExportItemStatus::Status::Success);
+        QVERIFY(QFileInfo::exists(outputDir.filePath(QStringLiteral("CachedAltium.PcbLib"))));
+
+        cache->setCacheDir(previousCacheDir);
+    }
+
+    // 验证 Altium 封装阶段会缓存预加载的 STEP 模型。
+    void altiumFootprintCachesPreloadedStepModel() {
+        QTemporaryDir outputDir;
+        QTemporaryDir cacheDir;
+        QVERIFY(outputDir.isValid());
+        QVERIFY(cacheDir.isValid());
+
+        ComponentCacheService* cache = ComponentCacheService::instance();
+        const QString previousCacheDir = cache->cacheDir();
+        cache->setCacheDir(cacheDir.path());
+        cache->clearAllCache();
+
+        const QString componentId = QStringLiteral("C12348");
+        const QString modelUuid = QStringLiteral("preloaded-altium-step");
+        const QByteArray stepData = QByteArrayLiteral("ISO-10303-21;\nDATA;\nENDSEC;\nEND-ISO-10303-21;\n");
+        const QByteArray objData = QByteArrayLiteral("v 0 0 0\nv 1 0 0\nv 0 1 0\nf 1 2 3\n");
+        auto component =
+            makeFootprintComponent(componentId, QStringLiteral("PRELOADED_PKG"), QStringLiteral("PRELOADED"));
+        Model3DData footprintModel = component->footprintData()->model3D();
+        footprintModel.setUuid(modelUuid);
+        component->footprintData()->setModel3D(footprintModel);
+        auto componentModel = QSharedPointer<Model3DData>::create(footprintModel);
+        componentModel->setStep(stepData);
+        componentModel->setRawObj(QString::fromUtf8(objData));
+        component->setModel3DData(componentModel);
+        component->setModel3DObjRaw(objData);
+
+        FootprintExportStage stage;
+        ExportOptions options;
+        options.outputPath = outputDir.path();
+        options.libName = QStringLiteral("PreloadedAltium");
+        options.targetFormat = TargetEdaFormat::Altium;
+        options.exportModel3D = true;
+        options.overwriteExistingFiles = true;
+        stage.setOptions(options);
+
+        QMap<QString, QSharedPointer<ComponentData>> cachedData;
+        cachedData.insert(componentId, component);
+        QSignalSpy completedSpy(&stage, &FootprintExportStage::completed);
+        stage.start({componentId}, cachedData);
+
+        QVERIFY2(completedSpy.wait(3000), "Altium preloaded STEP export should complete");
+        QCOMPARE(completedSpy.at(0).at(0).toInt(), 1);
+        QCOMPARE(completedSpy.at(0).at(1).toInt(), 0);
+        QCOMPARE(cache->loadModel3D(modelUuid, QStringLiteral("step")), stepData);
+        QCOMPARE(cache->loadModel3D(modelUuid, QStringLiteral("obj")), objData);
+
+        cache->setCacheDir(previousCacheDir);
+    }
+
+    // 验证预加载的有效 OBJ 会写入公共三维缓存。
+    void model3DWorkerCachesPreloadedObj() {
+        QTemporaryDir outputDir;
+        QTemporaryDir cacheDir;
+        QVERIFY(outputDir.isValid());
+        QVERIFY(cacheDir.isValid());
+
+        ComponentCacheService* cache = ComponentCacheService::instance();
+        const QString previousCacheDir = cache->cacheDir();
+        cache->setCacheDir(cacheDir.path());
+        cache->clearAllCache();
+
+        const QString componentId = QStringLiteral("C12346");
+        const QString modelUuid = QStringLiteral("preloaded-obj-model");
+        const QByteArray objData = QByteArrayLiteral("v 0 0 0\nv 1 0 0\nv 0 1 0\nf 1 2 3\n");
+        auto component = QSharedPointer<ComponentData>::create();
+        component->setLcscId(componentId);
+        auto model = QSharedPointer<Model3DData>::create();
+        model->setUuid(modelUuid);
+        model->setName(QStringLiteral("PRELOADED"));
+        model->setRawObj(QString::fromUtf8(objData));
+        component->setModel3DData(model);
+        component->setModel3DObjRaw(objData);
+
+        ExportOptions options;
+        options.outputPath = outputDir.path();
+        options.exportModel3D = true;
+        options.exportModel3DFormat = ExportOptions::MODEL_3D_FORMAT_WRL;
+        options.overwriteExistingFiles = true;
+
+        Model3DExportWorker worker;
+        QSignalSpy completedSpy(&worker, &Model3DExportWorker::completed);
+        worker.setData(componentId, component, options);
+        worker.run();
+
+        QCOMPARE(completedSpy.count(), 1);
+        QVERIFY(completedSpy.at(0).at(1).toBool());
+        QCOMPARE(cache->loadModel3D(modelUuid, QStringLiteral("obj")), objData);
+
+        cache->setCacheDir(previousCacheDir);
+    }
+
+    // 验证缓存清空后已排队的三维导出任务不会重新写入旧模型。
+    void model3DWorkerRejectsStaleCacheGeneration() {
+        QTemporaryDir outputDir;
+        QTemporaryDir cacheDir;
+        QVERIFY(outputDir.isValid());
+        QVERIFY(cacheDir.isValid());
+
+        ComponentCacheService* cache = ComponentCacheService::instance();
+        const QString previousCacheDir = cache->cacheDir();
+        cache->setCacheDir(cacheDir.path());
+        cache->clearAllCache();
+
+        const QString componentId = QStringLiteral("C12348");
+        const QString modelUuid = QStringLiteral("stale-generation-model");
+        const QByteArray objData = QByteArrayLiteral("v 0 0 0\nv 1 0 0\nv 0 1 0\nf 1 2 3\n");
+        auto component = QSharedPointer<ComponentData>::create();
+        component->setLcscId(componentId);
+        auto model = QSharedPointer<Model3DData>::create();
+        model->setUuid(modelUuid);
+        model->setName(QStringLiteral("STALE_GENERATION"));
+        model->setRawObj(QString::fromUtf8(objData));
+        component->setModel3DData(model);
+        component->setModel3DObjRaw(objData);
+
+        ExportOptions options;
+        options.outputPath = outputDir.path();
+        options.exportModel3D = true;
+        options.exportModel3DFormat = ExportOptions::MODEL_3D_FORMAT_WRL;
+        options.overwriteExistingFiles = true;
+
+        Model3DExportWorker worker;
+        QSignalSpy completedSpy(&worker, &Model3DExportWorker::completed);
+        worker.setData(componentId, component, options);
+        cache->clearAllCache();
+        worker.run();
+
+        QCOMPARE(completedSpy.count(), 1);
+        QVERIFY(completedSpy.at(0).at(1).toBool());
+        QVERIFY(cache->loadModel3D(modelUuid, QStringLiteral("obj")).isEmpty());
+
+        cache->setCacheDir(previousCacheDir);
+    }
+
+    // 验证预加载的有效 STEP 会被直接导出并写入公共三维缓存。
+    void model3DWorkerCachesPreloadedStep() {
+        QTemporaryDir outputDir;
+        QTemporaryDir cacheDir;
+        QVERIFY(outputDir.isValid());
+        QVERIFY(cacheDir.isValid());
+
+        ComponentCacheService* cache = ComponentCacheService::instance();
+        const QString previousCacheDir = cache->cacheDir();
+        cache->setCacheDir(cacheDir.path());
+        cache->clearAllCache();
+
+        const QString componentId = QStringLiteral("C12347");
+        const QString modelUuid = QStringLiteral("preloaded-step-model");
+        const QByteArray stepData = QByteArrayLiteral("ISO-10303-21;\nDATA;\nENDSEC;\nEND-ISO-10303-21;\n");
+        auto component = QSharedPointer<ComponentData>::create();
+        component->setLcscId(componentId);
+        auto model = QSharedPointer<Model3DData>::create();
+        model->setUuid(modelUuid);
+        model->setName(QStringLiteral("PRELOADED_STEP"));
+        model->setStep(stepData);
+        component->setModel3DData(model);
+
+        ExportOptions options;
+        options.outputPath = outputDir.path();
+        options.exportModel3D = true;
+        options.exportModel3DFormat = ExportOptions::MODEL_3D_FORMAT_STEP;
+        options.overwriteExistingFiles = true;
+
+        Model3DExportWorker worker;
+        QSignalSpy completedSpy(&worker, &Model3DExportWorker::completed);
+        worker.setData(componentId, component, options);
+        worker.run();
+
+        QCOMPARE(completedSpy.count(), 1);
+        QVERIFY(completedSpy.at(0).at(1).toBool());
+        QCOMPARE(cache->loadModel3D(modelUuid, QStringLiteral("step")), stepData);
+
+        cache->setCacheDir(previousCacheDir);
+    }
+
+    // 验证 Altium 封装提前失败时仍会结束对应的 3D 统计状态。
+    void altiumMissingFootprintReportsEmbeddedModelFailure() {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        FootprintExportStage stage;
+        ExportOptions options;
+        options.outputPath = tempDir.path();
+        options.targetFormat = TargetEdaFormat::Altium;
+        options.exportModel3D = true;
+        stage.setOptions(options);
+
+        const QString componentId = QStringLiteral("C_MISSING_FOOTPRINT");
+        QMap<QString, QSharedPointer<ComponentData>> cachedData;
+        cachedData.insert(componentId, QSharedPointer<ComponentData>::create());
+
+        QSignalSpy completedSpy(&stage, &FootprintExportStage::completed);
+        QSignalSpy modelSpy(&stage, &FootprintExportStage::embeddedModel3DStatusChanged);
+        stage.start({componentId}, cachedData);
+
+        if (completedSpy.count() == 0) {
+            QVERIFY2(completedSpy.wait(3000), "Altium missing footprint export should complete");
+        }
+        QCOMPARE(completedSpy.count(), 1);
+        QCOMPARE(completedSpy.at(0).at(0).toInt(), 0);
+        QCOMPARE(completedSpy.at(0).at(1).toInt(), 1);
+        QCOMPARE(modelSpy.count(), 1);
+        const ExportItemStatus modelStatus = qvariant_cast<ExportItemStatus>(modelSpy.at(0).at(1));
+        QCOMPARE(modelStatus.status, ExportItemStatus::Status::Failed);
+        QCOMPARE(modelStatus.errorMessage, QStringLiteral("No footprint data"));
+    }
+
+    // 验证多个符号可以合并写入同一个符号库。
     void symbolLibraryExportMergesMultipleComponentsIntoOneLibrary() {
         QTemporaryDir tempDir;
         QVERIFY(tempDir.isValid());
@@ -306,6 +712,38 @@ private slots:
         QVERIFY(!QDir(tempDir.path() + QDir::separator() + QStringLiteral(".tmp")).exists());
     }
 
+    // 验证符号输入诊断会随导出进度暴露给调用方。
+    void symbolLibraryExportEmitsInputDiagnostics() {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        SymbolExportStage stage;
+        ExportOptions options;
+        options.outputPath = tempDir.path();
+        options.libName = QStringLiteral("DiagnosticSymbols");
+        options.overwriteExistingFiles = true;
+        stage.setOptions(options);
+
+        QMap<QString, QSharedPointer<ComponentData>> cachedData;
+        cachedData[QStringLiteral("C5101")] = makeSymbolComponent(QStringLiteral("C5101"), QStringLiteral("SYM_DIAG"));
+
+        QSignalSpy itemSpy(&stage, &SymbolExportStage::itemStatusChanged);
+        QSignalSpy completedSpy(&stage, &SymbolExportStage::completed);
+        stage.start({QStringLiteral("C5101")}, cachedData);
+
+        QVERIFY2(completedSpy.wait(3000), "Diagnostic symbol export should complete");
+        bool foundDiagnostics = false;
+        for (const QList<QVariant>& arguments : itemSpy) {
+            const ExportItemStatus status = qvariant_cast<ExportItemStatus>(arguments.at(1));
+            if (status.status == ExportItemStatus::Status::Success) {
+                QVERIFY(!status.diagnostics.isEmpty());
+                foundDiagnostics = true;
+            }
+        }
+        QVERIFY(foundDiagnostics);
+    }
+
+    // 验证缺少符号数据时会报告失败而不是生成空库。
     void symbolLibraryExportReportsMissingSymbolData() {
         QTemporaryDir tempDir;
         QVERIFY(tempDir.isValid());
@@ -337,6 +775,7 @@ private slots:
         QCOMPARE(status.errorMessage, QStringLiteral("No symbol data"));
     }
 
+    // 验证符号库提交失败时会回滚临时文件。
     void symbolLibraryExportRollsBackTempFileOnCommitFailure() {
         QTemporaryDir tempDir;
         QVERIFY(tempDir.isValid());
@@ -370,6 +809,7 @@ private slots:
 
     // === 新增：ExportTypeStage 基类行为测试 ===
 
+    // 验证空组件列表会立即完成且不创建 Worker。
     void emptyListComponentpletesImmediately() {
         ImmediateSuccessStage stage;
         QSignalSpy completedSpy(&stage, &ExportTypeStage::completed);
@@ -384,6 +824,160 @@ private slots:
         QVERIFY(!stage.isRunning());
     }
 
+    // 验证没有 3D 模型 UUID 的元器件计入跳过，而不是被统计为成功。
+    void model3DWithoutUuidIsSkipped() {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        Model3DExportStage stage;
+        ExportOptions options;
+        options.outputPath = tempDir.path();
+        options.libName = QStringLiteral("SkippedModels");
+        options.exportModel3DFormat = ExportOptions::MODEL_3D_FORMAT_WRL;
+        stage.setOptions(options);
+
+        QMap<QString, QSharedPointer<ComponentData>> cachedData;
+        cachedData[QStringLiteral("C_NO_MODEL")] = QSharedPointer<ComponentData>::create();
+
+        QSignalSpy itemSpy(&stage, &ExportTypeStage::itemStatusChanged);
+        QSignalSpy completedSpy(&stage, &ExportTypeStage::completed);
+        stage.start({QStringLiteral("C_NO_MODEL")}, cachedData);
+
+        if (completedSpy.count() == 0)
+            QVERIFY2(completedSpy.wait(3000), "Model3D skip should complete");
+        QCOMPARE(completedSpy.count(), 1);
+        QCOMPARE(completedSpy.at(0).at(0).toInt(), 0);
+        QCOMPARE(completedSpy.at(0).at(1).toInt(), 0);
+        QCOMPARE(completedSpy.at(0).at(2).toInt(), 1);
+
+        const ExportTypeProgress progress = stage.getProgress();
+        QCOMPARE(progress.totalCount, 1);
+        QCOMPARE(progress.completedCount, 1);
+        QCOMPARE(progress.successCount, 0);
+        QCOMPARE(progress.skippedCount, 1);
+        QCOMPARE(progress.itemStatus.value(QStringLiteral("C_NO_MODEL")).status, ExportItemStatus::Status::Skipped);
+        QVERIFY(itemSpy.count() >= 2);
+    }
+
+    // 验证输出目录创建失败时，每个元器件都会收敛为失败状态。
+    void model3DOutputDirectoryFailureIsReportedPerComponent() {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        const QString blockingFilePath = tempDir.filePath(QStringLiteral("output-file"));
+        QFile blockingFile(blockingFilePath);
+        QVERIFY(blockingFile.open(QIODevice::WriteOnly));
+        blockingFile.close();
+
+        Model3DExportStage stage;
+        ExportOptions options;
+        options.outputPath = blockingFilePath;
+        options.libName = QStringLiteral("UnwritableModels");
+        options.exportModel3DFormat = ExportOptions::MODEL_3D_FORMAT_WRL;
+        stage.setOptions(options);
+
+        const QString componentId = QStringLiteral("C_OUTPUT_FAILURE");
+        QMap<QString, QSharedPointer<ComponentData>> cachedData;
+        cachedData[componentId] = QSharedPointer<ComponentData>::create();
+
+        QSignalSpy completedSpy(&stage, &ExportTypeStage::completed);
+        stage.start({componentId}, cachedData);
+
+        if (completedSpy.count() == 0)
+            QVERIFY2(completedSpy.wait(3000), "Model3D output failure should complete");
+        QCOMPARE(completedSpy.count(), 1);
+        QCOMPARE(completedSpy.at(0).at(0).toInt(), 0);
+        QCOMPARE(completedSpy.at(0).at(1).toInt(), 1);
+        QCOMPARE(completedSpy.at(0).at(2).toInt(), 0);
+
+        const ExportTypeProgress progress = stage.getProgress();
+        QCOMPARE(progress.totalCount, 1);
+        QCOMPARE(progress.completedCount, 1);
+        QCOMPARE(progress.failedCount, 1);
+        QCOMPARE(progress.itemStatus.value(componentId).status, ExportItemStatus::Status::Failed);
+    }
+
+    // 验证封装库阶段的失败统计包含预加载缺失和库写入失败的全部元器件。
+    void footprintLibraryFailureCountsAllComponents() {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        const QString blockerPath = tempDir.filePath(QStringLiteral("blocked-output"));
+        QFile blocker(blockerPath);
+        QVERIFY(blocker.open(QIODevice::WriteOnly));
+        blocker.close();
+
+        FootprintExportStage stage;
+        ExportOptions options;
+        options.outputPath = blockerPath;
+        options.libName = QStringLiteral("BrokenFootprints");
+        options.targetFormat = TargetEdaFormat::KiCad;
+        stage.setOptions(options);
+
+        auto component = QSharedPointer<ComponentData>::create();
+        component->setFootprintData(QSharedPointer<FootprintData>::create());
+        QMap<QString, QSharedPointer<ComponentData>> cachedData;
+        cachedData[QStringLiteral("C_VALID")] = component;
+
+        QSignalSpy progressSpy(&stage, &ExportTypeStage::progressChanged);
+        QSignalSpy completedSpy(&stage, &ExportTypeStage::completed);
+        stage.start({QStringLiteral("C_MISSING"), QStringLiteral("C_VALID")}, cachedData);
+
+        if (completedSpy.count() == 0)
+            QVERIFY2(completedSpy.wait(3000), "Footprint export should complete");
+        QCOMPARE(completedSpy.count(), 1);
+        QCOMPARE(completedSpy.at(0).at(0).toInt(), 0);
+        QCOMPARE(completedSpy.at(0).at(1).toInt(), 2);
+        QCOMPARE(completedSpy.at(0).at(2).toInt(), 0);
+
+        const ExportTypeProgress progress = stage.getProgress();
+        QCOMPARE(progress.totalCount, 2);
+        QCOMPARE(progress.completedCount, 2);
+        QCOMPARE(progress.successCount, 0);
+        QCOMPARE(progress.failedCount, 2);
+        QCOMPARE(progress.inProgressCount, 0);
+        QVERIFY(progressSpy.count() >= 2);
+    }
+
+    // 验证封装数据中的 3D UUID 也能驱动独立三维导出阶段。
+    void model3DUuidFromFootprintIsExported() {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        Model3DExportStage stage;
+        ExportOptions options;
+        options.outputPath = tempDir.path();
+        options.libName = QStringLiteral("FootprintModels");
+        options.exportModel3DFormat = ExportOptions::MODEL_3D_FORMAT_WRL;
+        options.overwriteExistingFiles = true;
+        stage.setOptions(options);
+
+        auto footprint = QSharedPointer<FootprintData>::create();
+        Model3DData model;
+        model.setUuid(QStringLiteral("footprint-model-123"));
+        model.setName(QStringLiteral("FOOTPRINT_MODEL"));
+        footprint->setModel3D(model);
+        auto component = QSharedPointer<ComponentData>::create();
+        component->setModel3DData(QSharedPointer<Model3DData>::create());
+        component->setFootprintData(footprint);
+        component->setModel3DObjRaw(QByteArrayLiteral("v 0 0 0\nv 1 0 0\nv 0 1 0\nf 1 2 3\n"));
+
+        QMap<QString, QSharedPointer<ComponentData>> cachedData;
+        cachedData[QStringLiteral("C_FOOTPRINT_MODEL")] = component;
+
+        QSignalSpy completedSpy(&stage, &ExportTypeStage::completed);
+        stage.start({QStringLiteral("C_FOOTPRINT_MODEL")}, cachedData);
+
+        if (completedSpy.count() == 0)
+            QVERIFY2(completedSpy.wait(3000), "Footprint model export should complete");
+        QCOMPARE(completedSpy.count(), 1);
+        QCOMPARE(completedSpy.at(0).at(0).toInt(), 1);
+        QCOMPARE(completedSpy.at(0).at(1).toInt(), 0);
+        QCOMPARE(completedSpy.at(0).at(2).toInt(), 0);
+        QVERIFY(QFile::exists(tempDir.filePath(QStringLiteral("FootprintModels.3dmodels/C_FOOTPRINT_MODEL.wrl"))));
+    }
+
+    // 验证运行中的阶段会拒绝重复启动请求。
     void duplicateStartWhileRunningIsIgnored() {
         DeferredStage stage;
         QSignalSpy completedSpy(&stage, &ExportTypeStage::completed);
@@ -405,6 +999,7 @@ private slots:
         QCOMPARE(progress.totalCount, 1);  // 只有 C8001，C8002 被忽略
     }
 
+    // 验证 Worker 失败时会递增失败计数并保留错误信息。
     void failedComponentIncrementsFailedCount() {
         FailStage stage;
         QSignalSpy completedSpy(&stage, &ExportTypeStage::completed);
@@ -440,6 +1035,7 @@ private slots:
         QCOMPARE(failedSignals, 3);
     }
 
+    // 验证线程池并发数限制会约束同时运行的 Worker 数量。
     void concurrencyLimitIsRespected() {
         ConcurrentStage stage(2);
         QSignalSpy completedSpy(&stage, &ExportTypeStage::completed);
@@ -460,6 +1056,7 @@ private slots:
                  qPrintable(QString("Max concurrent workers was %1, expected <= 2").arg(stage.maxStartedWorkers())));
     }
 
+    // 验证取消请求会等待已经启动的 Worker 收敛完成。
     void cancelStopsAfterActiveWorkersDrain() {
         DeferredStage stage;
         QSignalSpy completedSpy(&stage, &ExportTypeStage::completed);

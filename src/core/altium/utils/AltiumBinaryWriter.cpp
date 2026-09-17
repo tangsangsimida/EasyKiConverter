@@ -9,24 +9,29 @@ namespace EasyKiConverter {
  */
 AltiumBinaryWriter::AltiumBinaryWriter(QByteArray& buffer) : m_buffer(buffer) {}
 
+// 以单字节形式写入有符号八位整数。
 void AltiumBinaryWriter::writeInt8(int8_t value) {
     m_buffer.append(static_cast<char>(value));
 }
 
+// 以单字节形式写入无符号八位整数。
 void AltiumBinaryWriter::writeUInt8(uint8_t value) {
     m_buffer.append(static_cast<char>(value));
 }
 
+// 按小端序写入有符号十六位整数。
 void AltiumBinaryWriter::writeInt16(int16_t value) {
     m_buffer.append(static_cast<char>(value & 0xFF));
     m_buffer.append(static_cast<char>((value >> 8) & 0xFF));
 }
 
+// 按小端序写入无符号十六位整数。
 void AltiumBinaryWriter::writeUInt16(uint16_t value) {
     m_buffer.append(static_cast<char>(value & 0xFF));
     m_buffer.append(static_cast<char>((value >> 8) & 0xFF));
 }
 
+// 按小端序写入有符号三十二位整数。
 void AltiumBinaryWriter::writeInt32(int32_t value) {
     m_buffer.append(static_cast<char>(value & 0xFF));
     m_buffer.append(static_cast<char>((value >> 8) & 0xFF));
@@ -34,6 +39,7 @@ void AltiumBinaryWriter::writeInt32(int32_t value) {
     m_buffer.append(static_cast<char>((value >> 24) & 0xFF));
 }
 
+// 按小端序写入无符号三十二位整数。
 void AltiumBinaryWriter::writeUInt32(uint32_t value) {
     m_buffer.append(static_cast<char>(value & 0xFF));
     m_buffer.append(static_cast<char>((value >> 8) & 0xFF));
@@ -41,12 +47,14 @@ void AltiumBinaryWriter::writeUInt32(uint32_t value) {
     m_buffer.append(static_cast<char>((value >> 24) & 0xFF));
 }
 
+// 按 IEEE 754 位模式写入单精度浮点数。
 void AltiumBinaryWriter::writeFloat(float value) {
     uint32_t bits;
     std::memcpy(&bits, &value, sizeof(float));
     writeUInt32(bits);
 }
 
+// 按 IEEE 754 位模式写入双精度浮点数。
 void AltiumBinaryWriter::writeDouble(double value) {
     uint64_t bits;
     std::memcpy(&bits, &value, sizeof(double));
@@ -55,6 +63,7 @@ void AltiumBinaryWriter::writeDouble(double value) {
     }
 }
 
+// 将原始字节追加到当前输出缓冲区。
 void AltiumBinaryWriter::writeBytes(const QByteArray& data) {
     m_buffer.append(data);
 }
@@ -114,6 +123,7 @@ void AltiumBinaryWriter::writeStringBlock(const QString& str) {
     m_buffer.append(encoded.left(strLen));
 }
 
+// 写入带长度块和终止字节的 Pascal 字符串。
 void AltiumBinaryWriter::writePascalString(const QString& str) {
     beginBlock();
     writePascalShortString(str);
@@ -127,7 +137,13 @@ void AltiumBinaryWriter::writePascalString(const QString& str) {
 void AltiumBinaryWriter::writeCStringParameterBlock(const QMap<QString, QString>& params) {
     QString paramStr;
     QList<QString> orderedKeys;
-    for (const QString& preferred : {QStringLiteral("HEADER"), QStringLiteral("RECORD"), QStringLiteral("PATTERN")}) {
+    for (const QString& preferred : {QStringLiteral("HEADER"),
+                                     QStringLiteral("RECORD"),
+                                     QStringLiteral("PATTERN"),
+                                     QStringLiteral("ISNOTACCESIBLE"),
+                                     QStringLiteral("IndexInSheet"),
+                                     QStringLiteral("OWNERPARTID"),
+                                     QStringLiteral("OwnerPartId")}) {
         if (params.contains(preferred))
             orderedKeys.append(preferred);
     }
@@ -158,7 +174,13 @@ void AltiumBinaryWriter::writeCStringParameterBlockUtf8(const QMap<QString, QStr
     // 放在 RECORD/HEADER 前面，从而使合法数据被当作未知记录。保持少量
     // 协议首字段的稳定顺序，其余字段仍使用 QMap 的确定性顺序。
     QList<QString> orderedKeys;
-    for (const QString& preferred : {QStringLiteral("HEADER"), QStringLiteral("RECORD"), QStringLiteral("PATTERN")}) {
+    for (const QString& preferred : {QStringLiteral("HEADER"),
+                                     QStringLiteral("RECORD"),
+                                     QStringLiteral("PATTERN"),
+                                     QStringLiteral("ISNOTACCESIBLE"),
+                                     QStringLiteral("IndexInSheet"),
+                                     QStringLiteral("OWNERPARTID"),
+                                     QStringLiteral("OwnerPartId")}) {
         if (params.contains(preferred))
             orderedKeys.append(preferred);
     }
@@ -171,20 +193,21 @@ void AltiumBinaryWriter::writeCStringParameterBlockUtf8(const QMap<QString, QStr
         auto it = params.constFind(keyName);
         if (it == params.constEnd())
             continue;
-        const QByteArray key = it.key().toLatin1();
+        const QByteArray ansiKey = it.key().toLatin1();
+        const QByteArray utf8Key = it.key().toUtf8();
         QString value = it.value();
         value.replace('|', ' ');
         value.replace(QChar::Null, ' ');
         const QByteArray ansiValue = value.toLatin1();
         encoded += '|';
-        encoded += key;
+        encoded += ansiKey;
         encoded += '=';
         encoded += ansiValue;
 
-        // %UTF8% 参数的值必须是原始 UTF-8 字节，而不是再次 Latin-1 转码。
+        // %UTF8% 参数的键和值都必须使用原始 UTF-8 字节，而不是再次 Latin-1 转码。
         if (QString::fromLatin1(ansiValue) != value) {
             encoded += "|%UTF8%";
-            encoded += key;
+            encoded += utf8Key;
             encoded += '=';
             encoded += value.toUtf8();
         }
@@ -200,6 +223,7 @@ void AltiumBinaryWriter::writeCStringParameterBlockRaw(const QString& paramStrin
     writeCStringParameterBlockRaw(paramString.toLatin1());
 }
 
+// 写入已经编码好的 C 字符串参数块，并追加 NUL 终止字节。
 void AltiumBinaryWriter::writeCStringParameterBlockRaw(const QByteArray& parameterBytes) {
     QByteArray encoded = parameterBytes;
     encoded.append('\0');  // null 终止符

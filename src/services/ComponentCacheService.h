@@ -107,6 +107,7 @@ public:
      * @param imageIndex 图片索引
      * @param diag 网络诊断信息输出参数
      * @param cancelled 可选的取消标志，如果不为nullptr且被设置为1则立即返回
+     * @param expectedGeneration 可选的请求缓存代次，避免旧任务回写新缓存
      * @return QByteArray 下载的图片数据，下载失败或取消返回空
      */
     QByteArray downloadPreviewImage(const QString& lcscId,
@@ -114,7 +115,8 @@ public:
                                     int imageIndex,
                                     ComponentExportStatus::NetworkDiagnostics* diag = nullptr,
                                     QAtomicInt* cancelled = nullptr,
-                                    bool weakNetwork = false);
+                                    bool weakNetwork = false,
+                                    uint64_t expectedGeneration = 0);
 
     /**
      * @brief 检查元器件是否有有效缓存
@@ -195,7 +197,10 @@ public:
      * @param data 元器件数据
      * @note 适用于测试或需要保存后立即可见的场景
      */
-    void saveComponentMetadata(const QString& componentId, const ComponentData& data, uint64_t expectedGeneration = 0);
+    void saveComponentMetadata(const QString& componentId,
+                               const ComponentData& data,
+                               uint64_t expectedGeneration = 0,
+                               bool replaceModel3DMetadata = false);
 
     /**
      * @brief 异步保存元器件元数据到L2磁盘缓存（不阻塞UI）
@@ -205,7 +210,8 @@ public:
      */
     void saveComponentMetadataAsync(const QString& componentId,
                                     const ComponentData& data,
-                                    uint64_t expectedGeneration = 0);
+                                    uint64_t expectedGeneration = 0,
+                                    bool replaceModel3DMetadata = false);
 
     /**
      * @brief 保存符号CAD数据到L2磁盘缓存
@@ -258,6 +264,13 @@ public:
     QByteArray loadPreviewImage(const QString& lcscId, int imageIndex) const;
 
     /**
+     * @brief 检查预览图字节是否可以被 Qt 解码
+     * @param imageData 预览图原始数据
+     * @return true 表示数据是可解码的图片
+     */
+    static bool isValidPreviewImageData(const QByteArray& imageData);
+
+    /**
      * @brief 保存预览图（直接写磁盘）
      * @param lcscId 元器件ID
      * @param imageData 图片数据
@@ -274,6 +287,14 @@ public:
      * @return QByteArray 数据手册数据，如果不存在返回空
      */
     QByteArray loadDatasheet(const QString& lcscId) const;
+
+    /**
+     * @brief 检查数据手册内容与声明格式是否匹配
+     * @param datasheetData 数据手册原始数据
+     * @param format 数据格式（pdf/html）
+     * @return true 表示内容可以作为该格式的数据手册使用
+     */
+    static bool isValidDatasheetData(const QByteArray& datasheetData, const QString& format);
 
     /**
      * @brief 检查元器件是否有符号封装缓存（CAD数据）
@@ -307,6 +328,7 @@ public:
      * @param format 数据格式输出参数（pdf/html）
      * @param diag 网络诊断信息输出参数
      * @param cancelled 可选的取消标志，如果不为nullptr且被设置为1则立即返回
+     * @param expectedGeneration 可选的请求缓存代次，避免旧任务回写新缓存
      * @return QByteArray 下载的数据，下载失败或取消返回空
      */
     QByteArray downloadDatasheet(const QString& lcscId,
@@ -314,7 +336,8 @@ public:
                                  QString* format,
                                  ComponentExportStatus::NetworkDiagnostics* diag = nullptr,
                                  QAtomicInt* cancelled = nullptr,
-                                 bool weakNetwork = false);
+                                 bool weakNetwork = false,
+                                 uint64_t expectedGeneration = 0);
 
     /**
      * @brief 加载3D模型（STEP/WRL）
@@ -565,6 +588,7 @@ private:
 
     static std::unique_ptr<ComponentCacheService> s_instance;
     mutable QMutex m_mutex;  // 保护 L1 内存缓存
+    mutable QMutex m_cacheDirMutex;  // 保护缓存根目录及其路径快照
     mutable QMutex m_diskWriteMutex;  // 串行化 generation 检查与磁盘写入
     QString m_cacheDir;
     int m_memoryCacheLimitMB;

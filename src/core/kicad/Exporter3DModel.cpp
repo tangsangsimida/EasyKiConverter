@@ -12,6 +12,7 @@
 #include <QTextStream>
 #include <QVector>
 
+#include <cmath>
 #include <limits>
 
 namespace EasyKiConverter {
@@ -27,6 +28,7 @@ Exporter3DModel::~Exporter3DModel() {
     cancel();
 }
 
+// 异步接口包装 OBJ 文件下载并发送结果信号。
 void Exporter3DModel::downloadObjModel(const QString& uuid, const QString& savePath) {
     QString errorMessage;
     if (downloadObjModelSync(uuid, savePath, &errorMessage)) {
@@ -37,6 +39,7 @@ void Exporter3DModel::downloadObjModel(const QString& uuid, const QString& saveP
     emit downloadError(errorMessage);
 }
 
+// 异步接口包装 STEP 文件下载并发送结果信号。
 void Exporter3DModel::downloadStepModel(const QString& uuid, const QString& savePath) {
     QString errorMessage;
     if (downloadStepModelSync(uuid, savePath, &errorMessage)) {
@@ -47,22 +50,27 @@ void Exporter3DModel::downloadStepModel(const QString& uuid, const QString& save
     emit downloadError(errorMessage);
 }
 
+// 同步下载 OBJ 文件并保存到指定路径。
 bool Exporter3DModel::downloadObjModelSync(const QString& uuid, const QString& savePath, QString* errorMessage) {
     return downloadModelSync(uuid, savePath, ModelFormat::OBJ, errorMessage);
 }
 
+// 同步下载 STEP 文件并保存到指定路径。
 bool Exporter3DModel::downloadStepModelSync(const QString& uuid, const QString& savePath, QString* errorMessage) {
     return downloadModelSync(uuid, savePath, ModelFormat::STEP, errorMessage);
 }
 
+// 同步下载 OBJ 原始字节数据。
 bool Exporter3DModel::downloadObjDataSync(const QString& uuid, QByteArray* data, QString* errorMessage) {
     return downloadModelDataSync(uuid, ModelFormat::OBJ, data, errorMessage);
 }
 
+// 同步下载 STEP 原始字节数据。
 bool Exporter3DModel::downloadStepDataSync(const QString& uuid, QByteArray* data, QString* errorMessage) {
     return downloadModelDataSync(uuid, ModelFormat::STEP, data, errorMessage);
 }
 
+// 将模型 IR 中的 OBJ 数据转换为 WRL 文件。
 bool Exporter3DModel::exportToWrl(const IR::Model3DIR& model, const QString& savePath) {
     QFile file(savePath);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
@@ -86,6 +94,7 @@ bool Exporter3DModel::exportToWrl(const IR::Model3DIR& model, const QString& sav
     return true;
 }
 
+// 将模型 IR 中的 STEP 字节数据写入文件。
 bool Exporter3DModel::exportToStep(const IR::Model3DIR& model, const QString& savePath) {
     QFile file(savePath);
     if (!file.open(QIODevice::WriteOnly)) {
@@ -99,6 +108,7 @@ bool Exporter3DModel::exportToStep(const IR::Model3DIR& model, const QString& sa
     return true;
 }
 
+// 解析 OBJ 顶点并计算其最小 Z 坐标。
 double Exporter3DModel::calculateObjMinZ(const QByteArray& objData) {
     if (objData.isEmpty()) {
         return std::numeric_limits<double>::max();
@@ -149,6 +159,78 @@ double Exporter3DModel::calculateObjMinZ(const QByteArray& objData) {
     return minZ;
 }
 
+// 检查 OBJ 是否至少包含可解析的顶点和三点面，避免把错误响应当作模型缓存。
+bool Exporter3DModel::hasUsableObjGeometry(const QByteArray& objData) {
+    if (objData.isEmpty()) {
+        return false;
+    }
+
+    bool hasVertex = false;
+    bool hasFace = false;
+    const QStringList lines = QString::fromUtf8(objData).split('\n');
+    for (const QString& line : lines) {
+        const QStringList parts = line.trimmed().split(' ', Qt::SkipEmptyParts);
+        if (parts.isEmpty()) {
+            continue;
+        }
+
+        if (parts[0] == QStringLiteral("v") && parts.size() >= 4) {
+            bool validVertex = true;
+            for (int index = 1; index <= 3; ++index) {
+                bool ok = false;
+                const double coordinate = parts[index].toDouble(&ok);
+                validVertex = validVertex && ok && std::isfinite(coordinate);
+            }
+            hasVertex = hasVertex || validVertex;
+        } else if (parts[0] == QStringLiteral("f") && parts.size() >= 4) {
+            bool validFace = true;
+            for (int index = 1; index < parts.size(); ++index) {
+                const QString vertexIndex = parts[index].section('/', 0, 0);
+                bool ok = false;
+                const int parsedIndex = vertexIndex.toInt(&ok);
+                validFace = validFace && ok && parsedIndex != 0;
+            }
+            hasFace = hasFace || validFace;
+        }
+    }
+
+    return hasVertex && hasFace;
+}
+
+// 检查 WRL 是否包含文件头、至少三个坐标点和可闭合的面索引。
+bool Exporter3DModel::hasUsableWrlGeometry(const QByteArray& wrlData) {
+    if (wrlData.isEmpty()) {
+        return false;
+    }
+
+    const QString text = QString::fromUtf8(wrlData);
+    if (!text.trimmed().startsWith(QStringLiteral("#VRML V2.0"))) {
+        return false;
+    }
+
+    static const QRegularExpression numberRegex(QStringLiteral("[-+]?(?:\\d+\\.?\\d*|\\.\\d+)(?:[eE][-+]?\\d+)?"));
+    const int pointStart = text.indexOf(QStringLiteral("point ["));
+    const int pointEnd = pointStart < 0 ? -1 : text.indexOf(QLatin1Char(']'), pointStart);
+    const int coordIndexStart = text.indexOf(QStringLiteral("coordIndex ["));
+    const int coordIndexEnd = coordIndexStart < 0 ? -1 : text.indexOf(QLatin1Char(']'), coordIndexStart);
+    if (pointStart < 0 || pointEnd < 0 || coordIndexStart < 0 || coordIndexEnd < 0) {
+        return false;
+    }
+
+    const QString pointData = text.mid(pointStart + QStringLiteral("point [").size(), pointEnd - pointStart);
+    const int coordinateCount = pointData.count(numberRegex);
+    const QString indexData =
+        text.mid(coordIndexStart + QStringLiteral("coordIndex [").size(), coordIndexEnd - coordIndexStart);
+    return coordinateCount >= 9 && indexData.contains(QStringLiteral("-1"));
+}
+
+// 检查 STEP 是否包含完整交换文件的起始和结束标记。
+bool Exporter3DModel::hasUsableStepData(const QByteArray& stepData) {
+    const QByteArray normalized = stepData.trimmed().toUpper();
+    return normalized.startsWith("ISO-10303-21;") && normalized.contains("END-ISO-10303-21;");
+}
+
+// 解析 WRL 坐标点并计算 KiCad 显示单位下的最小 Z 坐标。
 double Exporter3DModel::calculateWrlDisplayMinZ(const QByteArray& wrlData) {
     if (wrlData.isEmpty()) {
         return std::numeric_limits<double>::max();
@@ -199,10 +281,12 @@ double Exporter3DModel::calculateWrlDisplayMinZ(const QByteArray& wrlData) {
     return minZ;
 }
 
+// 同步网络请求无需额外取消动作，保留接口以满足导出器协议。
 void Exporter3DModel::cancel() {
     // 使用同步的 NetworkClient，不需要取消请求
 }
 
+// 根据解析后的 OBJ 数据生成 WRL 文本内容。
 QString Exporter3DModel::generateWrlContent(const IR::Model3DIR& model, const QByteArray& objData) {
     QString content;
 
@@ -410,6 +494,7 @@ bool Exporter3DModel::downloadModelDataSync(const QString& uuid,
     return true;
 }
 
+// 解析 OBJ 顶点、面、材质和分组信息。
 QJsonObject Exporter3DModel::parseObjData(const QByteArray& objData) {
     QJsonObject result;
     QJsonArray vertices;
@@ -605,6 +690,7 @@ QJsonObject Exporter3DModel::parseObjData(const QByteArray& objData) {
     return result;
 }
 
+// 根据模型 UUID 和格式生成远程下载地址。
 QString Exporter3DModel::getModelUrl(const QString& uuid, ModelFormat format) const {
     if (format == ModelFormat::OBJ) {
         return ENDPOINT_3D_MODEL.arg(uuid);

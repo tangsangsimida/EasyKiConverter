@@ -18,11 +18,11 @@
 
 
 
-**EasyKiConverter** is a modern C++ desktop tool based on Qt 6 and MVVM architecture, designed for electronics engineers to efficiently convert component data from LCSC and EasyEDA into KiCad library files. Supports both GUI and CLI modes.
+**EasyKiConverter** is a modern C++ desktop tool based on Qt 6 and MVVM architecture, designed for electronics engineers to efficiently convert component data from LCSC and EasyEDA into KiCad, Altium, or Xpedition ASCII library files. Supports both GUI and CLI modes.
 
 ## Key Features
 
-*   **Complete Conversion**: Full export support for Symbols (.kicad_sym), Footprints (.kicad_mod) and 3D Models (STEP/WRL).
+*   **Multiple Targets**: Supports KiCad symbols/footprints, Altium SchLib/PcbLib, and Xpedition ASCII symbol/footprint packages; Altium embeds STEP models, while Xpedition 3D model association is not currently written.
 *   **Multi-unit Symbols**: Support for multi-unit symbol conversion.
 *   **Efficient Batch Processing**: Multi-threaded parallel conversion and BOM file import support, fully utilizing multi-core performance.
 *   **Modern Experience**: Fluid UI based on Qt Quick, supporting dark/light theme switching.
@@ -36,7 +36,7 @@
 ### Installation
 Please visit the [Releases](https://github.com/tangsangsimida/EasyKiConverter/releases) page to download the version for your platform:
 
-*   **Windows**: x64 and ARM64 builds are available; download the matching `.exe` installer or `.zip` portable package for your device.
+*   **Windows**: amd64 (the filenames use `x64`) and arm64 builds are available; download the matching `.exe` installer or `.zip` portable package for your device.
 *   **Linux**: Download the x86_64/ARM64 `.AppImage`. LoongArch64 currently requires separate build infrastructure and is not included in official release packages yet.
 *   **macOS**: Download `.dmg` image file.
 *   **Arch Linux**: `yay -S easykiconverter`

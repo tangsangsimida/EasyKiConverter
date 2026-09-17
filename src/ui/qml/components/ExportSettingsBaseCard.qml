@@ -92,6 +92,8 @@ Card {
                                     return qsTranslate("MainWindow", ".kicad_sym / .kicad_mod");
                                 if (targetId === "altium")
                                     return qsTranslate("MainWindow", ".SchLib / .PcbLib");
+                                if (targetId === "xpedition")
+                                    return qsTranslate("MainWindow", "_Symbols.zip / _Footprints.zip");
                                 return "";
                             }
                             font.pixelSize: AppStyle.fontSizes.xs
@@ -367,7 +369,7 @@ Card {
                 anchors.left: parent.left
                 anchors.right: parent.right
                 anchors.top: parent.top
-                active: baseCard.exportTargetModel !== null && baseCard.exportTargetModel.currentOptionsComponent !== ""
+                active: baseCard.exportTargetModel !== null && baseCard.exportTargetModel !== undefined ? baseCard.exportTargetModel.currentOptionsComponent !== "" : false
                 source: {
                     if (!baseCard.exportTargetModel)
                         return "";

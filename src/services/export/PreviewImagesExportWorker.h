@@ -10,6 +10,7 @@
 #include <QString>
 
 #include <atomic>
+#include <cstdint>
 
 namespace EasyKiConverter {
 
@@ -88,6 +89,7 @@ private:
     QMap<QString, QString> m_tempPaths;  ///< 文件名到临时路径的映射
     QSharedPointer<ComponentData> m_data;  ///< 预加载的元器件数据
     ExportOptions m_options;  ///< 导出选项
+    uint64_t m_cacheGeneration = 0;  ///< 接收任务数据时捕获的缓存代次
     std::atomic<bool> m_cancelled{false};  ///< 取消标志
 };
 

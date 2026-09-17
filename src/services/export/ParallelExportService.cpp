@@ -16,6 +16,7 @@
 #include <QMutexLocker>
 #include <QPointer>
 #include <QSaveFile>
+#include <QSet>
 #include <QTextStream>
 #include <QTimer>
 
@@ -56,6 +57,7 @@ ParallelExportService::~ParallelExportService() {
     }
 }
 
+// 清理已经完成或需要退出的导出阶段。
 void ParallelExportService::cleanupExportStages() {
     for (auto* stage : m_exportStages) {
         if (stage) {
@@ -70,6 +72,7 @@ void ParallelExportService::cleanupExportStages() {
     cleanupRetiredExportStages();
 }
 
+// 从阶段表中移除指定阶段并安排安全销毁。
 void ParallelExportService::discardExportStage(const QString& typeName, ExportTypeStage* stage) {
     if (m_exportStages.value(typeName) == stage) {
         m_exportStages.remove(typeName);
@@ -89,6 +92,7 @@ void ParallelExportService::discardExportStage(const QString& typeName, ExportTy
     cleanupRetiredExportStages();
 }
 
+// 将仍有活动任务的阶段转入延迟回收列表。
 void ParallelExportService::retireExportStage(ExportTypeStage* stage) {
     if (!stage) {
         return;
@@ -112,6 +116,7 @@ void ParallelExportService::retireExportStage(ExportTypeStage* stage) {
     });
 }
 
+// 回收已经停止且没有活动任务的阶段。
 void ParallelExportService::cleanupRetiredExportStages() {
     for (int i = m_retiredExportStages.size() - 1; i >= 0; --i) {
         ExportTypeStage* stage = m_retiredExportStages.at(i).data();
@@ -127,18 +132,22 @@ void ParallelExportService::cleanupRetiredExportStages() {
     }
 }
 
+// 设置后续预加载和导出流程使用的选项。
 void ParallelExportService::setOptions(const ExportOptions& options) {
     m_options = options;
 }
 
+// 更新导出输出目录。
 void ParallelExportService::setOutputPath(const QString& path) {
     m_options.outputPath = path;
 }
 
+// 注入负责网络和组件数据获取的服务。
 void ParallelExportService::setComponentService(ComponentService* componentService) {
     m_componentService = componentService;
 }
 
+// 启动组件预加载，并在没有网络服务时使用磁盘缓存回退。
 void ParallelExportService::startPreload(const QStringList& componentIds) {
     if (m_progress.currentStage == ExportOverallProgress::Stage::Preloading) {
         qWarning() << "ParallelExportService: Preload already in progress";
@@ -147,6 +156,17 @@ void ParallelExportService::startPreload(const QStringList& componentIds) {
 
     if (m_componentService) {
         disconnect(m_componentService, &ComponentService::allComponentsDataCollected, this, nullptr);
+        disconnect(m_componentService, &ComponentService::allComponentsDataCollectedWithErrors, this, nullptr);
+    }
+
+    QStringList normalizedComponentIds;
+    QSet<QString> seenComponentIds;
+    for (const QString& componentId : componentIds) {
+        const QString normalizedId = componentId.trimmed().toUpper();
+        if (!normalizedId.isEmpty() && !seenComponentIds.contains(normalizedId)) {
+            seenComponentIds.insert(normalizedId);
+            normalizedComponentIds.append(normalizedId);
+        }
     }
 
     cleanupExportStages();
@@ -156,14 +176,14 @@ void ParallelExportService::startPreload(const QStringList& componentIds) {
     // 新一轮验证/导出开始，解除全局 tombstone
     // 旧回调靠 generation token 被拒绝，新请求携带新 token 可正常写入
     ComponentCacheService::instance()->clearGlobalTombstone();
-    qDebug() << "ParallelExportService: Starting preload for" << componentIds.size() << "components";
+    qDebug() << "ParallelExportService: Starting preload for" << normalizedComponentIds.size() << "components";
 
-    m_componentIds = componentIds;
+    m_componentIds = normalizedComponentIds;
     m_progress.currentStage = ExportOverallProgress::Stage::Preloading;
-    m_progress.totalComponents = componentIds.size();
+    m_progress.totalComponents = m_componentIds.size();
     m_progress.startTime = QDateTime::currentDateTime();
     m_progress.preloadProgress = PreloadProgress();
-    m_progress.preloadProgress.totalCount = componentIds.size();
+    m_progress.preloadProgress.totalCount = m_componentIds.size();
     m_cachedData.clear();
     m_preloadCompleted = false;
     m_nextPreloadIndex = 0;
@@ -172,6 +192,16 @@ void ParallelExportService::startPreload(const QStringList& componentIds) {
         QMutexLocker locker(&m_progressMutex);
         m_progress.preloadProgress.currentComponentId.clear();
         m_progress.preloadProgress.inProgressCount = 0;
+    }
+
+    if (m_componentIds.isEmpty()) {
+        m_progress.currentStage = ExportOverallProgress::Stage::Idle;
+        m_progress.endTime = QDateTime::currentDateTime();
+        m_preloadCompleted = true;
+        emit preloadProgressChanged(m_progress.preloadProgress);
+        updateOverallProgress();
+        emit preloadCompleted(0, 0);
+        return;
     }
 
     emit preloadProgressChanged(m_progress.preloadProgress);
@@ -183,15 +213,15 @@ void ParallelExportService::startPreload(const QStringList& componentIds) {
     if (m_componentService) {
         // 连接到 ComponentService 的信号以接收数据
         connect(m_componentService,
-                &ComponentService::allComponentsDataCollected,
+                &ComponentService::allComponentsDataCollectedWithErrors,
                 this,
-                &ParallelExportService::onAllComponentDataCollected,
+                &ParallelExportService::onAllComponentDataCollectedWithErrors,
                 Qt::UniqueConnection);
 
         // 启动并行获取
-        m_componentService->fetchMultipleComponentsData(componentIds, m_options.exportModel3D);
+        m_componentService->fetchMultipleComponentsData(m_componentIds, m_options.exportModel3D);
 
-        qDebug() << "ParallelExportService: Started parallel fetch for" << componentIds.size() << "components";
+        qDebug() << "ParallelExportService: Started parallel fetch for" << m_componentIds.size() << "components";
     } else {
         // 如果没有 ComponentService，直接从本地缓存读取
         qWarning() << "ParallelExportService: ComponentService not set, using sync cache fallback";
@@ -199,6 +229,7 @@ void ParallelExportService::startPreload(const QStringList& componentIds) {
     }
 }
 
+// 取消当前预加载并收敛其进度状态。
 void ParallelExportService::cancelPreload() {
     qDebug() << "ParallelExportService: Cancelling preload";
     ++m_activeRunGeneration;
@@ -206,6 +237,7 @@ void ParallelExportService::cancelPreload() {
     m_nextPreloadIndex = m_componentIds.size();
     if (m_componentService) {
         disconnect(m_componentService, &ComponentService::allComponentsDataCollected, this, nullptr);
+        disconnect(m_componentService, &ComponentService::allComponentsDataCollectedWithErrors, this, nullptr);
         m_componentService->abortBatchFetch();
     }
     {
@@ -275,6 +307,7 @@ void ParallelExportService::registerStageAndStart(ExportTypeStage* stage,
     stage->start(componentIds, m_cachedData);
 }
 
+// 根据预加载结果启动各导出阶段。
 void ParallelExportService::startExport() {
     if (m_progress.currentStage == ExportOverallProgress::Stage::Exporting) {
         qWarning() << "ParallelExportService: Export already in progress";
@@ -324,7 +357,10 @@ void ParallelExportService::startExport() {
     // Altium PcbLib 将 STEP 直接嵌入 Library/Models，不生成 KiCad 风格的
     // 外部 .3dmodels 目录；封装阶段仍会按需获取 STEP 并交给写入器。
     // Model3D 统计项仍需保留，Altium 下由封装阶段镜像完成状态。
-    const bool enableModel3D = m_options.exportModel3D;
+    const bool enableModel3D = m_options.exportModel3D && m_options.targetFormat != TargetEdaFormat::Xpedition;
+    if (m_options.exportModel3D && m_options.targetFormat == TargetEdaFormat::Xpedition) {
+        qWarning() << "ParallelExportService: Xpedition 目标当前不支持 3D 模型关联，已跳过 3D 导出阶段";
+    }
     const bool runExternalModel3DStage = enableModel3D && m_options.targetFormat != TargetEdaFormat::Altium;
     const bool enablePreview = m_options.exportPreviewImages;
     const bool enableDatasheet = m_options.exportDatasheet;
@@ -454,6 +490,7 @@ void ParallelExportService::startExport() {
     }
 }
 
+// 取消预加载或导出，并回收仍在运行的阶段。
 void ParallelExportService::cancelExport() {
     qDebug() << "ParallelExportService: Cancelling export";
     ++m_activeRunGeneration;
@@ -498,21 +535,25 @@ void ParallelExportService::cancelExport() {
     });
 }
 
+// 获取线程安全的整体进度快照。
 ExportOverallProgress ParallelExportService::getProgress() const {
     QMutexLocker locker(&m_progressMutex);
     return m_progress;
 }
 
+// 获取指定导出类型的线程安全进度快照。
 ExportTypeProgress ParallelExportService::getTypeProgress(const QString& typeName) const {
     QMutexLocker locker(&m_progressMutex);
     return m_progress.exportTypeProgress.value(typeName);
 }
 
+// 判断预加载或导出流程是否仍在运行。
 bool ParallelExportService::isRunning() const {
     return m_progress.currentStage == ExportOverallProgress::Stage::Preloading ||
            m_progress.currentStage == ExportOverallProgress::Stage::Exporting;
 }
 
+// 接收单个预加载项的完成结果并更新统计。
 void ParallelExportService::onPreloadItemCompleted(const QString& componentId, bool success, const QString& error) {
     QMutexLocker locker(&m_progressMutex);
 
@@ -537,6 +578,7 @@ void ParallelExportService::onPreloadItemCompleted(const QString& componentId, b
     }
 }
 
+// 接收单个导出阶段的进度快照。
 void ParallelExportService::onExportTypeProgressChanged(const QString& typeName, const ExportTypeProgress& progress) {
     if (m_cancelRequested || m_progress.currentStage == ExportOverallProgress::Stage::Cancelled) {
         return;
@@ -550,21 +592,25 @@ void ParallelExportService::onExportTypeProgressChanged(const QString& typeName,
     updateOverallProgress();
 }
 
+// 接收单个导出阶段的完成统计并触发总流程检查。
 void ParallelExportService::onExportTypeCompleted(const QString& typeName,
                                                   int successCount,
                                                   int failedCount,
                                                   int skippedCount) {
+    Q_UNUSED(successCount);
+    Q_UNUSED(failedCount);
+    Q_UNUSED(skippedCount);
     {
         QMutexLocker locker(&m_progressMutex);
 
         ExportTypeProgress typeProgress = m_progress.exportTypeProgress.value(typeName);
         typeProgress.typeName = typeName;
         typeProgress.totalCount = m_componentIds.size();
-        typeProgress.successCount = successCount;
-        typeProgress.failedCount = failedCount;
-        typeProgress.skippedCount = skippedCount;
-        typeProgress.completedCount = successCount + failedCount + skippedCount;
         typeProgress.inProgressCount = 0;
+
+        // 完成信号的阶段计数只覆盖实际启动的任务，必须保留预加载失败项的逐项状态。
+        // 以 itemStatus 重新计算，确保统计与界面逐项结果保持一致。
+        ExportWorkerHelpers::recomputeTypeProgressCounts(typeProgress);
 
         m_progress.exportTypeProgress[typeName] = typeProgress;
 
@@ -582,6 +628,7 @@ void ParallelExportService::onExportTypeCompleted(const QString& typeName,
     checkAllExportCompleted();
 }
 
+// 合并单个元器件的导出状态并同步整体进度。
 void ParallelExportService::onExportItemStatusChanged(const QString& componentId,
                                                       const QString& typeName,
                                                       const ExportItemStatus& status) {
@@ -589,6 +636,7 @@ void ParallelExportService::onExportItemStatusChanged(const QString& componentId
         return;
     }
 
+    bool shouldMirrorAltiumModel3DStatus = false;
     QMutexLocker locker(&m_progressMutex);
 
     if (!m_progress.exportTypeProgress.contains(typeName)) {
@@ -598,16 +646,33 @@ void ParallelExportService::onExportItemStatusChanged(const QString& componentId
     }
 
     ExportTypeProgress& typeProgress = m_progress.exportTypeProgress[typeName];
-    typeProgress.itemStatus[componentId] = status;
+    ExportItemStatus mergedStatus = status;
+    const auto previousStatus = typeProgress.itemStatus.constFind(componentId);
+    if (previousStatus != typeProgress.itemStatus.cend()) {
+        for (const QString& diagnostic : previousStatus->diagnostics) {
+            if (!mergedStatus.diagnostics.contains(diagnostic))
+                mergedStatus.diagnostics.append(diagnostic);
+        }
+    }
+    typeProgress.itemStatus[componentId] = mergedStatus;
     ExportWorkerHelpers::recomputeTypeProgressCounts(typeProgress);
+
+    // FootprintExportStage 会先发出真实的嵌入结果，再发出封装结果。
+    // 只有在 3D 尚未收到独立结果时才使用封装状态兜底，避免封装成功覆盖
+    // STEP 缺失等真实的 Model3D 失败状态。
+    if (typeName == QStringLiteral("Footprint") && m_options.exportModel3D &&
+        m_options.targetFormat == TargetEdaFormat::Altium) {
+        const auto modelProgress = m_progress.exportTypeProgress.constFind(QStringLiteral("Model3D"));
+        shouldMirrorAltiumModel3DStatus =
+            modelProgress == m_progress.exportTypeProgress.cend() || !modelProgress->itemStatus.contains(componentId);
+    }
 
     locker.unlock();
     emit itemStatusChanged(componentId, typeName, status);
 
     // Altium 的 STEP 在 PcbLib 封装阶段写入并嵌入库中，没有独立的 Model3D stage。
     // 将封装结果镜像到 Model3D，确保 UI 状态、成功率和总体完成判定一致。
-    if (typeName == QStringLiteral("Footprint") && m_options.exportModel3D &&
-        m_options.targetFormat == TargetEdaFormat::Altium) {
+    if (shouldMirrorAltiumModel3DStatus) {
         onExportItemStatusChanged(componentId, QStringLiteral("Model3D"), status);
     }
 
@@ -615,30 +680,13 @@ void ParallelExportService::onExportItemStatusChanged(const QString& componentId
     updateOverallProgress();
 }
 
+// 处理一批预加载任务，网络服务缺失时直接读取磁盘缓存。
 void ParallelExportService::processNextPreloadBatch() {
     if (m_cancelRequested || m_progress.currentStage != ExportOverallProgress::Stage::Preloading) {
         return;
     }
 
     constexpr int BATCH_SIZE = 8;
-
-    if (!m_componentService) {
-        qWarning() << "ParallelExportService: ComponentService not set, cannot load data";
-        {
-            QMutexLocker locker(&m_progressMutex);
-            m_progress.preloadProgress.completedCount = m_componentIds.size();
-            m_progress.preloadProgress.failedCount = m_componentIds.size();
-            m_progress.preloadProgress.inProgressCount = 0;
-            m_progress.preloadProgress.currentComponentId.clear();
-            m_progress.currentStage = ExportOverallProgress::Stage::Idle;
-            m_progress.endTime = QDateTime::currentDateTime();
-        }
-        emit preloadProgressChanged(m_progress.preloadProgress);
-        logNetworkRuntimeStats(QStringLiteral("preload-failed-no-component-service"));
-        writeExportDetailedReport(QStringLiteral("preload-failed-no-component-service"));
-        emit preloadCompleted(0, m_componentIds.size());
-        return;
-    }
 
     int processedInBatch = 0;
     while (processedInBatch < BATCH_SIZE && m_nextPreloadIndex < m_componentIds.size() && !m_cancelRequested) {
@@ -649,10 +697,18 @@ void ParallelExportService::processNextPreloadBatch() {
             m_progress.preloadProgress.inProgressCount = 1;
         }
 
-        ComponentData data = m_componentService->getComponentData(componentId);
-        const QSharedPointer<ComponentData> diskCachedData =
-            ExportWorkerHelpers::loadDiskCachedComponentData(componentId);
-        ExportWorkerHelpers::mergeComponentData(data, diskCachedData);
+        ComponentData data;
+        if (m_componentService) {
+            data = m_componentService->getComponentData(componentId);
+            const QSharedPointer<ComponentData> diskCachedData =
+                ExportWorkerHelpers::loadDiskCachedComponentData(componentId);
+            ExportWorkerHelpers::mergeComponentData(data, diskCachedData);
+        } else {
+            const QSharedPointer<ComponentData> diskCachedData =
+                ExportWorkerHelpers::loadDiskCachedComponentData(componentId);
+            if (diskCachedData)
+                data = *diskCachedData;
+        }
 
         {
             QMutexLocker locker(&m_progressMutex);
@@ -667,7 +723,7 @@ void ParallelExportService::processNextPreloadBatch() {
             } else {
                 m_progress.preloadProgress.failedCount++;
                 m_progress.preloadProgress.failedComponents[componentId] = QStringLiteral("Incomplete component data");
-                qWarning() << "ParallelExportService: No data found for component:" << componentId;
+                qWarning() << "ParallelExportService: No valid data found for component:" << componentId;
             }
 
             m_progress.preloadProgress.completedCount++;
@@ -701,10 +757,17 @@ void ParallelExportService::processNextPreloadBatch() {
     QTimer::singleShot(0, this, &ParallelExportService::processNextPreloadBatch);
 }
 
+// 接收网络批量获取结果并完成预加载统计。
 void ParallelExportService::onAllComponentDataCollected(const QList<ComponentData>& componentDataList) {
+    onAllComponentDataCollectedWithErrors(componentDataList, {});
+}
+
+// 接收网络失败原因并完成预加载统计。
+void ParallelExportService::onAllComponentDataCollectedWithErrors(const QList<ComponentData>& componentDataList,
+                                                                  const QMap<QString, QString>& failedComponents) {
     // 断开连接，避免重复处理
     if (m_componentService) {
-        disconnect(m_componentService, &ComponentService::allComponentsDataCollected, this, nullptr);
+        disconnect(m_componentService, &ComponentService::allComponentsDataCollectedWithErrors, this, nullptr);
     }
 
     // 检查是否已请求取消 - 如果是则直接返回，避免覆盖取消状态
@@ -720,7 +783,11 @@ void ParallelExportService::onAllComponentDataCollected(const QList<ComponentDat
 
     // 统计成功和失败数量
     int successCount = 0;
-    int failedCount = 0;
+    int failedCount = failedComponents.size();
+
+    for (auto it = failedComponents.cbegin(); it != failedComponents.cend(); ++it) {
+        m_progress.preloadProgress.failedComponents[it.key()] = it.value();
+    }
 
     // 处理每个组件数据
     for (const ComponentData& data : componentDataList) {
@@ -751,7 +818,7 @@ void ParallelExportService::onAllComponentDataCollected(const QList<ComponentDat
         QMutexLocker locker(&m_progressMutex);
         m_progress.preloadProgress.successCount = successCount;
         m_progress.preloadProgress.failedCount = failedCount;
-        m_progress.preloadProgress.completedCount = componentDataList.size();
+        m_progress.preloadProgress.completedCount = successCount + failedCount;
         m_progress.preloadProgress.inProgressCount = 0;
         m_progress.preloadProgress.currentComponentId.clear();
         m_progress.currentStage = ExportOverallProgress::Stage::Idle;
@@ -768,6 +835,7 @@ void ParallelExportService::onAllComponentDataCollected(const QList<ComponentDat
     emit preloadCompleted(successCount, failedCount);
 }
 
+// 发布当前导出总进度快照。
 void ParallelExportService::updateOverallProgress() {
     ExportOverallProgress progressSnapshot;
     {
@@ -778,6 +846,7 @@ void ParallelExportService::updateOverallProgress() {
     emit progressChanged(progressSnapshot);
 }
 
+// 检查所有导出阶段和元器件是否已经完成。
 void ParallelExportService::checkAllExportCompleted() {
     if (m_runningExportStages > 0) {
         return;
@@ -829,10 +898,12 @@ void ParallelExportService::checkAllExportCompleted() {
     cleanupExportStages();
 }
 
+// 记录指定阶段的网络运行诊断。
 void ParallelExportService::logNetworkRuntimeStats(const QString& context) const {
     ExportReportGenerator::logNetworkStats(context);
 }
 
+// 生成包含状态、诊断和网络信息的详细导出报告。
 void ParallelExportService::writeExportDetailedReport(const QString& reason) const {
     // 获取进度快照（线程安全）
     ExportOverallProgress progressSnapshot;

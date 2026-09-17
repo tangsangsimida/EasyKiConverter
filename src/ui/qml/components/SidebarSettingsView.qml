@@ -33,7 +33,8 @@ Item {
                     model: root.exportTargetModel ? root.exportTargetModel.availableTargets : []
                     Rectangle {
                         Layout.fillWidth: true
-                        Layout.preferredHeight: 52
+                        Layout.minimumWidth: 0
+                        Layout.preferredHeight: 76
                         radius: AppStyle.radius.md
                         property bool isActive: root.exportTargetModel ? root.exportTargetModel.currentIndex === index : false
                         property string targetId: modelData.id || ""
@@ -54,13 +55,16 @@ Item {
                         ColumnLayout {
                             anchors.fill: parent
                             anchors.margins: AppStyle.spacing.sm
-                            spacing: 1
+                            spacing: 4
                             Text {
                                 text: modelData.displayName || ""
                                 font.pixelSize: AppStyle.fontSizes.xs
                                 font.bold: true
                                 color: isActive ? AppStyle.colors.primary : AppStyle.colors.textPrimary
+                                Layout.fillWidth: true
                                 Layout.alignment: Qt.AlignHCenter
+                                horizontalAlignment: Text.AlignHCenter
+                                elide: Text.ElideRight
                             }
 
                             Text {
@@ -69,11 +73,18 @@ Item {
                                         return ".kicad_sym";
                                     if (targetId === "altium")
                                         return ".SchLib";
+                                    if (targetId === "xpedition")
+                                        return "_Symbols.zip / _Footprints.zip";
                                     return "";
                                 }
                                 font.pixelSize: 9
                                 color: AppStyle.colors.textSecondary
+                                Layout.fillWidth: true
                                 Layout.alignment: Qt.AlignHCenter
+                                horizontalAlignment: Text.AlignHCenter
+                                maximumLineCount: 2
+                                wrapMode: Text.WordWrap
+                                elide: Text.ElideRight
                             }
                         }
 
@@ -157,11 +168,23 @@ Item {
                 SidebarToggleRow {
                     id: model3dToggle
                     label: qsTranslate("MainWindow", "3D 模型")
+                    property bool isXpeditionTarget: root.exportTargetModel && root.exportTargetModel.currentIndex === 2
                     checked: root.exportSettingsController ? root.exportSettingsController.exportModel3D : false
+                    enabled: !isXpeditionTarget
                     onToggled: val => {
                         if (root.exportSettingsController)
                             root.exportSettingsController.setExportModel3D(val);
                     }
+                }
+
+                Text {
+                    visible: model3dToggle.isXpeditionTarget
+                    Layout.fillWidth: true
+                    Layout.leftMargin: AppStyle.spacing.lg
+                    text: qsTranslate("MainWindow", "Xpedition 当前不支持 3D 模型关联")
+                    color: AppStyle.colors.textSecondary
+                    font.pixelSize: AppStyle.fontSizes.xs
+                    wrapMode: Text.WordWrap
                 }
 
                 // 子选项区域（高度动画 + clip）
@@ -475,7 +498,7 @@ Item {
         // ==================== Altium 导出说明（仅 Altium 格式显示，带动画） ====================
         Item {
             Layout.fillWidth: true
-            Layout.preferredHeight: (root.exportTargetModel !== null && root.exportTargetModel.currentIndex === 1) ? altiumInfoBox.implicitHeight + AppStyle.spacing.md * 2 : 0
+            Layout.preferredHeight: root.exportTargetModel !== null && root.exportTargetModel !== undefined && root.exportTargetModel.currentIndex === 1 ? altiumInfoBox.implicitHeight + AppStyle.spacing.md * 2 : 0
             clip: true
             Behavior on Layout.preferredHeight {
                 NumberAnimation {
@@ -521,6 +544,63 @@ Item {
                     anchors.fill: parent
                     anchors.margins: AppStyle.spacing.md
                     text: qsTranslate("MainWindow", "Altium 导出说明：\n" + "- 符号库导出为 .SchLib 格式\n" + "- 封装库导出为 .PcbLib 格式\n" + "- 3D 模型以 STEP 格式嵌入封装\n" + "- 生成的文件可直接在 Altium Designer 中打开")
+                    font.pixelSize: AppStyle.fontSizes.xs
+                    color: AppStyle.colors.textSecondary
+                    wrapMode: Text.WordWrap
+                    lineHeight: 1.4
+                }
+            }
+        }
+
+        // ==================== Xpedition 导出说明（仅 Xpedition 格式显示，带动画） ====================
+        Item {
+            Layout.fillWidth: true
+            Layout.preferredHeight: root.exportTargetModel !== null && root.exportTargetModel !== undefined && root.exportTargetModel.currentIndex === 2 ? xpeditionInfoBox.implicitHeight + AppStyle.spacing.md * 2 : 0
+            clip: true
+            Behavior on Layout.preferredHeight {
+                NumberAnimation {
+                    duration: 400
+                    easing.type: Easing.OutQuart
+                }
+            }
+
+            Rectangle {
+                id: xpeditionInfoBox
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.top: parent.top
+                implicitHeight: xpeditionInfoText.implicitHeight + AppStyle.spacing.md * 2
+                radius: AppStyle.radius.sm
+                color: AppStyle.colors.surface
+                border.color: AppStyle.colors.border
+                border.width: 1
+                opacity: (root.exportTargetModel !== null && root.exportTargetModel.currentIndex === 2) ? 1 : 0
+                scale: (root.exportTargetModel !== null && root.exportTargetModel.currentIndex === 2) ? 1 : 0.97
+                y: (root.exportTargetModel !== null && root.exportTargetModel.currentIndex === 2) ? 0 : 20
+                Behavior on opacity {
+                    NumberAnimation {
+                        duration: 500
+                        easing.type: Easing.OutCubic
+                    }
+                }
+                Behavior on scale {
+                    NumberAnimation {
+                        duration: 500
+                        easing.type: Easing.OutQuart
+                    }
+                }
+                Behavior on y {
+                    NumberAnimation {
+                        duration: 500
+                        easing.type: Easing.OutQuart
+                    }
+                }
+
+                Text {
+                    id: xpeditionInfoText
+                    anchors.fill: parent
+                    anchors.margins: AppStyle.spacing.md
+                    text: qsTranslate("MainWindow", "Xpedition 导出说明：\n" + "- 符号库导出为 _Symbols.zip\n" + "- 封装库导出为 _Footprints.zip\n" + "- 当前不关联 3D 模型\n" + "- 当前支持基础引脚、矩形、折线、圆形和圆弧图元")
                     font.pixelSize: AppStyle.fontSizes.xs
                     color: AppStyle.colors.textSecondary
                     wrapMode: Text.WordWrap
@@ -621,7 +701,7 @@ Item {
         // ==================== 库信息（短窗口时自动隐藏，仅 KiCad 格式显示） ====================
         SidebarSection {
             title: qsTranslate("MainWindow", "库信息 (可选)")
-            visible: !ResponsiveHelper.isShortWindow && (root.exportTargetModel === null || root.exportTargetModel.currentIndex === 0)
+            visible: !ResponsiveHelper.isShortWindow && (root.exportTargetModel === null || root.exportTargetModel === undefined || root.exportTargetModel.currentIndex === 0)
             SidebarTextField {
                 label: qsTranslate("MainWindow", "符号库描述")
                 text: root.exportSettingsController ? root.exportSettingsController.symbolLibraryDescription : ""

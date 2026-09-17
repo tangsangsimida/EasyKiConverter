@@ -11,6 +11,7 @@ namespace EasyKiConverter {
 
 EasyedaFootprintImporter::EasyedaFootprintImporter() {}
 
+// 从 EasyEDA CAD JSON 导入封装元数据、图元、层定义和三维模型关联。
 QSharedPointer<FootprintData> EasyedaFootprintImporter::importFootprintData(const QJsonObject& cadData) {
     auto footprintData = QSharedPointer<FootprintData>::create();
 
@@ -148,6 +149,11 @@ QSharedPointer<FootprintData> EasyedaFootprintImporter::importFootprintData(cons
                     } else if (designator == "SOLIDREGION") {
                         FootprintSolidRegion solidRegion = importSolidRegionData(shapeString);
                         footprintData->addSolidRegion(solidRegion);
+                    } else {
+                        const QString diagnostic =
+                            QStringLiteral("EasyEDA 封装包含不支持的图元类型 %1").arg(designator);
+                        qWarning().noquote() << diagnostic;
+                        footprintData->addValidationError(diagnostic);
                     }
                 }
 
@@ -187,6 +193,7 @@ QSharedPointer<FootprintData> EasyedaFootprintImporter::importFootprintData(cons
 }
 
 namespace {
+// 判断三维模型原点是否已经使用封装坐标系中的绝对位置。
 bool isAbsoluteModelOrigin(double originX, double originY, const FootprintBBox& bbox) {
     if (bbox.width <= 0.0 || bbox.height <= 0.0) {
         return qAbs(originX) >= 1000.0 || qAbs(originY) >= 1000.0;
@@ -197,11 +204,13 @@ bool isAbsoluteModelOrigin(double originX, double originY, const FootprintBBox& 
            originY <= bbox.y + bbox.height + margin;
 }
 
+// 判断三维模型原点是否应解释为相对封装中心的偏移。
 bool isRelativeModelOrigin(double originX, double originY, const FootprintBBox& bbox) {
     const double limit = bbox.width > 0.0 && bbox.height > 0.0 ? qMax(bbox.width, bbox.height) * 2.0 : 1000.0;
     return qAbs(originX) <= limit && qAbs(originY) <= limit;
 }
 
+// 根据封装边界统一三维模型原点的绝对、相对和异常回退情况。
 Model3DBase normalizeModelOrigin(double originX, double originY, double originZ, const FootprintBBox& bbox) {
     Model3DBase translation;
     const double bboxCenterX = bbox.x + bbox.width / 2.0;
@@ -223,6 +232,7 @@ Model3DBase normalizeModelOrigin(double originX, double originY, double originZ,
 }
 }  // namespace
 
+// 解析 PAD 记录中的形状、尺寸、层、孔和锁定状态。
 FootprintPad EasyedaFootprintImporter::importPadData(const QString& padData) {
     FootprintPad pad;
     QStringList fields = EasyedaUtils::parseDataString(padData);
@@ -249,6 +259,7 @@ FootprintPad EasyedaFootprintImporter::importPadData(const QString& padData) {
     return pad;
 }
 
+// 解析 TRACK、POLYLINE、POLYGON 和 PATH 记录的线宽与路径数据。
 FootprintTrack EasyedaFootprintImporter::importTrackData(const QString& trackData) {
     FootprintTrack track;
     QStringList fields = EasyedaUtils::parseDataString(trackData);
@@ -265,6 +276,7 @@ FootprintTrack EasyedaFootprintImporter::importTrackData(const QString& trackDat
     return track;
 }
 
+// 解析 HOLE 记录的孔径、位置、层和锁定状态。
 FootprintHole EasyedaFootprintImporter::importHoleData(const QString& holeData) {
     FootprintHole hole;
     QStringList fields = EasyedaUtils::parseDataString(holeData);
@@ -280,6 +292,7 @@ FootprintHole EasyedaFootprintImporter::importHoleData(const QString& holeData) 
     return hole;
 }
 
+// 解析封装圆形图元的圆心、半径和绘制属性。
 FootprintCircle EasyedaFootprintImporter::importFootprintCircleData(const QString& circleData) {
     FootprintCircle circle;
     QStringList fields = EasyedaUtils::parseDataString(circleData);
@@ -297,6 +310,7 @@ FootprintCircle EasyedaFootprintImporter::importFootprintCircleData(const QStrin
     return circle;
 }
 
+// 解析封装矩形图元的边界、层和线宽属性。
 FootprintRectangle EasyedaFootprintImporter::importFootprintRectangleData(const QString& rectangleData) {
     FootprintRectangle rectangle;
     QStringList fields = EasyedaUtils::parseDataString(rectangleData);
@@ -315,6 +329,7 @@ FootprintRectangle EasyedaFootprintImporter::importFootprintRectangleData(const 
     return rectangle;
 }
 
+// 解析封装弧线图元的路径、层、网络和锁定状态。
 FootprintArc EasyedaFootprintImporter::importFootprintArcData(const QString& arcData) {
     FootprintArc arc;
     QStringList fields = EasyedaUtils::parseDataString(arcData);
@@ -332,6 +347,7 @@ FootprintArc EasyedaFootprintImporter::importFootprintArcData(const QString& arc
     return arc;
 }
 
+// 解析封装文本图元的内容、字体、方向、可见性和层信息。
 FootprintText EasyedaFootprintImporter::importFootprintTextData(const QString& textData) {
     FootprintText text;
     QStringList fields = EasyedaUtils::parseDataString(textData);
@@ -356,6 +372,7 @@ FootprintText EasyedaFootprintImporter::importFootprintTextData(const QString& t
     return text;
 }
 
+// 解析实心区域图元，并识别其是否属于禁止布线层。
 FootprintSolidRegion EasyedaFootprintImporter::importSolidRegionData(const QString& solidRegionData) {
     FootprintSolidRegion region;
     QStringList fields = EasyedaUtils::parseDataString(solidRegionData);
@@ -372,6 +389,7 @@ FootprintSolidRegion EasyedaFootprintImporter::importSolidRegionData(const QStri
     return region;
 }
 
+// 解析 SVGNODE JSON，恢复三维模型变换和轮廓路径信息。
 void EasyedaFootprintImporter::importSvgNodeData(const QString& svgNodeData,
                                                  QSharedPointer<FootprintData> footprintData) {
     if (!footprintData) {
@@ -493,6 +511,7 @@ void EasyedaFootprintImporter::importSvgNodeData(const QString& svgNodeData,
     }
 }
 
+// 解析封装层定义的编号、名称、颜色和可见性字段。
 LayerDefinition EasyedaFootprintImporter::parseLayerDefinition(const QString& layerString) {
     LayerDefinition layer;
     QStringList fields = layerString.split("~");
@@ -512,6 +531,7 @@ LayerDefinition EasyedaFootprintImporter::parseLayerDefinition(const QString& la
     return layer;
 }
 
+// 解析封装对象可见性记录的类型和开关状态。
 ObjectVisibility EasyedaFootprintImporter::parseObjectVisibility(const QString& objectString) {
     ObjectVisibility visibility;
     QStringList fields = objectString.split("~");

@@ -93,9 +93,7 @@ QString SymbolGraphicsGenerator::generatePin(const IR::SymbolPinIR& pin) const {
     }
 
     const bool useOriginalNamePosition = pin.hasNamePosition && !pinName.isEmpty();
-    const bool useOriginalNumberPosition = pin.hasNumberPosition && !pinNumber.isEmpty();
     const QString nameHide = useOriginalNamePosition ? QStringLiteral(" hide") : QString();
-    const QString numberHide = useOriginalNumberPosition ? QStringLiteral(" hide") : QString();
 
     // 使用 IR 方向枚举获取 KiCad 角度
     double kicadOrientation = KiCadTypeMap::toKicadAngle(pin.direction);
@@ -109,12 +107,8 @@ QString SymbolGraphicsGenerator::generatePin(const IR::SymbolPinIR& pin) const {
     } else {
         content += QString("      (name \"%1\" (effects (font (size 1.27 1.27) (thickness 0) )))\n").arg(pinName);
     }
-    if (useOriginalNumberPosition) {
-        content += QString("      (number \"%1\" (effects (font (size 1.27 1.27) (thickness 0))%2))\n")
-                       .arg(pinNumber, numberHide);
-    } else {
-        content += QString("      (number \"%1\" (effects (font (size 1.27 1.27) (thickness 0) )))\n").arg(pinNumber);
-    }
+    // 引脚编号使用 KiCad 原生字段，避免把原始编号再绘制成倾斜的普通文本图元。
+    content += QString("      (number \"%1\" (effects (font (size 1.27 1.27) (thickness 0) )))\n").arg(pinNumber);
     content += "    )\n";
 
     auto kicadJustification = [](const QString& anchor) {
@@ -148,9 +142,6 @@ QString SymbolGraphicsGenerator::generatePin(const IR::SymbolPinIR& pin) const {
         };
     if (useOriginalNamePosition)
         appendOriginalText(pinName, pin.namePosition, pin.nameRotation, pin.nameAnchor, pin.nameFontSizeMm);
-    if (useOriginalNumberPosition)
-        appendOriginalText(pinNumber, pin.numberPosition, pin.numberRotation, pin.numberAnchor, pin.numberFontSizeMm);
-
     return content;
 }
 

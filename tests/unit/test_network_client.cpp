@@ -22,12 +22,14 @@ class TestNetworkClient : public QObject {
 
 private slots:
 
+    // 为每个测试重置网络单例和 Mock 客户端。
     void init() {
         // 每个测试前销毁单例，确保隔离
         NetworkClient::destroyInstance();
         m_mockClient = std::make_unique<MockNetworkClient>();
     }
 
+    // 清理测试期间创建的客户端和网络单例。
     void cleanup() {
         m_mockClient.reset();
         NetworkClient::destroyInstance();
@@ -35,6 +37,7 @@ private slots:
 
     // === MockNetworkClient 基本功能 ===
 
+    // 验证 Mock 客户端能够返回成功的 JSON 数据。
     void testMock_Get_Success() {
         const QUrl url(QStringLiteral("https://api.example.com/data"));
         QJsonObject mockData;
@@ -51,6 +54,7 @@ private slots:
         QCOMPARE(doc.object().value(QStringLiteral("key")).toString(), QStringLiteral("value"));
     }
 
+    // 验证 Mock 客户端能够保留失败信息和状态码。
     void testMock_Get_Error() {
         const QUrl url(QStringLiteral("https://api.example.com/fail"));
         m_mockClient->addErrorResponse(url.toString(), QStringLiteral("Connection refused"), 0);
@@ -62,6 +66,21 @@ private slots:
         QCOMPARE(result.statusCode, 0);
     }
 
+    // 验证 403 访问拒绝不会被误判为 429 限流。
+    void testMock_Get_ForbiddenIsNotRateLimited() {
+        const QUrl url(QStringLiteral("https://api.example.com/forbidden"));
+        m_mockClient->addErrorResponse(url.toString(), QStringLiteral("Access denied"), 403);
+
+        const NetworkResult result = m_mockClient->get(url, ResourceType::ComponentInfo);
+
+        QVERIFY(!result.success);
+        QCOMPARE(result.statusCode, 403);
+        QCOMPARE(result.diagnostic.errorType, NetworkErrorType::Forbidden);
+        QVERIFY(!result.diagnostic.wasRateLimited);
+        QVERIFY(!RetryPolicy().retryableStatusCodes.contains(403));
+    }
+
+    // 验证资源类型能够写入请求诊断信息。
     void testMock_Get_WithResourceType() {
         const QUrl url(QStringLiteral("https://api.example.com/component"));
         QJsonObject mockData;
@@ -75,6 +94,7 @@ private slots:
         QCOMPARE(result.diagnostic.profileName, QStringLiteral("ComponentInfo"));
     }
 
+    // 验证未配置的 POST 请求返回明确的失败默认值。
     void testMock_Post_DefaultBehavior() {
         const QUrl url(QStringLiteral("https://api.example.com/submit"));
 
@@ -86,6 +106,7 @@ private slots:
         QCOMPARE(result.statusCode, 0);
     }
 
+    // 验证异步 Mock 请求能够发出完成信号。
     void testMock_AsyncGet_SignalEmitted() {
         const QUrl url(QStringLiteral("https://api.example.com/async"));
         QJsonObject mockData;
@@ -107,6 +128,7 @@ private slots:
 
     // === RetryPolicy 配置验证 ===
 
+    // 验证默认重试策略只包含适合重试的状态码。
     void testRetryPolicy_DefaultValues() {
         RetryPolicy policy;
 
@@ -118,8 +140,10 @@ private slots:
         QVERIFY(policy.retryableStatusCodes.contains(502));
         QVERIFY(policy.retryableStatusCodes.contains(503));
         QVERIFY(policy.retryableStatusCodes.contains(504));
+        QVERIFY(!policy.retryableStatusCodes.contains(403));
     }
 
+    // 验证组件请求配置能够生成对应重试策略。
     void testRetryPolicy_FromProfile_ComponentInfo() {
         RequestProfile profile = RequestProfiles::componentInfo();
         RetryPolicy policy = RetryPolicy::fromProfile(profile);
@@ -130,6 +154,7 @@ private slots:
         QCOMPARE(policy.delays.size(), profile.maxRetries);
     }
 
+    // 验证弱网模式会应用更长超时和更多重试次数。
     void testRetryPolicy_FromProfile_WeakNetwork() {
         RequestProfile profile = RequestProfiles::componentInfo();
         RetryPolicy policy = RetryPolicy::fromProfile(profile, true);
@@ -140,6 +165,7 @@ private slots:
         QCOMPARE(policy.delays.size(), profile.weakNetworkMaxRetries);
     }
 
+    // 验证退避延迟按照指数规则生成。
     void testRetryPolicy_BackoffDelays() {
         RequestProfile profile = RequestProfiles::componentInfo();
         RetryPolicy policy = RetryPolicy::fromProfile(profile);
@@ -152,6 +178,7 @@ private slots:
 
     // === RequestProfile 配置验证 ===
 
+    // 验证组件信息请求的并发和缓存配置。
     void testRequestProfiles_ComponentInfo() {
         RequestProfile profile = RequestProfiles::componentInfo();
 
@@ -165,6 +192,7 @@ private slots:
         QVERIFY(profile.allowCancellation);
     }
 
+    // 验证 CAD 请求的超时和并发配置。
     void testRequestProfiles_CadData() {
         RequestProfile profile = RequestProfiles::cadData();
 
@@ -174,6 +202,7 @@ private slots:
         QCOMPARE(profile.maxConcurrent, 10);
     }
 
+    // 验证预览图请求的超时、重试和并发配置。
     void testRequestProfiles_PreviewImage() {
         RequestProfile profile = RequestProfiles::previewImage();
 
@@ -184,6 +213,7 @@ private slots:
         QCOMPARE(profile.maxConcurrent, 5);
     }
 
+    // 验证两种三维模型请求使用一致的并发上限。
     void testRequestProfiles_Model3D() {
         RequestProfile profileObj = RequestProfiles::model3DObj();
         RequestProfile profileStep = RequestProfiles::model3DStep();
@@ -194,6 +224,7 @@ private slots:
         QCOMPARE(profileStep.maxConcurrent, 3);
     }
 
+    // 验证版本检查请求的轻量配置。
     void testRequestProfiles_UpdateCheck() {
         RequestProfile profile = RequestProfiles::updateCheck();
 
@@ -204,6 +235,7 @@ private slots:
         QVERIFY(!profile.cacheable);
     }
 
+    // 验证所有资源类型都能映射到对应配置。
     void testRequestProfiles_FromType() {
         QCOMPARE(RequestProfiles::fromType(ResourceType::ComponentInfo).type, ResourceType::ComponentInfo);
         QCOMPARE(RequestProfiles::fromType(ResourceType::CadData).type, ResourceType::CadData);
@@ -229,6 +261,7 @@ private slots:
         QVERIFY(!result.wasCancelled);
     }
 
+    // 验证成功结果能够携带状态码和响应数据。
     void testNetworkResult_SuccessWithData() {
         NetworkResult result;
         result.success = true;
@@ -242,6 +275,7 @@ private slots:
 
     // === NetworkDiagnostic 验证 ===
 
+    // 验证网络错误分类可以转换为稳定字符串。
     void testNetworkDiagnostic_ErrorTypeToString() {
         QCOMPARE(NetworkDiagnostic::errorTypeToString(NetworkErrorType::None), QStringLiteral("None"));
         QCOMPARE(NetworkDiagnostic::errorTypeToString(NetworkErrorType::Timeout), QStringLiteral("Timeout"));
@@ -250,11 +284,13 @@ private slots:
         QCOMPARE(NetworkDiagnostic::errorTypeToString(NetworkErrorType::RateLimited), QStringLiteral("RateLimited"));
         QCOMPARE(NetworkDiagnostic::errorTypeToString(NetworkErrorType::ServerError), QStringLiteral("ServerError"));
         QCOMPARE(NetworkDiagnostic::errorTypeToString(NetworkErrorType::NotFound), QStringLiteral("NotFound"));
+        QCOMPARE(NetworkDiagnostic::errorTypeToString(NetworkErrorType::Forbidden), QStringLiteral("Forbidden"));
         QCOMPARE(NetworkDiagnostic::errorTypeToString(NetworkErrorType::Canceled), QStringLiteral("Canceled"));
     }
 
     // === 单例销毁/重建 ===
 
+    // 验证网络单例销毁后可以安全重建。
     void testSingleton_DestroyAndRecreate() {
         // 第一次获取实例
         NetworkClient& instance1 = NetworkClient::instance();
@@ -273,6 +309,7 @@ private slots:
 
     // === 并发限制配置验证 ===
 
+    // 验证各资源类型的并发上限符合配置。
     void testConcurrencyLimits_AllTypes() {
         // ComponentInfo: 10
         QCOMPARE(RequestProfiles::componentInfo().maxConcurrent, 10);
@@ -296,6 +333,7 @@ private slots:
 
     // === 弱网模式配置验证 ===
 
+    // 验证基础资源配置包含弱网参数。
     void testWeakNetwork_Configuration() {
         RequestProfile profile = RequestProfiles::componentInfo();
 
@@ -305,6 +343,7 @@ private slots:
         QCOMPARE(profile.weakNetworkTimeoutMultiplier, 2);
     }
 
+    // 验证全部请求配置都定义了弱网行为。
     void testWeakNetwork_AllProfilesHaveWeakNetworkSettings() {
         auto profiles = {RequestProfiles::componentInfo(),
                          RequestProfiles::cadData(),
@@ -326,6 +365,7 @@ private slots:
 
     // === GzipUtils 测试 ===
 
+    // 验证合法 gzip 标识能够被识别。
     void testGzipUtils_IsGzipped_ValidMagicBytes() {
         // Gzip magic number: 0x1f 0x8b
         QByteArray data;
@@ -335,16 +375,19 @@ private slots:
         QVERIFY(GzipUtils::isGzipped(data));
     }
 
+    // 验证普通文本不会被误判为 gzip。
     void testGzipUtils_IsGzipped_NotGzip() {
         QByteArray data("{\"json\": true}");
         QVERIFY(!GzipUtils::isGzipped(data));
     }
 
+    // 验证过短数据不会被识别为 gzip。
     void testGzipUtils_IsGzipped_TooShort() {
         QVERIFY(!GzipUtils::isGzipped(QByteArray()));
         QVERIFY(!GzipUtils::isGzipped(QByteArray("x")));
     }
 
+    // 验证过短输入会被解压器拒绝。
     void testGzipUtils_Decompress_TooSmall() {
         // 小于 18 字节的数据直接返回失败
         QByteArray smallData("short");
@@ -352,6 +395,7 @@ private slots:
         QVERIFY(!result.success);
     }
 
+    // 验证非 gzip 输入会原样返回。
     void testGzipUtils_Decompress_NotGzip_ReturnsAsIs() {
         // 非 gzip 数据 >= 18 字节，返回原始数据 + success=true
         QByteArray original = QByteArray("this is plain text data longer than 18 bytes");
@@ -360,6 +404,7 @@ private slots:
         QCOMPARE(result.data, original);
     }
 
+    // 验证合法 gzip 数据能够恢复原始内容。
     void testGzipUtils_Decompress_ValidGzip() {
         // 用 zlib 压缩一段数据，然后验证解压
         const QByteArray original("Hello, EasyKiConverter gzip test!");
@@ -372,6 +417,7 @@ private slots:
         QCOMPARE(result.data, original);
     }
 
+    // 验证空 gzip 流能够成功解压为空内容。
     void testGzipUtils_Decompress_EmptyGzip() {
         // 最小合法 gzip 流（18 字节：header + empty deflate block）
         // 构造一个空 gzip 流
@@ -408,6 +454,7 @@ private slots:
         request->deleteLater();
     }
 
+    // 验证延迟结果最终会通过完成信号发布。
     void testAsyncRequest_CompleteWithResultDelayed_EmitsSignal() {
         const QUrl url(QStringLiteral("https://api.example.com/delayed"));
         m_mockClient->addResponse(url.toString(), QByteArray("delayed data"), 200);
@@ -425,6 +472,7 @@ private slots:
         request->deleteLater();
     }
 
+    // 验证取消结果会同步标记请求状态。
     void testAsyncRequest_Cancel_SetsCancelledState() {
         // cancel() 在请求未完成时应设置取消状态
         // 使用 createFinished 的 cancelledResult 来验证取消语义
@@ -450,6 +498,7 @@ private slots:
         request->deleteLater();
     }
 
+    // 验证白名单拒绝会快速返回而不会阻塞调用线程。
     void testSyncGet_RejectedByWhitelist_ReturnsQuickly() {
         // 同步 get() 被白名单拒绝时应立即返回失败，不应死锁
         QElapsedTimer timer;
@@ -465,6 +514,7 @@ private slots:
         QVERIFY(elapsed < 2000);  // 应在 2 秒内返回，而非超时等待
     }
 
+    // 验证异步白名单拒绝仍然会发出完成信号。
     void testAsyncGet_RejectedByWhitelist_EmitsFinished() {
         // 异步 getAsync() 被白名单拒绝时应发出 finished 信号
         AsyncNetworkRequest* request =
@@ -486,6 +536,7 @@ private slots:
         request->deleteLater();
     }
 
+    // 验证请求对象析构时能够安全取消未完成操作。
     void testAsyncRequest_Cancel_ViaDestructor() {
         // 验证析构时 cancel 逻辑不会崩溃
         // 通过 MockNetworkClient 创建请求，不保存引用

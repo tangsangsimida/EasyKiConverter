@@ -1,5 +1,9 @@
 #include "CacheHealthManager.h"
 
+#include "ComponentCacheService.h"
+#include "core/kicad/Exporter3DModel.h"
+#include "models/Model3DData.h"
+
 #include <QDateTime>
 #include <QDir>
 #include <QFile>
@@ -14,22 +18,27 @@
 namespace EasyKiConverter {
 
 namespace {
+// 生成指定元件的缓存目录路径。
 QString _componentCacheDir(const QString& cacheRoot, const QString& lcscId) {
     return cacheRoot + "/" + lcscId;
 }
 
+// 生成元件元数据文件路径。
 QString _metadataPath(const QString& cacheRoot, const QString& lcscId) {
     return _componentCacheDir(cacheRoot, lcscId) + "/component.json";
 }
 
+// 生成遗留数据手册文件路径。
 QString _datasheetPath(const QString& cacheRoot, const QString& lcscId) {
     return _componentCacheDir(cacheRoot, lcscId) + "/datasheet";
 }
 
+// 生成指定序号的预览图缓存路径。
 QString _previewImagePath(const QString& cacheRoot, const QString& lcscId, int index) {
     return _componentCacheDir(cacheRoot, lcscId) + "/preview_" + QString::number(index) + ".jpg";
 }
 
+// 根据数据手册格式生成当前缓存文件路径。
 QString _resolveDatasheetPath(const QString& cacheRoot,
                               const QString& lcscId,
                               const QString& format,
@@ -38,6 +47,7 @@ QString _resolveDatasheetPath(const QString& cacheRoot,
     return _componentCacheDir(cacheRoot, lcscId) + "/datasheet." + ext;
 }
 
+// 从指定文件读取并解析元数据 JSON 对象。
 QJsonObject _loadMetadataFromPath(const QString& metaPath) {
     QFile metaFile(metaPath);
     if (!metaFile.open(QIODevice::ReadOnly)) {
@@ -53,6 +63,7 @@ QJsonObject _loadMetadataFromPath(const QString& metaPath) {
     return doc.object();
 }
 
+// 将元数据 JSON 以紧凑格式写入指定文件。
 bool _saveMetadataToPath(const QString& metaPath, const QJsonObject& metadata) {
     QFile metaFile(metaPath);
     if (!metaFile.open(QIODevice::WriteOnly)) {
@@ -63,10 +74,34 @@ bool _saveMetadataToPath(const QString& metaPath, const QJsonObject& metadata) {
     metaFile.close();
     return written > 0;
 }
+
+// 校验缓存中三维模型标识及变换字段是否可解析。
+bool _hasValidModel3DMetadata(const QJsonObject& metadata) {
+    if (!metadata.contains(QStringLiteral("model3duuid")))
+        return true;
+
+    const QJsonValue uuid = metadata.value(QStringLiteral("model3duuid"));
+    if (!uuid.isString() || uuid.toString().isEmpty())
+        return false;
+
+    QJsonObject model;
+    model.insert(QStringLiteral("uuid"), uuid);
+    if (metadata.contains(QStringLiteral("model3dName")))
+        model.insert(QStringLiteral("name"), metadata.value(QStringLiteral("model3dName")));
+    if (metadata.contains(QStringLiteral("model3dTranslation")))
+        model.insert(QStringLiteral("translation"), metadata.value(QStringLiteral("model3dTranslation")));
+    if (metadata.contains(QStringLiteral("model3dRotation")))
+        model.insert(QStringLiteral("rotation"), metadata.value(QStringLiteral("model3dRotation")));
+
+    Model3DData modelData;
+    return modelData.fromJson(model);
+}
 }  // namespace
 
+// 保存缓存根目录，供后续自愈操作解析各类缓存路径。
 CacheHealthManager::CacheHealthManager(const QString& cacheRoot) : m_cacheRoot(cacheRoot) {}
 
+// 扫描全部元件和三维模型缓存，并修复或移除无效条目。
 int CacheHealthManager::healAll() {
     QDir rootDir(m_cacheRoot);
     if (!rootDir.exists()) {
@@ -100,34 +135,42 @@ int CacheHealthManager::healAll() {
     return repairedComponents;
 }
 
+// 返回指定元件的缓存目录路径。
 QString CacheHealthManager::componentCacheDir(const QString& lcscId) const {
     return _componentCacheDir(m_cacheRoot, lcscId);
 }
 
+// 返回指定元件的元数据文件路径。
 QString CacheHealthManager::metadataPath(const QString& lcscId) const {
     return _metadataPath(m_cacheRoot, lcscId);
 }
 
+// 返回指定元件的遗留数据手册路径。
 QString CacheHealthManager::datasheetPath(const QString& lcscId) const {
     return _datasheetPath(m_cacheRoot, lcscId);
 }
 
+// 返回指定序号的预览图缓存路径。
 QString CacheHealthManager::previewImagePath(const QString& lcscId, int index) const {
     return _previewImagePath(m_cacheRoot, lcscId, index);
 }
 
+// 根据数据手册格式返回当前缓存路径。
 QString CacheHealthManager::resolveDatasheetPath(const QString& lcscId, const QString& format, bool migrate) const {
     return _resolveDatasheetPath(m_cacheRoot, lcscId, format, migrate);
 }
 
+// 读取指定元件的缓存元数据。
 QJsonObject CacheHealthManager::loadMetadata(const QString& lcscId) const {
     return _loadMetadataFromPath(metadataPath(lcscId));
 }
 
+// 保存指定元件的缓存元数据。
 bool CacheHealthManager::saveMetadata(const QString& lcscId, const QJsonObject& metadata) {
     return _saveMetadataToPath(metadataPath(lcscId), metadata);
 }
 
+// 检查并修复单个元件缓存目录及其关联文件。
 bool CacheHealthManager::repairComponentCache(const QString& lcscId) {
     const QString dirPath = componentCacheDir(lcscId);
     QDir componentDir(dirPath);
@@ -146,6 +189,21 @@ bool CacheHealthManager::repairComponentCache(const QString& lcscId) {
     if (metadata.isEmpty()) {
         componentDir.removeRecursively();
         qWarning().noquote() << "Removed invalid cache dir with unreadable metadata:" << dirPath;
+        return false;
+    }
+
+    const QJsonValue metadataId = metadata.value(QStringLiteral("lcscId"));
+    if (metadata.contains(QStringLiteral("lcscId")) &&
+        (!metadataId.isString() ||
+         (!metadataId.toString().isEmpty() && metadataId.toString().compare(lcscId, Qt::CaseInsensitive) != 0))) {
+        componentDir.removeRecursively();
+        qWarning().noquote() << "Removed cache dir with mismatched component ID:" << dirPath;
+        return false;
+    }
+
+    if (!_hasValidModel3DMetadata(metadata)) {
+        componentDir.removeRecursively();
+        qWarning().noquote() << "Removed cache dir with invalid 3D metadata:" << dirPath;
         return false;
     }
 
@@ -181,9 +239,15 @@ bool CacheHealthManager::repairComponentCache(const QString& lcscId) {
     for (int index = 0; index < 3; ++index) {
         const QString previewPath = previewImagePath(lcscId, index);
         const QFileInfo previewInfo(previewPath);
-        if (previewInfo.exists() && previewInfo.size() <= 0) {
-            QFile::remove(previewPath);
-            qWarning().noquote() << "Removed empty preview cache file:" << previewPath;
+        if (previewInfo.exists()) {
+            QFile previewFile(previewPath);
+            const bool valid = previewFile.open(QIODevice::ReadOnly) &&
+                               ComponentCacheService::isValidPreviewImageData(previewFile.readAll());
+            previewFile.close();
+            if (!valid) {
+                QFile::remove(previewPath);
+                qWarning().noquote() << "Removed invalid preview cache file:" << previewPath;
+            }
         }
     }
 
@@ -191,21 +255,26 @@ bool CacheHealthManager::repairComponentCache(const QString& lcscId) {
     if (QFileInfo::exists(legacyDatasheetPath)) {
         QFile legacyDatasheet(legacyDatasheetPath);
         if (legacyDatasheet.open(QIODevice::ReadOnly)) {
-            const QByteArray legacyData = legacyDatasheet.read(8);
+            const QByteArray legacyData = legacyDatasheet.readAll();
             legacyDatasheet.close();
 
             const QString format = legacyData.startsWith("%PDF-") ? QStringLiteral("pdf") : QStringLiteral("html");
-            const QString targetPath = resolveDatasheetPath(lcscId, format, true);
-            if (QFile::exists(targetPath)) {
-                QFile::remove(targetPath);
-            }
-            if (legacyDatasheet.rename(legacyDatasheetPath, targetPath)) {
-                metadata["datasheetFormat"] = format;
-                metadataChanged = true;
-                qInfo().noquote() << "Migrated legacy datasheet cache file:" << targetPath;
-            } else {
+            if (!ComponentCacheService::isValidDatasheetData(legacyData, format)) {
                 QFile::remove(legacyDatasheetPath);
-                qWarning().noquote() << "Removed unreadable legacy datasheet cache file:" << legacyDatasheetPath;
+                qWarning().noquote() << "Removed invalid legacy datasheet cache file:" << legacyDatasheetPath;
+            } else {
+                const QString targetPath = resolveDatasheetPath(lcscId, format, true);
+                if (QFile::exists(targetPath)) {
+                    QFile::remove(targetPath);
+                }
+                if (legacyDatasheet.rename(legacyDatasheetPath, targetPath)) {
+                    metadata["datasheetFormat"] = format;
+                    metadataChanged = true;
+                    qInfo().noquote() << "Migrated legacy datasheet cache file:" << targetPath;
+                } else {
+                    QFile::remove(legacyDatasheetPath);
+                    qWarning().noquote() << "Removed unreadable legacy datasheet cache file:" << legacyDatasheetPath;
+                }
             }
         } else {
             QFile::remove(legacyDatasheetPath);
@@ -217,9 +286,16 @@ bool CacheHealthManager::repairComponentCache(const QString& lcscId) {
     const QString resolvedDatasheetPath = resolveDatasheetPath(lcscId, datasheetFormat, false);
     if (QFileInfo::exists(resolvedDatasheetPath)) {
         const QFileInfo datasheetInfo(resolvedDatasheetPath);
-        if (datasheetInfo.size() <= 0) {
+        QFile datasheetFile(resolvedDatasheetPath);
+        const QString format = resolvedDatasheetPath.endsWith(QStringLiteral(".pdf"), Qt::CaseInsensitive)
+                                   ? QStringLiteral("pdf")
+                                   : QStringLiteral("html");
+        const bool valid = datasheetFile.open(QIODevice::ReadOnly) &&
+                           ComponentCacheService::isValidDatasheetData(datasheetFile.readAll(), format);
+        datasheetFile.close();
+        if (datasheetInfo.size() <= 0 || !valid) {
             QFile::remove(resolvedDatasheetPath);
-            qWarning().noquote() << "Removed empty datasheet cache file:" << resolvedDatasheetPath;
+            qWarning().noquote() << "Removed invalid datasheet cache file:" << resolvedDatasheetPath;
         } else if (datasheetFormat.isEmpty()) {
             metadata["datasheetFormat"] =
                 resolvedDatasheetPath.endsWith(".html") ? QStringLiteral("html") : QStringLiteral("pdf");
@@ -227,8 +303,7 @@ bool CacheHealthManager::repairComponentCache(const QString& lcscId) {
         }
     }
 
-    const bool hasBasicIdentity =
-        !metadata.value("lcscId").toString().isEmpty() || !metadata.value("name").toString().isEmpty();
+    const bool hasBasicIdentity = !metadata.value("name").toString().isEmpty();
     const bool hasPreviewUrls = !metadata.value("previewImages").toArray().isEmpty();
     const bool hasDatasheetUrl = !metadata.value("datasheet").toString().isEmpty();
     const bool hasModel3DUuid = !metadata.value("model3duuid").toString().isEmpty();
@@ -246,6 +321,7 @@ bool CacheHealthManager::repairComponentCache(const QString& lcscId) {
     return true;
 }
 
+// 清理无效、空文件和临时文件形式的三维模型缓存。
 void CacheHealthManager::repairModel3DCache() {
     const QString modelCacheDir = m_cacheRoot + "/model3d";
     QDir dir(modelCacheDir);
@@ -253,12 +329,26 @@ void CacheHealthManager::repairModel3DCache() {
         return;
     }
 
-    const QSet<QString> validSuffixes = {QStringLiteral("step"), QStringLiteral("wrl")};
+    const QSet<QString> validSuffixes = {QStringLiteral("obj"), QStringLiteral("step"), QStringLiteral("wrl")};
     const QFileInfoList files = dir.entryInfoList(QDir::Files | QDir::NoDotAndDotDot, QDir::Name);
     for (const QFileInfo& fileInfo : files) {
         const QString suffix = fileInfo.suffix().toLower();
+        bool validContent = false;
+        if (validSuffixes.contains(suffix) && fileInfo.size() > 0) {
+            QFile modelFile(fileInfo.absoluteFilePath());
+            if (modelFile.open(QIODevice::ReadOnly)) {
+                const QByteArray data = modelFile.readAll();
+                if (suffix == QStringLiteral("obj")) {
+                    validContent = Exporter3DModel::hasUsableObjGeometry(data);
+                } else if (suffix == QStringLiteral("step")) {
+                    validContent = Exporter3DModel::hasUsableStepData(data);
+                } else {
+                    validContent = Exporter3DModel::hasUsableWrlGeometry(data);
+                }
+            }
+        }
         const bool removable =
-            fileInfo.size() <= 0 || !validSuffixes.contains(suffix) || fileInfo.fileName().startsWith(".tmp");
+            !validContent || !validSuffixes.contains(suffix) || fileInfo.fileName().startsWith(".tmp");
         if (removable) {
             QFile::remove(fileInfo.absoluteFilePath());
             qWarning().noquote() << "Removed broken 3D cache file:" << fileInfo.absoluteFilePath();

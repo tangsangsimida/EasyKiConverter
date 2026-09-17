@@ -22,6 +22,7 @@
 
 #include <QRegularExpression>
 
+#include <algorithm>
 #include <cmath>
 #include <limits>
 
@@ -40,13 +41,20 @@ inline SymbolComponentIR toSymbolIR(const SymbolData& data) {
     ir.name = data.info().name;
     ir.description = data.info().description;
     ir.designatorPrefix = data.info().prefix;
+    ir.aliases = data.info().aliases;
 
     // 封装关联
     ir.footprintName = data.info().package;
+    if (!ir.footprintName.isEmpty())
+        ir.footprintNames.append(ir.footprintName);
 
     // EasyEDA 特有字段 -> sourceMetadata
     if (!data.info().lcscId.isEmpty())
         ir.sourceMetadata["lcscId"] = data.info().lcscId;
+    if (!data.info().manufacturer.isEmpty())
+        ir.sourceMetadata["manufacturer"] = data.info().manufacturer;
+    if (!data.info().datasheet.isEmpty())
+        ir.sourceMetadata["datasheet"] = data.info().datasheet;
     if (!data.info().jlcId.isEmpty())
         ir.sourceMetadata["jlcId"] = data.info().jlcId;
     if (!data.info().uuid.isEmpty())
@@ -65,7 +73,11 @@ inline SymbolComponentIR toSymbolIR(const SymbolData& data) {
         ir.sourceMetadata["jlcpcbPartClass"] = data.info().jlcpcbPartClass;
 
     // 转换辅助 lambda：处理单个 part 的引脚
-    auto convertPins = [&](const QList<SymbolPin>& pins, double originX, double originY, int partIdx = 0) {
+    auto convertPins = [&](const QList<SymbolPin>& pins,
+                           double originX,
+                           double originY,
+                           int partIdx = 0,
+                           bool commonToAllParts = false) {
         for (const auto& pin : pins) {
             SymbolPinIR pir;
             pir.name = pin.name.text;
@@ -123,7 +135,8 @@ inline SymbolComponentIR toSymbolIR(const SymbolData& data) {
                 pir.style.decoration = PinDecoration::Clock;
             }
 
-            pir.partIndex = partIdx;
+            pir.partIndex = commonToAllParts ? -1 : partIdx;
+            pir.commonToAllParts = commonToAllParts;
             ir.pins.append(pir);
         }
     };
@@ -136,8 +149,11 @@ inline SymbolComponentIR toSymbolIR(const SymbolData& data) {
             rir.y0 = -(rect.posY - originY) * EASYEDA_PX_TO_MM;
             rir.x1 = (rect.posX + rect.width - originX) * EASYEDA_PX_TO_MM;
             rir.y1 = -(rect.posY + rect.height - originY) * EASYEDA_PX_TO_MM;
+            rir.cornerRadiusX = rect.rx * EASYEDA_PX_TO_MM;
+            rir.cornerRadiusY = rect.ry * EASYEDA_PX_TO_MM;
             rir.strokeColor = parseColor(rect.strokeColor);
             rir.strokeWidth = rect.strokeWidth * EASYEDA_PX_TO_MM;
+            rir.strokeStyle = GeometryNormalizer::parseStrokeStyle(rect.strokeStyle);
             rir.isFilled = !rect.fillColor.isEmpty() && rect.fillColor != "none";
             if (rir.isFilled)
                 rir.fillColor = parseColor(rect.fillColor);
@@ -155,6 +171,7 @@ inline SymbolComponentIR toSymbolIR(const SymbolData& data) {
             cir.radius = circle.radius * EASYEDA_PX_TO_MM;
             cir.strokeColor = parseColor(circle.strokeColor);
             cir.strokeWidth = circle.strokeWidth * EASYEDA_PX_TO_MM;
+            cir.strokeStyle = GeometryNormalizer::parseStrokeStyle(circle.strokeStyle);
             cir.isFilled = circle.fillColor;
             cir.partIndex = partIdx;
             ir.circles.append(cir);
@@ -171,6 +188,7 @@ inline SymbolComponentIR toSymbolIR(const SymbolData& data) {
             eir.radiusY = ellipse.radiusY * EASYEDA_PX_TO_MM;
             eir.strokeColor = parseColor(ellipse.strokeColor);
             eir.strokeWidth = ellipse.strokeWidth * EASYEDA_PX_TO_MM;
+            eir.strokeStyle = GeometryNormalizer::parseStrokeStyle(ellipse.strokeStyle);
             eir.isFilled = ellipse.fillColor;
             eir.partIndex = partIdx;
             ir.ellipses.append(eir);
@@ -187,6 +205,7 @@ inline SymbolComponentIR toSymbolIR(const SymbolData& data) {
                 plir.points = GeometryNormalizer::transformPoints(plir.points, originMm);
                 plir.strokeColor = parseColor(pl.strokeColor);
                 plir.strokeWidth = pl.strokeWidth * EASYEDA_PX_TO_MM;
+                plir.strokeStyle = GeometryNormalizer::parseStrokeStyle(pl.strokeStyle);
                 plir.isFilled = pl.fillColor;
                 plir.partIndex = partIdx;
                 ir.polylines.append(plir);
@@ -202,6 +221,7 @@ inline SymbolComponentIR toSymbolIR(const SymbolData& data) {
             pgir.points = GeometryNormalizer::transformPoints(pgir.points, originMm);
             pgir.strokeColor = parseColor(pg.strokeColor);
             pgir.strokeWidth = pg.strokeWidth * EASYEDA_PX_TO_MM;
+            pgir.strokeStyle = GeometryNormalizer::parseStrokeStyle(pg.strokeStyle);
             pgir.isFilled = pg.fillColor;
             pgir.partIndex = partIdx;
             ir.polygons.append(pgir);
@@ -215,6 +235,40 @@ inline SymbolComponentIR toSymbolIR(const SymbolData& data) {
             pathIR.points = GeometryNormalizer::parseSimpleSvgPath(path.paths);
             QPointF originMm(originX * EASYEDA_PX_TO_MM, originY * EASYEDA_PX_TO_MM);
             pathIR.points = GeometryNormalizer::transformPoints(pathIR.points, originMm);
+            const auto transformSegmentPoint = [&](const QPointF& point) {
+                return GeometryNormalizer::transformPoints({point * EASYEDA_PX_TO_MM}, originMm).value(0);
+            };
+            for (const SvgPathSegment& sourceSegment : SvgPathParser::parseSegments(path.paths)) {
+                SymbolPathSegmentIR segment;
+                if (sourceSegment.type == SvgPathSegment::Type::QuadraticBezier)
+                    segment.type = SymbolPathSegmentIR::Type::QuadraticBezier;
+                else if (sourceSegment.type == SvgPathSegment::Type::CubicBezier)
+                    segment.type = SymbolPathSegmentIR::Type::CubicBezier;
+                else if (sourceSegment.type == SvgPathSegment::Type::CircularArc)
+                    segment.type = SymbolPathSegmentIR::Type::CircularArc;
+                else if (sourceSegment.type == SvgPathSegment::Type::EllipticalArc)
+                    segment.type = SymbolPathSegmentIR::Type::EllipticalArc;
+                else
+                    segment.type = SymbolPathSegmentIR::Type::Line;
+                segment.start = transformSegmentPoint(sourceSegment.start);
+                segment.end = transformSegmentPoint(sourceSegment.end);
+                if (segment.type == SymbolPathSegmentIR::Type::QuadraticBezier ||
+                    segment.type == SymbolPathSegmentIR::Type::CubicBezier) {
+                    segment.control1 = transformSegmentPoint(sourceSegment.control1);
+                }
+                if (segment.type == SymbolPathSegmentIR::Type::CubicBezier) {
+                    segment.control2 = transformSegmentPoint(sourceSegment.control2);
+                } else if (segment.type == SymbolPathSegmentIR::Type::CircularArc) {
+                    segment.arcMid = transformSegmentPoint(sourceSegment.arcMid);
+                } else if (segment.type == SymbolPathSegmentIR::Type::EllipticalArc) {
+                    segment.arcCenter = transformSegmentPoint(sourceSegment.arcCenter);
+                    segment.radiusX = sourceSegment.radiusX * EASYEDA_PX_TO_MM;
+                    segment.radiusY = sourceSegment.radiusY * EASYEDA_PX_TO_MM;
+                    segment.arcStartAngle = -sourceSegment.arcStartAngle;
+                    segment.arcEndAngle = -sourceSegment.arcEndAngle;
+                }
+                pathIR.segments.append(segment);
+            }
             // SVG Z 命令闭合路径
             if (path.paths.contains('Z', Qt::CaseInsensitive) && pathIR.points.size() >= 2) {
                 if (pathIR.points.first() != pathIR.points.last()) {
@@ -223,9 +277,26 @@ inline SymbolComponentIR toSymbolIR(const SymbolData& data) {
             }
             pathIR.strokeColor = parseColor(path.strokeColor);
             pathIR.strokeWidth = path.strokeWidth * EASYEDA_PX_TO_MM;
+            pathIR.strokeStyle = GeometryNormalizer::parseStrokeStyle(path.strokeStyle);
             pathIR.isFilled = path.fillColor;
             pathIR.partIndex = partIdx;
             ir.paths.append(pathIR);
+        }
+    };
+
+    // 转换图片。嵌入 data 保留原始字节，外部资源保留源 URL/文件名。
+    auto convertImages = [&](const QList<SymbolImage>& images, double originX, double originY, int partIdx = 0) {
+        for (const auto& image : images) {
+            SymbolImageIR imageIR;
+            imageIR.x0 = (image.posX - originX) * EASYEDA_PX_TO_MM;
+            imageIR.y0 = -(image.posY - originY) * EASYEDA_PX_TO_MM;
+            imageIR.x1 = (image.posX + image.width - originX) * EASYEDA_PX_TO_MM;
+            imageIR.y1 = -(image.posY + image.height - originY) * EASYEDA_PX_TO_MM;
+            imageIR.rotation = image.rotation;
+            imageIR.fileName = image.data.isEmpty() ? image.source : image.fileName;
+            imageIR.data = image.data;
+            imageIR.partIndex = partIdx;
+            ir.images.append(imageIR);
         }
     };
 
@@ -242,6 +313,7 @@ inline SymbolComponentIR toSymbolIR(const SymbolData& data) {
             tir.bold = text.bold;
             tir.italic = (text.italic == "1" || text.italic == "Italic" || text.italic == "italic");
             tir.visible = text.visible;
+            tir.anchor = text.anchor.trimmed().isEmpty() ? QStringLiteral("middle") : text.anchor.trimmed();
             tir.partIndex = partIdx;
             ir.texts.append(tir);
         }
@@ -269,6 +341,7 @@ inline SymbolComponentIR toSymbolIR(const SymbolData& data) {
             }
             air.strokeColor = parseColor(arc.strokeColor);
             air.strokeWidth = arc.strokeWidth * EASYEDA_PX_TO_MM;
+            air.strokeStyle = GeometryNormalizer::parseStrokeStyle(arc.strokeStyle);
             air.isFilled = arc.fillColor;
             air.partIndex = partIdx;
             ir.arcs.append(air);
@@ -277,7 +350,10 @@ inline SymbolComponentIR toSymbolIR(const SymbolData& data) {
 
     // 处理单部件或多部件符号
     if (data.isMultiPart()) {
-        ir.partCount = data.parts().size();
+        ir.partCount = qMax(
+            1, static_cast<int>(std::count_if(data.parts().cbegin(), data.parts().cend(), [](const SymbolPart& part) {
+                return !part.commonToAllParts;
+            })));
         int partIdx = 0;
         for (const auto& part : data.parts()) {
             // 图形使用 part 的显式原点（通常为 0,0）
@@ -328,23 +404,30 @@ inline SymbolComponentIR toSymbolIR(const SymbolData& data) {
                     poy = minY;
             }
 
-            // 引脚使用几何边界框原点
-            convertPins(part.pins, pox, poy, partIdx);
+            const int irPartIndex = part.commonToAllParts ? -1 : partIdx;
+
+            // 引脚使用几何边界框原点；公共部件进入 Part Zero。
+            convertPins(part.pins, pox, poy, partIdx, part.commonToAllParts);
             // 图形使用 part 显式原点
-            convertRectangles(part.rectangles, gox, goy, partIdx);
-            convertCircles(part.circles, gox, goy, partIdx);
-            convertEllipses(part.ellipses, gox, goy, partIdx);
-            convertArcs(part.arcs, gox, goy, partIdx);
-            convertPolylines(part.polylines, gox, goy, partIdx);
-            convertPolygons(part.polygons, gox, goy, partIdx);
-            convertPaths(part.paths, gox, goy, partIdx);
-            convertTexts(part.texts, gox, goy, partIdx);
-            ++partIdx;
+            convertRectangles(part.rectangles, gox, goy, irPartIndex);
+            convertCircles(part.circles, gox, goy, irPartIndex);
+            convertEllipses(part.ellipses, gox, goy, irPartIndex);
+            convertArcs(part.arcs, gox, goy, irPartIndex);
+            convertPolylines(part.polylines, gox, goy, irPartIndex);
+            convertPolygons(part.polygons, gox, goy, irPartIndex);
+            convertPaths(part.paths, gox, goy, irPartIndex);
+            convertImages(part.images, gox, goy, irPartIndex);
+            convertTexts(part.texts, gox, goy, irPartIndex);
+            for (const SymbolGraphicOrder& order : part.graphicOrder)
+                ir.graphicOrder.append({order.type, order.index, irPartIndex});
+            if (!part.commonToAllParts)
+                ++partIdx;
         }
     } else {
         const SymbolBBox bbox = data.bbox();
         double ox = bbox.x;
         double oy = bbox.y;
+        bool usesLogicalOrigin = false;
         const double bboxCenterX = bbox.x + bbox.width / 2.0;
         const double bboxCenterY = bbox.y + bbox.height / 2.0;
         const double headTolerance = 0.75 * qMax(bbox.width, bbox.height);
@@ -353,6 +436,7 @@ inline SymbolComponentIR toSymbolIR(const SymbolData& data) {
         if (bbox.hasHeadCenter && std::isfinite(bbox.headX) && std::isfinite(bbox.headY) && headInsideBbox) {
             ox = bbox.headX;
             oy = bbox.headY;
+            usesLogicalOrigin = true;
         } else if (!bbox.hasHeadCenter) {
             // 兼容旧缓存：没有 head 中心时保留原有 BBox 原点语义。
         } else {
@@ -385,7 +469,11 @@ inline SymbolComponentIR toSymbolIR(const SymbolData& data) {
         convertPolylines(data.polylines(), ox, oy);
         convertPolygons(data.polygons(), ox, oy);
         convertPaths(data.paths(), ox, oy);
+        convertImages(data.images(), ox, oy);
         convertTexts(data.texts(), ox, oy);
+        for (const SymbolGraphicOrder& order : data.graphicOrder())
+            ir.graphicOrder.append({order.type, order.index, 0});
+        ir.preserveLogicalOrigin = usesLogicalOrigin;
     }
 
     return ir;

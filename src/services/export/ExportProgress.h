@@ -4,6 +4,7 @@
 #include <QMap>
 #include <QMetaType>
 #include <QString>
+#include <QStringList>
 
 namespace EasyKiConverter {
 
@@ -14,8 +15,8 @@ namespace EasyKiConverter {
  */
 enum class TargetEdaFormat {
     KiCad = 0, /**< KiCad 格式（默认） */
-    Altium = 1 /**< Altium Designer 格式 */
-    // 后续扩展: Allegro = 2, Eagle = 3, ...
+    Altium = 1, /**< Altium Designer 格式 */
+    Xpedition = 2 /**< Xpedition ASCII 库格式 */
 };
 
 /**
@@ -46,6 +47,19 @@ struct ExportOptions {
 
     constexpr bool needsModel3DStep() const {
         return (exportModel3DFormat & MODEL_3D_FORMAT_STEP) != 0;
+    }
+
+    /**
+     * @brief 判断当前目标是否必须嵌入 STEP 三维模型
+     *
+     * Altium PcbLib 不使用 KiCad 的外部 WRL/STEP 文件引用，三维模型必须
+     * 以 STEP 形式嵌入封装库。因此即使调用方传入了 WRL-only 配置，也必须
+     * 为 Altium 获取并嵌入 STEP。
+     */
+    constexpr bool needsEmbeddedModel3DStep() const {
+        if (!exportModel3D || targetFormat == TargetEdaFormat::Xpedition)
+            return false;
+        return needsModel3DStep() || (targetFormat == TargetEdaFormat::Altium && exportModel3D);
     }
 
     static constexpr int normalizePathMode(int mode) {
@@ -99,6 +113,7 @@ struct ExportItemStatus {
 
     Status status = Status::Pending;  ///< 当前状态
     QString errorMessage;  ///< 错误信息（当status为Failed时有效）
+    QStringList diagnostics;  ///< 非致命输入诊断（不阻断导出）
     QString filePath;  ///< 导出文件路径（当status为Success时有效）
     qint64 bytesProcessed = 0;  ///< 已处理的字节数（用于大文件导出进度）
     qint64 totalBytes = 0;  ///< 总字节数（用于计算进度百分比）
@@ -157,6 +172,7 @@ struct ExportTypeProgress {
     int skippedCount = 0;  ///< 被跳过的元器件数量
     int inProgressCount = 0;  ///< 当前正在导出的元器件数量
     QMap<QString, ExportItemStatus> itemStatus;  ///< 所有元器件的导出状态映射
+    QStringList diagnostics;  ///< 导出器产生的非致命诊断
     qint64 totalBytes = 0;  ///< 该类型所有文件的总字节数
     qint64 processedBytes = 0;  ///< 已处理的字节数
     qint64 totalTimeMs = 0;  ///< 该类型导出的总耗时（毫秒）

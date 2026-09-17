@@ -15,10 +15,12 @@ class TestExportReportGenerator : public QObject {
 
 private slots:
 
+    // 清理网络客户端单例，避免影响其他测试。
     void cleanupTestCase() {
         NetworkClient::destroyInstance();
     }
 
+    // 验证关闭调试模式时不生成详细报告。
     void debugModeDisabledDoesNotWriteReport() {
         QTemporaryDir tempDir;
         QVERIFY(tempDir.isValid());
@@ -31,6 +33,7 @@ private slots:
         QVERIFY(!QFile::exists(reportPath(tempDir.path())));
     }
 
+    // 验证输出目录为空时不生成详细报告。
     void emptyOutputPathDoesNotWriteReport() {
         ExportOptions options = makeOptions(QString());
         options.debugMode = true;
@@ -40,6 +43,7 @@ private slots:
         QVERIFY(options.outputPath.isEmpty());
     }
 
+    // 验证详细报告会创建目录并写入导出进度快照。
     void detailedReportCreatesOutputDirectoryAndWritesProgressSnapshot() {
         QTemporaryDir tempDir;
         QVERIFY(tempDir.isValid());
@@ -79,11 +83,35 @@ private slots:
         QVERIFY(content.contains(QStringLiteral("### Symbol")));
         QVERIFY(content.contains(QStringLiteral("- Completed: 3/3")));
         QVERIFY(content.contains(QStringLiteral("- Skipped: 1")));
+        QVERIFY(content.contains(QStringLiteral("#### Input Diagnostics")));
+        QVERIFY(content.contains(QStringLiteral("- `C123`:")));
+        QVERIFY(content.contains(QStringLiteral("  - Rectangle 0 has a non-positive size")));
+        QVERIFY(content.contains(QStringLiteral("  - Path 0 has no commands")));
+        QVERIFY(content.contains(QStringLiteral("#### Exporter Diagnostics")));
+        QVERIFY(content.contains(QStringLiteral("组件 IMAGE_DIAGNOSTICS 图片 0 的嵌入数据为空，已跳过 Storage")));
         QVERIFY(content.contains(QStringLiteral("### Footprint")));
         QVERIFY(content.contains(QStringLiteral("- Completed: 2/3")));
+        QVERIFY(content.contains(QStringLiteral("#### Failed or Skipped Items")));
+        QVERIFY(content.contains(QStringLiteral("- `C404`: failed — Footprint export failed")));
 
         QVERIFY(content.contains(QStringLiteral("## Weak Network Diagnostics")));
         QVERIFY(content.contains(QStringLiteral("NetworkRuntimeStats total{")));
+    }
+
+    // 验证网络拒绝原因会原样进入预加载失败报告。
+    void detailedReportIncludesNetworkFailureReason() {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        ExportOptions options = makeOptions(tempDir.path());
+        ExportOverallProgress progress = makeProgress();
+        progress.preloadProgress.failedComponents.insert(
+            QStringLiteral("C403"), QStringLiteral("HTTP 403: Forbidden; response: access denied"));
+
+        ExportReportGenerator::writeDetailedReport(QStringLiteral("preload-completed"), options, progress);
+
+        const QString content = readText(reportPath(tempDir.path()));
+        QVERIFY(content.contains(QStringLiteral("- `C403`: HTTP 403: Forbidden; response: access denied")));
     }
 
 private:
@@ -125,6 +153,12 @@ private:
         symbolProgress.failedCount = 0;
         symbolProgress.skippedCount = 1;
         symbolProgress.inProgressCount = 0;
+        symbolProgress.diagnostics = {QStringLiteral("组件 IMAGE_DIAGNOSTICS 图片 0 的嵌入数据为空，已跳过 Storage")};
+        ExportItemStatus symbolStatus;
+        symbolStatus.status = ExportItemStatus::Status::Success;
+        symbolStatus.diagnostics = {QStringLiteral("Rectangle 0 has a non-positive size"),
+                                    QStringLiteral("Path 0 has no commands")};
+        symbolProgress.itemStatus.insert(QStringLiteral("C123"), symbolStatus);
         progress.exportTypeProgress.insert(QStringLiteral("Symbol"), symbolProgress);
 
         ExportTypeProgress footprintProgress;
@@ -135,6 +169,10 @@ private:
         footprintProgress.failedCount = 1;
         footprintProgress.skippedCount = 0;
         footprintProgress.inProgressCount = 1;
+        ExportItemStatus footprintFailure;
+        footprintFailure.status = ExportItemStatus::Status::Failed;
+        footprintFailure.errorMessage = QStringLiteral("Footprint export failed");
+        footprintProgress.itemStatus.insert(QStringLiteral("C404"), footprintFailure);
         progress.exportTypeProgress.insert(QStringLiteral("Footprint"), footprintProgress);
 
         return progress;

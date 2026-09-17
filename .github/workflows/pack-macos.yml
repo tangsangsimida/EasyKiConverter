@@ -204,6 +204,14 @@ jobs:
             echo "$ARCHS" | grep -qw x86_64
           fi
 
+      - name: 'Smoke test App Bundle executable'
+        run: |
+          set -euo pipefail
+          EXECUTABLE_NAME="$(/usr/libexec/PlistBuddy -c "Print :CFBundleExecutable" "${APP_NAME}.app/Contents/Info.plist")"
+          EXECUTABLE_PATH="${APP_NAME}.app/Contents/MacOS/${EXECUTABLE_NAME}"
+          test -x "$EXECUTABLE_PATH"
+          "$EXECUTABLE_PATH" --version
+
       - name: 'Create DMG'
         run: |
           hdiutil create -volname EasyKiConverter \
