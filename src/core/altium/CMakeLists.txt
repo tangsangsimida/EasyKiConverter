@@ -13,6 +13,8 @@ target_sources(EasyKiConverterAltium
         # 写入器
         writers/AltiumSchFontRegistry.h
         writers/AltiumSchFontRegistry.cpp
+        writers/AltiumSchImageStorageEncoder.h
+        writers/AltiumSchImageStorageEncoder.cpp
         writers/AltiumSchLibWriter.h
         writers/AltiumSchLibWriter.cpp
         writers/AltiumPcbLibWriter.h
