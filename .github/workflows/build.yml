@@ -332,7 +332,13 @@ jobs:
             # CTest 在 Windows 上可能不转发异常退出测试的标准输出，补充直接运行结果。
             $failedTest = Join-Path $env:GITHUB_WORKSPACE "build\bin\test_temp_file_manager.exe"
             if (Test-Path $failedTest) {
-              & $failedTest -vs
+              $testStdout = Join-Path $env:RUNNER_TEMP "test_temp_file_manager.stdout.log"
+              $testStderr = Join-Path $env:RUNNER_TEMP "test_temp_file_manager.stderr.log"
+              $testProcess = Start-Process -FilePath $failedTest -ArgumentList "-vs" -WorkingDirectory (Get-Location) -Wait -PassThru `
+                -RedirectStandardOutput $testStdout -RedirectStandardError $testStderr
+              Write-Host "test_temp_file_manager.exe exit code: $($testProcess.ExitCode)"
+              if (Test-Path $testStdout) { Get-Content $testStdout }
+              if (Test-Path $testStderr) { Get-Content $testStderr }
             }
             exit $ctestExitCode
           }
