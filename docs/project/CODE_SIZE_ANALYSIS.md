@@ -1,6 +1,6 @@
 # 代码文件规模分析报告
 
-> 分析日期：2026-07-17 | 工具：`/tmp/analyze_code_size.py`
+> 分析日期：2026-09-17 | 工具：`python3 tools/python/analyze_project.py`
 
 ## 概述
 
@@ -8,14 +8,13 @@
 
 | 类型 | 文件数 | 过长 | 偏长 | 健康率 |
 |------|--------|------|------|--------|
-| 头文件 (.h) | 132 | 3 (2%) | 8 (6%) | 92% |
-| 源文件 (.cpp) | 143 | 3 (2%) | 31 (22%) | 76% |
-| QML 文件 | 52 | 7 (13%) | 12 (23%) | 63% |
-| Python 脚本 | 12 | 3 (25%) | 5 (42%) | 33% |
-| CMake 文件 | 21 | 2 (10%) | 2 (10%) | 81% |
-| **合计** | **360** | **18** | **29** | -- |
+| 产品源码与资源 | 379 | 55 | 34 | -- |
+| Python 工具 | 13 | 5 | 4 | -- |
+| **合计** | **392** | **60** | **38** | -- |
 
-阈值：头文件 warn=300/fail=500，源文件 warn=500/fail=1000，QML warn=300/fail=500，Python warn=500/fail=800，CMake warn=200/fail=400。
+当前统计工具按文件总行数使用统一阈值：高风险 >500 行，中风险 300-500 行，低风险 200-300 行。类型分项和代码/注释行数需要额外脚本才能精确拆分，因此本报告不再保留旧的推算健康率。
+
+当前基线：`src` 319 个文件、73,529 行；`tests` 58 个文件、18,500 行；翻译资源 2 个文件、3,303 行；`tools/python` 13 个文件、6,642 行。项目工具的 `--all` 统计覆盖产品源码、测试和翻译资源，工具目录单独统计后合计 392 个文件、101,974 行。
 
 ---
 
@@ -54,9 +53,9 @@
 
 | 文件 | 总行数 | 代码行 | 注释行 | 问题分析 |
 |------|--------|--------|--------|---------|
-| `src/services/ComponentCacheService.cpp` | 1,509 | 1,181 | 118 | 项目最长文件，缓存读写/过期/迁移逻辑全集中 |
+| `src/services/ComponentCacheService.cpp` | 1,852 | -- | -- | 项目最长生产服务文件，缓存读写/过期/迁移逻辑全集中 |
 | `src/ui/viewmodels/ComponentListViewModel.cpp` | 1,385 | 1,082 | 109 | ViewModel 职责过多：列表管理+搜索+选择+批量操作 |
-| `src/services/ComponentService.cpp` | 1,184 | 902 | 117 | 数据获取+解析+缓存+错误处理全在一个类 |
+| `src/services/ComponentService.cpp` | 1,361 | -- | -- | 数据获取+解析+缓存+错误处理全在一个类 |
 
 ### 偏长（500-1000 行，按行数排序）
 
@@ -66,19 +65,19 @@
 | `src/services/export/ParallelExportService.cpp` | 946 | 并行导出协调 |
 | `src/main.cpp` | 857 | 入口文件混入了 CLI/GUI 切换逻辑 |
 | `src/workers/WriteWorker.cpp` | 841 | 文件写入工作线程 |
-| `src/core/altium/writers/AltiumPcbLibWriter.cpp` | 757 | PcbLib 二进制写入 |
+| `src/core/altium/writers/AltiumPcbLibWriter.cpp` | 1,193 | PcbLib 二进制写入 |
 | `src/models/SymbolDataSerializer.cpp` | 728 | IR 重构后自然解决 |
-| `src/services/export/TempFileManager.cpp` | 714 | 临时文件管理 |
+| `src/services/export/TempFileManager.cpp` | 804 | 临时文件管理 |
 | `src/core/kicad/SymbolGraphicsGenerator.cpp` | 691 | KiCad 符号图形生成 |
 | `src/core/kicad/ExporterSymbol.cpp` | 686 | KiCad 符号导出 |
 | `src/core/kicad/Exporter3DModel.cpp` | 684 | 3D 模型导出 |
 | `src/models/FootprintDataSerializer.cpp` | 677 | IR 重构后自然解决 |
 | `src/core/kicad/FootprintGraphicsGenerator.cpp` | 664 | KiCad 封装图形生成 |
 | `src/ui/viewmodels/ExportSettingsViewModel.cpp` | 622 | 导出设置 ViewModel |
-| `src/core/altium/compound/OLECompoundWriter.cpp` | 609 | OLE 二进制写入 |
+| `src/core/altium/compound/OLECompoundWriter.cpp` | 918 | OLE 二进制写入 |
 | `src/core/network/AsyncNetworkRequest.cpp` | 595 | 异步网络请求 |
-| `src/services/export/FootprintExportStage.cpp` | 569 | 封装导出阶段 |
-| 另有 15 个文件在 500-569 行之间 | -- | -- |
+| `src/services/export/FootprintExportStage.cpp` | 758 | 封装导出阶段 |
+| 其余高风险文件 | -- | 请以 `analyze_project.py --all --json` 的当前输出为准 |
 
 ### 处理建议
 
@@ -87,13 +86,13 @@
 - `SymbolData.h` 相关的模型文件 -- 拆分为 IR + Importer
 
 **需要独立拆分的**：
-- `ComponentCacheService.cpp`（1,509 行）：拆分为 `CacheReader` / `CacheWriter` / `CacheMigration` 三个子类
+- `ComponentCacheService.cpp`（1,852 行）：拆分为 `CacheReader` / `CacheWriter` / `CacheMigration` 三个子类
 - `ComponentListViewModel.cpp`（1,385 行）：提取 `ComponentSearchManager`、`ComponentSelectionManager` 等子管理器
-- `ComponentService.cpp`（1,184 行）：提取 `ComponentFetcher`、`ComponentParser` 等
+- `ComponentService.cpp`（1,361 行）：提取 `ComponentFetcher`、`ComponentParser` 等
 - `main.cpp`（857 行）：CLI 入口逻辑已迁移到 `CliConverter`，剩余 GUI 初始化可提取为 `ApplicationSetup` 类
 
 **可接受但需关注的**（导出器和写入器）：
-- `AltiumPcbLibWriter.cpp`（757 行）：二进制格式写入天然较长，可按原语类型拆分方法但收益有限
+- `AltiumPcbLibWriter.cpp`（1,193 行）：二进制格式写入天然较长，可按原语类型拆分方法但收益有限
 - KiCad 导出器系列（各 660-690 行）：与 IR 重构后的导出器接口调整一并处理
 
 ---
@@ -104,11 +103,11 @@
 
 | 文件 | 总行数 | 代码行 | 问题分析 |
 |------|--------|--------|---------|
-| `src/ui/qml/components/ComponentListCard.qml` | 1,128 | 1,020 | 项目最长 QML，列表+搜索+工具栏+状态管理全在一个文件 |
-| `src/ui/qml/MainWindow.qml` | 900 | 789 | 主窗口布局+状态管理+对话框逻辑 |
+| `src/ui/qml/components/ComponentListCard.qml` | 1,205 | -- | 项目最长 QML，列表+搜索+工具栏+状态管理全在一个文件 |
+| `src/ui/qml/MainWindow.qml` | 911 | -- | 主窗口布局+状态管理+对话框逻辑 |
 | `src/ui/qml/components/deprecated/ExportSettingsCard.qml` | 791 | 752 | 已标记 deprecated，可忽略 |
-| `src/ui/qml/components/SidebarSettingsView.qml` | 636 | 583 | 侧边栏设置面板 |
-| `src/ui/qml/components/ComponentListItem.qml` | 619 | 578 | 单个列表项组件过于复杂 |
+| `src/ui/qml/components/SidebarSettingsView.qml` | 724 | -- | 侧边栏设置面板 |
+| `src/ui/qml/components/ComponentListItem.qml` | 629 | -- | 单个列表项组件过于复杂 |
 | `src/ui/qml/components/SliderDialogBase.qml` | 608 | 530 | 滑动对话框基类 |
 | `src/ui/qml/components/ExportSettingsBaseCard.qml` | 533 | 483 | 导出设置卡片基类 |
 
@@ -124,13 +123,13 @@
 
 ### 处理建议
 
-QML 文件过长是当前最严重的问题区域（健康率仅 63%），建议按以下优先级处理：
+QML 文件过长是当前最严重的问题区域，建议按以下优先级处理：
 
-1. **`ComponentListCard.qml`（1,128 行）**：拆分为 `ComponentToolbar`、`ComponentSearchBar`、`ComponentListView` 等子组件
-2. **`MainWindow.qml`（900 行）**：提取 `MenuBar`、`StatusBar`、`DialogManager` 等独立 QML 组件
-3. **`ComponentListItem.qml`（619 行）**：拆分渲染逻辑为更小的子委托组件
+1. **`ComponentListCard.qml`（1,205 行）**：拆分为 `ComponentToolbar`、`ComponentSearchBar`、`ComponentListView` 等子组件
+2. **`MainWindow.qml`（911 行）**：提取 `MenuBar`、`StatusBar`、`DialogManager` 等独立 QML 组件
+3. **`ComponentListItem.qml`（629 行）**：拆分渲染逻辑为更小的子委托组件
 4. **`ExportSettingsCard.qml`（deprecated，791 行）**：确认无引用后直接删除
-5. **`SidebarSettingsView.qml`（636 行）**：各设置区块提取为独立组件
+5. **`SidebarSettingsView.qml`（724 行）**：各设置区块提取为独立组件
 
 ---
 
@@ -140,9 +139,9 @@ QML 文件过长是当前最严重的问题区域（健康率仅 63%），建议
 
 | 文件 | 行数 | 优先级 |
 |------|------|--------|
-| `tools/python/build_project.py` | 1,081 | 低（开发工具，不影响产品） |
-| `tools/python/manage_version.py` | 997 | 低 |
-| `tools/python/format_code.py` | 890 | 低 |
+| `tools/python/manage_version.py` | 1,190 | 低（开发工具，不影响产品） |
+| `tools/python/build_project.py` | 1,092 | 低 |
+| `tools/python/format_code.py` | 926 | 低 |
 
 工具脚本过长但不影响产品质量，可在空闲时逐步拆分为子模块。
 
@@ -186,11 +185,9 @@ QML 文件过长是当前最严重的问题区域（健康率仅 63%），建议
 
 | 目录 | 总行数 | 文件数 |
 |------|--------|--------|
-| `src/services` | 15,341 | 71 |
-| `src/ui` | 14,708 | 61 |
-| `src/core` | 14,626 | 78 |
-| `tests/unit` | 7,912 | 38 |
-| `tools/python` | 6,262 | 12 |
-| `src/utils` | 6,054 | 44 |
-| `src/models` | 4,578 | 20 |
-| `src/workers` | 2,696 | 12 |
+| `src` | 73,529 | 319 |
+| `tests` | 18,500 | 58 |
+| `resources/translations` | 3,303 | 2 |
+| `tools/python` | 6,642 | 13 |
+
+> 目录级统计以上述项目工具的当前输出为准；旧版按子目录手工估算的数据已移除，避免与总量不一致。
