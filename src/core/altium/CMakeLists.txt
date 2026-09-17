@@ -21,6 +21,8 @@ target_sources(EasyKiConverterAltium
         writers/AltiumSchComponentStorageWriter.cpp
         writers/AltiumSchOwnershipValidator.h
         writers/AltiumSchOwnershipValidator.cpp
+        writers/AltiumSchGeometryValidator.h
+        writers/AltiumSchGeometryValidator.cpp
         writers/AltiumSchLibWriter.h
         writers/AltiumSchLibWriter.cpp
         writers/AltiumSchLibraryHeaderWriter.h
