@@ -4,6 +4,7 @@
 #include "models/ComponentListItemData.h"
 #include "services/ComponentService.h"
 #include "ui/viewmodels/ComponentListIndex.h"
+#include "ui/viewmodels/ComponentListPreviewUpdateBuffer.h"
 #include "ui/viewmodels/ComponentListStateTracker.h"
 #include "ui/viewmodels/PreviewImageEncodeRunnable.h"
 
@@ -202,9 +203,7 @@ private:
     mutable QMutex m_previewImageMutex;  // Protects m_pendingPreviewImageItems
 
     // 缓存预览图批量更新（防抖）
-    QMap<QString, QStringList> m_pendingCachePreviewImages;
-    QMap<QString, QMap<int, QString>> m_pendingIncrementalPreviewImages;
-    mutable QMutex m_cachePreviewMutex;  // Protects m_pendingCachePreviewImages
+    ComponentListPreviewUpdateBuffer m_previewUpdateBuffer;
     QTimer* m_cachePreviewImageTimer;
 
     QThreadPool* m_encodingThreadPool;

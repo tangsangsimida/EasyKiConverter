@@ -120,11 +120,8 @@ ComponentListViewModel::ComponentListViewModel(ComponentService* service, QObjec
                 }
                 image.save(&buffer, "PNG");
 
-                {
-                    QMutexLocker locker(&m_cachePreviewMutex);
-                    m_pendingIncrementalPreviewImages[componentId][imageIndex] =
-                        QString::fromLatin1(byteArray.toBase64().constData());
-                }
+                m_previewUpdateBuffer.addIncremental(
+                    componentId, imageIndex, QString::fromLatin1(byteArray.toBase64().constData()));
                 if (!m_cachePreviewImageTimer->isActive()) {
                     m_cachePreviewImageTimer->start();
                 }
@@ -150,10 +147,7 @@ ComponentListViewModel::ComponentListViewModel(ComponentService* service, QObjec
             this,
             [this](const QString& componentId, const QStringList& encodedImages) {
                 // 收集到待处理列表，使用防抖避免频繁 UI 更新
-                {
-                    QMutexLocker locker(&m_cachePreviewMutex);
-                    m_pendingCachePreviewImages.insert(componentId, encodedImages);
-                }
+                m_previewUpdateBuffer.addComplete(componentId, encodedImages);
                 if (!m_cachePreviewImageTimer->isActive()) {
                     m_cachePreviewImageTimer->start();
                 }
@@ -370,11 +364,7 @@ void ComponentListViewModel::clearComponentList() {
     m_bomImportMode = false;
     m_bomImportPendingUpdates = 0;
     m_pendingPreviewFetchIds.clear();
-    {
-        QMutexLocker locker(&m_cachePreviewMutex);
-        m_pendingCachePreviewImages.clear();
-        m_pendingIncrementalPreviewImages.clear();
-    }
+    m_previewUpdateBuffer.clear();
     // 获取列表大小（需要锁保护）
     int listCount;
     {
@@ -1014,15 +1004,9 @@ void ComponentListViewModel::batchUpdatePreviewImages() {
 /** @brief 批量应用缓存中的预览图编码结果。 */
 void ComponentListViewModel::processCachePreviewImages() {
     // 获取并清空待处理映射（需要锁保护）
-    QMap<QString, QStringList> pending;
-    QMap<QString, QMap<int, QString>> incrementalPending;
-    {
-        QMutexLocker locker(&m_cachePreviewMutex);
-        pending = m_pendingCachePreviewImages;
-        incrementalPending = m_pendingIncrementalPreviewImages;
-        m_pendingCachePreviewImages.clear();
-        m_pendingIncrementalPreviewImages.clear();
-    }
+    const ComponentListPreviewUpdateBuffer::Snapshot snapshot = m_previewUpdateBuffer.take();
+    const auto& pending = snapshot.completeImages;
+    const auto& incrementalPending = snapshot.incrementalImages;
 
     if (pending.isEmpty() && incrementalPending.isEmpty()) {
         return;
