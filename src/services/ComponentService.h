@@ -27,6 +27,7 @@ namespace EasyKiConverter {
 struct CadFetchTaskResult;
 class ComponentParallelFetchCoordinator;
 class ComponentCadFetchCoordinator;
+class ComponentMediaCallbackCoordinator;
 
 /**
  * @brief 元件服务类
@@ -358,6 +359,7 @@ private slots:
 private:
     friend class ComponentParallelFetchCoordinator;
     friend class ComponentCadFetchCoordinator;
+    friend class ComponentMediaCallbackCoordinator;
 
     /**
      * @brief 创建并配置异步元件请求队列。
