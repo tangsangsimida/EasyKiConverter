@@ -22,20 +22,12 @@ ComponentListViewModel::ComponentListViewModel(ComponentService* service, QObjec
     /** @brief 创建验证状态管理器，统一维护列表验证进度和完成通知。 */
     m_validationStateManager = new ValidationStateManager(this);
 
-    m_previewImageUpdateTimer = new QTimer(this);
-    m_previewImageUpdateTimer->setSingleShot(true);
-    m_previewImageUpdateTimer->setInterval(100);
-    connect(m_previewImageUpdateTimer, &QTimer::timeout, this, &ComponentListViewModel::batchUpdatePreviewImages);
-
     // 缓存预览图批量更新定时器。
     // 这里用固定时间窗而不是每次来图都重启，保证预览图可以分批渐进显示。
     m_cachePreviewImageTimer = new QTimer(this);
     m_cachePreviewImageTimer->setSingleShot(true);
     m_cachePreviewImageTimer->setInterval(120);
     connect(m_cachePreviewImageTimer, &QTimer::timeout, this, &ComponentListViewModel::processCachePreviewImages);
-
-    m_encodingThreadPool = new QThreadPool(this);
-    m_encodingThreadPool->setMaxThreadCount(10);
 
     m_batchAddTimer = new QTimer(this);
     m_batchAddTimer->setSingleShot(false);
@@ -158,13 +150,6 @@ ComponentListViewModel::ComponentListViewModel(ComponentService* service, QObjec
 }
 
 ComponentListViewModel::~ComponentListViewModel() {
-    if (m_encodingThreadPool) {
-        m_encodingThreadPool->clear();
-        if (!m_encodingThreadPool->waitForDone(5000)) {
-            qWarning() << "ComponentListViewModel: preview image encoding thread pool did not finish in time";
-        }
-    }
-
     qDeleteAll(m_componentList);
     m_componentList.clear();
 }
@@ -964,40 +949,6 @@ void ComponentListViewModel::handleDatasheetReady(const QString& componentId, co
     }
 }
 
-/** @brief 批量提交待编码的预览图任务。 */
-void ComponentListViewModel::batchUpdatePreviewImages() {
-    // 获取并清空待处理列表（需要锁保护）
-    QList<QPointer<ComponentListItemData>> itemsToProcess;
-    {
-        QMutexLocker locker(&m_previewImageMutex);
-        itemsToProcess = m_pendingPreviewImageItems;
-        m_pendingPreviewImageItems.clear();
-    }
-
-    qDebug() << "Batch updating preview images for" << itemsToProcess.size() << "items";
-
-    if (itemsToProcess.isEmpty()) {
-        return;
-    }
-
-    for (const QPointer<ComponentListItemData>& item : itemsToProcess) {
-        if (item) {
-            QList<QImage> images;
-            for (const QImage& img : item->previewImagesRaw()) {
-                images.append(img);
-            }
-
-            auto callback = [this](const QString& cid, const QStringList& encoded) {
-                QMetaObject::invokeMethod(
-                    this, [this, cid, encoded]() { onPreviewImageEncodingDone(cid, encoded); }, Qt::QueuedConnection);
-            };
-            PreviewImageEncodeRunnable* runnable = new PreviewImageEncodeRunnable(item, images, callback);
-
-            m_encodingThreadPool->start(runnable);
-        }
-    }
-}
-
 /** @brief 批量应用缓存中的预览图编码结果。 */
 void ComponentListViewModel::processCachePreviewImages() {
     // 获取并清空待处理映射（需要锁保护）
@@ -1037,14 +988,6 @@ void ComponentListViewModel::processCachePreviewImages() {
     }
 
     scheduleListUpdate();
-}
-
-/** @brief 将后台编码完成的预览图写回列表项。 */
-void ComponentListViewModel::onPreviewImageEncodingDone(const QString& componentId, const QStringList& encodedImages) {
-    auto item = findItemData(componentId);
-    if (item) {
-        item->setEncodedPreviewImages(encodedImages);
-    }
 }
 
 /** @brief 重新请求指定列表项的基础信息。 */

@@ -7,14 +7,12 @@
 #include "ui/viewmodels/ComponentListPreviewUpdateBuffer.h"
 #include "ui/viewmodels/ComponentListStateTracker.h"
 #include "ui/viewmodels/ComponentValidationQueue.h"
-#include "ui/viewmodels/PreviewImageEncodeRunnable.h"
 
 #include <QAbstractListModel>
 #include <QMutex>
 #include <QPointer>
 #include <QSet>
 #include <QStringList>
-#include <QThreadPool>
 #include <QTimer>
 
 namespace EasyKiConverter {
@@ -167,9 +165,7 @@ private:
     void processNextValidation();
     void onValidationComplete(const QString& componentId);
     void fetchAllPreviewImages();
-    void batchUpdatePreviewImages();
     void processCachePreviewImages();  // 批量处理缓存预览图（防抖）
-    void onPreviewImageEncodingDone(const QString& componentId, const QStringList& encodedImages);
     void scheduleListUpdate();  // 批量模式下的列表更新调度
     void delayedFetchPreviewImages();  // 延迟获取预览图，等待所有验证完成
     void markPreviewFetchCompleted(const QString& componentId);
@@ -198,15 +194,9 @@ private:
     int m_validationCompletedCount = 0;
     int m_validationTotalCount = 0;
 
-    QTimer* m_previewImageUpdateTimer;
-    QList<QPointer<ComponentListItemData>> m_pendingPreviewImageItems;
-    mutable QMutex m_previewImageMutex;  // Protects m_pendingPreviewImageItems
-
     // 缓存预览图批量更新（防抖）
     ComponentListPreviewUpdateBuffer m_previewUpdateBuffer;
     QTimer* m_cachePreviewImageTimer;
-
-    QThreadPool* m_encodingThreadPool;
 
     QStringList m_pendingComponentIds;
     int m_pendingBatchValidationCount = 0;
