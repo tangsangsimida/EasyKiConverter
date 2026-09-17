@@ -6,6 +6,7 @@ add_library(EasyKiConverterServices STATIC
     LcscImageService.cpp
     ComponentService.cpp
     ComponentCacheService.cpp
+    CacheFileLayout.h
     CacheHealthManager.cpp
     CachePruner.cpp
     CadDataLoader.cpp

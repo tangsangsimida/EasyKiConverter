@@ -1,5 +1,6 @@
 #include "ComponentCacheService.h"
 
+#include "CacheFileLayout.h"
 #include "CacheHealthManager.h"
 #include "CachePruner.h"
 #include "ConfigService.h"
@@ -406,7 +407,7 @@ bool ComponentCacheService::isCacheValid(const QString& lcscId) const {
         return false;
     }
 
-    const bool hasCadJson = hasValidCadDataFile(componentCacheDir(lcscId) + "/cad_data.json");
+    const bool hasCadJson = hasValidCadDataFile(CacheFileLayout::cadDataFile(componentCacheDir(lcscId)));
     const bool hasBasicIdentity =
         !metadata.value("lcscId").toString().isEmpty() || !metadata.value("name").toString().isEmpty();
 
@@ -683,7 +684,7 @@ void ComponentCacheService::saveSymbolData(const QString& lcscId, const QByteArr
         if (ensureComponentDir(lcscId).isEmpty()) {
             return;
         }
-        symbolPath = componentCacheDir(lcscId) + "/symbol.json";
+        symbolPath = CacheFileLayout::symbolFile(componentCacheDir(lcscId));
     }
 
     if (writeFileAtomically(symbolPath, data)) {
@@ -708,7 +709,7 @@ QByteArray ComponentCacheService::loadSymbolData(const QString& lcscId) const {
     // L2 文件读取必须与目录迁移串行化。
     QMutexLocker diskLocker(&m_diskWriteMutex);
     // L1未命中，查L2磁盘
-    QString symbolPath = componentCacheDir(lcscId) + "/symbol.json";
+    const QString symbolPath = CacheFileLayout::symbolFile(componentCacheDir(lcscId));
     if (!QFileInfo::exists(symbolPath)) {
         return QByteArray();
     }
@@ -749,7 +750,7 @@ void ComponentCacheService::saveFootprintData(const QString& lcscId,
         if (ensureComponentDir(lcscId).isEmpty()) {
             return;
         }
-        footprintPath = componentCacheDir(lcscId) + "/footprint.json";
+        footprintPath = CacheFileLayout::footprintFile(componentCacheDir(lcscId));
     }
 
     if (writeFileAtomically(footprintPath, data)) {
@@ -774,7 +775,7 @@ QByteArray ComponentCacheService::loadFootprintData(const QString& lcscId) const
     // L2 文件读取必须与目录迁移串行化。
     QMutexLocker diskLocker(&m_diskWriteMutex);
     // L1未命中，查L2磁盘
-    QString footprintPath = componentCacheDir(lcscId) + "/footprint.json";
+    const QString footprintPath = CacheFileLayout::footprintFile(componentCacheDir(lcscId));
     if (!QFileInfo::exists(footprintPath)) {
         return QByteArray();
     }
@@ -815,7 +816,7 @@ void ComponentCacheService::saveCadDataJson(const QString& lcscId,
         if (ensureComponentDir(lcscId).isEmpty()) {
             return;
         }
-        cadDataPath = componentCacheDir(lcscId) + "/cad_data.json";
+        cadDataPath = CacheFileLayout::cadDataFile(componentCacheDir(lcscId));
     }
 
     if (writeFileAtomically(cadDataPath, cadData)) {
@@ -830,7 +831,7 @@ void ComponentCacheService::saveCadDataJson(const QString& lcscId,
 QByteArray ComponentCacheService::loadCadDataJson(const QString& lcscId) const {
     // CAD 文件读取必须与目录迁移串行化。
     QMutexLocker diskLocker(&m_diskWriteMutex);
-    QString cadDataPath = componentCacheDir(lcscId) + "/cad_data.json";
+    const QString cadDataPath = CacheFileLayout::cadDataFile(componentCacheDir(lcscId));
     if (!QFileInfo::exists(cadDataPath)) {
         return QByteArray();
     }
@@ -857,7 +858,7 @@ bool ComponentCacheService::hasSymbolFootprintCache(const QString& lcscId) const
     {
         QMutexLocker locker(&m_mutex);
         if (m_memoryCache.contains(metadataKey)) {
-            const QString cadDataPath = componentCacheDir(lcscId) + "/cad_data.json";
+            const QString cadDataPath = CacheFileLayout::cadDataFile(componentCacheDir(lcscId));
             const bool exists = hasValidCadDataFile(cadDataPath);
             LOG_DEBUG(LogModule::Core,
                       "hasSymbolFootprintCache: memory hit for {}, cad_data.json exists: {}",
@@ -868,7 +869,7 @@ bool ComponentCacheService::hasSymbolFootprintCache(const QString& lcscId) const
     }
 
     // 内存缓存未命中时直接校验磁盘中的 CAD JSON。
-    const QString cadDataPath = componentCacheDir(lcscId) + "/cad_data.json";
+    const QString cadDataPath = CacheFileLayout::cadDataFile(componentCacheDir(lcscId));
     if (!hasValidCadDataFile(cadDataPath)) {
         LOG_DEBUG(LogModule::Core, "hasSymbolFootprintCache: no cad_data.json for {}", lcscId);
         return false;
@@ -1802,7 +1803,7 @@ QString ComponentCacheService::metadataPath(const QString& lcscId) const {
     if (dir.isEmpty()) {
         return QString();
     }
-    return dir + "/component.json";
+    return CacheFileLayout::metadataFile(dir);
 }
 
 // 构造元器件预览图文件路径。
@@ -1811,7 +1812,7 @@ QString ComponentCacheService::previewImagePath(const QString& lcscId, int index
     if (dir.isEmpty()) {
         return QString();
     }
-    return dir + "/preview_" + QString::number(index) + ".jpg";
+    return CacheFileLayout::previewImageFile(dir, index);
 }
 
 // 构造元器件数据手册基础路径。
@@ -1820,7 +1821,7 @@ QString ComponentCacheService::datasheetPath(const QString& lcscId) const {
     if (dir.isEmpty()) {
         return QString();
     }
-    return dir + "/datasheet";
+    return CacheFileLayout::datasheetBase(dir);
 }
 
 // 根据经过校验的模型标识构造三维模型缓存路径。
@@ -1838,7 +1839,8 @@ QString ComponentCacheService::model3DPath(const QString& uuid, const QString& e
         qWarning() << "model3DPath: invalid extension, rejecting:" << extension;
         return QString();
     }
-    return cacheDir() + "/model3d/" + uuid + "." + normalizedExtension;
+    return CacheFileLayout::model3DFile(
+        QDir(cacheDir()).filePath(QStringLiteral("model3d")), uuid, normalizedExtension);
 }
 
 }  // namespace EasyKiConverter
