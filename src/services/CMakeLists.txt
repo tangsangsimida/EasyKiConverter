@@ -10,6 +10,8 @@ add_library(EasyKiConverterServices STATIC
     ComponentCacheCadDataWriter.h
     ComponentCachePreviewImageWriter.cpp
     ComponentCachePreviewImageWriter.h
+    ComponentCacheQuotaEnforcer.cpp
+    ComponentCacheQuotaEnforcer.h
     CacheFileLayout.h
     CacheDirectoryMigrator.cpp
     CacheDirectoryMigrator.h

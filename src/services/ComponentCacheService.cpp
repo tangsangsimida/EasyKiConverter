@@ -11,6 +11,7 @@
 #include "ComponentCacheCadDataWriter.h"
 #include "ComponentCacheMetadataWriter.h"
 #include "ComponentCachePreviewImageWriter.h"
+#include "ComponentCacheQuotaEnforcer.h"
 #include "ComponentCacheWritePolicy.h"
 #include "ConfigService.h"
 #include "Model3DCacheFileStore.h"
@@ -1063,27 +1064,8 @@ int ComponentCacheService::diskCacheLimit() const {
 
 // 按冷却策略执行二级磁盘缓存容量限制。
 void ComponentCacheService::enforceDiskCacheLimit(bool bypassCooldown) {
-    // 冷却机制：避免批量保存时频繁扫描目录（每次扫描开销较大）
-    constexpr qint64 kCooldownMs = 3000;
-    QString cacheDir;
-    qint64 targetSizeBytes = 0;
-    {
-        QMutexLocker locker(&m_mutex);
-        if (!bypassCooldown && m_lastEnforceTimer.elapsed() < kCooldownMs) {
-            return;
-        }
-        cacheDir = this->cacheDir();
-        targetSizeBytes = static_cast<qint64>(m_diskCacheLimitMB) * 1024 * 1024;
-        m_lastEnforceTimer.restart();
-    }
-
-    if (targetSizeBytes <= 0 || cacheDir.isEmpty()) {
-        return;
-    }
-
-    CachePruner pruner(cacheDir);
-    const qint64 newSize = pruner.pruneTo(targetSizeBytes);
-    emit cacheSizeChanged(newSize);
+    ComponentCacheQuotaEnforcer quotaEnforcer(*this);
+    quotaEnforcer.enforce(bypassCooldown);
 }
 
 // 从二级磁盘缓存读取元器件元数据。

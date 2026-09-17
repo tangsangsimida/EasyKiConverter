@@ -499,6 +499,7 @@ private:
     friend class ComponentCacheCadDataWriter;
     friend class ComponentCacheMetadataWriter;
     friend class ComponentCachePreviewImageWriter;
+    friend class ComponentCacheQuotaEnforcer;
 
     /**
      * @brief 私有构造函数（单例模式）
