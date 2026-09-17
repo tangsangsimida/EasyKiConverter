@@ -153,7 +153,6 @@ private slots:
     void handleDatasheetReady(const QString& componentId, const QByteArray& datasheetData);
 
 private:
-    static bool isNonRetryableValidationError(const QString& error);
     bool componentExists(const QString& componentId) const;
     bool validateComponentId(const QString& componentId) const;
     QStringList extractComponentIdFromText(const QString& text) const;

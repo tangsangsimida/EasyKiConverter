@@ -1,6 +1,7 @@
 #include "ComponentListViewModel.h"
 
 #include "services/ConfigService.h"
+#include "ui/viewmodels/ComponentValidationErrorPolicy.h"
 #include "ui/viewmodels/ValidationStateManager.h"
 
 #include <QClipboard>
@@ -152,14 +153,6 @@ ComponentListViewModel::ComponentListViewModel(ComponentService* service, QObjec
 ComponentListViewModel::~ComponentListViewModel() {
     qDeleteAll(m_componentList);
     m_componentList.clear();
-}
-
-/** @brief 判断验证错误是否不应自动重试。 */
-bool ComponentListViewModel::isNonRetryableValidationError(const QString& error) {
-    return error.contains("HTTP 404", Qt::CaseInsensitive) || error.contains("404 Not Found", Qt::CaseInsensitive) ||
-           error.contains("component not found", Qt::CaseInsensitive) ||
-           error.contains("元器件不存在", Qt::CaseInsensitive) || error.contains("[NO_RETRY]", Qt::CaseInsensitive) ||
-           error.contains("No result", Qt::CaseInsensitive);
 }
 
 /** @brief 返回当前元件列表的行数。 */
@@ -829,31 +822,15 @@ void ComponentListViewModel::handleFetchError(const QString& componentId, const 
             // 组件尚未验证通过，说明 CAD 数据获取失败或还未完成
             // 判断是否是 CAD 数据获取失败
             // 扩大判断范围：包括网络错误和 HTTP 错误，因为这些也可能导致 CAD 数据获取失败
-            bool isCadDataFailure =
-                error.contains("CAD data") || error.contains("Symbol data") || error.contains("Footprint data") ||
-                error.contains("Empty CAD") || error.contains("parse.*EasyEDA") ||
-                error.contains("No result", Qt::CaseInsensitive) ||
-                // API 业务层错误
-                error.contains("API returned success=false", Qt::CaseInsensitive) ||
-                error.contains("API response missing result field", Qt::CaseInsensitive) ||
-                // 网络相关错误（CAD 数据获取也可能触发这些）
-                error.contains("403") || error.contains("404") || error.contains("timeout", Qt::CaseInsensitive) ||
-                error.contains("access denied", Qt::CaseInsensitive) ||
-                error.contains("forbidden", Qt::CaseInsensitive) || error.contains("not found", Qt::CaseInsensitive) ||
-                error.contains("connection closed", Qt::CaseInsensitive) ||
-                error.contains("operation canceled", Qt::CaseInsensitive) ||
-                error.contains("Request cancelled", Qt::CaseInsensitive) ||
-                error.contains("network error", Qt::CaseInsensitive) ||
-                error.contains("fetch error", Qt::CaseInsensitive);
+            const bool isCadDataFailure = ComponentValidationErrorPolicy::isCadDataFailure(error);
 
             if (isCadDataFailure) {
                 // CAD 数据获取失败，标记为验证失败
                 item->setValid(false);
                 item->setValidationPhase("failed");
-                const bool nonRetryable = ComponentListViewModel::isNonRetryableValidationError(error);
+                const bool nonRetryable = ComponentValidationErrorPolicy::isNonRetryable(error);
                 item->setRetryable(!nonRetryable);
-                if (error.contains("No result", Qt::CaseInsensitive) ||
-                    error.contains("not found", Qt::CaseInsensitive) || error.contains("404", Qt::CaseInsensitive)) {
+                if (ComponentValidationErrorPolicy::isNotFound(error)) {
                     item->setErrorMessage(tr("元器件不存在（404）"));
                 } else if (nonRetryable) {
                     item->setErrorMessage(error);
@@ -866,16 +843,19 @@ void ComponentListViewModel::handleFetchError(const QString& componentId, const 
             } else {
                 // 预览图获取失败，保持验证状态（可能还未验证完成）
                 // 只更新错误消息，不改变验证状态
-                if (error.contains("Request timeout", Qt::CaseInsensitive) ||
-                    error.contains("timeout", Qt::CaseInsensitive)) {
-                    item->setErrorMessage(tr("预览图获取超时（网络不稳定）"));
-                } else if (error.contains("No result", Qt::CaseInsensitive) || error.contains("404") ||
-                           error.contains("not found", Qt::CaseInsensitive)) {
-                    item->setErrorMessage(tr("预览图不存在"));
-                } else if (error.contains("403")) {
-                    item->setErrorMessage(tr("预览图获取被拒绝"));
-                } else {
-                    item->setErrorMessage(tr("预览图获取失败"));
+                switch (ComponentValidationErrorPolicy::classifyPreviewError(error)) {
+                    case ComponentValidationErrorPolicy::PreviewErrorKind::Timeout:
+                        item->setErrorMessage(tr("预览图获取超时（网络不稳定）"));
+                        break;
+                    case ComponentValidationErrorPolicy::PreviewErrorKind::NotFound:
+                        item->setErrorMessage(tr("预览图不存在"));
+                        break;
+                    case ComponentValidationErrorPolicy::PreviewErrorKind::Forbidden:
+                        item->setErrorMessage(tr("预览图获取被拒绝"));
+                        break;
+                    case ComponentValidationErrorPolicy::PreviewErrorKind::Other:
+                        item->setErrorMessage(tr("预览图获取失败"));
+                        break;
                 }
             }
         } else {

@@ -1,3 +1,4 @@
+#include "ui/viewmodels/ComponentValidationErrorPolicy.h"
 #include "ui/viewmodels/ComponentValidationQueue.h"
 #include "ui/viewmodels/ValidationStateManager.h"
 
@@ -156,6 +157,19 @@ private slots:
         queue.remove(QStringLiteral("C12346"));
         QVERIFY(queue.isEmpty());
         QVERIFY(!queue.hasInFlight());
+    }
+
+    // 验证错误策略能区分 CAD 失败、不可重试错误和预览图显示分类。
+    void testComponentValidationErrorPolicyClassifiesErrors() {
+        QVERIFY(ComponentValidationErrorPolicy::isCadDataFailure(QStringLiteral("HTTP 403 from CAD data API")));
+        QVERIFY(ComponentValidationErrorPolicy::isNonRetryable(QStringLiteral("HTTP 404 Not Found")));
+        QVERIFY(ComponentValidationErrorPolicy::isNotFound(QStringLiteral("Preview image not found")));
+        QCOMPARE(ComponentValidationErrorPolicy::classifyPreviewError(QStringLiteral("Request timeout")),
+                 ComponentValidationErrorPolicy::PreviewErrorKind::Timeout);
+        QCOMPARE(ComponentValidationErrorPolicy::classifyPreviewError(QStringLiteral("403 Forbidden")),
+                 ComponentValidationErrorPolicy::PreviewErrorKind::Forbidden);
+        QCOMPARE(ComponentValidationErrorPolicy::classifyPreviewError(QStringLiteral("image not found")),
+                 ComponentValidationErrorPolicy::PreviewErrorKind::NotFound);
     }
 };
 
