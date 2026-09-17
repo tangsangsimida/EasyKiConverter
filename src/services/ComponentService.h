@@ -2,6 +2,7 @@
 #define COMPONENTSERVICE_H
 
 #include "ComponentCacheService.h"
+#include "ComponentDataMemoryStore.h"
 #include "LcscImageService.h"
 #include "ParallelFetchContext.h"
 #include "models/ComponentData.h"
@@ -447,11 +448,10 @@ private:
 
     // 添加互斥锁保护并发访问
     mutable QMutex m_fetchingComponentsMutex;
-    mutable QMutex m_componentCacheMutex;
     mutable QMutex m_currentIdMutex;  // 保护 m_currentComponentId 的并发访问
 
-    // 数据缓存
-    QMap<QString, ComponentData> m_componentCache;
+    // 数据缓存由独立存储类负责容器和并发保护。
+    ComponentDataMemoryStore m_componentCache;
 
     // 当前正在获取的元件数据
     struct FetchingComponent {

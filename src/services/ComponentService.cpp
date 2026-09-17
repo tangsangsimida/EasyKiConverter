@@ -617,10 +617,7 @@ void ComponentService::handleImageReady(const QString& componentId, const QByteA
         if (ComponentCacheService::instance()->currentGeneration() != gen) {
             return;
         }
-        QMutexLocker cacheLocker(&m_componentCacheMutex);
-        if (m_componentCache.contains(normalizedId)) {
-            m_componentCache[normalizedId] = updatedData;
-        }
+        m_componentCache.replaceIfPresent(normalizedId, updatedData);
     }
 }
 
@@ -798,9 +795,7 @@ void ComponentService::handleDatasheetReady(const QString& componentId, const QB
         }
 
         if (hasDataCopy) {
-            QMutexLocker cacheLocker(&m_componentCacheMutex);
-            if (m_componentCache.contains(normalizedId)) {
-                m_componentCache[normalizedId] = dataCopy;
+            if (m_componentCache.replaceIfPresent(normalizedId, dataCopy)) {
                 qDebug() << "ComponentService: Updated cache with datasheet data for" << normalizedId;
             }
         }
@@ -1162,44 +1157,25 @@ QStringList ComponentService::parseBomFile(const QString& filePath) {
 /** @brief 从内存缓存中读取元器件数据。 */
 ComponentData ComponentService::getComponentData(const QString& componentId) const {
     const QString normalizedId = componentId.toUpper();
-    QMutexLocker locker(&m_componentCacheMutex);
-    return m_componentCache.value(normalizedId, ComponentData());
+    return m_componentCache.value(normalizedId);
 }
 
 /** @brief 更新内存中的元器件缓存。 */
 void ComponentService::updateComponentCache(const QString& componentId, const ComponentData& data) {
     const QString normalizedId = componentId.toUpper();
-    QMutexLocker locker(&m_componentCacheMutex);
-    m_componentCache[normalizedId] = data;
+    m_componentCache.set(normalizedId, data);
     qDebug() << "ComponentService: Updated cache for" << normalizedId;
 }
 
 /** @brief 更新缓存元器件的描述字段。 */
 void ComponentService::updateComponentDescription(const QString& componentId, const QString& description) {
     const QString normalizedId = componentId.toUpper();
-    QMutexLocker locker(&m_componentCacheMutex);
-    auto it = m_componentCache.find(normalizedId);
-    if (it == m_componentCache.end()) {
-        return;
-    }
-    if (it->symbolData()) {
-        SymbolInfo info = it->symbolData()->info();
-        info.description = description;
-        it->symbolData()->setInfo(info);
-    }
-    if (it->footprintData()) {
-        FootprintInfo info = it->footprintData()->info();
-        info.description = description;
-        it->footprintData()->setInfo(info);
-    }
+    m_componentCache.updateDescription(normalizedId, description);
 }
 
 /** @brief 清理元器件及其预览图缓存。 */
 void ComponentService::clearCache() {
-    {
-        QMutexLocker locker(&m_componentCacheMutex);
-        m_componentCache.clear();
-    }
+    m_componentCache.clear();
 
     // 清空 LCSC 图片服务的缓存
     if (m_imageService) {
@@ -1287,13 +1263,7 @@ void ComponentService::emitFetchErrorAndClearState(const QString& componentId,
         }
         m_fetchingComponents.erase(it);
     }
-    {
-        QMutexLocker locker(&m_componentCacheMutex);
-        const auto it = m_componentCache.find(componentId);
-        if (it != m_componentCache.end() && !it.value().isValid()) {
-            m_componentCache.erase(it);
-        }
-    }
+    m_componentCache.removeIfInvalid(componentId.toUpper());
 
     handleParallelFetchError(componentId, error);
 
