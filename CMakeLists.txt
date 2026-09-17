@@ -223,6 +223,7 @@ set(QML_FILES
     src/ui/qml/components/ComponentInputCard.qml
     src/ui/qml/components/BomImportCard.qml
     src/ui/qml/components/ComponentListCard.qml
+    src/ui/qml/components/ComponentToolbar.qml
     src/ui/qml/components/ComponentPreviewPopup.qml
     src/ui/qml/components/ExportSettingsBaseCard.qml
     src/ui/qml/components/KiCadSettingsCard.qml
