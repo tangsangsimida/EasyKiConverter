@@ -19,6 +19,7 @@
 namespace EasyKiConverter {
 
 class ValidationStateManager;
+class ComponentValidationCoordinator;
 
 // 元件列表视图模型
 class ComponentListViewModel : public QAbstractListModel {
@@ -154,6 +155,8 @@ private slots:
     void handleDatasheetReady(const QString& componentId, const QByteArray& datasheetData);
 
 private:
+    friend class ComponentValidationCoordinator;
+
     /**
      * @brief 创建批处理、预览和延迟调度所需的定时器。
      */

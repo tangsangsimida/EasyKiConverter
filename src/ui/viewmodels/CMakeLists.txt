@@ -12,6 +12,8 @@ add_library(EasyKiConverterViewModels STATIC
     ComponentListItemUpdateBuffer.h
     ComponentValidationQueue.cpp
     ComponentValidationQueue.h
+    ComponentValidationCoordinator.cpp
+    ComponentValidationCoordinator.h
     ComponentValidationErrorPolicy.cpp
     ComponentValidationErrorPolicy.h
     ExportSettingsViewModel.cpp

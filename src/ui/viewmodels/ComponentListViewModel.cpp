@@ -1,5 +1,6 @@
 #include "ComponentListViewModel.h"
 
+#include "ComponentValidationCoordinator.h"
 #include "services/ConfigService.h"
 #include "ui/viewmodels/ComponentValidationErrorPolicy.h"
 #include "ui/viewmodels/ValidationStateManager.h"
@@ -515,90 +516,17 @@ void ComponentListViewModel::processNextBatchAdd() {
 
 /** @brief 启动验证队列中的并发元件请求。 */
 void ComponentListViewModel::startValidationQueue() {
-    const int CONCURRENT_WORKERS = ConfigService::instance()->getValidationConcurrentCount();
-
-    // 检查需要添加到队列的新组件
-    for (auto item : m_componentList) {
-        // 只添加正在验证的组件，排除已验证完成或已验证失败的组件
-        // 注意：isFetching() 在 handleCadDataReady 时立即设为 false，
-        // 但 onValidationComplete 通过 singleShot(0) 延迟调用，
-        // 所以需要额外检查 isValid() 来排除已完成的组件
-        if (item->isFetching() && !item->isValid()) {
-            QString componentId = item->componentId();
-            // 检查是否已经在队列中或正在处理中（飞行中），避免重复添加
-            m_validationQueue.enqueue(componentId);
-        }
-    }
-
-    // 如果没有待验证的组件，直接返回
-    if (m_validationQueue.isEmpty()) {
-        return;
-    }
-
-    // 如果 m_validationTotalCount 为 0，说明是首次启动，设置总数
-    // 否则说明是延续之前的处理，不需要额外设置（已在 pending 中）
-    if (m_validationTotalCount == 0) {
-        m_validationTotalCount = m_validationQueue.size();
-    }
-
-    // 启动并发验证 worker（如果当前没有活跃的 worker）
-    int initialCount = qMin(CONCURRENT_WORKERS, m_validationQueue.size());
-    for (int i = 0; i < initialCount; ++i) {
-        const QString componentId = m_validationQueue.takeNext();
-        m_service->fetchComponentData(componentId, false);
-        m_validationPendingCount++;
-    }
+    ComponentValidationCoordinator::start(*this);
 }
 
 /** @brief 从验证队列中调度下一个元件请求。 */
 void ComponentListViewModel::processNextValidation() {
-    if (m_validationQueue.isEmpty()) {
-        return;
-    }
-
-    const QString componentId = m_validationQueue.takeNext();
-    m_service->fetchComponentData(componentId, false);
-    m_validationPendingCount++;
+    ComponentValidationCoordinator::processNext(*this);
 }
 
 /** @brief 处理单个元件验证完成并推进验证队列。 */
 void ComponentListViewModel::onValidationComplete(const QString& componentId) {
-    m_validationCompletedCount++;
-    m_validationQueue.complete(componentId);
-
-    if (m_validationPendingCount > 0) {
-        m_validationPendingCount--;
-    }
-
-    // BOM 导入完成后，跳过 scheduleListUpdate 和 startValidationQueue
-    // 避免频繁调用导致 O(n²) 复杂度和 UI 阻塞
-    // 验证流程已在 processNextBatchAdd -> startValidationQueue 中启动
-    if (m_bomImportComplete) {
-        // BOM 导入已完成，只处理队列中的下一个验证
-        if (!m_validationQueue.isEmpty()) {
-            processNextValidation();
-        } else if (m_validationPendingCount == 0) {
-            m_bomImportComplete = false;
-        }
-        return;
-    }
-
-    // BOM 导入模式下，跳过频繁的 scheduleListUpdate，避免 UI 阻塞
-    // 只在最后所有验证完成时再更新 UI
-    if (!m_bomImportMode) {
-        scheduleListUpdate();
-    } else {
-        m_bomImportPendingUpdates++;
-    }
-
-    if (!m_validationQueue.isEmpty()) {
-        processNextValidation();
-    } else {
-        // 队列为空，尝试补充新组件（可能在验证期间新添加的）
-        startValidationQueue();
-        // 预览图获取现在由 ValidationStateManager::validationCompleted 信号触发
-        // 不再使用计数器判断，因为计数器存在溢出问题
-    }
+    ComponentValidationCoordinator::complete(*this, componentId);
 }
 
 /** @brief 从系统剪贴板提取并批量添加元件编号。 */
