@@ -3,6 +3,7 @@
 
 #include "models/ComponentListItemData.h"
 #include "services/ComponentService.h"
+#include "ui/viewmodels/ComponentListIndex.h"
 #include "ui/viewmodels/ComponentListStateTracker.h"
 #include "ui/viewmodels/PreviewImageEncodeRunnable.h"
 
@@ -45,19 +46,23 @@ public:
     QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
     QHash<int, QByteArray> roleNames() const override;
 
+    /** @brief 返回当前列表中的元件数量。 */
     int componentCount() const {
         QMutexLocker locker(&m_listMutex);
         return m_componentList.count();
     }
 
+    /** @brief 返回当前选择的 BOM 文件路径。 */
     QString bomFilePath() const {
         return m_bomFilePath;
     }
 
+    /** @brief 返回最近一次 BOM 解析结果。 */
     QString bomResult() const {
         return m_bomResult;
     }
 
+    /** @brief 返回是否存在可重试的失败元件。 */
     bool hasInvalidComponents() const {
         return m_hasInvalidComponents;
     }
@@ -78,6 +83,7 @@ public slots:
     void fetchComponentData(const QString& componentId, bool fetch3DModel = true);
     void setOutputPath(const QString& path);
 
+    /** @brief 返回当前导出输出目录。 */
     QString outputPath() const {
         return m_outputPath;
     }
@@ -98,14 +104,17 @@ public slots:
     int validCount() const;
     int invalidCount() const;
 
+    /** @brief 返回列表是否正在滚动。 */
     bool isScrolling() const {
         return m_isScrolling;
     }
 
+    /** @brief 返回验证完成提示是否可见。 */
     bool validationReadyHint() const {
         return m_validationReadyHint;
     }
 
+    /** @brief 返回预览图完成提示是否可见。 */
     bool previewReadyHint() const {
         return m_previewReadyHint;
     }
@@ -167,8 +176,8 @@ private:
 private:
     ComponentService* m_service;
     QList<ComponentListItemData*> m_componentList;
-    QHash<QString, int> m_componentIdIndex;
-    mutable QMutex m_listMutex;  // Protects m_componentList and m_componentIdIndex
+    ComponentListIndex m_componentIdIndex;
+    mutable QMutex m_listMutex;  // 保护 m_componentList 和对应索引
     QString m_outputPath;
     QString m_bomFilePath;
     QString m_bomResult;
