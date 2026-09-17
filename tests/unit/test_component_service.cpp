@@ -1,3 +1,4 @@
+#include "services/ComponentDataMemoryStore.h"
 #include "services/ComponentService.h"
 #include "tests/common/TestPaths.hpp"
 
@@ -72,6 +73,32 @@ private slots:
 
         const ComponentData loadedData = service.getComponentData(QStringLiteral("C54330"));
         QCOMPARE(loadedData.name(), QStringLiteral("Case normalized component"));
+    }
+
+    /** @brief 验证独立内存存储可以原子更新符号和封装描述。 */
+    void testComponentMemoryStoreUpdatesDescriptions() {
+        ComponentDataMemoryStore store;
+        ComponentData data;
+        data.setLcscId(QStringLiteral("C54331"));
+
+        const auto symbol = QSharedPointer<SymbolData>::create();
+        SymbolInfo symbolInfo = symbol->info();
+        symbolInfo.description = QStringLiteral("旧符号描述");
+        symbol->setInfo(symbolInfo);
+        data.setSymbolData(symbol);
+
+        const auto footprint = QSharedPointer<FootprintData>::create();
+        FootprintInfo footprintInfo = footprint->info();
+        footprintInfo.description = QStringLiteral("旧封装描述");
+        footprint->setInfo(footprintInfo);
+        data.setFootprintData(footprint);
+
+        store.set(QStringLiteral("C54331"), data);
+        QVERIFY(store.updateDescription(QStringLiteral("C54331"), QStringLiteral("新描述")));
+
+        QCOMPARE(store.value(QStringLiteral("C54331")).symbolData()->info().description, QStringLiteral("新描述"));
+        QCOMPARE(store.value(QStringLiteral("C54331")).footprintData()->info().description, QStringLiteral("新描述"));
+        QVERIFY(!store.updateDescription(QStringLiteral("C99999"), QStringLiteral("不存在")));
     }
 
     /** @brief 验证没有活动请求时不会转发过期的图片回调。 */
