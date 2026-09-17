@@ -16,6 +16,7 @@
 #include "ComponentCacheWritePolicy.h"
 #include "ConfigService.h"
 #include "DatasheetCacheFileStore.h"
+#include "DatasheetDownloadService.h"
 #include "Model3DCacheFileStore.h"
 #include "core/kicad/Exporter3DModel.h"
 #include "core/network/NetworkClient.h"
@@ -600,114 +601,8 @@ QByteArray ComponentCacheService::downloadDatasheet(const QString& lcscId,
                                                     QAtomicInt* cancelled,
                                                     bool weakNetwork,
                                                     uint64_t expectedGeneration) {
-    if (datasheetUrl.isEmpty()) {
-        return QByteArray();
-    }
-    const uint64_t gen = expectedGeneration != 0 ? expectedGeneration : currentGeneration();
-
-    QElapsedTimer timer;
-    timer.start();
-
-    // 确定格式
-    QString ext = datasheetUrl.toLower().contains(".html") ? "html" : "pdf";
-    if (format) {
-        *format = ext;
-    }
-
-    // 缓存目录路径、文件检查和读取必须与目录迁移串行化。
-    {
-        QMutexLocker diskLocker(&m_diskWriteMutex);
-        const QString fullPath = resolveDatasheetPath(lcscId, ext, false);
-        if (QFileInfo::exists(fullPath)) {
-            QFile file(fullPath);
-            if (file.open(QIODevice::ReadOnly)) {
-                const QByteArray cachedData = file.readAll();
-                file.close();
-                const QString cachedFormat =
-                    fullPath.endsWith(".pdf", Qt::CaseInsensitive) ? QStringLiteral("pdf") : QStringLiteral("html");
-                if (CacheDataValidator::isValidDatasheet(cachedData, cachedFormat)) {
-                    LOG_DEBUG(LogModule::Core, "Datasheet loaded from disk cache: {}", fullPath);
-                    if (diag) {
-                        diag->url = datasheetUrl;
-                        diag->statusCode = 200;
-                        diag->errorString = "";
-                        diag->responseContentType.clear();
-                        diag->retryAfter.clear();
-                        diag->rateLimitRemaining.clear();
-                        diag->rateLimitReset.clear();
-                        diag->responseSummary.clear();
-                        diag->retryCount = 0;
-                        diag->latencyMs = timer.elapsed();
-                        diag->wasRateLimited = false;
-                        diag->hasRateLimitHint = false;
-                    }
-                    if (format) {
-                        *format = cachedFormat;
-                    }
-                    return cachedData;
-                }
-                QFile::remove(fullPath);
-            }
-        }
-    }
-
-    // 检查取消标志
-    if (cancelled && cancelled->loadRelaxed()) {
-        LOG_DEBUG(LogModule::Core, "Datasheet download cancelled for {} before start", lcscId);
-        return QByteArray();
-    }
-
-    const RetryPolicy policy = RetryPolicy::fromProfile(RequestProfiles::datasheet(), weakNetwork);
-    const NetworkResult result = NetworkClient::instance().get(QUrl(datasheetUrl), ResourceType::Datasheet, policy);
-
-    QByteArray data;
-    int statusCode = result.statusCode;
-    QString errorString;
-    int retryCount = result.retryCount;
-    bool wasRateLimited = result.diagnostic.wasRateLimited;
-
-    if (cancelled && cancelled->loadRelaxed()) {
-        errorString = "Cancelled";
-    } else if (result.wasCancelled) {
-        errorString = "Cancelled";
-    } else if (result.success) {
-        data = result.data;
-        if (format && ext == "pdf" && data.size() >= 5 && !data.startsWith("%PDF-")) {
-            ext = "html";
-            *format = ext;
-        }
-        if (!CacheDataValidator::isValidDatasheet(data, ext)) {
-            data.clear();
-            errorString = QStringLiteral("Invalid datasheet data");
-        }
-    } else {
-        errorString = result.error;
-    }
-
-    // 更新诊断信息
-    if (diag) {
-        diag->url = datasheetUrl;
-        diag->statusCode = statusCode;
-        diag->errorString = errorString;
-        diag->responseContentType = result.diagnostic.responseContentType;
-        diag->retryAfter = result.diagnostic.retryAfter;
-        diag->rateLimitRemaining = result.diagnostic.rateLimitRemaining;
-        diag->rateLimitReset = result.diagnostic.rateLimitReset;
-        diag->responseSummary = result.diagnostic.responseSummary;
-        diag->retryCount = retryCount;
-        diag->latencyMs = timer.elapsed();
-        diag->wasRateLimited = wasRateLimited;
-        diag->hasRateLimitHint = result.diagnostic.hasRateLimitHint;
-    }
-
-    if (errorString.isEmpty() && !data.isEmpty()) {
-        // 保存到磁盘缓存
-        saveDatasheet(lcscId, data, ext, gen);
-    } else if (!errorString.isEmpty() && errorString != "Cancelled") {
-        LOG_WARN(LogModule::Core, "Datasheet download failed for {}: {}", lcscId, errorString);
-    }
-
-    return data;
+    DatasheetDownloadService downloader(*this);
+    return downloader.download(lcscId, datasheetUrl, format, diag, cancelled, weakNetwork, expectedGeneration);
 }
 
 // 判断指定格式的三维模型文件是否存在且非空。

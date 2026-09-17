@@ -24,6 +24,7 @@ class CacheHealthManager;
 class ComponentCacheMetadataWriter;
 class ComponentCacheCadDataWriter;
 class DatasheetCacheFileStore;
+class DatasheetDownloadService;
 class ComponentCacheMaintenance;
 
 namespace EasyKiConverter {
@@ -498,6 +499,7 @@ private:
     friend class ComponentCachePreviewImageWriter;
     friend class ComponentCacheQuotaEnforcer;
     friend class DatasheetCacheFileStore;
+    friend class DatasheetDownloadService;
     friend class ComponentCacheMaintenance;
 
     /**
