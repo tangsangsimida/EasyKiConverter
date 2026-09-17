@@ -8,13 +8,13 @@
 
 | 类型 | 文件数 | 过长 | 偏长 | 健康率 |
 |------|--------|------|------|--------|
-| 产品源码与资源 | 416 | 55 | 34 | -- |
+| 产品源码与资源 | 417 | 55 | 35 | -- |
 | Python 工具 | 13 | 5 | 4 | -- |
-| **合计** | **429** | **60** | **38** | -- |
+| **合计** | **430** | **60** | **39** | -- |
 
 当前统计工具按文件总行数使用统一阈值：高风险 >500 行，中风险 300-500 行，低风险 200-300 行。类型分项和代码/注释行数需要额外脚本才能精确拆分，因此本报告不再保留旧的推算健康率。
 
-当前基线：`src` 356 个文件、74,899 行；`tests` 58 个文件、18,581 行；翻译资源 2 个文件、3,303 行；`tools/python` 13 个文件、6,642 行。项目工具的 `--all` 统计覆盖产品源码、测试和翻译资源，工具目录单独统计后合计 429 个文件、103,425 行。
+当前基线：`src` 357 个文件、74,927 行；`tests` 58 个文件、18,581 行；翻译资源 2 个文件、3,303 行；`tools/python` 13 个文件、6,642 行。项目工具的 `--all` 统计覆盖产品源码、测试和翻译资源，工具目录单独统计后合计 430 个文件、103,453 行。
 
 ---
 
@@ -54,7 +54,7 @@
 | 文件 | 总行数 | 代码行 | 注释行 | 问题分析 |
 |------|--------|--------|--------|---------|
 | `src/services/ComponentCacheService.cpp` | 1,371 | -- | -- | 缓存读写/过期/迁移逻辑仍集中，已通过辅助职责拆分逐步收敛 |
-| `src/ui/viewmodels/ComponentListViewModel.cpp` | 1,352 | 1,029 | 155 | ViewModel 职责过多：列表管理+搜索+选择+批量操作；预览更新缓冲和验证队列状态已提取 |
+| `src/ui/viewmodels/ComponentListViewModel.cpp` | 1,353 | 1,029 | 155 | ViewModel 职责过多：列表管理+搜索+选择+批量操作；预览更新缓冲和验证队列状态已提取 |
 | `src/services/ComponentService.cpp` | 1,213 | -- | -- | 数据获取+缓存+错误处理仍在服务内，基础信息字段解析和缓存加载任务已提取 |
 
 ### 偏长（500-1000 行，按行数排序）
@@ -62,21 +62,21 @@
 | 文件 | 行数 | 说明 |
 |------|------|------|
 | `src/ui/viewmodels/ExportProgressViewModel.cpp` | 950 | 导出进度管理 |
-| `src/services/export/ParallelExportService.cpp` | 946 | 并行导出协调 |
-| `src/main.cpp` | 857 | 入口文件混入了 CLI/GUI 切换逻辑 |
-| `src/workers/WriteWorker.cpp` | 841 | 文件写入工作线程 |
+| `src/services/export/ParallelExportService.cpp` | 917 | 并行导出协调 |
+| `src/main.cpp` | 859 | 入口文件混入了 CLI/GUI 切换逻辑 |
+| `src/workers/WriteWorker.cpp` | 846 | 文件写入工作线程 |
 | `src/core/altium/writers/AltiumPcbLibWriter.cpp` | 1,193 | PcbLib 二进制写入 |
 | `src/core/altium/writers/AltiumSchLibWriter.cpp` | 2,093 | SchLib 记录写入；字体表和图片 Storage 编码已提取 |
-| `src/models/SymbolDataSerializer.cpp` | 728 | IR 重构后自然解决 |
+| `src/models/SymbolDataSerializer.cpp` | 842 | IR 重构后自然解决 |
 | `src/services/export/TempFileManager.cpp` | 804 | 临时文件管理 |
-| `src/core/kicad/SymbolGraphicsGenerator.cpp` | 691 | KiCad 符号图形生成 |
-| `src/core/kicad/ExporterSymbol.cpp` | 686 | KiCad 符号导出 |
-| `src/core/kicad/Exporter3DModel.cpp` | 684 | 3D 模型导出 |
-| `src/models/FootprintDataSerializer.cpp` | 677 | IR 重构后自然解决 |
-| `src/core/kicad/FootprintGraphicsGenerator.cpp` | 664 | KiCad 封装图形生成 |
-| `src/ui/viewmodels/ExportSettingsViewModel.cpp` | 622 | 导出设置 ViewModel |
+| `src/core/kicad/SymbolGraphicsGenerator.cpp` | 443 | KiCad 符号图形生成 |
+| `src/core/kicad/ExporterSymbol.cpp` | 768 | KiCad 符号导出 |
+| `src/core/kicad/Exporter3DModel.cpp` | 702 | 3D 模型导出 |
+| `src/models/FootprintDataSerializer.cpp` | 697 | IR 重构后自然解决 |
+| `src/core/kicad/FootprintGraphicsGenerator.cpp` | 543 | KiCad 封装图形生成 |
+| `src/ui/viewmodels/ExportSettingsViewModel.cpp` | 685 | 导出设置 ViewModel |
 | `src/core/altium/compound/OLECompoundWriter.cpp` | 918 | OLE 二进制写入 |
-| `src/core/network/AsyncNetworkRequest.cpp` | 595 | 异步网络请求 |
+| `src/core/network/AsyncNetworkRequest.cpp` | 669 | 异步网络请求 |
 | `src/services/export/FootprintExportStage.cpp` | 758 | 封装导出阶段 |
 | 其余高风险文件 | -- | 请以 `analyze_project.py --all --json` 的当前输出为准 |
 
@@ -105,7 +105,8 @@
 
 | 文件 | 总行数 | 代码行 | 问题分析 |
 |------|--------|--------|---------|
-| `src/ui/qml/components/ComponentListCard.qml` | 1,205 | -- | 项目最长 QML，列表+搜索+工具栏+状态管理全在一个文件 |
+| `src/ui/qml/components/ComponentListCard.qml` | 913 | -- | 列表+搜索+工具栏+状态管理仍在一个文件，预览弹窗已提取 |
+| `src/ui/qml/components/ComponentPreviewPopup.qml` | 320 | -- | 独立承载预览图展示、缩略图切换和延迟隐藏 |
 | `src/ui/qml/MainWindow.qml` | 911 | -- | 主窗口布局+状态管理+对话框逻辑 |
 | `src/ui/qml/components/deprecated/ExportSettingsCard.qml` | 791 | 752 | 已标记 deprecated，可忽略 |
 | `src/ui/qml/components/SidebarSettingsView.qml` | 724 | -- | 侧边栏设置面板 |
@@ -127,7 +128,7 @@
 
 QML 文件过长是当前最严重的问题区域，建议按以下优先级处理：
 
-1. **`ComponentListCard.qml`（1,205 行）**：拆分为 `ComponentToolbar`、`ComponentSearchBar`、`ComponentListView` 等子组件
+1. **`ComponentListCard.qml`（913 行）**：已提取预览弹窗，后续继续拆分为 `ComponentToolbar`、`ComponentSearchBar`、`ComponentListView` 等子组件
 2. **`MainWindow.qml`（911 行）**：提取 `MenuBar`、`StatusBar`、`DialogManager` 等独立 QML 组件
 3. **`ComponentListItem.qml`（629 行）**：拆分渲染逻辑为更小的子委托组件
 4. **`ExportSettingsCard.qml`（deprecated，791 行）**：确认无引用后直接删除
@@ -187,7 +188,7 @@ QML 文件过长是当前最严重的问题区域，建议按以下优先级处�
 
 | 目录 | 总行数 | 文件数 |
 |------|--------|--------|
-| `src` | 74,899 | 356 |
+| `src` | 74,927 | 357 |
 | `tests` | 18,581 | 58 |
 | `resources/translations` | 3,303 | 2 |
 | `tools/python` | 6,642 | 13 |
