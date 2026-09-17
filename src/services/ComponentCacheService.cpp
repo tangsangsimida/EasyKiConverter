@@ -48,16 +48,9 @@ bool hasValidCadDataFile(const QString& path) {
 std::unique_ptr<ComponentCacheService> ComponentCacheService::s_instance;
 
 ComponentCacheService::ComponentCacheService(QObject* parent)
-    : QObject(parent)
-    , m_memoryCacheLimitMB(50)
-    , m_diskCacheLimitMB(ConfigService::DEFAULT_DISK_CACHE_LIMIT_MB)
-    , m_memoryCacheSize(0) {
+    : QObject(parent), m_diskCacheLimitMB(ConfigService::DEFAULT_DISK_CACHE_LIMIT_MB), m_memoryCache(50 * 1024 * 1024) {
     m_lastEnforceTimer.start();
     setCacheDir(ConfigService::defaultCacheDir());
-
-    // 初始化L1内存缓存，设置大小限制（50MB = 50 * 1024 * 1024 bytes）
-    // QCache 的 cost 是存储的字节数
-    m_memoryCache.setMaxCost(50 * 1024 * 1024);
 }
 
 ComponentCacheService::~ComponentCacheService() = default;
@@ -111,7 +104,6 @@ void ComponentCacheService::setCacheDir(const QString& cacheDir, bool migrateExi
         if (cacheDirChanged) {
             // L1 数据没有目录归属信息，切换 L2 目录后必须全部失效，避免
             // 同一元件 ID 从旧目录泄漏到新目录。
-            QMutexLocker locker(&m_mutex);
             m_memoryCache.clear();
         }
     }
@@ -217,24 +209,20 @@ bool ComponentCacheService::isCacheValid(const QString& lcscId) const {
 
 // 判断元器件元数据是否存在于一级内存缓存。
 bool ComponentCacheService::hasInMemoryCache(const QString& lcscId) const {
-    QMutexLocker locker(&m_mutex);
-    QString key = makeMemoryKey(lcscId, "metadata");
-    return m_memoryCache.contains(key);
+    return m_memoryCache.contains(makeMemoryKey(lcscId, "metadata"));
 }
 
 // ==================== L1 内存缓存操作 ====================
 
 // 从一级内存缓存读取元器件元数据。
 QJsonObject ComponentCacheService::loadMetadataFromMemory(const QString& lcscId) const {
-    QMutexLocker locker(&m_mutex);
-    QString key = makeMemoryKey(lcscId, "metadata");
-    QByteArray* data = m_memoryCache.object(key);
-    if (!data) {
+    const QByteArray data = m_memoryCache.value(makeMemoryKey(lcscId, "metadata"));
+    if (data.isEmpty()) {
         return QJsonObject();
     }
 
     QJsonParseError error;
-    QJsonDocument doc = QJsonDocument::fromJson(*data, &error);
+    QJsonDocument doc = QJsonDocument::fromJson(data, &error);
     if (error.error != QJsonParseError::NoError) {
         return QJsonObject();
     }
@@ -244,31 +232,16 @@ QJsonObject ComponentCacheService::loadMetadataFromMemory(const QString& lcscId)
 
 // 将元器件元数据写入一级内存缓存。
 void ComponentCacheService::saveMetadataToMemory(const QString& lcscId, const QJsonObject& metadata) {
-    qint64 sizeAfterUpdate = 0;
-    {
-        QMutexLocker locker(&m_mutex);
-
-        QString key = makeMemoryKey(lcscId, "metadata");
-        QJsonDocument doc(metadata);
-        QByteArray* data = new QByteArray(doc.toJson(QJsonDocument::Compact));
-
-        // 直接插入即可，QCache 会自动处理相同 key 的旧数据的删除
-        m_memoryCache.insert(key, data, data->size());
-        sizeAfterUpdate = m_memoryCache.totalCost();
-    }
+    const QJsonDocument document(metadata);
+    const qint64 sizeAfterUpdate =
+        m_memoryCache.insert(makeMemoryKey(lcscId, "metadata"), document.toJson(QJsonDocument::Compact));
     // 锁外发送信号
     emit memoryCacheSizeChanged(sizeAfterUpdate);
 }
 
 // 从一级内存缓存读取符号数据。
 QByteArray ComponentCacheService::loadSymbolDataFromMemory(const QString& lcscId) const {
-    QMutexLocker locker(&m_mutex);
-    QString key = makeMemoryKey(lcscId, "symbol");
-    QByteArray* data = m_memoryCache.object(key);
-    if (data) {
-        return *data;
-    }
-    return QByteArray();
+    return m_memoryCache.value(makeMemoryKey(lcscId, "symbol"));
 }
 
 // 将符号数据写入一级内存缓存。
@@ -277,29 +250,14 @@ void ComponentCacheService::saveSymbolDataToMemory(const QString& lcscId, const 
         return;
     }
 
-    qint64 sizeAfterUpdate = 0;
-    {
-        QMutexLocker locker(&m_mutex);
-        QString key = makeMemoryKey(lcscId, "symbol");
-
-        // 直接插入即可，QCache 会自动处理相同 key 的旧数据的删除
-        QByteArray* newData = new QByteArray(data);
-        m_memoryCache.insert(key, newData, newData->size());
-        sizeAfterUpdate = m_memoryCache.totalCost();
-    }
+    const qint64 sizeAfterUpdate = m_memoryCache.insert(makeMemoryKey(lcscId, "symbol"), data);
     // 锁外发送信号
     emit memoryCacheSizeChanged(sizeAfterUpdate);
 }
 
 // 从一级内存缓存读取封装数据。
 QByteArray ComponentCacheService::loadFootprintDataFromMemory(const QString& lcscId) const {
-    QMutexLocker locker(&m_mutex);
-    QString key = makeMemoryKey(lcscId, "footprint");
-    QByteArray* data = m_memoryCache.object(key);
-    if (data) {
-        return *data;
-    }
-    return QByteArray();
+    return m_memoryCache.value(makeMemoryKey(lcscId, "footprint"));
 }
 
 // 将封装数据写入一级内存缓存。
@@ -308,16 +266,7 @@ void ComponentCacheService::saveFootprintDataToMemory(const QString& lcscId, con
         return;
     }
 
-    qint64 sizeAfterUpdate = 0;
-    {
-        QMutexLocker locker(&m_mutex);
-        QString key = makeMemoryKey(lcscId, "footprint");
-
-        // 直接插入即可，QCache 会自动处理相同 key 的旧数据的删除
-        QByteArray* newData = new QByteArray(data);
-        m_memoryCache.insert(key, newData, newData->size());
-        sizeAfterUpdate = m_memoryCache.totalCost();
-    }
+    const qint64 sizeAfterUpdate = m_memoryCache.insert(makeMemoryKey(lcscId, "footprint"), data);
     // 锁外发送信号
     emit memoryCacheSizeChanged(sizeAfterUpdate);
 }
@@ -402,7 +351,7 @@ void ComponentCacheService::saveComponentMetadata(const QString& componentId,
                                                   uint64_t expectedGeneration,
                                                   bool replaceModel3DMetadata) {
     QJsonObject metadata = CacheMetadataStore::build(componentId, data);
-    QString key = makeMemoryKey(componentId, "metadata");
+    const QString key = makeMemoryKey(componentId, "metadata");
     qint64 sizeAfterUpdate = 0;
 
     // 旧元数据读取、合并、代次检查、L1 写入和磁盘写入必须在同一把锁内，
@@ -429,13 +378,7 @@ void ComponentCacheService::saveComponentMetadata(const QString& componentId,
             metadata.remove(QStringLiteral("model3dRotation"));
         }
 
-        QJsonDocument doc(metadata);
-        QByteArray* newData = new QByteArray(doc.toJson(QJsonDocument::Compact));
-        {
-            QMutexLocker locker(&m_mutex);
-            m_memoryCache.insert(key, newData, newData->size());
-            sizeAfterUpdate = m_memoryCache.totalCost();
-        }
+        sizeAfterUpdate = m_memoryCache.insert(key, QJsonDocument(metadata).toJson(QJsonDocument::Compact));
         saveMetadata(componentId, metadata);
     }
     enforceDiskCacheLimit();
@@ -1213,12 +1156,7 @@ void ComponentCacheService::removeCache(const QString& lcscId) {
         QString symbolKey = makeMemoryKey(lcscId, "symbol");
         QString footprintKey = makeMemoryKey(lcscId, "footprint");
 
-        // take() 会自动从 QCache 的 totalCost() 中扣除被移除项的 cost
-        delete m_memoryCache.take(metadataKey);
-        delete m_memoryCache.take(symbolKey);
-        delete m_memoryCache.take(footprintKey);
-
-        sizeAfterUpdate = m_memoryCache.totalCost();
+        sizeAfterUpdate = m_memoryCache.remove({metadataKey, symbolKey, footprintKey});
     }
     // 锁外发送信号
     emit memoryCacheSizeChanged(sizeAfterUpdate);
@@ -1275,7 +1213,6 @@ void ComponentCacheService::clearAllCache() {
 
 // 清空一级内存缓存的内部实现。
 void ComponentCacheService::clearMemoryCacheInternal() {
-    QMutexLocker locker(&m_mutex);
     m_memoryCache.clear();
 }
 
@@ -1331,7 +1268,6 @@ qint64 ComponentCacheService::getCacheSize() const {
 
 // 返回一级内存缓存的当前占用大小。
 qint64 ComponentCacheService::getMemoryCacheSize() const {
-    QMutexLocker locker(&m_mutex);
     return m_memoryCache.totalCost();
 }
 
@@ -1370,16 +1306,13 @@ void ComponentCacheService::pruneCache(qint64 targetSizeBytes) {
 
 // 设置一级内存缓存的最大容量。
 void ComponentCacheService::setMemoryCacheLimit(int maxSizeMB) {
-    QMutexLocker locker(&m_mutex);
-    m_memoryCacheLimitMB = maxSizeMB;
     m_memoryCache.setMaxCost(maxSizeMB * 1024 * 1024);
     LOG_DEBUG(LogModule::Core, "Memory cache limit set to: {} MB", maxSizeMB);
 }
 
 // 获取一级内存缓存的最大容量。
 int ComponentCacheService::memoryCacheLimit() const {
-    QMutexLocker locker(&m_mutex);
-    return m_memoryCacheLimitMB;
+    return m_memoryCache.maxCost() / (1024 * 1024);
 }
 
 // 设置二级磁盘缓存的最大容量并立即触发清理。

@@ -13,6 +13,8 @@ add_library(EasyKiConverterServices STATIC
     CacheMetadataStore.h
     CacheDataValidator.cpp
     CacheDataValidator.h
+    CacheMemoryStore.cpp
+    CacheMemoryStore.h
     CacheTombstoneRegistry.cpp
     CacheTombstoneRegistry.h
     CacheHealthManager.cpp
