@@ -18,6 +18,11 @@ class TestTempFileManager : public QObject {
 
 private slots:
 
+    // 使用 Qt 测试专用的应用数据目录，避免备份事务污染开发机或 CI 环境。
+    void initTestCase() {
+        QStandardPaths::setTestModeEnabled(true);
+    }
+
     // 验证符号临时文件提交后会移动到目标位置并注销临时文件。
     void symbolTempFileCommitMovesFileAndUnregistersIt() {
         QTemporaryDir tempDir;
