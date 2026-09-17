@@ -552,6 +552,63 @@ Item {
             }
         }
 
+        // ==================== Xpedition 导出说明（仅 Xpedition 格式显示，带动画） ====================
+        Item {
+            Layout.fillWidth: true
+            Layout.preferredHeight: root.exportTargetModel !== null && root.exportTargetModel !== undefined && root.exportTargetModel.currentIndex === 2 ? xpeditionInfoBox.implicitHeight + AppStyle.spacing.md * 2 : 0
+            clip: true
+            Behavior on Layout.preferredHeight {
+                NumberAnimation {
+                    duration: 400
+                    easing.type: Easing.OutQuart
+                }
+            }
+
+            Rectangle {
+                id: xpeditionInfoBox
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.top: parent.top
+                implicitHeight: xpeditionInfoText.implicitHeight + AppStyle.spacing.md * 2
+                radius: AppStyle.radius.sm
+                color: AppStyle.colors.surface
+                border.color: AppStyle.colors.border
+                border.width: 1
+                opacity: (root.exportTargetModel !== null && root.exportTargetModel.currentIndex === 2) ? 1 : 0
+                scale: (root.exportTargetModel !== null && root.exportTargetModel.currentIndex === 2) ? 1 : 0.97
+                y: (root.exportTargetModel !== null && root.exportTargetModel.currentIndex === 2) ? 0 : 20
+                Behavior on opacity {
+                    NumberAnimation {
+                        duration: 500
+                        easing.type: Easing.OutCubic
+                    }
+                }
+                Behavior on scale {
+                    NumberAnimation {
+                        duration: 500
+                        easing.type: Easing.OutQuart
+                    }
+                }
+                Behavior on y {
+                    NumberAnimation {
+                        duration: 500
+                        easing.type: Easing.OutQuart
+                    }
+                }
+
+                Text {
+                    id: xpeditionInfoText
+                    anchors.fill: parent
+                    anchors.margins: AppStyle.spacing.md
+                    text: qsTranslate("MainWindow", "Xpedition 导出说明：\n" + "- 符号库导出为 _Symbols.zip\n" + "- 封装库导出为 _Footprints.zip\n" + "- 当前不关联 3D 模型\n" + "- 当前支持基础引脚、矩形、折线、圆形和圆弧图元")
+                    font.pixelSize: AppStyle.fontSizes.xs
+                    color: AppStyle.colors.textSecondary
+                    wrapMode: Text.WordWrap
+                    lineHeight: 1.4
+                }
+            }
+        }
+
         // ==================== 运行策略（滑块式导出模式选择） ====================
         SidebarSection {
             title: qsTranslate("MainWindow", "运行策略")
