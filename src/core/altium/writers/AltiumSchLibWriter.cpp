@@ -4,6 +4,7 @@
 #include "AltiumSchGraphicOrderWriter.h"
 #include "AltiumSchImageRecordWriter.h"
 #include "AltiumSchImageStorageEncoder.h"
+#include "AltiumSchImageStorageWriter.h"
 #include "AltiumSchLibraryHeaderWriter.h"
 #include "AltiumSchPinRecordWriter.h"
 #include "AltiumSchPrimitiveRecordWriter.h"
@@ -13,10 +14,8 @@
 #include "utils/AltiumWriterUtils.h"
 
 #include <QDebug>
-#include <QFileInfo>
 #include <QIODevice>
 #include <QRandomGenerator>
-#include <QSet>
 
 #include <algorithm>
 #include <cmath>
@@ -1006,78 +1005,8 @@ void AltiumSchLibWriter::writeImageRecord(AltiumBinaryWriter& writer, const Alti
  * @details Altium 的 Storage 以文件名关联图片记录；重复名称会导致多个图元指向同一条目。
  */
 void AltiumSchLibWriter::prepareImageStorageNames(const QList<AltiumSchComponent>& components) {
-    QSet<QString> usedNames;
-    for (const AltiumSchComponent& component : components) {
-        for (int imageIndex = 0; imageIndex < component.images.size(); ++imageIndex) {
-            const AltiumSchImage& image = component.images.at(imageIndex);
-            if (!image.embedImage) {
-                if (image.fileName.trimmed().isEmpty()) {
-                    const QString diagnostic = QStringLiteral("组件 %1 图片 %2 的外部文件名为空，已跳过文件引用")
-                                                   .arg(component.name)
-                                                   .arg(imageIndex);
-                    m_diagnostics.append(diagnostic);
-                    qWarning() << "AltiumSchLibWriter:" << diagnostic;
-                }
-                continue;
-            }
-
-            QString sourceName = image.fileName;
-            sourceName.replace('\\', '/');
-            const QString embeddedName = QFileInfo(sourceName).fileName();
-            if (image.data.isEmpty()) {
-                const QString diagnostic = QStringLiteral("组件 %1 图片 %2 的嵌入数据为空，已跳过 Storage")
-                                               .arg(component.name)
-                                               .arg(imageIndex);
-                m_diagnostics.append(diagnostic);
-                qWarning() << "AltiumSchLibWriter:" << diagnostic;
-                continue;
-            }
-            if (embeddedName.toLocal8Bit().size() > 255) {
-                const QString diagnostic = QStringLiteral("组件 %1 图片 %2 的嵌入文件名超过 255 字节，已跳过 Storage")
-                                               .arg(component.name)
-                                               .arg(imageIndex);
-                m_diagnostics.append(diagnostic);
-                qWarning() << "AltiumSchLibWriter:" << diagnostic;
-                continue;
-            }
-            if (!AltiumWriterUtils::isValidImageStorageName(embeddedName)) {
-                const QString diagnostic = QStringLiteral("组件 %1 图片 %2 的嵌入文件名无效: %3，已跳过 Storage")
-                                               .arg(component.name)
-                                               .arg(imageIndex)
-                                               .arg(image.fileName);
-                m_diagnostics.append(diagnostic);
-                qWarning() << "AltiumSchLibWriter:" << diagnostic;
-                continue;
-            }
-
-            const QFileInfo fileInfo(embeddedName);
-            const QString suffix = fileInfo.suffix();
-            QString baseName =
-                suffix.isEmpty() ? embeddedName : embeddedName.left(embeddedName.size() - suffix.size() - 1);
-            QString candidate = embeddedName;
-            int duplicateIndex = 1;
-            while (usedNames.contains(candidate.toCaseFolded())) {
-                ++duplicateIndex;
-                const QString suffixText = suffix.isEmpty() ? QString() : QStringLiteral(".") + suffix;
-                const QString marker = QStringLiteral("_%1").arg(duplicateIndex);
-                QString trimmedBase = baseName;
-                while (!trimmedBase.isEmpty() && (trimmedBase + marker + suffixText).toLocal8Bit().size() > 255)
-                    trimmedBase.chop(1);
-                candidate = trimmedBase + marker + suffixText;
-            }
-            usedNames.insert(candidate.toCaseFolded());
-            m_embeddedImageNames.insert(&image, candidate);
-            if (candidate != embeddedName) {
-                const QString diagnostic = QStringLiteral("组件 %1 图片 %2 的嵌入文件名 %3 重复，已改为 %4")
-                                               .arg(component.name)
-                                               .arg(imageIndex)
-                                               .arg(embeddedName)
-                                               .arg(candidate);
-                m_diagnostics.append(diagnostic);
-                qWarning() << "AltiumSchLibWriter:" << diagnostic;
-            }
-        }
-    }
+    AltiumSchImageStorageWriter imageStorageWriter(*this);
+    imageStorageWriter.prepareNames(components);
 }
 
 /**
@@ -1086,9 +1015,8 @@ void AltiumSchLibWriter::prepareImageStorageNames(const QList<AltiumSchComponent
  *          并按 Altium 的 D0 标记和 Pascal 文件名组织条目。
  */
 void AltiumSchLibWriter::writeImageStorage(OLECompoundWriter& ole, const QList<AltiumSchComponent>& components) {
-    const QByteArray storageData =
-        AltiumSchImageStorageEncoder::encode(components, m_embeddedImageNames, m_diagnostics);
-    ole.writeStream("Storage", storageData);
+    AltiumSchImageStorageWriter imageStorageWriter(*this);
+    imageStorageWriter.write(ole, components);
 }
 
 /**
