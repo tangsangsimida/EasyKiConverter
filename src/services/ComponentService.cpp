@@ -4,6 +4,7 @@
 #include "CadDataLoader.h"
 #include "ComponentCacheLoadWorker.h"
 #include "ComponentInfoParser.h"
+#include "ComponentParallelFetchCoordinator.h"
 #include "ComponentQueueManager.h"
 #include "ConfigService.h"
 #include "PreviewImageDataEncoder.h"
@@ -864,49 +865,12 @@ void ComponentService::fetchMultipleComponentsData(const QStringList& componentI
 
 /** @brief 处理并行请求中的单个元器件完成事件。 */
 void ComponentService::handleParallelDataCollected(const QString& componentId, const ComponentData& data) {
-    Q_UNUSED(data);
-    qDebug() << "Parallel data collected for:" << componentId;
-
-    ComponentData completedData;
-    {
-        QMutexLocker locker(&m_fetchingComponentsMutex);
-        if (m_fetchingComponents.contains(componentId)) {
-            FetchingComponent& fc = m_fetchingComponents[componentId];
-            completedData = fc.data;
-        }
-    }
-
-    ParallelFetchContext* parallelContext = nullptr;
-    {
-        QMutexLocker locker(&m_parallelContextMutex);
-        parallelContext = m_parallelContext;
-    }
-    if (parallelContext != nullptr) {
-        parallelContext->markCompleted(componentId, completedData);
-    }
-
-    if (m_queueManager != nullptr) {
-        m_queueManager->requestCompleted(componentId);
-    }
+    ComponentParallelFetchCoordinator::handleDataCollected(*this, componentId, data);
 }
 
 /** @brief 处理并行请求中的单个元器件失败事件。 */
 void ComponentService::handleParallelFetchError(const QString& componentId, const QString& error) {
-    qDebug() << "Parallel fetch error for:" << componentId << error;
-
-    Q_UNUSED(error);
-    ParallelFetchContext* parallelContext = nullptr;
-    {
-        QMutexLocker locker(&m_parallelContextMutex);
-        parallelContext = m_parallelContext;
-    }
-    if (parallelContext != nullptr) {
-        parallelContext->markFailed(componentId, error);
-    }
-
-    if (m_queueManager != nullptr) {
-        m_queueManager->requestCompleted(componentId);
-    }
+    ComponentParallelFetchCoordinator::handleFetchError(*this, componentId, error);
 }
 
 /** @brief 校验元器件编号格式。 */
@@ -1056,22 +1020,7 @@ bool ComponentService::isPDF(const QByteArray& data) const {
 
 /** @brief 处理批量请求队列超时。 */
 void ComponentService::handleQueueTimeout() {
-    qWarning() << "Queue timeout reached";
-
-    if (m_parallelContext != nullptr) {
-        int completedCount = m_parallelContext->completedCount();
-        int totalCount = m_parallelContext->totalCount();
-        qWarning() << "Queue timeout - Completed:" << completedCount << "Total:" << totalCount;
-
-        if (completedCount > 0) {
-            QList<ComponentData> allData = m_parallelContext->collectedData();
-            const QMap<QString, QString> failedComponents = m_parallelContext->failedComponents();
-            emit allComponentsDataCollected(allData);
-            emit allComponentsDataCollectedWithErrors(allData, failedComponents);
-        }
-
-        resetQueueState();
-    }
+    ComponentParallelFetchCoordinator::handleQueueTimeout(*this);
 }
 
 /** @brief 中止当前批量请求并清理状态。 */
@@ -1085,18 +1034,7 @@ void ComponentService::abortBatchFetch() {
 
 /** @brief 重置批量请求队列及并行上下文。 */
 void ComponentService::resetQueueState() {
-    m_queueManager->stop();
-    m_activeRequestCount = 0;
-
-    {
-        QMutexLocker locker(&m_parallelContextMutex);
-        if (m_parallelContext != nullptr) {
-            m_parallelContext->deleteLater();
-            m_parallelContext = nullptr;
-        }
-    }
-
-    qDebug() << "Queue state reset completed";
+    ComponentParallelFetchCoordinator::reset(*this);
 }
 
 }  // namespace EasyKiConverter
