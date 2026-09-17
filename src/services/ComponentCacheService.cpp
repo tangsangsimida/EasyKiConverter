@@ -1,5 +1,6 @@
 #include "ComponentCacheService.h"
 
+#include "CacheDirectoryMigrator.h"
 #include "CacheFileLayout.h"
 #include "CacheHealthManager.h"
 #include "CachePruner.h"
@@ -179,7 +180,7 @@ void ComponentCacheService::setCacheDir(const QString& cacheDir, bool migrateExi
 
         // 迁移期间持有磁盘写锁，避免异步写入与目录迁移交错。
         if (migrateExistingCache && !oldCacheDir.isEmpty() && cacheDirChanged) {
-            migrateCacheDirectory(oldCacheDir, newCacheDir);
+            CacheDirectoryMigrator::migrate(oldCacheDir, newCacheDir);
         }
 
         // 目录创建也在锁内，确保切换期间读写使用完整的目录结构。
@@ -209,116 +210,6 @@ void ComponentCacheService::setCacheDir(const QString& cacheDir, bool migrateExi
 
     selfHealCache();
     LOG_DEBUG(LogModule::Core, "Cache directory set to: {}", newCacheDir);
-}
-
-// 将旧缓存目录中的内容迁移到新的缓存目录。
-bool ComponentCacheService::migrateCacheDirectory(const QString& oldCacheDir, const QString& newCacheDir) const {
-    if (oldCacheDir.isEmpty() || newCacheDir.isEmpty() || oldCacheDir == newCacheDir) {
-        return true;
-    }
-
-    QDir source(oldCacheDir);
-    if (!source.exists()) {
-        return true;
-    }
-
-    QDir target;
-    if (!target.exists(newCacheDir) && !target.mkpath(newCacheDir)) {
-        LOG_WARN(LogModule::Core, "Failed to create cache migration target directory: {}", newCacheDir);
-        return false;
-    }
-
-    const bool moved = moveDirectoryContents(oldCacheDir, newCacheDir);
-    if (moved) {
-        source.rmdir(oldCacheDir);
-        LOG_DEBUG(LogModule::Core, "Migrated cache directory from {} to {}", oldCacheDir, newCacheDir);
-    } else {
-        LOG_WARN(LogModule::Core,
-                 "Cache directory migration completed with skipped or failed entries: {} -> {}",
-                 oldCacheDir,
-                 newCacheDir);
-    }
-    return moved;
-}
-
-// 迁移目录中的全部缓存条目，并返回整体迁移结果。
-bool ComponentCacheService::moveDirectoryContents(const QString& sourceDir, const QString& targetDir) const {
-    QDir source(sourceDir);
-    if (!source.exists()) {
-        return true;
-    }
-
-    QDir target;
-    if (!target.exists(targetDir) && !target.mkpath(targetDir)) {
-        LOG_WARN(LogModule::Core, "Failed to create cache migration directory: {}", targetDir);
-        return false;
-    }
-
-    bool allMoved = true;
-    const QFileInfoList entries = source.entryInfoList(QDir::AllEntries | QDir::NoDotAndDotDot);
-    for (const QFileInfo& entryInfo : entries) {
-        const QString sourcePath = entryInfo.absoluteFilePath();
-        const QString targetPath = QDir(targetDir).filePath(entryInfo.fileName());
-        if (!moveCacheEntry(sourcePath, targetPath)) {
-            allMoved = false;
-        }
-    }
-
-    return allMoved;
-}
-
-// 迁移单个缓存文件或目录条目。
-bool ComponentCacheService::moveCacheEntry(const QString& sourcePath, const QString& targetPath) const {
-    QFileInfo sourceInfo(sourcePath);
-    if (!sourceInfo.exists()) {
-        return true;
-    }
-
-    QFileInfo targetInfo(targetPath);
-    if (targetInfo.exists()) {
-        if (sourceInfo.isDir() && targetInfo.isDir()) {
-            const bool moved = moveDirectoryContents(sourcePath, targetPath);
-            QDir sourceDir(sourcePath);
-            if (sourceDir.entryList(QDir::AllEntries | QDir::NoDotAndDotDot).isEmpty()) {
-                sourceDir.rmdir(sourcePath);
-            }
-            return moved;
-        }
-
-        LOG_WARN(LogModule::Core, "Skipping cache migration entry because target already exists: {}", targetPath);
-        return false;
-    }
-
-    QDir targetParent(targetInfo.absolutePath());
-    if (!targetParent.exists() && !targetParent.mkpath(QStringLiteral("."))) {
-        LOG_WARN(LogModule::Core, "Failed to create cache migration parent directory: {}", targetInfo.absolutePath());
-        return false;
-    }
-
-    if (sourceInfo.isDir()) {
-        QDir dir;
-        if (dir.rename(sourcePath, targetPath)) {
-            return true;
-        }
-
-        if (!moveDirectoryContents(sourcePath, targetPath)) {
-            return false;
-        }
-
-        QDir sourceDir(sourcePath);
-        return sourceDir.removeRecursively();
-    }
-
-    if (QFile::rename(sourcePath, targetPath)) {
-        return true;
-    }
-
-    if (QFile::copy(sourcePath, targetPath)) {
-        return QFile::remove(sourcePath);
-    }
-
-    LOG_WARN(LogModule::Core, "Failed to migrate cache file: {} -> {}", sourcePath, targetPath);
-    return false;
 }
 
 // 获取当前缓存根目录。
