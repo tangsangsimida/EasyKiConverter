@@ -56,6 +56,7 @@ private:
     friend class AltiumSchTextRecordWriter;
     friend class AltiumSchLibraryHeaderWriter;
     friend class AltiumSchImageStorageWriter;
+    friend class AltiumSchComponentStorageWriter;
 
     // ---- 文件级写入 ----
     void writeFileHeader(OLECompoundWriter& ole, const QList<AltiumSchComponent>& components);
