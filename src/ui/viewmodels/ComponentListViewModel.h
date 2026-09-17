@@ -4,6 +4,7 @@
 #include "models/ComponentListItemData.h"
 #include "services/ComponentService.h"
 #include "ui/viewmodels/ComponentListIndex.h"
+#include "ui/viewmodels/ComponentListItemUpdateBuffer.h"
 #include "ui/viewmodels/ComponentListPreviewUpdateBuffer.h"
 #include "ui/viewmodels/ComponentListStateTracker.h"
 #include "ui/viewmodels/ComponentValidationQueue.h"
@@ -204,7 +205,7 @@ private:
     static constexpr int BATCH_ADD_SIZE = 50;
 
     // 批量更新模式（验证期间暂停 UI 更新）
-    QList<QPointer<ComponentListItemData>> m_batchUpdateItems;
+    ComponentListItemUpdateBuffer m_batchUpdateItems;
     QTimer* m_batchUpdateTimer;
 
     // 列表更新批处理（合并 componentCountChanged 和 filteredCountChanged）

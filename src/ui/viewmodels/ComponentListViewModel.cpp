@@ -39,12 +39,12 @@ ComponentListViewModel::ComponentListViewModel(ComponentService* service, QObjec
     m_batchUpdateTimer->setSingleShot(true);
     m_batchUpdateTimer->setInterval(100);
     connect(m_batchUpdateTimer, &QTimer::timeout, this, [this]() {
-        for (const QPointer<ComponentListItemData>& item : m_batchUpdateItems) {
+        const QList<QPointer<ComponentListItemData>> items = m_batchUpdateItems.take();
+        for (const QPointer<ComponentListItemData>& item : items) {
             if (item) {
                 emit item->dataChanged();
             }
         }
-        m_batchUpdateItems.clear();
     });
 
     // 列表更新批处理定时器（更短的间隔，减少批量操作时的延迟）
@@ -760,9 +760,7 @@ void ComponentListViewModel::handleComponentInfoReady(const QString& componentId
     if (item) {
         item->setNameSilent(data.name());
         item->setPackageSilent(data.package());
-        if (!m_batchUpdateItems.contains(item)) {
-            m_batchUpdateItems.append(item);
-        }
+        m_batchUpdateItems.add(item);
         if (!m_batchUpdateTimer->isActive()) {
             m_batchUpdateTimer->start();
         }
@@ -894,9 +892,7 @@ void ComponentListViewModel::handleLcscDataUpdated(const QString& componentId,
 
         if (!manufacturerPart.isEmpty()) {
             item->setNameSilent(manufacturerPart);
-            if (!m_batchUpdateItems.contains(item)) {
-                m_batchUpdateItems.append(item);
-            }
+            m_batchUpdateItems.add(item);
             if (!m_batchUpdateTimer->isActive()) {
                 m_batchUpdateTimer->start();
             }
