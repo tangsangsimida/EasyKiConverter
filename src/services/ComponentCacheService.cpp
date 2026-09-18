@@ -9,6 +9,7 @@
 #include "CachePruner.h"
 #include "ComponentCacheBinaryFileStore.h"
 #include "ComponentCacheCadDataWriter.h"
+#include "ComponentCacheFileReadCoordinator.h"
 #include "ComponentCacheMaintenance.h"
 #include "ComponentCacheMetadataWriter.h"
 #include "ComponentCacheModel3DCoordinator.h"
@@ -222,17 +223,7 @@ void ComponentCacheService::saveSymbolData(const QString& lcscId, const QByteArr
 
 // 从二级磁盘缓存读取符号数据。
 QByteArray ComponentCacheService::loadSymbolData(const QString& lcscId) const {
-    // 先查L1内存缓存
-    QByteArray data = loadSymbolDataFromMemory(lcscId);
-    if (!data.isEmpty()) {
-        return data;
-    }
-
-    // L2 文件读取必须与目录迁移串行化。
-    QMutexLocker diskLocker(&m_diskWriteMutex);
-    // L1未命中，查L2磁盘
-    const QString symbolPath = CacheFileLayout::symbolFile(componentCacheDir(lcscId));
-    return ComponentCacheBinaryFileStore::readCadData(symbolPath);
+    return ComponentCacheFileReadCoordinator::loadSymbolData(*this, lcscId);
 }
 
 // 将封装数据原子写入二级磁盘缓存。
@@ -245,17 +236,7 @@ void ComponentCacheService::saveFootprintData(const QString& lcscId,
 
 // 从二级磁盘缓存读取封装数据。
 QByteArray ComponentCacheService::loadFootprintData(const QString& lcscId) const {
-    // 先查L1内存缓存
-    QByteArray data = loadFootprintDataFromMemory(lcscId);
-    if (!data.isEmpty()) {
-        return data;
-    }
-
-    // L2 文件读取必须与目录迁移串行化。
-    QMutexLocker diskLocker(&m_diskWriteMutex);
-    // L1未命中，查L2磁盘
-    const QString footprintPath = CacheFileLayout::footprintFile(componentCacheDir(lcscId));
-    return ComponentCacheBinaryFileStore::readCadData(footprintPath);
+    return ComponentCacheFileReadCoordinator::loadFootprintData(*this, lcscId);
 }
 
 // 将 CAD 原始 JSON 原子写入二级磁盘缓存。
@@ -268,10 +249,7 @@ void ComponentCacheService::saveCadDataJson(const QString& lcscId,
 
 // 从二级磁盘缓存读取 CAD 原始 JSON。
 QByteArray ComponentCacheService::loadCadDataJson(const QString& lcscId) const {
-    // CAD 文件读取必须与目录迁移串行化。
-    QMutexLocker diskLocker(&m_diskWriteMutex);
-    const QString cadDataPath = CacheFileLayout::cadDataFile(componentCacheDir(lcscId));
-    return ComponentCacheBinaryFileStore::readCadData(cadDataPath);
+    return ComponentCacheFileReadCoordinator::loadCadDataJson(*this, lcscId);
 }
 
 // 判断符号、封装和 CAD 数据缓存是否完整。
@@ -281,21 +259,7 @@ bool ComponentCacheService::hasSymbolFootprintCache(const QString& lcscId) const
 
 // 从二级磁盘缓存读取指定预览图。
 QByteArray ComponentCacheService::loadPreviewImage(const QString& lcscId, int imageIndex) const {
-    if (imageIndex < 0 || imageIndex >= 3) {
-        return QByteArray();
-    }
-
-    // 预览图读取必须与缓存目录迁移串行化。
-    QMutexLocker diskLocker(&m_diskWriteMutex);
-    // 获取路径在锁外进行
-    QString previewPath;
-    {
-        QMutexLocker locker(&m_mutex);
-        previewPath = previewImagePath(lcscId, imageIndex);
-    }
-
-    // I/O 操作由文件存储器完成，避免服务层重复实现校验和损坏文件清理。
-    return ComponentCacheBinaryFileStore::readPreviewImage(previewPath);
+    return ComponentCacheFileReadCoordinator::loadPreviewImage(*this, lcscId, imageIndex);
 }
 
 // 使用 Qt 图片解码器拒绝错误页、截断文件和其他非图片缓存内容。
@@ -500,9 +464,7 @@ void ComponentCacheService::enforceDiskCacheLimit(bool bypassCooldown) {
 
 // 从二级磁盘缓存读取元器件元数据。
 QJsonObject ComponentCacheService::loadMetadata(const QString& lcscId) const {
-    // 外部元数据读取必须与缓存目录迁移串行化。
-    QMutexLocker diskLocker(&m_diskWriteMutex);
-    return CacheMetadataStore::read(metadataPath(lcscId));
+    return ComponentCacheFileReadCoordinator::loadMetadata(*this, lcscId);
 }
 
 // 将元器件元数据原子写入二级磁盘缓存。

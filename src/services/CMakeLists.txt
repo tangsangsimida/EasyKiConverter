@@ -14,6 +14,8 @@ add_library(EasyKiConverterServices STATIC
     ComponentCacheService.cpp
     ComponentCacheCadDataWriter.cpp
     ComponentCacheCadDataWriter.h
+    ComponentCacheFileReadCoordinator.cpp
+    ComponentCacheFileReadCoordinator.h
     ComponentCachePreviewImageWriter.cpp
     ComponentCachePreviewImageWriter.h
     ComponentCacheReadCoordinator.cpp
