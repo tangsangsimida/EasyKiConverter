@@ -3,6 +3,7 @@
 #include "ComponentListBatchCoordinator.h"
 #include "ComponentListClipboardCoordinator.h"
 #include "ComponentListDataCoordinator.h"
+#include "ComponentListRetryCoordinator.h"
 #include "ComponentListServiceConnectionCoordinator.h"
 #include "ComponentListTimerCoordinator.h"
 #include "ComponentValidationCoordinator.h"
@@ -457,38 +458,7 @@ void ComponentListViewModel::refreshComponentInfo(int index) {
 
 /** @brief 重新请求所有可重试的失败元件。 */
 void ComponentListViewModel::retryAllInvalidComponents() {
-    clearAttentionHints();
-    // 先收集需要重试的组件 ID 列表
-    QStringList idsToRetry;
-    {
-        QMutexLocker locker(&m_listMutex);
-        for (int i = 0; i < m_componentList.count(); ++i) {
-            auto item = m_componentList.at(i);
-            if (item && !item->isValid() && !item->isFetching() && item->retryable()) {
-                idsToRetry.append(item->componentId());
-            }
-        }
-    }
-
-    // 在锁外执行重试操作
-    for (const QString& id : idsToRetry) {
-        auto item = findItemData(id);
-        if (item) {
-            m_bomImportComplete = false;
-            item->setFetching(true);
-            item->setValid(false);
-            item->setRetryable(true);
-            item->setValidationPhase("validating");
-            item->setErrorMessage("");
-            m_service->fetchComponentData(id, false);
-        }
-    }
-
-    if (!idsToRetry.isEmpty()) {
-        m_validationStateManager->startValidation(idsToRetry.count());
-    }
-
-    emit filteredCountChanged();
+    ComponentListRetryCoordinator::retryAllInvalid(*this);
 }
 
 /** @brief 返回当前列表中的全部元件编号。 */

@@ -4,6 +4,8 @@ add_library(EasyKiConverterViewModels STATIC
     ComponentListViewModel.cpp
     ComponentListClipboardCoordinator.cpp
     ComponentListClipboardCoordinator.h
+    ComponentListRetryCoordinator.cpp
+    ComponentListRetryCoordinator.h
     ComponentListServiceConnectionCoordinator.cpp
     ComponentListServiceConnectionCoordinator.h
     ComponentListTimerCoordinator.cpp

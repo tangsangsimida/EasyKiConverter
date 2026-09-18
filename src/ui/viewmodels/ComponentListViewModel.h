@@ -23,6 +23,7 @@ class ComponentValidationCoordinator;
 class ComponentListDataCoordinator;
 class ComponentListBatchCoordinator;
 class ComponentListClipboardCoordinator;
+class ComponentListRetryCoordinator;
 
 // 元件列表视图模型
 class ComponentListViewModel : public QAbstractListModel {
@@ -164,6 +165,7 @@ private:
     friend class ComponentListTimerCoordinator;
     friend class ComponentListServiceConnectionCoordinator;
     friend class ComponentListClipboardCoordinator;
+    friend class ComponentListRetryCoordinator;
 
     /**
      * @brief 创建批处理、预览和延迟调度所需的定时器。
