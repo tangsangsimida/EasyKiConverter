@@ -8,13 +8,13 @@
 
 | 类型 | 文件数 | 过长 | 偏长 | 健康率 |
 |------|--------|------|------|--------|
-| 产品源码与资源 | 487 | 54 | 38 | -- |
+| 产品源码与资源 | 489 | 54 | 38 | -- |
 | Python 工具 | 13 | 5 | 4 | -- |
-| **合计** | **500** | **59** | **42** | -- |
+| **合计** | **502** | **59** | **42** | -- |
 
 当前统计工具按文件总行数使用统一阈值：高风险 >500 行，中风险 300-500 行，低风险 200-300 行。类型分项和代码/注释行数需要额外脚本才能精确拆分，因此本报告不再保留旧的推算健康率。
 
-当前基线：`src` 427 个文件、77,037 行；`tests` 58 个文件、18,632 行；翻译资源 2 个文件、3,303 行；`tools/python` 13 个文件、6,640 行。项目工具的 `--all` 统计覆盖产品源码、测试和翻译资源，工具目录单独统计后合计 500 个文件、105,612 行。
+当前基线：`src` 429 个文件、77,088 行；`tests` 58 个文件、18,632 行；翻译资源 2 个文件、3,303 行；`tools/python` 13 个文件、6,640 行。项目工具的 `--all` 统计覆盖产品源码、测试和翻译资源，工具目录单独统计后合计 502 个文件、105,657 行。
 
 ---
 
@@ -68,7 +68,8 @@
 | `src/ui/viewmodels/ComponentValidationCoordinator.cpp` | 81 | -- | -- | 独立协调验证队列的启动、并发调度、完成回调和 BOM 导入状态推进 |
 | `src/ui/viewmodels/ComponentListDataCoordinator.cpp` | 166 | -- | -- | 独立协调组件基础信息、CAD、LCSC、数据手册和错误回调到列表项状态的转换 |
 | `src/ui/viewmodels/ComponentListBatchCoordinator.cpp` | 189 | -- | -- | 独立协调批量添加、模型行插入、BOM 解析回调和验证启动时序 |
-| `src/services/ComponentService.cpp` | 525 | -- | -- | 数据获取、请求取消和服务编排仍在服务内，基础信息字段解析、BOM 文本编号提取、缓存加载任务、预览图文件编码、CAD 结果收敛、媒体回调、API 回调、队列初始化、并行批量协调和 CAD 响应协调已提取 |
+| `src/services/ComponentService.cpp` | 487 | -- | -- | 数据获取和服务编排仍在服务内，基础信息字段解析、BOM 文本编号提取、缓存加载任务、预览图文件编码、CAD 结果收敛、媒体回调、API 回调、队列初始化、并行批量协调、CAD 响应协调和请求取消已提取 |
+| `src/services/ComponentRequestCancellationCoordinator.cpp` | 58 | -- | -- | 独立协调全量请求和单器件请求的 API、网络客户端、图片服务取消及状态清理顺序 |
 | `src/services/ComponentMediaCallbackCoordinator.cpp` | 274 | -- | -- | 独立协调预览图、LCSC 数据和数据手册回调，保持缓存代次校验、异步写入、并行队列完成通知和服务信号转发顺序 |
 | `src/services/ComponentApiCallbackCoordinator.cpp` | 85 | -- | -- | 独立协调 EasyEDA API 基础信息和错误回调，保持缓存代次校验、失败状态清理、并行错误通知和服务信号转发顺序 |
 | `src/services/ComponentCacheLoadCoordinator.cpp` | 145 | -- | -- | 独立协调后台缓存读取、缓存代次校验、网络回退、结果合并和缓存结果信号转发 |
@@ -135,7 +136,8 @@
 - `ComponentCacheQuotaEnforcer.cpp`（40 行）：独立承载磁盘缓存配额的冷却判断、目标容量计算、清理执行和大小变化通知
 - `ComponentCacheMemoryStore.cpp`（92 行）：独立承载一级缓存复合键、JSON 编解码、CAD 数据校验、LRU 访问和容量统计；ComponentCacheService 继续负责信号、代次和磁盘流程
 - `ComponentValidationErrorPolicy.cpp`（65 行）：集中维护 CAD 数据失败、不可重试错误和预览图错误分类规则，保持 ViewModel 的验证状态与界面提示行为一致
-- `ComponentService.cpp`（525 行）：已提取组件数据内存缓存、基础信息字段解析、BOM 文本编号提取、后台缓存加载、预览图文件编码、CAD 结果收敛、媒体回调、API 回调、队列初始化、并行批量协调和 CAD 响应协调职责，后续继续按异步请求状态边界拆分获取与错误处理
+- `ComponentService.cpp`（487 行）：已提取组件数据内存缓存、基础信息字段解析、BOM 文本编号提取、后台缓存加载、预览图文件编码、CAD 结果收敛、媒体回调、API 回调、队列初始化、并行批量协调、CAD 响应协调和请求取消职责，后续继续按异步请求状态边界拆分获取与错误处理
+- `ComponentRequestCancellationCoordinator.cpp`（58 行）：独立协调全量请求和单器件请求的 API、网络客户端、图片服务取消及状态清理顺序，保持 ComponentService 的公开取消接口不变
 - `ComponentMediaCallbackCoordinator.cpp`（274 行）：独立协调预览图、LCSC 数据和数据手册的异步回调，保持缓存代次校验、异步写入、并行队列完成通知和服务信号转发顺序
 - `ComponentApiCallbackCoordinator.cpp`（85 行）：独立协调 EasyEDA API 基础信息和错误回调，保持缓存代次校验、失败状态清理、并行错误通知和服务信号转发顺序
 - `ComponentCacheLoadCoordinator.cpp`（145 行）：独立协调后台缓存读取、缓存代次校验、网络回退、结果合并和缓存结果信号转发
