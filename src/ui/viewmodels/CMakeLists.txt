@@ -18,6 +18,8 @@ add_library(EasyKiConverterViewModels STATIC
     ComponentListStateTracker.h
     ComponentListPreviewUpdateBuffer.cpp
     ComponentListPreviewUpdateBuffer.h
+    ComponentListPreviewCoordinator.cpp
+    ComponentListPreviewCoordinator.h
     ComponentListItemUpdateBuffer.cpp
     ComponentListItemUpdateBuffer.h
     ComponentListDataCoordinator.cpp

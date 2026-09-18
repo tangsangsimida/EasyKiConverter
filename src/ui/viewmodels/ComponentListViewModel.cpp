@@ -4,6 +4,7 @@
 #include "ComponentListClipboardCoordinator.h"
 #include "ComponentListDataCoordinator.h"
 #include "ComponentListMutationCoordinator.h"
+#include "ComponentListPreviewCoordinator.h"
 #include "ComponentListRetryCoordinator.h"
 #include "ComponentListServiceConnectionCoordinator.h"
 #include "ComponentListTimerCoordinator.h"
@@ -218,43 +219,7 @@ void ComponentListViewModel::handleDatasheetReady(const QString& componentId, co
 
 /** @brief 批量应用缓存中的预览图编码结果。 */
 void ComponentListViewModel::processCachePreviewImages() {
-    // 获取并清空待处理映射（需要锁保护）
-    const ComponentListPreviewUpdateBuffer::Snapshot snapshot = m_previewUpdateBuffer.take();
-    const auto& pending = snapshot.completeImages;
-    const auto& incrementalPending = snapshot.incrementalImages;
-
-    if (pending.isEmpty() && incrementalPending.isEmpty()) {
-        return;
-    }
-
-    for (auto it = incrementalPending.cbegin(); it != incrementalPending.cend(); ++it) {
-        auto item = findItemData(it.key());
-        if (!item) {
-            continue;
-        }
-
-        bool changed = false;
-        for (auto imageIt = it.value().cbegin(); imageIt != it.value().cend(); ++imageIt) {
-            item->setEncodedPreviewImageAt(imageIt.value(), imageIt.key(), false);
-            changed = true;
-        }
-
-        if (changed) {
-            item->notifyPreviewImagesChanged();
-        }
-    }
-
-    for (auto it = pending.cbegin(); it != pending.cend(); ++it) {
-        auto item = findItemData(it.key());
-        if (item) {
-            item->setEncodedPreviewImages(it.value());
-            if (item->validationPhase() == "fetching_preview") {
-                item->setValidationPhase("completed");
-            }
-        }
-    }
-
-    scheduleListUpdate();
+    ComponentListPreviewCoordinator::processCacheImages(*this);
 }
 
 /** @brief 重新请求指定列表项的基础信息。 */
@@ -338,44 +303,7 @@ void ComponentListViewModel::fetchAllPreviewImages() {
 
 /** @brief 为指定的有效元件批量获取预览图。 */
 void ComponentListViewModel::fetchPreviewImages(const QStringList& componentIds) {
-    QStringList validIds;
-    QSet<QString> seenIds;
-    for (const QString& componentId : componentIds) {
-        if (componentId.isEmpty() || seenIds.contains(componentId)) {
-            continue;
-        }
-        seenIds.insert(componentId);
-
-        auto item = findItemData(componentId);
-        if (item && item->isValid()) {
-            validIds.append(componentId);
-        }
-    }
-
-    if (validIds.isEmpty()) {
-        qDebug() << "No valid components to fetch preview images for";
-        m_previewReadyHint = false;
-        m_validationReadyHint = false;
-        emit attentionStateChanged();
-        return;
-    }
-
-    qDebug() << "Fetching preview images for" << validIds.count() << "valid components";
-    m_pendingPreviewFetchIds = QSet<QString>(validIds.begin(), validIds.end());
-    m_previewReadyHint = false;
-    emit attentionStateChanged();
-
-    for (const QString& componentId : std::as_const(validIds)) {
-        auto item = findItemData(componentId);
-        if (item && item->isValid() && item->previewImageCount() == 0) {
-            item->setValidationPhase("fetching_preview");
-        }
-    }
-    scheduleListUpdate();
-
-    // 使用批量获取预览图接口，避免为每个组件创建单独的定时器
-    // LcscImageService 会自动处理缓存加载和队列管理
-    m_service->fetchBatchPreviewImages(validIds);
+    ComponentListPreviewCoordinator::fetchImages(*this, componentIds);
 }
 
 /** @brief 处理旧版延迟预览图入口，目前由验证完成信号替代。 */
@@ -412,16 +340,7 @@ void ComponentListViewModel::setScrolling(bool scrolling) {
 
 /** @brief 标记一个元件的预览图请求完成。 */
 void ComponentListViewModel::markPreviewFetchCompleted(const QString& componentId) {
-    if (componentId.isEmpty() || !m_pendingPreviewFetchIds.contains(componentId)) {
-        return;
-    }
-
-    m_pendingPreviewFetchIds.remove(componentId);
-    if (m_pendingPreviewFetchIds.isEmpty()) {
-        m_validationReadyHint = false;
-        m_previewReadyHint = true;
-        emit attentionStateChanged();
-    }
+    ComponentListPreviewCoordinator::markFetchCompleted(*this, componentId);
 }
 
 /** @brief 清除界面上的验证和预览图提示。 */
@@ -444,13 +363,7 @@ void ComponentListViewModel::updateComponentDescription(const QString& component
 
 /** @brief 清空验证完成和预览图完成提示状态。 */
 void ComponentListViewModel::clearAttentionHints() {
-    const bool changed = m_validationReadyHint || m_previewReadyHint || !m_pendingPreviewFetchIds.isEmpty();
-    m_validationReadyHint = false;
-    m_previewReadyHint = false;
-    m_pendingPreviewFetchIds.clear();
-    if (changed) {
-        emit attentionStateChanged();
-    }
+    ComponentListPreviewCoordinator::clearAttentionHints(*this);
 }
 
 /** @brief 更新元件预览图和数据手册的导出状态。 */
