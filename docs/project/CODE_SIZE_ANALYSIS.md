@@ -8,13 +8,13 @@
 
 | 类型 | 文件数 | 过长 | 偏长 | 健康率 |
 |------|--------|------|------|--------|
-| 产品源码与资源 | 526 | 53 | 40 | -- |
+| 产品源码与资源 | 528 | 53 | 40 | -- |
 | Python 工具 | 13 | 5 | 4 | -- |
-| **合计** | **539** | **58** | **44** | -- |
+| **合计** | **541** | **58** | **44** | -- |
 
 当前统计工具按文件总行数使用统一阈值：高风险 >500 行，中风险 300-500 行，低风险 200-300 行。类型分项和代码/注释行数需要额外脚本才能精确拆分，因此本报告不再保留旧的推算健康率。
 
-当前基线：`src` 466 个文件、78,274 行；`tests` 58 个文件、18,726 行；翻译资源 2 个文件、3,303 行；`tools/python` 13 个文件、6,640 行。项目工具的 `--all` 统计覆盖产品源码、测试和翻译资源，工具目录单独统计后合计 539 个文件、106,943 行。
+当前基线：`src` 468 个文件、78,348 行；`tests` 58 个文件、18,726 行；翻译资源 2 个文件、3,303 行；`tools/python` 13 个文件、6,640 行。项目工具的 `--all` 统计覆盖产品源码、测试和翻译资源，工具目录单独统计后合计 541 个文件、107,017 行。
 
 ---
 
@@ -105,7 +105,8 @@
 | `src/core/altium/ExporterAltiumSymbol.cpp` | 1,306 | SchLib 符号转换；引脚电气类型、显示标志、IEEE 装饰和共享转换工具已提取 |
 | `src/core/altium/AltiumSymbolPinConverter.cpp` | 190 | 独立承载 IR 引脚到 Altium 引脚记录的电气类型、显示标志、IEEE 装饰和电源引脚识别 |
 | `src/core/altium/utils/AltiumSymbolConversionUtils.h` | 71 | 独立承载符号部件 ID、方向、颜色、线型和坐标量化等共享转换规则 |
-| `src/core/altium/writers/AltiumSchLibWriter.cpp` | 761 | SchLib 主记录写入；来源顺序调度、文本记录、图片记录、引脚记录、几何图元、文件级头部、字体表、参数、图片 Storage、组件 Data 流、几何校验和部件归属校验已提取 |
+| `src/core/altium/writers/AltiumSchLibWriter.cpp` | 629 | SchLib 主记录写入；来源顺序调度、文本记录、图片记录、引脚记录、几何图元、文件级头部、字体表、图片 Storage、组件 Data 流、输入校验、几何校验和部件归属校验已提取 |
+| `src/core/altium/writers/AltiumSchInputValidator.cpp` | 177 | 独立协调组件名称、参数字段、字符串编码、重复名称、实现映射、几何和部件归属的写入前校验 |
 | `src/core/altium/writers/AltiumSchPinRecordWriter.cpp` | 61 | 独立承载 SchLib `RECORD=2` 二进制引脚记录编码，并复用主写入器的 Owner 校验与内容序号状态 |
 | `src/core/altium/writers/AltiumSchPrimitiveRecordWriter.cpp` | 273 | 独立承载矩形、弧线、多边形、折线、Bezier 和 IEEE 等文本参数图元记录编码 |
 | `src/core/altium/writers/AltiumSchComponentRecordWriter.cpp` | 265 | 独立承载 Designator、参数字段、实现关系、引脚映射和实现参数记录编码 |
@@ -182,7 +183,8 @@
 - `main.cpp`（859 行）：CLI 入口逻辑已迁移到 `CliConverter`，剩余 GUI 初始化可提取为 `ApplicationSetup` 类
 
 **可接受但需关注的**（导出器和写入器）：
-- `AltiumSchLibWriter.cpp`（761 行）：二进制格式写入天然较长，来源顺序调度、文本记录、图片记录、引脚记录、几何图元、文件级头部、字体表、参数、图片 Storage、组件 Data 流、几何校验和部件归属校验已提取，后续可按组件级文件流程继续拆分
+- `AltiumSchLibWriter.cpp`（629 行）：二进制格式写入天然较长，来源顺序调度、文本记录、图片记录、引脚记录、几何图元、文件级头部、字体表、图片 Storage、组件 Data 流、输入校验、几何校验和部件归属校验已提取，后续可按组件级文件流程继续拆分
+- `AltiumSchInputValidator.cpp`（177 行）：独立承载 SchLib 组件文本、参数、名称、编码、实现映射、几何和部件归属的写入前校验，保持主写入器的诊断信息和拒绝时序
 - `AltiumSchPinRecordWriter.cpp`（61 行）：独立编码二进制引脚记录，保持引脚方向、可见性、名称/编号和连接属性的原有写入顺序
 - `AltiumSchPrimitiveRecordWriter.cpp`（273 行）：独立编码几何图元文本参数，复用主写入器的坐标、Owner、唯一标识和诊断策略
 - `AltiumSchComponentRecordWriter.cpp`（265 行）：独立编码参数和实现关系记录，复用主写入器的字体、编号、库名和诊断状态
