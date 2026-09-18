@@ -33,6 +33,8 @@ add_library(EasyKiConverterViewModels STATIC
     ComponentValidationErrorPolicy.cpp
     ComponentValidationErrorPolicy.h
     ExportSettingsViewModel.cpp
+    ExportOptionsBuilder.cpp
+    ExportOptionsBuilder.h
     ExportTargetModel.cpp
     ExportProgressViewModel.cpp
     ExportProgressStageCoordinator.cpp
