@@ -13,6 +13,7 @@ set(EXPORT_HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/PreviewImagesExportWorker.h
     ${CMAKE_CURRENT_SOURCE_DIR}/DatasheetExportWorker.h
     ${CMAKE_CURRENT_SOURCE_DIR}/ParallelExportService.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/ExportRunPlan.h
     ${CMAKE_CURRENT_SOURCE_DIR}/ExportReportGenerator.h
     ${CMAKE_CURRENT_SOURCE_DIR}/ComponentDataCache.h
     ${CMAKE_CURRENT_SOURCE_DIR}/TempFileManager.h
@@ -32,6 +33,7 @@ set(EXPORT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/PreviewImagesExportWorker.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/DatasheetExportWorker.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ParallelExportService.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ExportRunPlan.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ExportReportGenerator.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ComponentDataCache.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ExportWorkerHelpers.cpp

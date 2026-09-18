@@ -1,4 +1,6 @@
+#include "models/ComponentData.h"
 #include "services/export/ExportProgress.h"
+#include "services/export/ExportRunPlan.h"
 
 #include <QtTest/QtTest>
 
@@ -11,6 +13,53 @@ private slots:
 
     // === ExportOptions 测试 ===
 
+    // 验证导出计划会区分完整缓存数据和缺失数据。
+    void exportRunPlanSeparatesCachedData() {
+        ExportOptions options;
+        options.exportSymbol = true;
+        options.exportFootprint = true;
+        options.exportModel3D = true;
+        options.exportPreviewImages = true;
+        options.exportDatasheet = true;
+
+        auto cachedComponent = QSharedPointer<ComponentData>::create();
+        cachedComponent->setLcscId(QStringLiteral("C100"));
+        cachedComponent->setSymbolData(QSharedPointer<SymbolData>::create());
+        cachedComponent->setFootprintData(QSharedPointer<FootprintData>::create());
+
+        QMap<QString, QSharedPointer<ComponentData>> cachedData;
+        cachedData.insert(QStringLiteral("C100"), cachedComponent);
+        const ExportRunPlan plan =
+            buildExportRunPlan(options, {QStringLiteral("C100"), QStringLiteral("C200")}, cachedData);
+
+        QCOMPARE(plan.exportableComponentIds, QStringList{QStringLiteral("C100")});
+        QCOMPARE(plan.missingDataComponentIds, QStringList{QStringLiteral("C200")});
+        QCOMPARE(plan.progressTypeNames(),
+                 QStringList({QStringLiteral("Symbol"),
+                              QStringLiteral("Footprint"),
+                              QStringLiteral("Model3D"),
+                              QStringLiteral("PreviewImages"),
+                              QStringLiteral("Datasheet")}));
+        QCOMPARE(plan.runningStageCount(), 5);
+    }
+
+    // 验证 Xpedition 不会启动独立三维模型阶段，但仍保留导出选项之外的阶段计划。
+    void exportRunPlanSkipsXpeditionModelStage() {
+        ExportOptions options;
+        options.targetFormat = TargetEdaFormat::Xpedition;
+        options.exportSymbol = false;
+        options.exportFootprint = true;
+        options.exportModel3D = true;
+
+        const ExportRunPlan plan = buildExportRunPlan(options, {}, {});
+
+        QVERIFY(!plan.enableModel3D);
+        QVERIFY(!plan.runExternalModel3DStage);
+        QCOMPARE(plan.progressTypeNames(), QStringList{QStringLiteral("Footprint")});
+        QCOMPARE(plan.runningStageCount(), 1);
+    }
+
+    // 提供三维模型格式位掩码测试所需的参数组合。
     void exportOptionsModel3DFormatBitmask_data() {
         QTest::addColumn<int>("format");
         QTest::addColumn<bool>("wrl");

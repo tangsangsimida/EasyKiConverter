@@ -2,6 +2,7 @@
 
 #include "ComponentService.h"
 #include "DatasheetExportStage.h"
+#include "ExportRunPlan.h"
 #include "FootprintExportStage.h"
 #include "Model3DExportStage.h"
 #include "PreviewImagesExportStage.h"
@@ -352,34 +353,22 @@ void ParallelExportService::startExport() {
     m_progress.exportTypeProgress.clear();
     m_runningExportStages = 0;
 
-    const bool enableSymbol = m_options.exportSymbol;
-    const bool enableFootprint = m_options.exportFootprint;
     // Altium PcbLib 将 STEP 直接嵌入 Library/Models，不生成 KiCad 风格的
     // 外部 .3dmodels 目录；封装阶段仍会按需获取 STEP 并交给写入器。
     // Model3D 统计项仍需保留，Altium 下由封装阶段镜像完成状态。
-    const bool enableModel3D = m_options.exportModel3D && m_options.targetFormat != TargetEdaFormat::Xpedition;
+    const ExportRunPlan plan = buildExportRunPlan(m_options, m_componentIds, m_cachedData);
+    const bool enableSymbol = plan.enableSymbol;
+    const bool enableFootprint = plan.enableFootprint;
+    const bool enableModel3D = plan.enableModel3D;
+    const bool runExternalModel3DStage = plan.runExternalModel3DStage;
+    const bool enablePreview = plan.enablePreview;
+    const bool enableDatasheet = plan.enableDatasheet;
     if (m_options.exportModel3D && m_options.targetFormat == TargetEdaFormat::Xpedition) {
         qWarning() << "ParallelExportService: Xpedition 目标当前不支持 3D 模型关联，已跳过 3D 导出阶段";
     }
-    const bool runExternalModel3DStage = enableModel3D && m_options.targetFormat != TargetEdaFormat::Altium;
-    const bool enablePreview = m_options.exportPreviewImages;
-    const bool enableDatasheet = m_options.exportDatasheet;
-    QStringList exportableComponentIds;
-    QStringList missingDataComponentIds;
-
-    for (const QString& componentId : std::as_const(m_componentIds)) {
-        const auto it = m_cachedData.constFind(componentId);
-        if (it != m_cachedData.cend() && it.value() && it.value()->isValid() && it.value()->symbolData() &&
-            it.value()->footprintData()) {
-            exportableComponentIds.append(componentId);
-        } else {
-            missingDataComponentIds.append(componentId);
-        }
-    }
-
-    if (!missingDataComponentIds.isEmpty()) {
-        qWarning() << "ParallelExportService: Missing preloaded component data for" << missingDataComponentIds.size()
-                   << "components:" << missingDataComponentIds;
+    if (!plan.missingDataComponentIds.isEmpty()) {
+        qWarning() << "ParallelExportService: Missing preloaded component data for"
+                   << plan.missingDataComponentIds.size() << "components:" << plan.missingDataComponentIds;
     }
 
     const auto initTypeProgress = [this](const QString& typeName) {
@@ -389,24 +378,12 @@ void ParallelExportService::startExport() {
         m_progress.exportTypeProgress[typeName] = progress;
     };
 
-    if (enableSymbol) {
-        initTypeProgress(QStringLiteral("Symbol"));
-    }
-    if (enableFootprint) {
-        initTypeProgress(QStringLiteral("Footprint"));
-    }
-    if (enableModel3D) {
-        initTypeProgress(QStringLiteral("Model3D"));
-    }
-    if (enablePreview) {
-        initTypeProgress(QStringLiteral("PreviewImages"));
-    }
-    if (enableDatasheet) {
-        initTypeProgress(QStringLiteral("Datasheet"));
+    for (const QString& typeName : plan.progressTypeNames()) {
+        initTypeProgress(typeName);
     }
 
-    const auto markMissingDataFailures = [this, &missingDataComponentIds](const QString& typeName) {
-        for (const QString& componentId : missingDataComponentIds) {
+    const auto markMissingDataFailures = [this, &plan](const QString& typeName) {
+        for (const QString& componentId : plan.missingDataComponentIds) {
             ExportItemStatus status;
             status.status = ExportItemStatus::Status::Failed;
             status.errorMessage = QStringLiteral("Component preload data missing");
@@ -414,29 +391,16 @@ void ParallelExportService::startExport() {
         }
     };
 
-    if (!missingDataComponentIds.isEmpty()) {
-        if (enableSymbol) {
-            markMissingDataFailures(QStringLiteral("Symbol"));
-        }
-        if (enableFootprint) {
-            markMissingDataFailures(QStringLiteral("Footprint"));
-        }
-        if (enableModel3D) {
-            markMissingDataFailures(QStringLiteral("Model3D"));
-        }
-        if (enablePreview) {
-            markMissingDataFailures(QStringLiteral("PreviewImages"));
-        }
-        if (enableDatasheet) {
-            markMissingDataFailures(QStringLiteral("Datasheet"));
+    if (!plan.missingDataComponentIds.isEmpty()) {
+        for (const QString& typeName : plan.progressTypeNames()) {
+            markMissingDataFailures(typeName);
         }
     }
 
-    m_runningExportStages = (enableSymbol ? 1 : 0) + (enableFootprint ? 1 : 0) + (runExternalModel3DStage ? 1 : 0) +
-                            (enablePreview ? 1 : 0) + (enableDatasheet ? 1 : 0);
+    m_runningExportStages = plan.runningStageCount();
     logNetworkRuntimeStats(QStringLiteral("export-start"));
 
-    if (exportableComponentIds.isEmpty()) {
+    if (plan.exportableComponentIds.isEmpty()) {
         qWarning() << "ParallelExportService: No exportable components after preload";
         m_progress.currentStage = ExportOverallProgress::Stage::Failed;
         m_progress.endTime = QDateTime::currentDateTime();
@@ -450,31 +414,31 @@ void ParallelExportService::startExport() {
     if (enableSymbol) {
         auto* stage = new SymbolExportStage(this);
         stage->setOptions(m_options);
-        registerStageAndStart(stage, QStringLiteral("Symbol"), exportableComponentIds, runGeneration);
+        registerStageAndStart(stage, QStringLiteral("Symbol"), plan.exportableComponentIds, runGeneration);
     }
 
     if (enableFootprint) {
         auto* stage = new FootprintExportStage(this);
         stage->setOptions(m_options);
-        registerStageAndStart(stage, QStringLiteral("Footprint"), exportableComponentIds, runGeneration);
+        registerStageAndStart(stage, QStringLiteral("Footprint"), plan.exportableComponentIds, runGeneration);
     }
 
     if (runExternalModel3DStage) {
         auto* stage = new Model3DExportStage(this);
         stage->setOptions(m_options);
-        registerStageAndStart(stage, QStringLiteral("Model3D"), exportableComponentIds, runGeneration);
+        registerStageAndStart(stage, QStringLiteral("Model3D"), plan.exportableComponentIds, runGeneration);
     }
 
     if (enablePreview) {
         auto* stage = new PreviewImagesExportStage(this);
         stage->setOptions(m_options);
-        registerStageAndStart(stage, QStringLiteral("PreviewImages"), exportableComponentIds, runGeneration);
+        registerStageAndStart(stage, QStringLiteral("PreviewImages"), plan.exportableComponentIds, runGeneration);
     }
 
     if (enableDatasheet) {
         auto* stage = new DatasheetExportStage(this);
         stage->setOptions(m_options);
-        registerStageAndStart(stage, QStringLiteral("Datasheet"), exportableComponentIds, runGeneration);
+        registerStageAndStart(stage, QStringLiteral("Datasheet"), plan.exportableComponentIds, runGeneration);
     }
 
     // 重试模式仅对本次导出生效，避免影响后续正常导出
