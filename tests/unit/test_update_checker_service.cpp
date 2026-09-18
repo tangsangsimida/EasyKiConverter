@@ -258,8 +258,8 @@ void TestUpdateCheckerService::rateLimitFailureExposesFriendlyState() {
 void TestUpdateCheckerService::unmatchedAssetFallsBackToReleasePage() {
     QJsonObject candidate = release(QStringLiteral("3.1.13"));
     candidate[QStringLiteral("assets")] = QJsonArray{QJsonObject{
-        {QStringLiteral("name"), QStringLiteral("EasyKiConverter-win64.zip")},
-        {QStringLiteral("browser_download_url"), QStringLiteral("https://example.com/windows.zip")},
+        {QStringLiteral("name"), QStringLiteral("EasyKiConverter-source.tar.gz")},
+        {QStringLiteral("browser_download_url"), QStringLiteral("https://example.com/source.tar.gz")},
     }};
 
     MockNetworkClient network;
