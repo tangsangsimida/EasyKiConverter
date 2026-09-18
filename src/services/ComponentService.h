@@ -31,6 +31,7 @@ class ComponentMediaCallbackCoordinator;
 class ComponentApiCallbackCoordinator;
 class ComponentCacheLoadCoordinator;
 class ComponentRequestCancellationCoordinator;
+class ComponentRequestCoordinator;
 
 /**
  * @brief 元件服务类
@@ -366,6 +367,7 @@ private:
     friend class ComponentApiCallbackCoordinator;
     friend class ComponentCacheLoadCoordinator;
     friend class ComponentRequestCancellationCoordinator;
+    friend class ComponentRequestCoordinator;
 
     /**
      * @brief 创建并配置异步元件请求队列。

@@ -9,6 +9,7 @@
 #include "ComponentParallelFetchCoordinator.h"
 #include "ComponentQueueManager.h"
 #include "ComponentRequestCancellationCoordinator.h"
+#include "ComponentRequestCoordinator.h"
 #include "ConfigService.h"
 #include "PreviewImageDataEncoder.h"
 #include "core/easyeda/EasyedaApi.h"
@@ -147,101 +148,12 @@ void ComponentService::fetchComponentDataInternal(const QString& componentId, bo
     qDebug() << "Fetching component data (internal) for:" << componentId << "Fetch 3D:" << fetch3DModel
              << "at:" << QDateTime::currentDateTime().toString("hh:mm:ss.zzz");
 
-    // 确保 componentId 格式统一（大写）
-    QString normalizedId = componentId.toUpper();
-
     // 使用互斥锁保护 m_currentComponentId 的并发访问
     {
         QMutexLocker locker(&m_currentIdMutex);
-        m_currentComponentId = normalizedId;
+        m_currentComponentId = componentId.toUpper();
     }
-
-    ComponentData reusableData;
-    uint64_t gen = 0;  // 请求创建时的缓存 generation，用于过滤旧回调
-    bool reuseExistingData = false;
-    bool shouldSkipAsDuplicate = false;
-
-    // 先添加到 m_fetchingComponents（防止重复调度）
-    {
-        QMutexLocker locker(&m_fetchingComponentsMutex);
-        if (m_fetchingComponents.contains(normalizedId)) {
-            const FetchingComponent& existing = m_fetchingComponents[normalizedId];
-            const bool hasReusableData =
-                !existing.data.lcscId().isEmpty() && (existing.hasCadData || existing.data.symbolData() != nullptr ||
-                                                      existing.data.footprintData() != nullptr);
-
-            if (hasReusableData) {
-                reusableData = existing.data;
-                reuseExistingData = true;
-            } else if (m_parallelContext != nullptr || !existing.requestActive) {
-                qDebug() << "ComponentService: Removing stale fetching state for" << normalizedId << "before retry";
-                m_fetchingComponents.remove(normalizedId);
-            } else {
-                shouldSkipAsDuplicate = true;
-            }
-        }
-
-        if (!reuseExistingData && !shouldSkipAsDuplicate && !m_fetchingComponents.contains(normalizedId)) {
-            // 创建占位条目，防止重复调度
-            FetchingComponent& fc = m_fetchingComponents[normalizedId];
-            initializeFetchingComponent(fc, normalizedId, fetch3DModel);
-            // 新请求已捕获当前 generation，仅解除当前组件的屏蔽并恢复全局写入。
-            ComponentCacheService::instance()->clearTombstone(normalizedId);
-            ComponentCacheService::instance()->clearGlobalTombstone();
-        }
-    }
-
-    if (reuseExistingData) {
-        qDebug() << "ComponentService: Reusing existing fetched data for:" << normalizedId;
-        updateComponentCache(normalizedId, reusableData);
-        emit cadDataReady(normalizedId, reusableData);
-
-        if (m_parallelContext != nullptr) {
-            handleParallelDataCollected(normalizedId, reusableData);
-        }
-        return;
-    }
-
-    if (shouldSkipAsDuplicate) {
-        qDebug() << "ComponentService: Already fetching for" << normalizedId << ", skipping duplicate request";
-        return;
-    }
-
-    // 检查是否有符号封装缓存，有则直接从缓存加载（元器件存在）
-    ComponentCacheService* cache = ComponentCacheService::instance();
-    if (m_api) {
-        m_api->setWeakNetworkSupport(ConfigService::instance()->getWeakNetworkSupport());
-    }
-    if (cache->hasSymbolFootprintCache(normalizedId)) {
-        qDebug() << "ComponentService: Symbol/Footprint cache hit for" << normalizedId
-                 << ", loading from cache (component exists)";
-        QTimer::singleShot(0, this, [this, normalizedId, fetch3DModel, cache]() {
-            loadComponentDataFromCacheAsync(normalizedId, fetch3DModel, cache);
-        });
-        return;
-    }
-
-    // 符号封装缓存不存在，改为后台线程直接获取并解析 CAD 数据，避免主线程卡顿。
-    // 从 FetchingComponent 读取请求创建时的 generation
-    {
-        QMutexLocker locker(&m_fetchingComponentsMutex);
-        auto it = m_fetchingComponents.find(normalizedId);
-        if (it != m_fetchingComponents.end()) {
-            gen = it->cacheGeneration;
-        }
-    }
-    if (gen == 0) {
-        qWarning() << "fetchComponentDataInternal: No FetchingComponent for" << normalizedId << ", aborting";
-        return;
-    }
-    auto future = QtConcurrent::run([normalizedId]() { return CadDataLoader::fetchAndParseCadData(normalizedId); });
-    auto* watcher = new QFutureWatcher<CadFetchTaskResult>(this);
-    connect(watcher, &QFutureWatcher<CadFetchTaskResult>::finished, this, [this, watcher, gen]() {
-        const CadFetchTaskResult result = watcher->result();
-        watcher->deleteLater();
-        handleCadFetchResult(result, gen);
-    });
-    watcher->setFuture(future);
+    ComponentRequestCoordinator::start(*this, componentId, fetch3DModel);
 }
 
 void ComponentService::loadComponentDataFromCacheAsync(const QString& normalizedId,
