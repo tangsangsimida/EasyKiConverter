@@ -8,13 +8,13 @@
 
 | 类型 | 文件数 | 过长 | 偏长 | 健康率 |
 |------|--------|------|------|--------|
-| 产品源码与资源 | 510 | 53 | 40 | -- |
+| 产品源码与资源 | 512 | 53 | 40 | -- |
 | Python 工具 | 13 | 5 | 4 | -- |
-| **合计** | **523** | **58** | **44** | -- |
+| **合计** | **525** | **58** | **44** | -- |
 
 当前统计工具按文件总行数使用统一阈值：高风险 >500 行，中风险 300-500 行，低风险 200-300 行。类型分项和代码/注释行数需要额外脚本才能精确拆分，因此本报告不再保留旧的推算健康率。
 
-当前基线：`src` 450 个文件、77,848 行；`tests` 58 个文件、18,725 行；翻译资源 2 个文件、3,303 行；`tools/python` 13 个文件、6,640 行。项目工具的 `--all` 统计覆盖产品源码、测试和翻译资源，工具目录单独统计后合计 523 个文件、106,516 行。
+当前基线：`src` 452 个文件、77,859 行；`tests` 58 个文件、18,725 行；翻译资源 2 个文件、3,303 行；`tools/python` 13 个文件、6,640 行。项目工具的 `--all` 统计覆盖产品源码、测试和翻译资源，工具目录单独统计后合计 525 个文件、106,527 行。
 
 ---
 
@@ -93,6 +93,8 @@
 | `src/workers/WriteWorker.cpp` | 846 | 文件写入工作线程 |
 | `src/core/altium/writers/AltiumPcbLibWriter.cpp` | 826 | PcbLib 文件级写入与元件记录编排；图元记录写入已提取 |
 | `src/core/altium/writers/AltiumPcbPrimitiveWriter.cpp` | 384 | 独立承载 PcbLib 焊盘、走线、弧线、文本、填充、区域和组件实体图元记录写入 |
+| `src/core/altium/compound/OLECompoundWriter.cpp` | 736 | OLE 存储树、流数据和扇区分配；目录条目与文件头序列化已提取 |
+| `src/core/altium/compound/OLECompoundSerializer.cpp` | 153 | 独立承载 OLE 目录条目和 512 字节文件头的 CFB V3 字节序列化 |
 | `src/core/altium/ExporterAltiumSymbol.cpp` | 1,306 | SchLib 符号转换；引脚电气类型、显示标志、IEEE 装饰和共享转换工具已提取 |
 | `src/core/altium/AltiumSymbolPinConverter.cpp` | 190 | 独立承载 IR 引脚到 Altium 引脚记录的电气类型、显示标志、IEEE 装饰和电源引脚识别 |
 | `src/core/altium/utils/AltiumSymbolConversionUtils.h` | 71 | 独立承载符号部件 ID、方向、颜色、线型和坐标量化等共享转换规则 |
@@ -115,7 +117,8 @@
 | `src/models/FootprintDataSerializer.cpp` | 697 | IR 重构后自然解决 |
 | `src/core/kicad/FootprintGraphicsGenerator.cpp` | 543 | KiCad 封装图形生成 |
 | `src/ui/viewmodels/ExportSettingsViewModel.cpp` | 685 | 导出设置 ViewModel |
-| `src/core/altium/compound/OLECompoundWriter.cpp` | 918 | OLE 二进制写入 |
+| `src/core/altium/compound/OLECompoundWriter.cpp` | 736 | OLE 存储树、流数据、扇区分配和文件落盘；固定结构序列化已提取 |
+| `src/core/altium/compound/OLECompoundSerializer.cpp` | 153 | 独立承载 OLE 目录条目和文件头的固定字节布局编码 |
 | `src/core/network/AsyncNetworkRequest.cpp` | 669 | 异步网络请求 |
 | `src/services/export/FootprintExportStage.cpp` | 758 | 封装导出阶段 |
 | 其余高风险文件 | -- | 请以 `analyze_project.py --all --json` 的当前输出为准 |
@@ -179,6 +182,8 @@
 - `AltiumSchGeometryValidator.cpp`（192 行）：独立校验图元几何边界、编码字符串和枚举范围，并复用主写入器诊断通道，保持拒绝写入行为不变
 - `AltiumPcbLibWriter.cpp`（826 行）：已提取焊盘、走线、弧线、文本、填充、区域和组件实体图元记录，主写入器继续负责文件级状态、封装数据、唯一标识表和元件记录编排
 - `AltiumPcbPrimitiveWriter.cpp`（384 行）：独立承载 PcbLib 图元记录编码，复用主写入器的层映射、标志编码、有限值归一化、广字符串和公共图元头部规则
+- `OLECompoundWriter.cpp`（736 行）：继续负责 OLE 存储树、流登记、mini stream、FAT/DIFAT 扇区分配和文件落盘，固定结构编码已移出
+- `OLECompoundSerializer.cpp`（153 行）：独立承载目录条目、版本字段、FAT/DIFAT 索引和扇区布局的 CFB V3 序列化，保持 OLE 写入器的只读状态边界
 - KiCad 导出器系列（各 660-690 行）：与 IR 重构后的导出器接口调整一并处理
 
 ---
@@ -274,7 +279,7 @@ QML 文件过长是当前最严重的问题区域，建议按以下优先级处�
 
 | 目录 | 总行数 | 文件数 |
 |------|--------|--------|
-| `src` | 77,848 | 450 |
+| `src` | 77,859 | 452 |
 | `tests` | 18,725 | 58 |
 | `resources/translations` | 3,303 | 2 |
 | `tools/python` | 6,640 | 13 |
