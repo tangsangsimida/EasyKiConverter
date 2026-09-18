@@ -4,6 +4,7 @@
 #include "AltiumSymbolAnnotationConverter.h"
 #include "AltiumSymbolCurveConverter.h"
 #include "AltiumSymbolImplementationConverter.h"
+#include "AltiumSymbolParameterConverter.h"
 #include "AltiumSymbolPinConverter.h"
 #include "AltiumSymbolPrimitiveConverter.h"
 #include "utils/AltiumCoord.h"
@@ -133,18 +134,7 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
                 QStringLiteral("符号 %1 参数 %2 的字体大小无效，已跳过").arg(data.name).arg(parameter.name));
             continue;
         }
-        AltiumSchParameter altiumParameter;
-        altiumParameter.name = parameter.name;
-        altiumParameter.value = parameter.value;
-        altiumParameter.locationX = AltiumCoord::mmToRaw(parameter.position.x());
-        altiumParameter.locationY = AltiumCoord::mmToRaw(parameter.position.y());
-        altiumParameter.fontSizeMm = parameter.fontSizeMm;
-        altiumParameter.isHidden = !parameter.visible;
-        altiumParameter.readOnly = parameter.readOnly;
-        altiumParameter.orientation = toAltiumOrientation(parameter.rotation);
-        altiumParameter.ownerPartId = toAltiumOwnerPartId(parameter.partIndex);
-        altiumParameter.color = toAltiumColor(parameter.color);
-        component.parameters.append(altiumParameter);
+        component.parameters.append(AltiumSymbolParameterConverter::convert(parameter));
     }
 
     // 转换引脚
