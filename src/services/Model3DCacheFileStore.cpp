@@ -21,6 +21,8 @@ QByteArray Model3DCacheFileStore::read(const QString& filePath, const QString& e
     }
 
     const QByteArray data = file.readAll();
+    // Windows 不允许删除仍被 QFile 打开的文件，先显式关闭再清理损坏缓存。
+    file.close();
     if (CacheDataValidator::isUsableModel3D(data, extension)) {
         return data;
     }
