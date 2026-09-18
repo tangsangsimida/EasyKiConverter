@@ -29,6 +29,7 @@ class ComponentParallelFetchCoordinator;
 class ComponentCadFetchCoordinator;
 class ComponentMediaCallbackCoordinator;
 class ComponentApiCallbackCoordinator;
+class ComponentCacheLoadCoordinator;
 
 /**
  * @brief 元件服务类
@@ -362,6 +363,7 @@ private:
     friend class ComponentCadFetchCoordinator;
     friend class ComponentMediaCallbackCoordinator;
     friend class ComponentApiCallbackCoordinator;
+    friend class ComponentCacheLoadCoordinator;
 
     /**
      * @brief 创建并配置异步元件请求队列。

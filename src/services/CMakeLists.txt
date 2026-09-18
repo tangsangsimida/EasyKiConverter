@@ -5,6 +5,8 @@ add_library(EasyKiConverterServices STATIC
     BomParser.cpp
     LcscImageService.cpp
     ComponentService.cpp
+    ComponentCacheLoadCoordinator.cpp
+    ComponentCacheLoadCoordinator.h
     ComponentApiCallbackCoordinator.cpp
     ComponentApiCallbackCoordinator.h
     ComponentCadFetchCoordinator.cpp
