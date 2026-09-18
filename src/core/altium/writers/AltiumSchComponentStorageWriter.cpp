@@ -1,5 +1,6 @@
 #include "AltiumSchComponentStorageWriter.h"
 
+#include "AltiumSchGraphicOrderValidator.h"
 #include "AltiumSchGraphicOrderWriter.h"
 #include "AltiumSchLibWriter.h"
 #include "compound/OLECompoundWriter.h"
@@ -30,7 +31,8 @@ void AltiumSchComponentStorageWriter::write(OLECompoundWriter& ole,
     m_owner.m_nextIndexInSheet = 0;
     m_owner.writeComponentRecord(writer, component);
 
-    const bool useGraphicOrder = !component.graphicOrder.isEmpty() && m_owner.hasCompleteGraphicOrder(component);
+    const bool useGraphicOrder =
+        !component.graphicOrder.isEmpty() && AltiumSchGraphicOrderValidator::validate(component);
     const bool hasImageOrder = std::any_of(
         component.graphicOrder.cbegin(), component.graphicOrder.cend(), [](const AltiumSchGraphicOrder& order) {
             return order.type == QStringLiteral("I");

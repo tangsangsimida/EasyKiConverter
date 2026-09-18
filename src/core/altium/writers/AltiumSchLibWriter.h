@@ -90,7 +90,6 @@ private:
     void writeImageStorage(OLECompoundWriter& ole, const QList<AltiumSchComponent>& components);
     void writeComponentParameterRecords(AltiumBinaryWriter& writer, const AltiumSchComponent& component);
     void writeImplementationRecords(AltiumBinaryWriter& writer, const AltiumSchComponent& component);
-    bool hasCompleteGraphicOrder(const AltiumSchComponent& component) const;
     bool validateGeometry(const AltiumSchComponent& component);
     bool validatePartOwnership(const AltiumSchComponent& component);
 

@@ -33,6 +33,8 @@ target_sources(EasyKiConverterAltium
         writers/AltiumSchLibraryHeaderWriter.cpp
         writers/AltiumSchGraphicOrderWriter.h
         writers/AltiumSchGraphicOrderWriter.cpp
+        writers/AltiumSchGraphicOrderValidator.h
+        writers/AltiumSchGraphicOrderValidator.cpp
         writers/AltiumSchTextRecordWriter.h
         writers/AltiumSchTextRecordWriter.cpp
         writers/AltiumSchImageRecordWriter.h
