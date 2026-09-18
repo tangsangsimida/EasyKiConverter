@@ -148,7 +148,7 @@
 | `src/core/kicad/Exporter3DModel.cpp` | 702 | 3D 模型导出 |
 | `src/models/FootprintDataSerializer.cpp` | 697 | IR 重构后自然解决 |
 | `src/core/kicad/FootprintGraphicsGenerator.cpp` | 543 | KiCad 封装图形生成 |
-| `src/ui/viewmodels/ExportSettingsViewModel.cpp` | 685 | 导出设置 ViewModel |
+| `src/ui/viewmodels/ExportSettingsViewModel.cpp` | 617 | 导出设置状态管理；选项组装和输出路径解析已提取 |
 | `src/core/altium/compound/OLECompoundWriter.cpp` | 736 | OLE 存储树、流数据、扇区分配和文件落盘；固定结构序列化已提取 |
 | `src/core/altium/compound/OLECompoundSerializer.cpp` | 153 | 独立承载 OLE 目录条目和文件头的固定字节布局编码 |
 | `src/core/network/AsyncNetworkRequest.cpp` | 669 | 异步网络请求 |
