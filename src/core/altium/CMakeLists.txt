@@ -43,6 +43,8 @@ target_sources(EasyKiConverterAltium
         writers/AltiumSchComponentRecordWriter.cpp
         writers/AltiumPcbLibWriter.h
         writers/AltiumPcbLibWriter.cpp
+        writers/AltiumPcbPrimitiveWriter.h
+        writers/AltiumPcbPrimitiveWriter.cpp
 
         # 读取器
         readers/AltiumPcbLibReader.h
