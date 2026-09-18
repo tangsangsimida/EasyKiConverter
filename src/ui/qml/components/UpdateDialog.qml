@@ -87,7 +87,7 @@ SliderDialogBase {
                 if (!root.updateChecker)
                     return "";
                 if (root.updateChecker.error && root.updateChecker.statusText === "failed")
-                    return root.updateChecker.error;
+                    return root.updateChecker.rateLimited ? qsTranslate("MainWindow", "GitHub 暂时限制了更新检查，请稍后重试。") : qsTranslate("MainWindow", "更新检查失败，请稍后重试。");
                 if (root.updateChecker.releaseName)
                     return qsTranslate("MainWindow", "当前版本 %1，最新发布：%2").arg(root.updateChecker.currentVersion).arg(root.updateChecker.releaseName);
                 return qsTranslate("MainWindow", "当前版本 %1，可前往 GitHub 查看发布说明。").arg(root.updateChecker.currentVersion);

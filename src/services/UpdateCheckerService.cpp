@@ -226,6 +226,7 @@ void UpdateCheckerService::checkForUpdates(bool force) {
         }
         setChecking(false);
         if (result.wasCancelled) {
+            m_rateLimited = false;
             setError(QStringLiteral("Update check was cancelled"));
             setStatus(Status::NotChecked);
             return;
@@ -233,11 +234,16 @@ void UpdateCheckerService::checkForUpdates(bool force) {
 
         if (!result.success) {
             loadCachedRelease();
+            m_rateLimited = result.statusCode == 403 || result.statusCode == 429 ||
+                            result.diagnostic.errorType == NetworkErrorType::Forbidden ||
+                            result.diagnostic.errorType == NetworkErrorType::RateLimited ||
+                            result.diagnostic.wasRateLimited;
             setError(result.error.isEmpty() ? QStringLiteral("Update check failed") : result.error);
             setStatus(Status::Failed);
             return;
         }
 
+        m_rateLimited = false;
         QJsonParseError parseError;
         const QJsonDocument document = QJsonDocument::fromJson(result.data, &parseError);
         if (parseError.error != QJsonParseError::NoError || !document.isObject()) {

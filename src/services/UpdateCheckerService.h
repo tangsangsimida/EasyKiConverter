@@ -28,6 +28,7 @@ class UpdateCheckerService : public QObject {
     Q_PROPERTY(QString releaseUrl READ releaseUrl NOTIFY updateStateChanged)
     Q_PROPERTY(QString assetUrl READ assetUrl NOTIFY updateStateChanged)
     Q_PROPERTY(QString error READ error NOTIFY updateStateChanged)
+    Q_PROPERTY(bool rateLimited READ rateLimited NOTIFY updateStateChanged)
     Q_PROPERTY(Status status READ status NOTIFY statusChanged)
     Q_PROPERTY(QString statusText READ statusText NOTIFY statusChanged)
     Q_PROPERTY(bool autoCheckEnabled READ autoCheckEnabled WRITE setAutoCheckEnabled NOTIFY autoCheckEnabledChanged)
@@ -96,6 +97,11 @@ public:
         return m_error;
     }
 
+    /** @brief 返回最近一次检查是否被 GitHub 访问限制。 */
+    bool rateLimited() const {
+        return m_rateLimited;
+    }
+
     /** @brief 返回当前检查状态。 */
     Status status() const {
         return m_status;
@@ -156,6 +162,7 @@ private:
     QString m_releaseUrl;
     QString m_assetUrl;
     QString m_error;
+    bool m_rateLimited{false};
     Status m_status{Status::NotChecked};
 };
 

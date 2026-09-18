@@ -1252,6 +1252,11 @@ Output: Symbols %1 · Footprints %2 · 3D %3</translation>
         <translation>Update check failed. Please try again later.</translation>
     </message>
     <message>
+        <location filename="../../src/ui/qml/components/UpdateDialog.qml" line="91"/>
+        <source>GitHub 暂时限制了更新检查，请稍后重试。</source>
+        <translation>GitHub temporarily limited update checks. Please try again later.</translation>
+    </message>
+    <message>
         <location filename="../../src/ui/qml/components/UpdateBanner.qml" line="64"/>
         <source>查看更新</source>
         <translation>View Update</translation>

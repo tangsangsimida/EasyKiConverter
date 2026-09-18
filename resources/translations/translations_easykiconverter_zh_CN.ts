@@ -1331,6 +1331,11 @@
         <translation>更新检查失败，可稍后重试。</translation>
     </message>
     <message>
+        <location filename="../../src/ui/qml/components/UpdateDialog.qml" line="91"/>
+        <source>GitHub 暂时限制了更新检查，请稍后重试。</source>
+        <translation>GitHub 暂时限制了更新检查，请稍后重试。</translation>
+    </message>
+    <message>
         <location filename="../../src/ui/qml/components/UpdateBanner.qml" line="64"/>
         <source>查看更新</source>
         <translation>查看更新</translation>

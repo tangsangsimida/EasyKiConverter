@@ -50,6 +50,7 @@ private slots:
     void newerReleaseClearsIgnoredVersion();
     void automaticCheckHonorsIntervalAndManualCheckBypassesIt();
     void networkFailureFallsBackToCachedRelease();
+    void rateLimitFailureExposesFriendlyState();
     void unmatchedAssetFallsBackToReleasePage();
 
 private:
@@ -186,6 +187,18 @@ void TestUpdateCheckerService::networkFailureFallsBackToCachedRelease() {
     QVERIFY(service.hasUpdate());
     QCOMPARE(service.latestVersion(), QStringLiteral("3.1.13"));
     QCOMPARE(service.assetUrl(), QStringLiteral("https://example.com/EasyKiConverter-linux.AppImage"));
+}
+
+// 验证 GitHub 限流响应会暴露专用状态，界面无需展示原始请求地址。
+void TestUpdateCheckerService::rateLimitFailureExposesFriendlyState() {
+    MockNetworkClient network;
+    network.addErrorResponse(QString::fromLatin1(RELEASES_URL), QStringLiteral("HTTP 403"), 403);
+
+    UpdateCheckerService service(network);
+    service.checkForUpdates();
+    QTRY_COMPARE(service.status(), UpdateCheckerService::Status::Failed);
+    QVERIFY(service.rateLimited());
+    QVERIFY(service.error().contains(QStringLiteral("HTTP 403")));
 }
 
 // 验证当前平台没有匹配资产时不会误打开其他平台的下载包。
