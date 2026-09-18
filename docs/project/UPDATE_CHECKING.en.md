@@ -29,7 +29,7 @@ Update checking reuses `ConfigService` and does not introduce a separate setting
 - `updateIgnoredVersion`: the version explicitly ignored by the user.
 - `updateRemindedVersion`: the version postponed by the user.
 
-When the network fails, a valid local Release cache is applied first and the state is then reported as failed. This keeps cached update information available while the Settings page still reports the failed check. Cache and ignore records are cleared when a newer version is found.
+When the network fails, a valid local Release cache is applied first and the state is then reported as failed. This keeps cached update information available while the version dialog still reports the failed check. The failed state provides an "Open Release" action: it opens the cached Release page when available, otherwise it opens the official `releases/latest` page. Cache and ignore records are cleared when a newer version is found.
 
 “Remind later” hides the current version and remains effective after restart. “Ignore this version” expresses a stronger preference and suppresses the current version until a newer version appears.
 

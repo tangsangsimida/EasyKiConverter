@@ -42,6 +42,23 @@ SliderDialogBase {
         },
         {
             isSeparator: true,
+            visible: updateChecker && updateChecker.statusText === "failed"
+        },
+        {
+            text: qsTranslate("MainWindow", "查看更新"),
+            color: AppStyle.colors.textSecondary,
+            objectName: "dialogOpenLatestReleaseButton",
+            visible: updateChecker && updateChecker.statusText === "failed",
+            action: function () {
+                if (updateChecker) {
+                    var url = updateChecker.releaseUrl && updateChecker.releaseUrl.length > 0 ? updateChecker.releaseUrl : updateChecker.latestReleasePageUrl;
+                    Qt.openUrlExternally(url);
+                    root.close();
+                }
+            }
+        },
+        {
+            isSeparator: true,
             visible: updateChecker && updateChecker.hasUpdate
         },
         {

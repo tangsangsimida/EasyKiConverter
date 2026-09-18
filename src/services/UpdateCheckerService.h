@@ -26,6 +26,7 @@ class UpdateCheckerService : public QObject {
     Q_PROPERTY(QString latestVersion READ latestVersion NOTIFY updateStateChanged)
     Q_PROPERTY(QString releaseName READ releaseName NOTIFY updateStateChanged)
     Q_PROPERTY(QString releaseUrl READ releaseUrl NOTIFY updateStateChanged)
+    Q_PROPERTY(QString latestReleasePageUrl READ latestReleasePageUrl CONSTANT)
     Q_PROPERTY(QString assetUrl READ assetUrl NOTIFY updateStateChanged)
     Q_PROPERTY(QString error READ error NOTIFY updateStateChanged)
     Q_PROPERTY(bool rateLimited READ rateLimited NOTIFY updateStateChanged)
@@ -85,6 +86,11 @@ public:
     /** @brief 返回 Release 页面地址。 */
     QString releaseUrl() const {
         return m_releaseUrl;
+    }
+
+    /** @brief 返回官方最新 Release 页面地址，供检查失败时人工访问。 */
+    QString latestReleasePageUrl() const {
+        return QStringLiteral("https://github.com/tangsangsimida/EasyKiConverter/releases/latest");
     }
 
     /** @brief 返回匹配平台的资产地址。 */

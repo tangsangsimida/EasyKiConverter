@@ -19,6 +19,7 @@ TestCase {
         property string latestVersion: "3.1.13"
         property string releaseName: "EasyKiConverter 3.1.13"
         property string releaseUrl: "https://example.com/release"
+        property string latestReleasePageUrl: "https://github.com/tangsangsimida/EasyKiConverter/releases/latest"
         property string assetUrl: "https://example.com/package"
         property string error: ""
         property int checkCount: 0
@@ -70,6 +71,14 @@ TestCase {
         verify(action !== null)
         action.clicked()
         compare(updateChecker.checkCount, 1)
+    }
+
+    function test_failedCheckProvidesReleasePageAction() {
+        updateChecker.statusText = "failed"
+        updateChecker.hasUpdate = false
+        dialog.open()
+        var releaseButton = findByObjectName(dialog, "dialogOpenLatestReleaseButton")
+        verify(releaseButton !== null)
     }
 
     function test_cancelCanOpenDialogAgain() {
