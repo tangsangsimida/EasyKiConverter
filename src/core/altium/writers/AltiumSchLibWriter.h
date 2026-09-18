@@ -1,5 +1,6 @@
 #pragma once
 
+#include "AltiumSchFontRegistry.h"
 #include "compound/OLECompoundWriter.h"
 #include "models/AltiumSchComponent.h"
 #include "utils/AltiumBinaryWriter.h"
@@ -47,6 +48,19 @@ public:
     }
 
 private:
+    friend class AltiumSchGraphicOrderWriter;
+    friend class AltiumSchImageRecordWriter;
+    friend class AltiumSchPinRecordWriter;
+    friend class AltiumSchPrimitiveRecordWriter;
+    friend class AltiumSchComponentRecordWriter;
+    friend class AltiumSchTextRecordWriter;
+    friend class AltiumSchLibraryHeaderWriter;
+    friend class AltiumSchImageStorageWriter;
+    friend class AltiumSchComponentStorageWriter;
+    friend class AltiumSchOwnershipValidator;
+    friend class AltiumSchGeometryValidator;
+    friend class AltiumSchInputValidator;
+
     // ---- 文件级写入 ----
     void writeFileHeader(OLECompoundWriter& ole, const QList<AltiumSchComponent>& components);
     void writeSectionKeys(OLECompoundWriter& ole,
@@ -72,25 +86,15 @@ private:
     void writeTextRecord(AltiumBinaryWriter& writer, const AltiumSchText& text);
     void writeTextFrameRecord(AltiumBinaryWriter& writer, const AltiumSchTextFrame& frame);
     void writeImageRecord(AltiumBinaryWriter& writer, const AltiumSchImage& image);
-    void writeOrderedGraphic(AltiumBinaryWriter& writer,
-                             const AltiumSchComponent& component,
-                             const AltiumSchGraphicOrder& order);
     void prepareImageStorageNames(const QList<AltiumSchComponent>& components);
     void writeImageStorage(OLECompoundWriter& ole, const QList<AltiumSchComponent>& components);
     void writeComponentParameterRecords(AltiumBinaryWriter& writer, const AltiumSchComponent& component);
     void writeImplementationRecords(AltiumBinaryWriter& writer, const AltiumSchComponent& component);
-    bool hasCompleteGraphicOrder(const AltiumSchComponent& component) const;
     bool validateGeometry(const AltiumSchComponent& component);
     bool validatePartOwnership(const AltiumSchComponent& component);
 
     // ---- 辅助 ----
     QString getSectionKey(const QString& name) const;
-    int getOrAddFont(const QString& fontName,
-                     int fontSize,
-                     bool bold = false,
-                     bool italic = false,
-                     bool underline = false);
-    void registerTextFonts(const QList<AltiumSchComponent>& components);
     void addCoordParam(QMap<QString, QString>& params, const QString& key, int raw);
     void addColorParam(QMap<QString, QString>& params, const QString& key, uint32_t color);
     void addUniqueID(QMap<QString, QString>& params);
@@ -102,7 +106,7 @@ private:
     void addOwnerParams(QMap<QString, QString>& params, int ownerPartId);
 
     // 字体表管理
-    QList<AltiumModels::FontEntry> m_fonts;
+    AltiumSchFontRegistry m_fontRegistry;
     QHash<const AltiumSchImage*, QString> m_embeddedImageNames;
     int m_uniqueIdCounter = 0;
     int m_nextIndexInSheet = 0;

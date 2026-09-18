@@ -3,36 +3,29 @@
 
 #include "models/ComponentListItemData.h"
 #include "services/ComponentService.h"
+#include "ui/viewmodels/ComponentListIndex.h"
+#include "ui/viewmodels/ComponentListItemUpdateBuffer.h"
+#include "ui/viewmodels/ComponentListPreviewUpdateBuffer.h"
+#include "ui/viewmodels/ComponentListStateTracker.h"
+#include "ui/viewmodels/ComponentValidationQueue.h"
 
 #include <QAbstractListModel>
-#include <QImage>
 #include <QMutex>
 #include <QPointer>
-#include <QRunnable>
 #include <QSet>
 #include <QStringList>
-#include <QThreadPool>
 #include <QTimer>
-
-#include <functional>
 
 namespace EasyKiConverter {
 
 class ValidationStateManager;
-
-// 预览图编码任务
-class PreviewImageEncodeRunnable : public QRunnable {
-public:
-    PreviewImageEncodeRunnable(ComponentListItemData* item,
-                               const QList<QImage>& images,
-                               std::function<void(const QString&, const QStringList&)> callback);
-    void run() override;
-
-private:
-    QString m_componentId;
-    QList<QImage> m_images;
-    std::function<void(const QString&, const QStringList&)> m_callback;
-};
+class ComponentValidationCoordinator;
+class ComponentListDataCoordinator;
+class ComponentListBatchCoordinator;
+class ComponentListClipboardCoordinator;
+class ComponentListRetryCoordinator;
+class ComponentListMutationCoordinator;
+class ComponentListPreviewCoordinator;
 
 // 元件列表视图模型
 class ComponentListViewModel : public QAbstractListModel {
@@ -61,19 +54,23 @@ public:
     QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
     QHash<int, QByteArray> roleNames() const override;
 
+    /** @brief 返回当前列表中的元件数量。 */
     int componentCount() const {
         QMutexLocker locker(&m_listMutex);
         return m_componentList.count();
     }
 
+    /** @brief 返回当前选择的 BOM 文件路径。 */
     QString bomFilePath() const {
         return m_bomFilePath;
     }
 
+    /** @brief 返回最近一次 BOM 解析结果。 */
     QString bomResult() const {
         return m_bomResult;
     }
 
+    /** @brief 返回是否存在可重试的失败元件。 */
     bool hasInvalidComponents() const {
         return m_hasInvalidComponents;
     }
@@ -94,6 +91,7 @@ public slots:
     void fetchComponentData(const QString& componentId, bool fetch3DModel = true);
     void setOutputPath(const QString& path);
 
+    /** @brief 返回当前导出输出目录。 */
     QString outputPath() const {
         return m_outputPath;
     }
@@ -106,7 +104,7 @@ public slots:
 
     // Getter 方法
     QString filterMode() const {
-        return m_filterMode;
+        return m_stateTracker.filterMode();
     }
 
     int filteredCount() const;
@@ -114,14 +112,17 @@ public slots:
     int validCount() const;
     int invalidCount() const;
 
+    /** @brief 返回列表是否正在滚动。 */
     bool isScrolling() const {
         return m_isScrolling;
     }
 
+    /** @brief 返回验证完成提示是否可见。 */
     bool validationReadyHint() const {
         return m_validationReadyHint;
     }
 
+    /** @brief 返回预览图完成提示是否可见。 */
     bool previewReadyHint() const {
         return m_previewReadyHint;
     }
@@ -160,7 +161,26 @@ private slots:
     void handleDatasheetReady(const QString& componentId, const QByteArray& datasheetData);
 
 private:
-    static bool isNonRetryableValidationError(const QString& error);
+    friend class ComponentValidationCoordinator;
+    friend class ComponentListDataCoordinator;
+    friend class ComponentListBatchCoordinator;
+    friend class ComponentListTimerCoordinator;
+    friend class ComponentListServiceConnectionCoordinator;
+    friend class ComponentListClipboardCoordinator;
+    friend class ComponentListRetryCoordinator;
+    friend class ComponentListMutationCoordinator;
+    friend class ComponentListPreviewCoordinator;
+
+    /**
+     * @brief 创建批处理、预览和延迟调度所需的定时器。
+     */
+    void initializeTimers();
+
+    /**
+     * @brief 连接验证服务和组件服务的异步信号。
+     */
+    void initializeServiceConnections();
+
     bool componentExists(const QString& componentId) const;
     bool validateComponentId(const QString& componentId) const;
     QStringList extractComponentIdFromText(const QString& text) const;
@@ -172,9 +192,7 @@ private:
     void processNextValidation();
     void onValidationComplete(const QString& componentId);
     void fetchAllPreviewImages();
-    void batchUpdatePreviewImages();
     void processCachePreviewImages();  // 批量处理缓存预览图（防抖）
-    void onPreviewImageEncodingDone(const QString& componentId, const QStringList& encodedImages);
     void scheduleListUpdate();  // 批量模式下的列表更新调度
     void delayedFetchPreviewImages();  // 延迟获取预览图，等待所有验证完成
     void markPreviewFetchCompleted(const QString& componentId);
@@ -183,8 +201,8 @@ private:
 private:
     ComponentService* m_service;
     QList<ComponentListItemData*> m_componentList;
-    QHash<QString, int> m_componentIdIndex;
-    mutable QMutex m_listMutex;  // Protects m_componentList and m_componentIdIndex
+    ComponentListIndex m_componentIdIndex;
+    mutable QMutex m_listMutex;  // 保护 m_componentList 和对应索引
     QString m_outputPath;
     QString m_bomFilePath;
     QString m_bomResult;
@@ -195,30 +213,17 @@ private:
     int m_pendingValidationCount = 0;
     QStringList m_validatedComponentIds;
 
-    QString m_filterMode = "all";
+    ComponentListStateTracker m_stateTracker;
     bool m_isScrolling = false;
-    int m_validatingCountCache = 0;
-    int m_validCountCache = 0;
-    int m_invalidCountCache = 0;
-    int m_retryableInvalidCountCache = 0;
 
-    QStringList m_validationQueue;
-    QSet<QString> m_inFlightComponentIds;  // 追踪正在处理中的组件，避免重复调度
+    ComponentValidationQueue m_validationQueue;
     int m_validationPendingCount = 0;
     int m_validationCompletedCount = 0;
     int m_validationTotalCount = 0;
 
-    QTimer* m_previewImageUpdateTimer;
-    QList<QPointer<ComponentListItemData>> m_pendingPreviewImageItems;
-    mutable QMutex m_previewImageMutex;  // Protects m_pendingPreviewImageItems
-
     // 缓存预览图批量更新（防抖）
-    QMap<QString, QStringList> m_pendingCachePreviewImages;
-    QMap<QString, QMap<int, QString>> m_pendingIncrementalPreviewImages;
-    mutable QMutex m_cachePreviewMutex;  // Protects m_pendingCachePreviewImages
+    ComponentListPreviewUpdateBuffer m_previewUpdateBuffer;
     QTimer* m_cachePreviewImageTimer;
-
-    QThreadPool* m_encodingThreadPool;
 
     QStringList m_pendingComponentIds;
     int m_pendingBatchValidationCount = 0;
@@ -227,7 +232,7 @@ private:
     static constexpr int BATCH_ADD_SIZE = 50;
 
     // 批量更新模式（验证期间暂停 UI 更新）
-    QList<QPointer<ComponentListItemData>> m_batchUpdateItems;
+    ComponentListItemUpdateBuffer m_batchUpdateItems;
     QTimer* m_batchUpdateTimer;
 
     // 列表更新批处理（合并 componentCountChanged 和 filteredCountChanged）

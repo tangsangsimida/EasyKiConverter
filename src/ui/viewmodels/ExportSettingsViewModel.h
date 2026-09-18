@@ -65,18 +65,22 @@ public:
         return m_outputPath;
     }
 
+    /** @brief 获取库名称。 */
     QString libName() const {
         return m_libName;
     }
 
+    /** @brief 获取符号导出开关。 */
     bool exportSymbol() const {
         return m_exportSymbol;
     }
 
+    /** @brief 获取封装导出开关。 */
     bool exportFootprint() const {
         return m_exportFootprint;
     }
 
+    /** @brief 获取三维模型导出开关。 */
     bool exportModel3D() const {
         return m_exportModel3D;
     }
@@ -86,70 +90,87 @@ public:
         return m_exportModel3DFormat;
     }
 
+    /** @brief 获取三维模型路径模式。 */
     int exportModel3DPathMode() const {
         return m_exportModel3DPathMode;
     }
 
+    /** @brief 获取预览图片导出开关。 */
     bool exportPreviewImages() const {
         return m_exportPreviewImages;
     }
 
+    /** @brief 获取数据手册导出开关。 */
     bool exportDatasheet() const {
         return m_exportDatasheet;
     }
 
+    /** @brief 获取覆盖已有文件开关。 */
     bool overwriteExistingFiles() const {
         return m_overwriteExistingFiles;
     }
 
+    /** @brief 获取弱网络适配开关。 */
     bool weakNetworkSupport() const {
         return m_weakNetworkSupport;
     }
 
+    /** @brief 获取导出模式。 */
     int exportMode() const {
         return m_exportMode;
     }
 
+    /** @brief 获取调试模式开关。 */
     bool debugMode() const {
         return m_debugMode;
     }
 
+    /** @brief 获取符号描述导出开关。 */
     bool exportSymbolDescription() const {
         return m_exportSymbolDescription;
     }
 
+    /** @brief 获取封装描述导出开关。 */
     bool exportFootprintDescription() const {
         return m_exportFootprintDescription;
     }
 
+    /** @brief 获取符号库描述。 */
     QString symbolLibraryDescription() const {
         return m_symbolLibraryDescription;
     }
 
+    /** @brief 获取封装库描述。 */
     QString footprintLibraryDescription() const {
         return m_footprintLibraryDescription;
     }
 
+    /** @brief 获取封装库关键词。 */
     QString footprintLibraryKeywords() const {
         return m_footprintLibraryKeywords;
     }
 
+    /** @brief 获取缓存目录。 */
     QString cacheDir() const {
         return m_cacheDir;
     }
 
+    /** @brief 获取磁盘缓存上限。 */
     int diskCacheLimitMB() const {
         return m_diskCacheLimitMB;
     }
 
+    /** @brief 获取允许的最大磁盘缓存上限。 */
     int maxDiskCacheLimitMB() const {
         return ConfigService::MAX_DISK_CACHE_LIMIT_MB;
     }
 
+    /** @brief 获取当前是否正在导出。 */
     bool isExporting() const {
         return m_isExporting;
     }
 
+    /** @brief 获取当前状态文本。 */
     QString status() const {
         return m_status;
     }
@@ -219,6 +240,8 @@ private slots:
     void handleFailed(const QString& error);
 
 private:
+    friend class ExportOptionsBuilder;
+
     void buildExportOptions();
     void loadFromConfig();
     void setIsExporting(bool exporting);

@@ -1,4 +1,7 @@
+#include "models/ComponentData.h"
 #include "services/export/ExportProgress.h"
+#include "services/export/ExportProgressAggregator.h"
+#include "services/export/ExportRunPlan.h"
 
 #include <QtTest/QtTest>
 
@@ -11,6 +14,96 @@ private slots:
 
     // === ExportOptions 测试 ===
 
+    // 验证状态合并会保留先前到达且不重复的诊断信息。
+    void exportProgressAggregatorMergesDiagnostics() {
+        ExportTypeProgress progress;
+        ExportItemStatus firstStatus;
+        firstStatus.status = ExportItemStatus::Status::InProgress;
+        firstStatus.diagnostics = {QStringLiteral("first"), QStringLiteral("shared")};
+        ExportProgressAggregator::mergeItemStatus(progress, QStringLiteral("C1"), firstStatus);
+
+        ExportItemStatus finalStatus;
+        finalStatus.status = ExportItemStatus::Status::Success;
+        finalStatus.diagnostics = {QStringLiteral("shared"), QStringLiteral("second")};
+        ExportProgressAggregator::mergeItemStatus(progress, QStringLiteral("C1"), finalStatus);
+
+        QCOMPARE(progress.itemStatus.value(QStringLiteral("C1")).status, ExportItemStatus::Status::Success);
+        QCOMPARE(progress.itemStatus.value(QStringLiteral("C1")).diagnostics,
+                 QStringList({QStringLiteral("shared"), QStringLiteral("second"), QStringLiteral("first")}));
+        QCOMPARE(progress.successCount, 1);
+        QCOMPARE(progress.completedCount, 1);
+    }
+
+    // 验证最终统计只计算已经完成的元件，并区分成功和失败结果。
+    void exportProgressAggregatorCountsCompletedComponents() {
+        ExportTypeProgress symbolProgress;
+        symbolProgress.itemStatus[QStringLiteral("C1")].status = ExportItemStatus::Status::Success;
+        symbolProgress.itemStatus[QStringLiteral("C2")].status = ExportItemStatus::Status::Failed;
+        symbolProgress.itemStatus[QStringLiteral("C3")].status = ExportItemStatus::Status::Pending;
+
+        ExportTypeProgress footprintProgress;
+        footprintProgress.itemStatus[QStringLiteral("C1")].status = ExportItemStatus::Status::Skipped;
+        footprintProgress.itemStatus[QStringLiteral("C2")].status = ExportItemStatus::Status::Success;
+        footprintProgress.itemStatus[QStringLiteral("C3")].status = ExportItemStatus::Status::Success;
+
+        QMap<QString, ExportTypeProgress> progress;
+        progress.insert(QStringLiteral("Symbol"), symbolProgress);
+        progress.insert(QStringLiteral("Footprint"), footprintProgress);
+
+        const ExportCompletionTotals totals = ExportProgressAggregator::countCompletedComponents(
+            {QStringLiteral("C1"), QStringLiteral("C2"), QStringLiteral("C3")}, progress);
+
+        QCOMPARE(totals.successCount, 1);
+        QCOMPARE(totals.failedCount, 1);
+    }
+
+    // 验证导出计划会区分完整缓存数据和缺失数据。
+    void exportRunPlanSeparatesCachedData() {
+        ExportOptions options;
+        options.exportSymbol = true;
+        options.exportFootprint = true;
+        options.exportModel3D = true;
+        options.exportPreviewImages = true;
+        options.exportDatasheet = true;
+
+        auto cachedComponent = QSharedPointer<ComponentData>::create();
+        cachedComponent->setLcscId(QStringLiteral("C100"));
+        cachedComponent->setSymbolData(QSharedPointer<SymbolData>::create());
+        cachedComponent->setFootprintData(QSharedPointer<FootprintData>::create());
+
+        QMap<QString, QSharedPointer<ComponentData>> cachedData;
+        cachedData.insert(QStringLiteral("C100"), cachedComponent);
+        const ExportRunPlan plan =
+            buildExportRunPlan(options, {QStringLiteral("C100"), QStringLiteral("C200")}, cachedData);
+
+        QCOMPARE(plan.exportableComponentIds, QStringList{QStringLiteral("C100")});
+        QCOMPARE(plan.missingDataComponentIds, QStringList{QStringLiteral("C200")});
+        QCOMPARE(plan.progressTypeNames(),
+                 QStringList({QStringLiteral("Symbol"),
+                              QStringLiteral("Footprint"),
+                              QStringLiteral("Model3D"),
+                              QStringLiteral("PreviewImages"),
+                              QStringLiteral("Datasheet")}));
+        QCOMPARE(plan.runningStageCount(), 5);
+    }
+
+    // 验证 Xpedition 不会启动独立三维模型阶段，但仍保留导出选项之外的阶段计划。
+    void exportRunPlanSkipsXpeditionModelStage() {
+        ExportOptions options;
+        options.targetFormat = TargetEdaFormat::Xpedition;
+        options.exportSymbol = false;
+        options.exportFootprint = true;
+        options.exportModel3D = true;
+
+        const ExportRunPlan plan = buildExportRunPlan(options, {}, {});
+
+        QVERIFY(!plan.enableModel3D);
+        QVERIFY(!plan.runExternalModel3DStage);
+        QCOMPARE(plan.progressTypeNames(), QStringList{QStringLiteral("Footprint")});
+        QCOMPARE(plan.runningStageCount(), 1);
+    }
+
+    // 提供三维模型格式位掩码测试所需的参数组合。
     void exportOptionsModel3DFormatBitmask_data() {
         QTest::addColumn<int>("format");
         QTest::addColumn<bool>("wrl");

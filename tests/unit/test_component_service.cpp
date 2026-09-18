@@ -1,4 +1,7 @@
+#include "services/ComponentDataMemoryStore.h"
 #include "services/ComponentService.h"
+#include "services/LcscProductParser.h"
+#include "services/PreviewImageDataEncoder.h"
 #include "tests/common/TestPaths.hpp"
 
 #include <QBuffer>
@@ -74,6 +77,32 @@ private slots:
         QCOMPARE(loadedData.name(), QStringLiteral("Case normalized component"));
     }
 
+    /** @brief 验证独立内存存储可以原子更新符号和封装描述。 */
+    void testComponentMemoryStoreUpdatesDescriptions() {
+        ComponentDataMemoryStore store;
+        ComponentData data;
+        data.setLcscId(QStringLiteral("C54331"));
+
+        const auto symbol = QSharedPointer<SymbolData>::create();
+        SymbolInfo symbolInfo = symbol->info();
+        symbolInfo.description = QStringLiteral("旧符号描述");
+        symbol->setInfo(symbolInfo);
+        data.setSymbolData(symbol);
+
+        const auto footprint = QSharedPointer<FootprintData>::create();
+        FootprintInfo footprintInfo = footprint->info();
+        footprintInfo.description = QStringLiteral("旧封装描述");
+        footprint->setInfo(footprintInfo);
+        data.setFootprintData(footprint);
+
+        store.set(QStringLiteral("C54331"), data);
+        QVERIFY(store.updateDescription(QStringLiteral("C54331"), QStringLiteral("新描述")));
+
+        QCOMPARE(store.value(QStringLiteral("C54331")).symbolData()->info().description, QStringLiteral("新描述"));
+        QCOMPARE(store.value(QStringLiteral("C54331")).footprintData()->info().description, QStringLiteral("新描述"));
+        QVERIFY(!store.updateDescription(QStringLiteral("C99999"), QStringLiteral("不存在")));
+    }
+
     /** @brief 验证没有活动请求时不会转发过期的图片回调。 */
     void testImageCallbackWithoutActiveRequestIsDiscarded() {
         QImage image(2, 2, QImage::Format_RGB32);
@@ -141,6 +170,69 @@ private slots:
         QCOMPARE(completedSpy.count(), 1);
         QCOMPARE(context.completedCount(), 1);
         QCOMPARE(context.collectedData().size(), 1);
+    }
+
+    /** @brief 验证预览图编码器按文件名序号保存原始数据和 Base64 数据。 */
+    void testPreviewImageDataEncoderPreservesImageIndexes() {
+        QTemporaryDir imageDir;
+        QVERIFY(imageDir.isValid());
+
+        const QString firstPath = imageDir.filePath(QStringLiteral("preview_0.jpg"));
+        const QString thirdPath = imageDir.filePath(QStringLiteral("preview_2.jpg"));
+        {
+            QFile firstFile(firstPath);
+            QVERIFY(firstFile.open(QIODevice::WriteOnly));
+            QVERIFY(firstFile.write("first") == 5);
+            QFile thirdFile(thirdPath);
+            QVERIFY(thirdFile.open(QIODevice::WriteOnly));
+            QVERIFY(thirdFile.write("third") == 5);
+        }
+
+        const PreviewImageDataResult result = PreviewImageDataEncoder::encodeFiles(
+            {thirdPath, imageDir.filePath(QStringLiteral("ignored.png")), firstPath});
+
+        QCOMPARE(PreviewImageDataEncoder::imageIndexFromPath(firstPath), 0);
+        QCOMPARE(PreviewImageDataEncoder::imageIndexFromPath(QStringLiteral("preview_invalid.jpg")), -1);
+        QCOMPARE(result.imageData.size(), 3);
+        QCOMPARE(result.imageData.at(0), QByteArray("first"));
+        QCOMPARE(result.imageData.at(1), QByteArray());
+        QCOMPARE(result.imageData.at(2), QByteArray("third"));
+        QCOMPARE(result.encodedImages.at(0), QString::fromLatin1(QByteArray("first").toBase64()));
+        QCOMPARE(result.encodedImages.at(2), QString::fromLatin1(QByteArray("third").toBase64()));
+    }
+
+    /** @brief 验证 LCSC 产品解析器只选择精确匹配并限制预览图数量。 */
+    void testLcscProductParserSelectsExactProduct() {
+        const QByteArray response = R"({
+            "result": {
+                "productList": [
+                    {"component_code": "C99999", "image": "wrong.png"},
+                    {"component_code": "c54337", "image": "a.png<$>b.png<$>c.png<$>extra.png",
+                     "device_info": {"attributes": {"Manufacturer Part": "MP-54337", "Datasheet": "data.pdf"}}}
+                ]
+            }
+        })";
+
+        const auto product = LcscProductParser::parse(QStringLiteral("C54337"), response);
+        QVERIFY(product.has_value());
+        QCOMPARE(product->manufacturerPart, QStringLiteral("MP-54337"));
+        QCOMPARE(product->datasheetUrl, QStringLiteral("data.pdf"));
+        QCOMPARE(product->imageUrls,
+                 QStringList({QStringLiteral("https://image.lceda.cn/a.png"),
+                              QStringLiteral("https://image.lceda.cn/b.png"),
+                              QStringLiteral("https://image.lceda.cn/c.png")}));
+    }
+
+    /** @brief 验证没有精确匹配产品时不会错误回退到搜索结果第一项。 */
+    void testLcscProductParserRejectsNonMatchingProduct() {
+        const QByteArray response = R"({"result":{"productList":[{"component_code":"C99999","image":"wrong.png"}]}})";
+
+        QVERIFY(!LcscProductParser::parse(QStringLiteral("C54338"), response).has_value());
+    }
+
+    /** @brief 验证无效 JSON 响应会被产品解析器拒绝。 */
+    void testLcscProductParserRejectsInvalidJson() {
+        QVERIFY(!LcscProductParser::parse(QStringLiteral("C54339"), QByteArray("not-json")).has_value());
     }
 
     /** @brief 验证取消缓存加载后不会重新创建获取状态。 */

@@ -213,6 +213,7 @@ set(QML_FILES
     src/ui/qml/MainWindow.qml
     src/ui/qml/components/Card.qml
     src/ui/qml/components/ComponentListItem.qml
+    src/ui/qml/components/ListItemInteraction.qml
     src/ui/qml/components/ResultListItem.qml
     src/ui/qml/components/Icon.qml
     src/ui/qml/components/ModernButton.qml
@@ -223,6 +224,9 @@ set(QML_FILES
     src/ui/qml/components/ComponentInputCard.qml
     src/ui/qml/components/BomImportCard.qml
     src/ui/qml/components/ComponentListCard.qml
+    src/ui/qml/components/ComponentToolbar.qml
+    src/ui/qml/components/ComponentListView.qml
+    src/ui/qml/components/ComponentPreviewPopup.qml
     src/ui/qml/components/ExportSettingsBaseCard.qml
     src/ui/qml/components/KiCadSettingsCard.qml
     src/ui/qml/components/AltiumSettingsCard.qml

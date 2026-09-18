@@ -75,6 +75,21 @@ bool BomParser::validateId(const QString& componentId) {
     return false;
 }
 
+/** @brief 从文本中提取有效、去重并规范化的 LCSC 元件编号。 */
+QStringList BomParser::extractIdsFromText(const QString& text) {
+    QStringList extractedIds;
+    static const QRegularExpression re(QStringLiteral("[Cc]\\d{4,}"));
+    QRegularExpressionMatchIterator it = re.globalMatch(text);
+
+    while (it.hasNext()) {
+        const QString id = it.next().captured().toUpper();
+        if (validateId(id) && !extractedIds.contains(id)) {
+            extractedIds.append(id);
+        }
+    }
+    return extractedIds;
+}
+
 // 根据文件扩展名选择 CSV 或 Excel 解析路径并汇总元件编号。
 QStringList BomParser::parse(const QString& filePath) {
     qDebug() << "BomParser: Parsing file:" << filePath;

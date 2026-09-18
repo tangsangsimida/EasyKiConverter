@@ -36,98 +36,123 @@ class ComponentListItemData : public QObject {
 public:
     explicit ComponentListItemData(const QString& componentId, QObject* parent = nullptr);
 
-    // 批量更新预览图（暂停通知，更新完后统一通知）
+    /** @brief 批量更新预览图并按需延迟通知。 */
     void setEncodedPreviewImagesHoldNotify(const QStringList& encodedImages);
+    /** @brief 批量更新预览图但不发出通知。 */
     void setEncodedPreviewImagesSilent(const QStringList& encodedImages);
+    /** @brief 暂停所有列表项的预览图通知。 */
     static void holdPreviewImageNotifications();
+    /** @brief 恢复列表项的预览图通知。 */
     static void flushPreviewImageNotifications();
 
-    // Getter 方法
+    /** @brief 返回元器件编号。 */
     QString componentId() const {
         return m_componentId;
     }
 
+    /** @brief 返回元器件名称。 */
     QString name() const {
         return m_name;
     }
 
+    /** @brief 返回封装名称。 */
     QString package() const {
         return m_package;
     }
 
+    /** @brief 返回元器件描述。 */
     QString description() const {
         return m_description;
     }
 
+    /** @brief 返回供 QML 使用的预览图列表。 */
     QVariantList previewImages() const;
 
+    /** @brief 返回有效预览图数量。 */
     int previewImageCount() const;
 
+    /** @brief 返回元器件是否验证有效。 */
     bool isValid() const {
         return m_isValid;
     }
 
+    /** @brief 返回元器件是否正在获取数据。 */
     bool isFetching() const {
         return m_isFetching;
     }
 
+    /** @brief 返回当前验证阶段。 */
     QString validationPhase() const {
         return m_validationPhase;
     }
 
+    /** @brief 返回最近一次错误信息。 */
     QString errorMessage() const {
         return m_errorMessage;
     }
 
+    /** @brief 返回失败后是否允许重试。 */
     bool retryable() const {
         return m_retryable;
     }
 
+    /** @brief 返回数据手册地址。 */
     QString datasheetUrl() const;
 
+    /** @brief 返回预览图是否已导出。 */
     bool previewImageExported() const {
         return m_previewImageExported;
     }
 
+    /** @brief 返回数据手册是否已导出。 */
     bool datasheetExported() const {
         return m_datasheetExported;
     }
 
+    /** @brief 返回关联的元器件详细数据。 */
     QSharedPointer<ComponentData> componentData() const {
         return m_componentData;
     }
 
-    // Setter 方法
+    /** @brief 设置元器件名称并通知界面。 */
     void setName(const QString& name);
+    /** @brief 设置封装名称并通知界面。 */
     void setPackage(const QString& package);
+    /** @brief 设置描述并同步到符号和封装数据。 */
     void setDescription(const QString& description);
+    /** @brief 静默设置元器件名称。 */
     void setNameSilent(const QString& name);
+    /** @brief 静默设置封装名称。 */
     void setPackageSilent(const QString& package);
+    /** @brief 追加一张预览图。 */
     void addPreviewImage(const QImage& image);
+    /** @brief 在指定位置插入预览图。 */
     void insertPreviewImage(const QImage& image, int index);
+    /** @brief 替换全部原始预览图。 */
     void setPreviewImages(const QList<QImage>& images);
+    /** @brief 设置关联的元器件详细数据。 */
     void setComponentData(const QSharedPointer<ComponentData>& data);
+    /** @brief 设置验证状态。 */
     void setValid(bool valid);
+    /** @brief 设置数据获取状态。 */
     void setFetching(bool fetching);
+    /** @brief 设置验证阶段。 */
     void setValidationPhase(const QString& phase);
+    /** @brief 设置错误信息。 */
     void setErrorMessage(const QString& error);
+    /** @brief 设置是否允许重试。 */
     void setRetryable(bool retryable);
+    /** @brief 设置预览图导出状态。 */
     void setPreviewImageExported(bool exported);
+    /** @brief 设置数据手册导出状态。 */
     void setDatasheetExported(bool exported);
 
-    // 批量插入，不触发信号
-    void insertPreviewImageSilent(const QImage& image, int index);
-    // 批量插入完成后刷新缓存
-    void finishPreviewImageLoading();
-    // 设置预编码的图片
+    /** @brief 设置已经编码的全部预览图。 */
     void setEncodedPreviewImages(const QStringList& encodedImages);
+    /** @brief 设置指定位置的编码预览图。 */
     void setEncodedPreviewImageAt(const QString& encodedImage, int index, bool notify = true);
+    /** @brief 通知界面预览图内容已变化。 */
     void notifyPreviewImagesChanged();
-
-    // 获取原始图片
-    QList<QImage> previewImagesRaw() const {
-        return m_previewImages;
-    }
 
 signals:
     void dataChanged();

@@ -102,7 +102,11 @@ SOD-123FL_L2.7-W1.8-LS3.8-BI.wrl
 SMB_L4.6-W3.5-LS5.3-BI.wrl
 SOT-23-3P_L2.9-W1.3-H1.0-LS2.4-P0.95.wrl
 .qtcreator
-.vscode
+.vscode/*
+!.vscode/
+!.vscode/settings.json
+!.vscode/c_cpp_properties.json
+!.vscode/extensions.json
 temp_project
 tests/build
 demo

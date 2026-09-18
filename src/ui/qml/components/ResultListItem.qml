@@ -132,27 +132,18 @@ Rectangle {
         id: itemHover
     }
 
-    MouseArea {
-        id: itemMouseArea
+    // 共享复制和外链点击判定，提示动画仍由本列表项保留。
+    ListItemInteraction {
+        id: itemInteraction
         anchors.fill: parent
-        hoverEnabled: true
-        cursorShape: Qt.ArrowCursor
-        acceptedButtons: Qt.RightButton | Qt.LeftButton
-        onClicked: mouse => {
-            if (mouse.button === Qt.RightButton) {
-                if (componentId) {
-                    copyHelper.text = componentId;
-                    copyHelper.selectAll();
-                    copyHelper.copy();
-                    item.copyClicked();
-                    copyFeedback.visible = true;
-                    copyFeedbackTimer.start();
-                }
-            } else if (mouse.button === Qt.LeftButton && (mouse.modifiers & Qt.ControlModifier)) {
-                if (componentId) {
-                    Qt.openUrlExternally("https://so.szlcsc.com/global.html?k=" + componentId);
-                }
-            }
+        itemId: componentId
+        onCopyClicked: {
+            copyHelper.text = componentId;
+            copyHelper.selectAll();
+            copyHelper.copy();
+            item.copyClicked();
+            copyFeedback.visible = true;
+            copyFeedbackTimer.start();
         }
     }
 

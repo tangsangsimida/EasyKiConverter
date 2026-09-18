@@ -3,6 +3,7 @@ ComponentListItem 1.0 ComponentListItem.qml
 Icon 1.0 Icon.qml
 ModernButton 1.0 ModernButton.qml
 ResultListItem 1.0 ResultListItem.qml
+ListItemInteraction 1.0 ListItemInteraction.qml
 StatItem 1.0 StatItem.qml
 StepItem 1.0 StepItem.qml
 TitleBar 1.0 TitleBar.qml
@@ -10,6 +11,9 @@ HeaderSection 1.0 HeaderSection.qml
 ComponentInputCard 1.0 ComponentInputCard.qml
 BomImportCard 1.0 BomImportCard.qml
 ComponentListCard 1.0 ComponentListCard.qml
+ComponentToolbar 1.0 ComponentToolbar.qml
+ComponentListView 1.0 ComponentListView.qml
+ComponentPreviewPopup 1.0 ComponentPreviewPopup.qml
 ExportSettingsCard 1.0 ExportSettingsCard.qml
 ExportSettingsBaseCard 1.0 ExportSettingsBaseCard.qml
 KiCadSettingsCard 1.0 KiCadSettingsCard.qml

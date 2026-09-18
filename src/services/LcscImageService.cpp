@@ -1,15 +1,13 @@
 #include "LcscImageService.h"
 
 #include "ConfigService.h"
+#include "LcscProductParser.h"
 #include "core/network/NetworkClient.h"
 #include "core/utils/UrlUtils.h"
 
 #include <QDebug>
 #include <QFile>
 #include <QFileInfo>
-#include <QJsonArray>
-#include <QJsonDocument>
-#include <QJsonObject>
 #include <QRegularExpression>
 #include <QSharedPointer>
 #include <QTimer>
@@ -19,82 +17,6 @@
 namespace EasyKiConverter {
 
 namespace {
-
-// 从产品对象中提取并规范化最多三张预览图地址。
-QStringList extractPreviewImageUrlsFromProduct(const QJsonObject& product) {
-    QStringList imageUrls;
-    if (product.contains(QStringLiteral("image"))) {
-        const QString imagesStr = product.value(QStringLiteral("image")).toString();
-        if (!imagesStr.isEmpty()) {
-            imageUrls = imagesStr.split(QStringLiteral("<$>"), Qt::SkipEmptyParts);
-        }
-    }
-
-    while (imageUrls.size() > 3) {
-        imageUrls.removeLast();
-    }
-
-    return UrlUtils::deduplicateAndNormalizeUrls(imageUrls);
-}
-
-// 从产品及其设备属性中提取元器件编号。
-QString extractComponentCode(const QJsonObject& product) {
-    static const QStringList directKeys = {QStringLiteral("component_code"),
-                                           QStringLiteral("productCode"),
-                                           QStringLiteral("product_code"),
-                                           QStringLiteral("productNo"),
-                                           QStringLiteral("product_no"),
-                                           QStringLiteral("number"),
-                                           QStringLiteral("code"),
-                                           QStringLiteral("lcscPart"),
-                                           QStringLiteral("lcscPartNumber")};
-
-    for (const QString& key : directKeys) {
-        const QString value = product.value(key).toString().trimmed();
-        if (!value.isEmpty()) {
-            return value.toUpper();
-        }
-    }
-
-    const QJsonObject deviceInfo = product.value(QStringLiteral("device_info")).toObject();
-    if (!deviceInfo.isEmpty()) {
-        for (const QString& key : directKeys) {
-            const QString value = deviceInfo.value(key).toString().trimmed();
-            if (!value.isEmpty()) {
-                return value.toUpper();
-            }
-        }
-
-        const QJsonObject attributes = deviceInfo.value(QStringLiteral("attributes")).toObject();
-        static const QStringList attributeKeys = {QStringLiteral("LCSC Part"),
-                                                  QStringLiteral("LCSC Part #"),
-                                                  QStringLiteral("LCSC Part Number"),
-                                                  QStringLiteral("Part Number")};
-        for (const QString& key : attributeKeys) {
-            const QString value = attributes.value(key).toString().trimmed();
-            if (!value.isEmpty()) {
-                return value.toUpper();
-            }
-        }
-    }
-
-    return QString();
-}
-
-// 从搜索结果中选择与当前元器件编号精确匹配的产品。
-QJsonObject selectBestProductForComponent(const QString& componentId, const QJsonArray& productList) {
-    const QString normalizedId = componentId.trimmed().toUpper();
-    for (const QJsonValue& value : productList) {
-        const QJsonObject product = value.toObject();
-        if (extractComponentCode(product) == normalizedId) {
-            return product;
-        }
-    }
-
-    // 不再 fallback 到第一个产品，如果没有精确匹配则返回空对象
-    // 原因：之前的 fallback 逻辑会导致显示错误元器件的预览图，造成用户混淆
-    return QJsonObject();
-}
 
 // 读取当前配置中的弱网络适配开关。
 bool isWeakNetworkEnabled() {
@@ -406,75 +328,29 @@ void LcscImageService::performApiSearch(const QString& componentId, quint64 requ
                 return;
             }
 
-            const QJsonDocument doc = QJsonDocument::fromJson(result.data);
-            if (doc.isNull()) {
-                qWarning() << "LcscImageService: Failed to parse JSON response for component:" << componentId;
+            const std::optional<LcscProductInfo> productInfo = LcscProductParser::parse(componentId, result.data);
+            if (!productInfo.has_value()) {
+                qWarning() << "LcscImageService: No matching product found for component:" << componentId;
                 request->deleteLater();
                 m_requestedComponents.remove(componentId);
                 m_requestTokens.remove(componentId);
-                // 不再触发fallback，直接报告无预览图
+                // 不再触发 fallback，直接报告无预览图。
                 emit error(componentId, "No preview image available from API");
                 return;
             }
 
-            const QJsonObject root = doc.object();
+            const QStringList imageUrls = productInfo->imageUrls;
+            emit lcscDataReady(componentId, productInfo->manufacturerPart, productInfo->datasheetUrl, imageUrls);
 
-            if (root.contains("result")) {
-                const QJsonObject resultObject = root["result"].toObject();
-                if (resultObject.contains("productList")) {
-                    const QJsonArray productList = resultObject["productList"].toArray();
-                    if (!productList.isEmpty()) {
-                        const QJsonObject product = selectBestProductForComponent(componentId, productList);
-                        const QString matchedComponentCode = extractComponentCode(product);
-
-                        // 如果没有找到匹配的元器件，直接报告错误，不再使用 fallback
-                        if (matchedComponentCode.isEmpty()) {
-                            qWarning() << "LcscImageService: No matching product found for component:" << componentId;
-                            request->deleteLater();
-                            m_requestedComponents.remove(componentId);
-                            m_requestTokens.remove(componentId);
-                            emit error(componentId, "No preview image available from API");
-                            return;
-                        }
-
-                        QStringList imageUrls = extractPreviewImageUrlsFromProduct(product);
-
-                        QString manufacturerPart;
-                        QString datasheetUrl;
-                        if (product.contains("device_info")) {
-                            const QJsonObject deviceInfo = product["device_info"].toObject();
-                            if (deviceInfo.contains("attributes")) {
-                                const QJsonObject attributes = deviceInfo["attributes"].toObject();
-                                manufacturerPart = attributes.value("Manufacturer Part").toString();
-                                datasheetUrl = attributes.value("Datasheet").toString();
-                            }
-                        }
-
-                        while (imageUrls.size() > MAX_IMAGES_PER_COMPONENT) {
-                            imageUrls.removeLast();
-                        }
-
-                        emit lcscDataReady(componentId, manufacturerPart, datasheetUrl, imageUrls);
-
-                        if (!imageUrls.isEmpty()) {
-                            startPreviewImageDownloads(componentId, imageUrls, requestToken);
-                        } else {
-                            m_requestedComponents.remove(componentId);
-                            m_requestTokens.remove(componentId);
-                            emit error(componentId, "No images available");
-                        }
-
-                        request->deleteLater();
-                        return;
-                    }
-                }
+            if (!imageUrls.isEmpty()) {
+                startPreviewImageDownloads(componentId, imageUrls, requestToken);
+            } else {
+                m_requestedComponents.remove(componentId);
+                m_requestTokens.remove(componentId);
+                emit error(componentId, "No images available");
             }
 
             request->deleteLater();
-            m_requestedComponents.remove(componentId);
-            m_requestTokens.remove(componentId);
-            // 不再触发fallback，直接报告无预览图
-            emit error(componentId, "No preview image available from API");
         });
 }
 

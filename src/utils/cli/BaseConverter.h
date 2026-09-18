@@ -1,6 +1,8 @@
 #ifndef BASECONVERTER_H
 #define BASECONVERTER_H
 
+#include "services/export/ExportProgress.h"
+
 #include <QObject>
 #include <QString>
 
@@ -8,6 +10,7 @@ namespace EasyKiConverter {
 
 class CliContext;
 class CliPrinter;
+class ParallelExportService;
 
 /**
  * @brief 转换器基类
@@ -61,6 +64,13 @@ signals:
 
 protected:
     /**
+     * @brief 执行 CLI 共用的预加载和导出流程。
+     * @param componentIds 待导出的元器件编号
+     * @return 所有元器件导出成功返回 true，否则返回 false
+     */
+    bool runExport(const QStringList& componentIds);
+
+    /**
      * @brief 获取 CLI 上下文
      * @return CLI 上下文指针
      */
@@ -96,10 +106,26 @@ protected:
      */
     void printProgressBar(int progress) const;
 
+private slots:
+    /** @brief 输出预加载阶段的成功和失败数量。 */
+    void onPreloadCompleted(int successCount, int failedCount);
+
+    /** @brief 根据 CLI 选项输出导出进度。 */
+    void onProgressChanged(const ExportOverallProgress& progress);
+
+    /** @brief 保存导出完成统计并更新最终成功状态。 */
+    void onExportCompleted(int successCount, int failedCount);
+
+    /** @brief 保存导出失败信息并终止成功状态。 */
+    void onExportFailed(const QString& error);
+
 private:
     CliContext* m_context;
     CliPrinter* m_printer;
     QString m_errorMessage;
+    bool m_exportSuccess{false};
+    int m_successCount{0};
+    int m_failedCount{0};
 };
 
 }  // namespace EasyKiConverter

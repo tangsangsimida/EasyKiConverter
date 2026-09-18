@@ -1,7 +1,9 @@
 #ifndef COMPONENTSERVICE_H
 #define COMPONENTSERVICE_H
 
+#include "ComponentCacheLoadWorker.h"
 #include "ComponentCacheService.h"
+#include "ComponentDataMemoryStore.h"
 #include "LcscImageService.h"
 #include "ParallelFetchContext.h"
 #include "models/ComponentData.h"
@@ -21,6 +23,15 @@
 #include <QStringList>
 
 namespace EasyKiConverter {
+
+struct CadFetchTaskResult;
+class ComponentParallelFetchCoordinator;
+class ComponentCadFetchCoordinator;
+class ComponentMediaCallbackCoordinator;
+class ComponentApiCallbackCoordinator;
+class ComponentCacheLoadCoordinator;
+class ComponentRequestCancellationCoordinator;
+class ComponentRequestCoordinator;
 
 /**
  * @brief 元件服务类
@@ -350,6 +361,21 @@ private slots:
     void handleFetchErrorWithId(const QString& componentId, const QString& error);
 
 private:
+    friend class ComponentParallelFetchCoordinator;
+    friend class ComponentCadFetchCoordinator;
+    friend class ComponentMediaCallbackCoordinator;
+    friend class ComponentApiCallbackCoordinator;
+    friend class ComponentCacheLoadCoordinator;
+    friend class ComponentRequestCancellationCoordinator;
+    friend class ComponentRequestCoordinator;
+
+    /**
+     * @brief 创建并配置异步元件请求队列。
+     *
+     * 两种构造方式共享同一套队列信号连接，集中初始化可避免行为漂移。
+     */
+    void initializeQueueManager();
+
     /**
      * @brief 初始化API连接
      */
@@ -417,22 +443,6 @@ private:
     // 图片抓取已移至独立的 LcscImageService 类
 
     /**
-     * @brief 缓存加载结果结构体（用于异步缓存加载）
-     */
-    struct CacheLoadResult {
-        QString componentId;
-        bool success;
-        QSharedPointer<ComponentData> cachedData;
-        QByteArray cadDataJson;  // 原始 CAD JSON 数据
-        QList<QPair<int, QByteArray>> previewImageData;  // index, data
-        QStringList encodedPreviewImages;  // 后台线程预编码后的预览图
-        QByteArray datasheetData;
-        // 预解析的符号和封装数据（在后台线程解析）
-        QSharedPointer<SymbolData> symbolData;
-        QSharedPointer<FootprintData> footprintData;
-    };
-
-    /**
      * @brief 异步从缓存加载元件数据（后台线程执行）
      *
      * @param normalizedId 元件 ID
@@ -441,17 +451,23 @@ private:
      */
     void loadComponentDataFromCacheAsync(const QString& normalizedId, bool fetch3DModel, ComponentCacheService* cache);
 
+    /**
+     * @brief 处理异步 CAD 获取结果并完成缓存、信号和批量状态更新
+     * @param result CAD 获取与解析结果
+     * @param expectedGeneration 请求创建时的缓存代次
+     */
+    void handleCadFetchResult(const CadFetchTaskResult& result, uint64_t expectedGeneration);
+
 private:
     class EasyedaApi* m_api;
     LcscImageService* m_imageService;
 
     // 添加互斥锁保护并发访问
     mutable QMutex m_fetchingComponentsMutex;
-    mutable QMutex m_componentCacheMutex;
     mutable QMutex m_currentIdMutex;  // 保护 m_currentComponentId 的并发访问
 
-    // 数据缓存
-    QMap<QString, ComponentData> m_componentCache;
+    // 数据缓存由独立存储类负责容器和并发保护。
+    ComponentDataMemoryStore m_componentCache;
 
     // 当前正在获取的元件数据
     struct FetchingComponent {

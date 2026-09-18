@@ -15,6 +15,8 @@
 
 namespace EasyKiConverter {
 
+class WriteWorkerDebugExporter;
+
 /**
  * @brief 写入工作线程
  *
@@ -79,6 +81,9 @@ signals:
     void itemWriteCompleted(const QString& componentId, int itemType, bool success);
 
 private:
+    /** @brief 允许调试数据协作者复用输出目录策略和路径状态。 */
+    friend class WriteWorkerDebugExporter;
+
     /**
      * @brief 写入符号文件
      * @param status 导出状态

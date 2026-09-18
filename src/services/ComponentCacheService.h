@@ -1,18 +1,18 @@
 #ifndef COMPONENTCACHESERVICE_H
 #define COMPONENTCACHESERVICE_H
 
+#include "CacheTombstoneRegistry.h"
+#include "ComponentCacheMemoryStore.h"
 #include "core/network/AsyncNetworkRequest.h"
 #include "core/network/NetworkClient.h"
 #include "models/ComponentData.h"
 #include "models/ComponentExportStatus.h"
 
-#include <QCache>
 #include <QDir>
 #include <QElapsedTimer>
 #include <QJsonObject>
 #include <QMutex>
 #include <QObject>
-#include <QSet>
 #include <QSharedPointer>
 #include <QString>
 
@@ -21,6 +21,16 @@
 #include <memory>
 
 class CacheHealthManager;
+class ComponentCacheMetadataWriter;
+class ComponentCacheCadDataWriter;
+class DatasheetCacheFileStore;
+class DatasheetDownloadService;
+class ComponentCacheMaintenance;
+class ComponentCacheModel3DCoordinator;
+class PreviewImageDownloadService;
+class CacheDirectoryCoordinator;
+class ComponentCacheReadCoordinator;
+class ComponentCacheFileReadCoordinator;
 
 namespace EasyKiConverter {
 
@@ -422,11 +432,6 @@ public:
     void clearMemoryCache();
 
     /**
-     * @brief 清空L1内存缓存（不重置 tombstone，供 clearAllCache 内部使用）
-     */
-    void clearMemoryCacheInternal();
-
-    /**
      * @brief 获取所有缓存的元器件ID列表
      * @return QStringList 元器件ID列表
      */
@@ -494,6 +499,19 @@ signals:
     void memoryCacheSizeChanged(qint64 newSize);
 
 private:
+    friend class ComponentCacheCadDataWriter;
+    friend class ComponentCacheMetadataWriter;
+    friend class ComponentCachePreviewImageWriter;
+    friend class ComponentCacheQuotaEnforcer;
+    friend class DatasheetCacheFileStore;
+    friend class DatasheetDownloadService;
+    friend class ComponentCacheMaintenance;
+    friend class ComponentCacheModel3DCoordinator;
+    friend class PreviewImageDownloadService;
+    friend class CacheDirectoryCoordinator;
+    friend class ComponentCacheReadCoordinator;
+    friend class ComponentCacheFileReadCoordinator;
+
     /**
      * @brief 私有构造函数（单例模式）
      */
@@ -535,21 +553,6 @@ private:
     void saveMetadata(const QString& lcscId, const QJsonObject& metadata);
 
     /**
-     * @brief 从ComponentData构建元数据
-     */
-    QJsonObject buildMetadata(const QString& componentId, const ComponentData& data) const;
-
-    /**
-     * @brief 合并新旧元数据，避免新数据缺字段时覆盖掉已有缓存
-     */
-    QJsonObject mergeMetadata(const QJsonObject& existing, const QJsonObject& incoming) const;
-
-    /**
-     * @brief 原子写文件，防止半写入缓存损坏
-     */
-    bool writeFileAtomically(const QString& path, const QByteArray& data) const;
-
-    /**
      * @brief 解析datasheet缓存文件实际路径
      */
     QString resolveDatasheetPath(const QString& lcscId,
@@ -562,52 +565,24 @@ private:
     void selfHealCache();
 
     /**
-     * @brief 将旧缓存目录内容迁移到新缓存目录
-     */
-    bool migrateCacheDirectory(const QString& oldCacheDir, const QString& newCacheDir) const;
-
-    /**
-     * @brief 移动目录内容，目标中已存在的文件不覆盖
-     */
-    bool moveDirectoryContents(const QString& sourceDir, const QString& targetDir) const;
-
-    /**
-     * @brief 移动单个文件或目录，跨文件系统时回退到复制后删除
-     */
-    bool moveCacheEntry(const QString& sourcePath, const QString& targetPath) const;
-
-    /**
      * @brief 根据当前磁盘缓存限制执行清理
      */
     void enforceDiskCacheLimit(bool bypassCooldown = false);
-
-    /**
-     * @brief 生成缓存key
-     */
-    QString makeMemoryKey(const QString& lcscId, const QString& type) const;
 
     static std::unique_ptr<ComponentCacheService> s_instance;
     mutable QMutex m_mutex;  // 保护 L1 内存缓存
     mutable QMutex m_cacheDirMutex;  // 保护缓存根目录及其路径快照
     mutable QMutex m_diskWriteMutex;  // 串行化 generation 检查与磁盘写入
     QString m_cacheDir;
-    int m_memoryCacheLimitMB;
     int m_diskCacheLimitMB;
     QElapsedTimer m_lastEnforceTimer;
 
-    // L1 内存缓存：QCache 自动 LRU 淘汰
-    // Key 格式: "lcscId:type" (如 "C12345:metadata", "C12345:symbol")
-    // Value: QByteArray
-    QCache<QString, QByteArray> m_memoryCache;
-
-    // 跟踪L1缓存总大小（字节）
-    qint64 m_memoryCacheSize;
+    // L1 内存缓存由独立存储类负责线程安全、LRU 淘汰和成本统计。
+    ComponentCacheMemoryStore m_memoryCache;
     // 缓存代次：clearAllCache 时递增，异步写入前检查，防止清空后旧任务写回
     std::atomic<uint64_t> m_cacheGeneration{1};
     // Per-component tombstone：removeCache 后阻止旧回调写回
-    mutable QMutex m_tombstoneMutex;
-    QSet<QString> m_tombstones;
-    bool m_allTombstoned = false;
+    CacheTombstoneRegistry m_tombstones;
 };
 
 }  // namespace EasyKiConverter

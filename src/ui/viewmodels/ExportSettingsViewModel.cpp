@@ -7,6 +7,7 @@
 
 #include "ExportSettingsViewModel.h"
 
+#include "ExportOptionsBuilder.h"
 #include "services/ComponentCacheService.h"
 #include "services/export/ParallelExportService.h"
 #include "utils/FileUtils.h"
@@ -15,7 +16,6 @@
 #include <QCoreApplication>
 #include <QDebug>
 #include <QDir>
-#include <QStandardPaths>
 
 namespace EasyKiConverter {
 
@@ -339,78 +339,10 @@ void ExportSettingsViewModel::startExport(const QStringList& componentIds) {
 
 // 将界面设置转换为导出服务使用的选项对象。
 void ExportSettingsViewModel::buildExportOptions() {
-    ExportOptions options;
-
-    // Handle output path
-    QString absoluteOutputPath = m_outputPath;
-    if (absoluteOutputPath.isEmpty()) {
-        QString documentsPath = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
-        QDir exportDir(documentsPath);
-
-        if (!exportDir.exists("EasyKiConverter")) {
-            exportDir.mkdir("EasyKiConverter");
-        }
-        exportDir.cd("EasyKiConverter");
-        absoluteOutputPath = exportDir.absoluteFilePath(m_libName);
-    } else {
-        QDir dir(absoluteOutputPath);
-        if (dir.isAbsolute()) {
-            absoluteOutputPath = dir.cleanPath(absoluteOutputPath);
-        } else {
-            QString documentsPath = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
-            QDir exportDir(documentsPath);
-            if (!exportDir.exists("EasyKiConverter")) {
-                exportDir.mkdir("EasyKiConverter");
-            }
-            exportDir.cd("EasyKiConverter");
-            absoluteOutputPath = exportDir.absoluteFilePath(absoluteOutputPath);
-        }
-    }
-
-    if (absoluteOutputPath.isEmpty()) {
-        absoluteOutputPath = QStandardPaths::writableLocation(QStandardPaths::DesktopLocation);
-        absoluteOutputPath = QDir(absoluteOutputPath).absoluteFilePath(m_libName);
-    }
-
-    options.outputPath = absoluteOutputPath;
-    options.libName = m_libName;
-    options.exportSymbol = m_exportSymbol;
-    options.exportFootprint = m_exportFootprint;
-    options.exportModel3D = m_exportModel3D;
-    options.exportModel3DFormat = m_exportModel3DFormat;
-    options.exportModel3DPathMode = m_exportModel3DPathMode;
-    options.exportPreviewImages = m_exportPreviewImages;
-    options.exportDatasheet = m_exportDatasheet;
-    options.overwriteExistingFiles = m_overwriteExistingFiles;
-    options.weakNetworkSupport = m_weakNetworkSupport;
-    options.updateMode = (m_exportMode == 1);
-    options.debugMode = m_debugMode;
-    options.exportSymbolDescription = m_exportSymbolDescription;
-    options.exportFootprintDescription = m_exportFootprintDescription;
-    options.symbolLibraryDescription = m_symbolLibraryDescription;
-    options.footprintLibraryDescription = m_footprintLibraryDescription;
-    options.footprintLibraryKeywords = m_footprintLibraryKeywords;
-    // 从 ExportTargetModel 读取目标格式（唯一真相源）
-    options.targetFormat =
-        m_targetModel ? static_cast<TargetEdaFormat>(m_targetModel->currentIndex()) : TargetEdaFormat::KiCad;
-
-    const char* targetFormatName = options.targetFormat == TargetEdaFormat::Altium      ? "Altium"
-                                   : options.targetFormat == TargetEdaFormat::Xpedition ? "Xpedition"
-                                                                                        : "KiCad";
-    qInfo() << "Export options:" << "OutputPath:" << options.outputPath << "LibName:" << options.libName
-            << "TargetFormat:" << targetFormatName << "Symbol:" << options.exportSymbol
-            << "Footprint:" << options.exportFootprint << "3D Model:" << options.exportModel3D
-            << "3D Model Format:" << options.exportModel3DFormat << "(1=WRL, 2=STEP, 3=Both)"
-            << "3D Model Path Mode:" << options.exportModel3DPathMode << "(0=Relative, 1=Absolute)"
-            << "Preview Images:" << options.exportPreviewImages << "Datasheet:" << options.exportDatasheet
-            << "Client Weak Network Adaptation:" << options.weakNetworkSupport << "Update Mode:" << options.updateMode
-            << "Debug Mode:" << options.debugMode << "Symbol Description:" << options.exportSymbolDescription
-            << "Footprint Description:" << options.exportFootprintDescription
-            << "Symbol Library Description:" << options.symbolLibraryDescription
-            << "Footprint Library Description:" << options.footprintLibraryDescription;
+    const ExportOptions options = ExportOptionsBuilder::build(*this);
 
     m_exportService->setOptions(options);
-    m_exportService->setOutputPath(absoluteOutputPath);
+    m_exportService->setOutputPath(options.outputPath);
 }
 
 // 请求导出服务取消当前导出并更新界面状态。

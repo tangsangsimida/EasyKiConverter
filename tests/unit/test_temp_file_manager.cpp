@@ -69,6 +69,27 @@ private slots:
         QVERIFY(QDir(firstManager.tempDirectory()).exists());
     }
 
+    // 验证共享临时目录清理不会删除其他管理器仍在使用的文件。
+    void sharedTempDirectorySkipsCleanupWhileInUse() {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        TempFileManager firstManager;
+        TempFileManager secondManager;
+        firstManager.setOutputPath(tempDir.path());
+        secondManager.setOutputPath(tempDir.path());
+
+        const QString tempPath =
+            firstManager.createSymbolTempPath(QStringLiteral("Shared"), QStringLiteral(".kicad_sym"));
+        QVERIFY(writeFile(tempPath, QByteArrayLiteral("shared")));
+
+        secondManager.cleanupTempDirectory();
+        QVERIFY(QFile::exists(tempPath));
+
+        secondManager.cleanupOrphanedTempFiles();
+        QVERIFY(QFile::exists(tempPath));
+    }
+
     // 验证临时目录提交会替换已有目标目录。
     void tempDirectoryCommitMovesDirectoryAndReplacesExistingTarget() {
         QTemporaryDir tempDir;
