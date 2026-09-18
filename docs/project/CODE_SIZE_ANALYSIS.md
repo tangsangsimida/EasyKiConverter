@@ -8,13 +8,13 @@
 
 | 类型 | 文件数 | 过长 | 偏长 | 健康率 |
 |------|--------|------|------|--------|
-| 产品源码与资源 | 564 | 51 | 43 | -- |
+| 产品源码与资源 | 565 | 51 | 43 | -- |
 | Python 工具 | 13 | 5 | 4 | -- |
-| **合计** | **577** | **56** | **47** | -- |
+| **合计** | **578** | **56** | **47** | -- |
 
 当前统计工具按文件总行数使用统一阈值：高风险 >500 行，中风险 300-500 行，低风险 200-300 行。类型分项和代码/注释行数需要额外脚本才能精确拆分，因此本报告不再保留旧的推算健康率。
 
-当前基线：`src` 504 个文件、79,236 行；`tests` 58 个文件、18,782 行；翻译资源 2 个文件、3,303 行；`tools/python` 13 个文件、6,640 行。项目工具的 `--all` 统计覆盖产品源码、测试和翻译资源，工具目录单独统计后合计 577 个文件、107,961 行。
+当前基线：`src` 505 个文件、79,243 行；`tests` 58 个文件、18,782 行；翻译资源 2 个文件、3,303 行；`tools/python` 13 个文件、6,640 行。项目工具的 `--all` 统计覆盖产品源码、测试和翻译资源，工具目录单独统计后合计 578 个文件、107,968 行。
 
 ---
 
@@ -139,7 +139,8 @@
 | `src/core/altium/writers/AltiumSchComponentStorageWriter.cpp` | 145 | 独立承载单个组件 Data 流的记录顺序协调和 OLE 存储写入 |
 | `src/core/altium/writers/AltiumSchOwnershipValidator.cpp` | 48 | 独立承载 SchLib 图元和参数记录的 OWNERPARTID 范围校验与诊断 |
 | `src/core/altium/writers/AltiumSchGeometryValidator.cpp` | 192 | 独立承载 SchLib 图元的坐标、尺寸、方向、字符串和控制点约束校验 |
-| `src/models/SymbolDataSerializer.cpp` | 842 | IR 重构后自然解决 |
+| `src/models/SymbolDataSerializer.cpp` | 742 | 图形类型兼容转发已提取到独立实现，剩余主体序列化逻辑待 IR 重构收敛 |
+| `src/models/SymbolDataShapeCompatibility.cpp` | 106 | 独立承载旧 SymbolDataSerializer 图形类型接口到 SymbolShapeSerializer 的兼容转发 |
 | `src/services/export/TempFileManager.cpp` | 632 | 临时文件管理；备份事务路径操作已提取，保留共享目录引用保护 |
 | `src/services/export/TempFileTransactionUtils.cpp` | 204 | 独立承载备份事务路径移动、清单序列化和恢复数据解析 |
 | `src/services/export/TempFileTransactionUtils.h` | 48 | 备份事务工具的数据结构和路径操作接口 |
@@ -312,7 +313,7 @@ QML 文件过长是当前最严重的问题区域，建议按以下优先级处�
 |------|------|----------------|
 | `src/models/SymbolData.h` | 491 | 拆分到 `ir/SymbolIR.h` + `importers/easyeda/EasyedaMetadata.h` |
 | `src/models/FootprintData.h` | 403 | 拆分到 `ir/FootprintIR.h` + `importers/easyeda/EasyedaMetadata.h` |
-| `src/models/SymbolDataSerializer.cpp` | 728 | 逻辑合并到 IR 层或删除 |
+| `src/models/SymbolDataSerializer.cpp` | 742 | 逻辑合并到 IR 层或删除 |
 | `src/models/FootprintDataSerializer.cpp` | 677 | 同上 |
 | `src/models/ComponentData.h` | 234 | 合并到 `ir/ComponentIR.h` |
 | `src/models/Model3DData.h` | 124 | 合并到 `ir/Model3DIR.h` |
@@ -335,7 +336,7 @@ QML 文件过长是当前最严重的问题区域，建议按以下优先级处�
 
 | 目录 | 总行数 | 文件数 |
 |------|--------|--------|
-| `src` | 79,236 | 504 |
+| `src` | 79,243 | 505 |
 | `tests` | 18,782 | 58 |
 | `resources/translations` | 3,303 | 2 |
 | `tools/python` | 6,640 | 13 |
