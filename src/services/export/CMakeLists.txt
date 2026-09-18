@@ -15,6 +15,7 @@ set(EXPORT_HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/ParallelExportService.h
     ${CMAKE_CURRENT_SOURCE_DIR}/ExportRunPlan.h
     ${CMAKE_CURRENT_SOURCE_DIR}/ExportProgressAggregator.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/ExportStageLaunchCoordinator.h
     ${CMAKE_CURRENT_SOURCE_DIR}/ExportReportGenerator.h
     ${CMAKE_CURRENT_SOURCE_DIR}/ComponentDataCache.h
     ${CMAKE_CURRENT_SOURCE_DIR}/TempFileManager.h
@@ -36,6 +37,7 @@ set(EXPORT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/ParallelExportService.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ExportRunPlan.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ExportProgressAggregator.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ExportStageLaunchCoordinator.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ExportReportGenerator.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ComponentDataCache.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ExportWorkerHelpers.cpp

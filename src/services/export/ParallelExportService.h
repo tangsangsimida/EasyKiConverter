@@ -18,6 +18,7 @@ namespace EasyKiConverter {
 class ComponentService;
 class ComponentData;
 class ExportTypeStage;
+class ExportStageLaunchCoordinator;
 
 /**
  * @brief 并行导出服务
@@ -50,6 +51,8 @@ class ExportTypeStage;
  */
 class ParallelExportService : public QObject {
     Q_OBJECT
+
+    friend class ExportStageLaunchCoordinator;
 
 public:
     /**
