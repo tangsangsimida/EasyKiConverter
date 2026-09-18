@@ -11,6 +11,8 @@ target_sources(EasyKiConverterAltium
         AltiumSchSymbolGeometryNormalizer.cpp
         AltiumSymbolPinConverter.h
         AltiumSymbolPinConverter.cpp
+        AltiumSymbolCurveConverter.h
+        AltiumSymbolCurveConverter.cpp
         ExporterAltiumFootprint.h
         ExporterAltiumFootprint.cpp
         AltiumFootprintGeometryNormalizer.h

@@ -1,6 +1,7 @@
 #include "ExporterAltiumSymbol.h"
 
 #include "AltiumSchSymbolGeometryNormalizer.h"
+#include "AltiumSymbolCurveConverter.h"
 #include "AltiumSymbolPinConverter.h"
 #include "utils/AltiumCoord.h"
 #include "utils/AltiumSymbolConversionUtils.h"
@@ -687,104 +688,35 @@ AltiumSchEllipse ExporterAltiumSymbol::convertCircle(const IR::SymbolCircleIR& c
  * @brief SymbolArcIR → AltiumSchArc
  */
 AltiumSchArc ExporterAltiumSymbol::convertArc(const IR::SymbolArcIR& arc) {
-    AltiumSchArc altiumArc;
-    // 三点确定圆弧。退化为共线时，以首尾中点作为安全回退。
-    const double ax = arc.startPoint.x();
-    const double ay = arc.startPoint.y();
-    const double bx = arc.midPoint.x();
-    const double by = arc.midPoint.y();
-    const double cx = arc.endPoint.x();
-    const double cy = arc.endPoint.y();
-    const double determinant = 2.0 * (ax * (by - cy) + bx * (cy - ay) + cx * (ay - by));
-    QPointF center = (arc.startPoint + arc.endPoint) / 2.0;
-    if (std::abs(determinant) > 1e-12) {
-        const double a2 = ax * ax + ay * ay;
-        const double b2 = bx * bx + by * by;
-        const double c2 = cx * cx + cy * cy;
-        center.setX((a2 * (by - cy) + b2 * (cy - ay) + c2 * (ay - by)) / determinant);
-        center.setY((a2 * (cx - bx) + b2 * (ax - cx) + c2 * (bx - ax)) / determinant);
-    }
-    double dx = arc.startPoint.x() - center.x();
-    double dy = arc.startPoint.y() - center.y();
-    double radius = std::sqrt(dx * dx + dy * dy);
-    altiumArc.centerX = AltiumCoord::mmToRaw(center.x());
-    altiumArc.centerY = AltiumCoord::mmToRaw(center.y());
-    altiumArc.radius = AltiumCoord::mmToRaw(radius);
-    altiumArc.startAngle = std::atan2(arc.startPoint.y() - center.y(), arc.startPoint.x() - center.x()) * 180.0 / M_PI;
-    altiumArc.endAngle = std::atan2(arc.endPoint.y() - center.y(), arc.endPoint.x() - center.x()) * 180.0 / M_PI;
-    altiumArc.lineWidth = AltiumCoord::lineWidthMmToIndex(arc.strokeWidth);
-    altiumArc.lineStyle = toAltiumLineStyle(arc.strokeStyle);
-    altiumArc.color = toAltiumColor(arc.strokeColor);
-    altiumArc.ownerPartId = toAltiumOwnerPartId(arc.partIndex);
-    return altiumArc;
+    return AltiumSymbolCurveConverter::convertArc(arc);
 }
 
 /**
  * @brief SymbolPolygonIR → AltiumSchPolygon
  */
 AltiumSchPolygon ExporterAltiumSymbol::convertPolygon(const IR::SymbolPolygonIR& polygon) {
-    AltiumSchPolygon altiumPolygon;
-    altiumPolygon.lineWidth = AltiumCoord::lineWidthMmToIndex(polygon.strokeWidth);
-    altiumPolygon.lineStyle = toAltiumLineStyle(polygon.strokeStyle);
-    altiumPolygon.color = toAltiumColor(polygon.strokeColor);
-    altiumPolygon.areaColor = polygon.isFilled ? toAltiumColor(polygon.fillColor) : 0xFFFFFF;
-    altiumPolygon.isSolid = polygon.isFilled;
-    altiumPolygon.ownerPartId = toAltiumOwnerPartId(polygon.partIndex);
-
-    for (const QPointF& point : polygon.points) {
-        altiumPolygon.vertices.append(
-            QPointF(AltiumCoord::mmToSchematicUnits(point.x()), AltiumCoord::mmToSchematicUnits(point.y())));
-    }
-    return altiumPolygon;
+    return AltiumSymbolCurveConverter::convertPolygon(polygon);
 }
 
 /**
  * @brief SymbolPolylineIR → AltiumSchPolyline
  */
 AltiumSchPolyline ExporterAltiumSymbol::convertPolyline(const IR::SymbolPolylineIR& polyline) {
-    AltiumSchPolyline altiumPolyline;
-    altiumPolyline.lineWidth = AltiumCoord::lineWidthMmToIndex(polyline.strokeWidth);
-    altiumPolyline.lineStyle = toAltiumLineStyle(polyline.strokeStyle);
-    altiumPolyline.color = toAltiumColor(polyline.strokeColor);
-    altiumPolyline.ownerPartId = toAltiumOwnerPartId(polyline.partIndex);
-
-    for (const QPointF& point : polyline.points) {
-        altiumPolyline.vertices.append(
-            QPointF(AltiumCoord::mmToSchematicUnits(point.x()), AltiumCoord::mmToSchematicUnits(point.y())));
-    }
-    return altiumPolyline;
+    return AltiumSymbolCurveConverter::convertPolyline(polyline);
 }
 
 /**
  * @brief SymbolPathIR → AltiumSchPath
  */
 AltiumSchPath ExporterAltiumSymbol::convertPath(const IR::SymbolPathIR& path) {
-    AltiumSchPath altiumPath;
-    altiumPath.lineWidth = AltiumCoord::lineWidthMmToIndex(path.strokeWidth);
-    altiumPath.lineStyle = toAltiumLineStyle(path.strokeStyle);
-    altiumPath.color = toAltiumColor(path.strokeColor);
-    altiumPath.ownerPartId = toAltiumOwnerPartId(path.partIndex);
-
-    for (const QPointF& point : path.points) {
-        altiumPath.vertices.append(
-            QPointF(AltiumCoord::mmToSchematicUnits(point.x()), AltiumCoord::mmToSchematicUnits(point.y())));
-    }
-    return altiumPath;
+    return AltiumSymbolCurveConverter::convertPath(path);
 }
 
 /**
  * @brief SymbolBezierIR → AltiumSchBezier
  */
 AltiumSchBezier ExporterAltiumSymbol::convertBezier(const IR::SymbolBezierIR& bezier) {
-    AltiumSchBezier altiumBezier;
-    altiumBezier.lineWidth = AltiumCoord::lineWidthMmToIndex(bezier.strokeWidth);
-    altiumBezier.color = toAltiumColor(bezier.strokeColor);
-    altiumBezier.ownerPartId = toAltiumOwnerPartId(bezier.partIndex);
-    for (const QPointF& point : bezier.controlPoints) {
-        altiumBezier.controlPoints.append(
-            QPointF(AltiumCoord::mmToSchematicUnits(point.x()), AltiumCoord::mmToSchematicUnits(point.y())));
-    }
-    return altiumBezier;
+    return AltiumSymbolCurveConverter::convertBezier(bezier);
 }
 
 /**
@@ -885,56 +817,21 @@ AltiumSchImage ExporterAltiumSymbol::convertImage(const IR::SymbolImageIR& image
  * @brief SymbolEllipseIR → AltiumSchEllipse
  */
 AltiumSchEllipse ExporterAltiumSymbol::convertEllipse(const IR::SymbolEllipseIR& ellipse) {
-    AltiumSchEllipse altiumEllipse;
-    altiumEllipse.centerX = AltiumCoord::mmToRaw(ellipse.center.x());
-    altiumEllipse.centerY = AltiumCoord::mmToRaw(ellipse.center.y());
-    altiumEllipse.radiusX = AltiumCoord::mmToRaw(ellipse.radiusX);
-    altiumEllipse.radiusY = AltiumCoord::mmToRaw(ellipse.radiusY);
-    altiumEllipse.lineWidth = AltiumCoord::lineWidthMmToIndex(ellipse.strokeWidth);
-    altiumEllipse.lineStyle = toAltiumLineStyle(ellipse.strokeStyle);
-    altiumEllipse.color = toAltiumColor(ellipse.strokeColor);
-    altiumEllipse.areaColor = ellipse.isFilled ? toAltiumColor(ellipse.fillColor) : 0xFFFFFF;
-    altiumEllipse.isSolid = ellipse.isFilled;
-    altiumEllipse.ownerPartId = toAltiumOwnerPartId(ellipse.partIndex);
-    return altiumEllipse;
+    return AltiumSymbolCurveConverter::convertEllipse(ellipse);
 }
 
 /**
  * @brief SymbolPieIR → AltiumSchPie
  */
 AltiumSchPie ExporterAltiumSymbol::convertPie(const IR::SymbolPieIR& pie) {
-    AltiumSchPie altiumPie;
-    altiumPie.centerX = AltiumCoord::mmToRaw(pie.center.x());
-    altiumPie.centerY = AltiumCoord::mmToRaw(pie.center.y());
-    altiumPie.radius = AltiumCoord::mmToRaw(finiteNonNegative(pie.radius));
-    altiumPie.startAngle = pie.startAngle;
-    altiumPie.endAngle = pie.endAngle;
-    altiumPie.lineWidth = AltiumCoord::lineWidthMmToIndex(pie.strokeWidth);
-    altiumPie.lineStyle = toAltiumLineStyle(pie.strokeStyle);
-    altiumPie.color = toAltiumColor(pie.strokeColor);
-    altiumPie.areaColor = pie.isFilled ? toAltiumColor(pie.fillColor) : 0xFFFFFF;
-    altiumPie.isSolid = pie.isFilled;
-    altiumPie.ownerPartId = toAltiumOwnerPartId(pie.partIndex);
-    return altiumPie;
+    return AltiumSymbolCurveConverter::convertPie(pie);
 }
 
 /**
  * @brief SymbolEllipticalArcIR → AltiumSchEllipticalArc
  */
 AltiumSchEllipticalArc ExporterAltiumSymbol::convertEllipticalArc(const IR::SymbolEllipticalArcIR& arc) {
-    AltiumSchEllipticalArc altiumArc;
-    altiumArc.centerX = AltiumCoord::mmToRaw(arc.center.x());
-    altiumArc.centerY = AltiumCoord::mmToRaw(arc.center.y());
-    altiumArc.radiusX = AltiumCoord::mmToRaw(finiteNonNegative(arc.radiusX));
-    altiumArc.radiusY = AltiumCoord::mmToRaw(finiteNonNegative(arc.radiusY));
-    altiumArc.startAngle = arc.startAngle;
-    altiumArc.endAngle = arc.endAngle;
-    altiumArc.lineWidth = AltiumCoord::lineWidthMmToIndex(arc.strokeWidth);
-    altiumArc.lineStyle = toAltiumLineStyle(arc.strokeStyle);
-    altiumArc.color = toAltiumColor(arc.strokeColor);
-    altiumArc.areaColor = arc.isFilled ? toAltiumColor(arc.fillColor) : 0xFFFFFF;
-    altiumArc.ownerPartId = toAltiumOwnerPartId(arc.partIndex);
-    return altiumArc;
+    return AltiumSymbolCurveConverter::convertEllipticalArc(arc);
 }
 
 /** @brief 将符号图元委托给独立的几何归一化器。 */
