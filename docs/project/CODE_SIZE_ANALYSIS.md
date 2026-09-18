@@ -8,13 +8,13 @@
 
 | 类型 | 文件数 | 过长 | 偏长 | 健康率 |
 |------|--------|------|------|--------|
-| 产品源码与资源 | 565 | 51 | 43 | -- |
+| 产品源码与资源 | 568 | 48 | 46 | -- |
 | Python 工具 | 13 | 5 | 4 | -- |
-| **合计** | **578** | **56** | **47** | -- |
+| **合计** | **581** | **53** | **50** | -- |
 
 当前统计工具按文件总行数使用统一阈值：高风险 >500 行，中风险 300-500 行，低风险 200-300 行。类型分项和代码/注释行数需要额外脚本才能精确拆分，因此本报告不再保留旧的推算健康率。
 
-当前基线：`src` 505 个文件、79,243 行；`tests` 58 个文件、18,782 行；翻译资源 2 个文件、3,303 行；`tools/python` 13 个文件、6,640 行。项目工具的 `--all` 统计覆盖产品源码、测试和翻译资源，工具目录单独统计后合计 578 个文件、107,968 行。
+当前基线：`src` 508 个文件、79,389 行；`tests` 58 个文件、18,782 行；翻译资源 2 个文件、3,303 行；`tools/python` 13 个文件、6,642 行。项目工具的 `--all` 统计覆盖产品源码、测试和翻译资源，工具目录单独统计后合计 581 个文件、108,116 行。产品源码与资源的高风险文件 48 个、中风险文件 46 个、低风险文件 51 个；Python 工具分别为 5、4、1 个。
 
 ---
 
@@ -147,7 +147,10 @@
 | `src/core/kicad/SymbolGraphicsGenerator.cpp` | 443 | KiCad 符号图形生成 |
 | `src/core/kicad/ExporterSymbol.cpp` | 768 | KiCad 符号导出 |
 | `src/core/kicad/Exporter3DModel.cpp` | 702 | 3D 模型导出 |
-| `src/models/FootprintDataSerializer.cpp` | 697 | IR 重构后自然解决 |
+| `src/models/FootprintDataSerializer.cpp` | 379 | 封装基本信息和顶层数组聚合；图形、层定义和对象可见性序列化已提取 |
+| `src/models/FootprintShapeSerializer.cpp` | 284 | 独立承载封装边界框、焊盘、走线、孔、图形、文本、区域、轮廓、层定义和对象可见性的 JSON 映射 |
+| `src/models/FootprintDataShapeCompatibility.cpp` | 126 | 独立承载旧 `FootprintDataSerializer` 图形类型接口到 `FootprintShapeSerializer` 的兼容转发 |
+| `src/models/FootprintShapeSerializer.h` | 53 | 封装图形序列化接口 |
 | `src/core/kicad/FootprintGraphicsGenerator.cpp` | 543 | KiCad 封装图形生成 |
 | `src/ui/viewmodels/ExportSettingsViewModel.cpp` | 617 | 导出设置状态管理；选项组装和输出路径解析已提取 |
 | `src/core/altium/compound/OLECompoundWriter.cpp` | 736 | OLE 存储树、流数据、扇区分配和文件落盘；固定结构序列化已提取 |

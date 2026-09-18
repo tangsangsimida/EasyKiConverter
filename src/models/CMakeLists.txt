@@ -9,6 +9,8 @@ add_library(EasyKiConverterModels STATIC
     SymbolShapeSerializer.cpp
     FootprintData.cpp
     FootprintDataSerializer.cpp
+    FootprintDataShapeCompatibility.cpp
+    FootprintShapeSerializer.cpp
     Model3DData.cpp
     ComponentListItemData.cpp
 )
