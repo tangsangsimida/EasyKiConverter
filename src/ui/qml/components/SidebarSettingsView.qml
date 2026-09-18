@@ -7,6 +7,7 @@ Item {
     id: root
     property var exportSettingsController
     property var exportTargetModel
+    property var updateChecker
     signal openOutputFolderDialog
     signal openCacheFolderDialog
     implicitHeight: mainColumn.implicitHeight
@@ -137,6 +138,44 @@ Item {
                 }
                 browseIcon: "folder"
                 onBrowseClicked: root.openCacheFolderDialog()
+            }
+        }
+
+        // ==================== 更新配置 ====================
+        SidebarSection {
+            title: qsTranslate("MainWindow", "版本更新")
+            ColumnLayout {
+                Layout.fillWidth: true
+                spacing: AppStyle.spacing.sm
+                Text {
+                    Layout.fillWidth: true
+                    text: updateChecker ? qsTranslate("MainWindow", "当前版本 %1").arg(updateChecker.currentVersion) : ""
+                    color: AppStyle.colors.textSecondary
+                    font.pixelSize: AppStyle.fontSizes.sm
+                }
+                Text {
+                    Layout.fillWidth: true
+                    text: updateChecker ? (updateChecker.statusText === "checking" ? qsTranslate("MainWindow", "正在检查更新") : updateChecker.statusText === "failed" ? qsTranslate("MainWindow", "更新检查失败，可稍后重试。") : updateChecker.statusText === "up_to_date" ? qsTranslate("MainWindow", "已是最新版本") : updateChecker.statusText === "ignored" ? qsTranslate("MainWindow", "已忽略当前版本") : qsTranslate("MainWindow", "尚未检查")) : ""
+                    color: AppStyle.colors.textSecondary
+                    font.pixelSize: AppStyle.fontSizes.xs
+                    wrapMode: Text.Wrap
+                }
+                RowLayout {
+                    Layout.fillWidth: true
+                    Button {
+                        text: qsTranslate("MainWindow", "检查更新")
+                        enabled: updateChecker && !updateChecker.checking
+                        onClicked: updateChecker.checkForUpdates()
+                    }
+                    CheckBox {
+                        text: qsTranslate("MainWindow", "启动时自动检查")
+                        checked: updateChecker ? updateChecker.autoCheckEnabled : true
+                        onToggled: {
+                            if (updateChecker)
+                                updateChecker.setAutoCheckEnabled(checked);
+                        }
+                    }
+                }
             }
         }
 

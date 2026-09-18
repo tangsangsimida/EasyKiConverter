@@ -54,6 +54,7 @@ set(QML_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/tst_Card.qml
     ${CMAKE_CURRENT_SOURCE_DIR}/tst_ControllerBinding.qml
     ${CMAKE_CURRENT_SOURCE_DIR}/tst_ThemeBinding.qml
+    ${CMAKE_CURRENT_SOURCE_DIR}/tst_UpdateBanner.qml
 )
 
 set(QML_RESOURCES

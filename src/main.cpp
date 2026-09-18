@@ -775,7 +775,9 @@ int main(int argc, char* argv[]) {
     // 点击关闭按钮时直接退出应用程序
     app.setQuitOnLastWindowClosed(true);
 
-    QTimer::singleShot(2000, updateCheckerService, &EasyKiConverter::UpdateCheckerService::checkForUpdates);
+    // 启动检查遵循自动检查开关和 24 小时默认间隔，设置页的手动检查会强制刷新。
+    QTimer::singleShot(
+        2000, updateCheckerService, [updateCheckerService]() { updateCheckerService->checkForUpdates(false); });
 
     // 连接应用程序的 aboutToQuit 信号，确保退出前清理所有资源
     QObject::connect(&app, &QCoreApplication::aboutToQuit, [&]() {

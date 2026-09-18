@@ -16,6 +16,7 @@ Rectangle {
     readonly property var settingsController: exportSettingsViewModel
     readonly property var targetModel: exportTargetModel
     readonly property var listController: componentListViewModel
+    readonly property var updateChecker: updateCheckerService
     readonly property bool isExporting: progressController ? progressController.isExporting : false
     readonly property int failureCount: progressController ? progressController.failureCount : 0
     readonly property bool hasCompletedExport: progressController ? progressController.hasCompletedExport : false
@@ -209,6 +210,7 @@ Rectangle {
                     Layout.fillWidth: true
                     exportSettingsController: root.settingsController
                     exportTargetModel: root.targetModel
+                    updateChecker: root.updateChecker
                     onOpenOutputFolderDialog: root.requestOutputFolderDialog()
                     onOpenCacheFolderDialog: root.requestCacheFolderDialog()
                     opacity: root.collapsed ? 0 : 1

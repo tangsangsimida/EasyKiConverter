@@ -527,6 +527,22 @@ target_include_directories(test_validation_state_manager PRIVATE
 )
 add_test(NAME test_validation_state_manager COMMAND test_validation_state_manager)
 
+add_executable(test_update_checker_service
+    test_update_checker_service.cpp
+    ../common/MockNetworkClient.hpp
+)
+target_link_libraries(test_update_checker_service PRIVATE
+    Qt6::Test
+    Qt6::Network
+    EasyKiConverterLib
+)
+target_include_directories(test_update_checker_service PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}
+    ${CMAKE_SOURCE_DIR}/tests
+)
+add_test(NAME test_update_checker_service COMMAND test_update_checker_service)
+
 set(EASYKICONVERTER_UNIT_TESTS
     test_easyeda_api
     test_network_client
@@ -566,6 +582,7 @@ set(EASYKICONVERTER_UNIT_TESTS
     test_cad_data_loader
     test_component_list_viewmodel
     test_validation_state_manager
+    test_update_checker_service
 )
 
 set_tests_properties(${EASYKICONVERTER_UNIT_TESTS}

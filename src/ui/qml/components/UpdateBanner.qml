@@ -10,7 +10,7 @@ Rectangle {
     color: AppStyle.colors.infoSurface
     border.width: AppStyle.borderWidths.thin
     border.color: AppStyle.colors.infoBorder
-    visible: updateChecker ? (updateChecker.hasUpdate && !updateChecker.dismissed) : false
+    visible: updateChecker ? (updateChecker.checking || (updateChecker.hasUpdate && !updateChecker.dismissed) || updateChecker.statusText === "failed") : false
     implicitHeight: visible ? bannerLayout.implicitHeight + AppStyle.spacing.lg * 2 : 0
     Behavior on implicitHeight {
         NumberAnimation {
@@ -42,14 +42,14 @@ Rectangle {
             Layout.fillWidth: true
             spacing: 4
             Text {
-                text: qsTranslate("MainWindow", "发现新版本 %1").arg(updateChecker ? updateChecker.latestVersion : "")
+                text: updateChecker && updateChecker.checking ? qsTranslate("MainWindow", "正在检查更新") : updateChecker && updateChecker.statusText === "failed" ? qsTranslate("MainWindow", "更新检查失败") : qsTranslate("MainWindow", "发现新版本 %1").arg(updateChecker ? updateChecker.latestVersion : "")
                 color: AppStyle.colors.textPrimary
                 font.pixelSize: AppStyle.fontSizes.md
                 font.bold: true
             }
 
             Text {
-                text: updateChecker && updateChecker.releaseName && updateChecker.releaseName.length > 0 ? qsTranslate("MainWindow", "当前版本 %1，最新发布：%2").arg(updateChecker.currentVersion).arg(updateChecker.releaseName) : qsTranslate("MainWindow", "当前版本 %1，可前往 GitHub 查看发布说明。").arg(updateChecker ? updateChecker.currentVersion : "")
+                text: updateChecker && updateChecker.checking ? qsTranslate("MainWindow", "正在从 GitHub 获取最新发布信息...") : updateChecker && updateChecker.statusText === "failed" ? qsTranslate("MainWindow", "更新检查失败，可稍后重试。") : updateChecker && updateChecker.releaseName && updateChecker.releaseName.length > 0 ? qsTranslate("MainWindow", "当前版本 %1，最新发布：%2").arg(updateChecker.currentVersion).arg(updateChecker.releaseName) : qsTranslate("MainWindow", "当前版本 %1，可前往 GitHub 查看发布说明。").arg(updateChecker ? updateChecker.currentVersion : "")
                 color: AppStyle.colors.textSecondary
                 font.pixelSize: AppStyle.fontSizes.sm
                 wrapMode: Text.Wrap
@@ -60,21 +60,37 @@ Rectangle {
         RowLayout {
             spacing: AppStyle.spacing.sm
             Button {
-                text: qsTranslate("MainWindow", "查看更新")
+                objectName: "updateActionButton"
+                text: updateChecker && updateChecker.statusText === "failed" ? qsTranslate("MainWindow", "重试") : qsTranslate("MainWindow", "查看更新")
                 onClicked: {
-                    if (updateChecker && updateChecker.releaseUrl) {
-                        Qt.openUrlExternally(updateChecker.releaseUrl);
+                    if (updateChecker && updateChecker.statusText === "failed") {
+                        updateChecker.checkForUpdates();
+                    } else if (updateChecker) {
+                        Qt.openUrlExternally(updateChecker.assetUrl || updateChecker.releaseUrl);
                     }
                 }
             }
 
             Button {
+                objectName: "remindLaterButton"
                 text: qsTranslate("MainWindow", "稍后提醒")
                 flat: true
+                visible: updateChecker && updateChecker.hasUpdate
                 onClicked: {
                     if (updateChecker) {
                         updateChecker.dismissUpdate();
                     }
+                }
+            }
+
+            Button {
+                objectName: "ignoreVersionButton"
+                text: qsTranslate("MainWindow", "忽略此版本")
+                flat: true
+                visible: updateChecker && updateChecker.hasUpdate
+                onClicked: {
+                    if (updateChecker)
+                        updateChecker.ignoreUpdate();
                 }
             }
         }

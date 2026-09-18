@@ -442,6 +442,13 @@ void ConfigService::initializeDefaultConfig() {
     m_config["language"] = "en";
     m_config["cacheDir"] = defaultCacheDir();
     m_config["diskCacheLimitMB"] = DEFAULT_DISK_CACHE_LIMIT_MB;
+    m_config["updateAutoCheck"] = true;
+    m_config["updateCheckIntervalHours"] = 24;
+    m_config["updateLastCheckTime"] = 0;
+    m_config["updateLastSuccessfulCheckTime"] = 0;
+    m_config["updateIgnoredVersion"] = QString();
+    m_config["updateRemindedVersion"] = QString();
+    m_config["updateCachedRelease"] = QJsonObject();
 }
 
 QString ConfigService::getDefaultConfigPath() const {
@@ -453,6 +460,111 @@ QString ConfigService::getDefaultConfigPath() const {
     }
 
     return configDir + "/config.json";
+}
+
+// 读取启动时自动检查更新的持久化开关。
+bool ConfigService::getUpdateAutoCheck() const {
+    QMutexLocker locker(&m_configMutex);
+    return m_config.value(QStringLiteral("updateAutoCheck")).toBool(true);
+}
+
+// 保存启动时自动检查更新的持久化开关。
+void ConfigService::setUpdateAutoCheck(bool enabled) {
+    QMutexLocker locker(&m_configMutex);
+    m_config[QStringLiteral("updateAutoCheck")] = enabled;
+    emit configChanged();
+    locker.unlock();
+    saveIfNotBatching();
+}
+
+// 读取并限制自动检查间隔，避免异常配置造成频繁请求。
+int ConfigService::getUpdateCheckIntervalHours() const {
+    QMutexLocker locker(&m_configMutex);
+    return qBound(1, m_config.value(QStringLiteral("updateCheckIntervalHours")).toInt(24), 168);
+}
+
+// 保存经过边界限制的自动检查间隔。
+void ConfigService::setUpdateCheckIntervalHours(int hours) {
+    QMutexLocker locker(&m_configMutex);
+    m_config[QStringLiteral("updateCheckIntervalHours")] = qBound(1, hours, 168);
+    emit configChanged();
+    locker.unlock();
+    saveIfNotBatching();
+}
+
+// 读取最近一次发起更新检查的时间戳。
+qint64 ConfigService::getUpdateLastCheckTime() const {
+    QMutexLocker locker(&m_configMutex);
+    return m_config.value(QStringLiteral("updateLastCheckTime")).toVariant().toLongLong();
+}
+
+// 保存最近一次发起更新检查的时间戳。
+void ConfigService::setUpdateLastCheckTime(qint64 timestamp) {
+    QMutexLocker locker(&m_configMutex);
+    m_config[QStringLiteral("updateLastCheckTime")] = timestamp;
+    emit configChanged();
+    locker.unlock();
+    saveIfNotBatching();
+}
+
+// 读取最近一次成功检查的时间戳。
+qint64 ConfigService::getUpdateLastSuccessfulCheckTime() const {
+    QMutexLocker locker(&m_configMutex);
+    return m_config.value(QStringLiteral("updateLastSuccessfulCheckTime")).toVariant().toLongLong();
+}
+
+// 保存最近一次成功检查的时间戳。
+void ConfigService::setUpdateLastSuccessfulCheckTime(qint64 timestamp) {
+    QMutexLocker locker(&m_configMutex);
+    m_config[QStringLiteral("updateLastSuccessfulCheckTime")] = timestamp;
+    emit configChanged();
+    locker.unlock();
+    saveIfNotBatching();
+}
+
+// 读取用户明确忽略的版本号。
+QString ConfigService::getUpdateIgnoredVersion() const {
+    QMutexLocker locker(&m_configMutex);
+    return m_config.value(QStringLiteral("updateIgnoredVersion")).toString();
+}
+
+// 保存用户明确忽略的版本号。
+void ConfigService::setUpdateIgnoredVersion(const QString& version) {
+    QMutexLocker locker(&m_configMutex);
+    m_config[QStringLiteral("updateIgnoredVersion")] = version;
+    emit configChanged();
+    locker.unlock();
+    saveIfNotBatching();
+}
+
+// 读取用户选择稍后提醒的版本号。
+QString ConfigService::getUpdateRemindedVersion() const {
+    QMutexLocker locker(&m_configMutex);
+    return m_config.value(QStringLiteral("updateRemindedVersion")).toString();
+}
+
+// 保存用户选择稍后提醒的版本号。
+void ConfigService::setUpdateRemindedVersion(const QString& version) {
+    QMutexLocker locker(&m_configMutex);
+    m_config[QStringLiteral("updateRemindedVersion")] = version;
+    emit configChanged();
+    locker.unlock();
+    saveIfNotBatching();
+}
+
+// 读取最近一次成功获取的 Release JSON 缓存。
+QJsonObject ConfigService::getUpdateCachedRelease() const {
+    QMutexLocker locker(&m_configMutex);
+    return m_config.value(QStringLiteral("updateCachedRelease")).toObject();
+}
+
+// 保存最近一次成功获取的 Release JSON 缓存。
+void ConfigService::setUpdateCachedRelease(const QJsonObject& release) {
+    QMutexLocker locker(&m_configMutex);
+    m_config[QStringLiteral("updateCachedRelease")] = release;
+    emit configChanged();
+    locker.unlock();
+    saveIfNotBatching();
 }
 
 QString ConfigService::getLanguage() const {
