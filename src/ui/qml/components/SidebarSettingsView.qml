@@ -162,18 +162,24 @@ Item {
                 }
                 RowLayout {
                     Layout.fillWidth: true
-                    Button {
+                    ModernButton {
+                        objectName: "settingsUpdateActionButton"
                         text: qsTranslate("MainWindow", "检查更新")
                         enabled: updateChecker && !updateChecker.checking
+                        Layout.preferredHeight: 34
+                        backgroundColor: AppStyle.colors.primary
                         onClicked: updateChecker.checkForUpdates()
                     }
-                    CheckBox {
-                        text: qsTranslate("MainWindow", "启动时自动检查")
-                        checked: updateChecker ? updateChecker.autoCheckEnabled : true
-                        onToggled: {
-                            if (updateChecker)
-                                updateChecker.setAutoCheckEnabled(checked);
-                        }
+                    Item {
+                        Layout.fillWidth: true
+                    }
+                }
+                SidebarToggleRow {
+                    label: qsTranslate("MainWindow", "启动时自动检查")
+                    checked: updateChecker ? updateChecker.autoCheckEnabled : true
+                    onToggled: {
+                        if (updateChecker)
+                            updateChecker.setAutoCheckEnabled(checked);
                     }
                 }
             }

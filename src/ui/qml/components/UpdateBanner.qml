@@ -7,9 +7,9 @@ Rectangle {
     id: updateBanner
     property var updateChecker
     radius: AppStyle.radius.lg
-    color: AppStyle.colors.infoSurface
+    color: AppStyle.colors.surface
     border.width: AppStyle.borderWidths.thin
-    border.color: AppStyle.colors.infoBorder
+    border.color: AppStyle.colors.border
     visible: updateChecker ? (updateChecker.checking || (updateChecker.hasUpdate && !updateChecker.dismissed) || updateChecker.statusText === "failed") : false
     implicitHeight: visible ? bannerLayout.implicitHeight + AppStyle.spacing.lg * 2 : 0
     Behavior on implicitHeight {
@@ -25,13 +25,20 @@ Rectangle {
         anchors.margins: AppStyle.spacing.lg
         spacing: AppStyle.spacing.lg
         Rectangle {
+            Layout.preferredWidth: 4
+            Layout.preferredHeight: 42
+            radius: width / 2
+            color: updateChecker && updateChecker.statusText === "failed" ? AppStyle.colors.danger : AppStyle.colors.primary
+        }
+
+        Rectangle {
             Layout.preferredWidth: 36
             Layout.preferredHeight: 36
-            radius: width / 2  // 声明式圆角
+            radius: width / 2
             color: AppStyle.colors.infoLight
             Text {
                 anchors.centerIn: parent
-                text: "i"
+                text: updateChecker && updateChecker.statusText === "failed" ? "!" : "i"
                 color: AppStyle.colors.primary
                 font.pixelSize: AppStyle.fontSizes.lg
                 font.bold: true
@@ -58,10 +65,14 @@ Rectangle {
         }
 
         RowLayout {
-            spacing: AppStyle.spacing.sm
-            Button {
+            Layout.alignment: Qt.AlignVCenter
+            spacing: AppStyle.spacing.xs
+            ModernButton {
                 objectName: "updateActionButton"
                 text: updateChecker && updateChecker.statusText === "failed" ? qsTranslate("MainWindow", "重试") : qsTranslate("MainWindow", "查看更新")
+                Layout.preferredHeight: 36
+                backgroundColor: updateChecker && updateChecker.statusText === "failed" ? AppStyle.colors.warning : AppStyle.colors.primary
+                hoverColor: updateChecker && updateChecker.statusText === "failed" ? AppStyle.colors.warningDark : AppStyle.colors.primaryHover
                 onClicked: {
                     if (updateChecker && updateChecker.statusText === "failed") {
                         updateChecker.checkForUpdates();
@@ -74,20 +85,45 @@ Rectangle {
             Button {
                 objectName: "remindLaterButton"
                 text: qsTranslate("MainWindow", "稍后提醒")
-                flat: true
                 visible: updateChecker && updateChecker.hasUpdate
+                padding: AppStyle.spacing.sm
+                contentItem: Text {
+                    text: parent.text
+                    color: AppStyle.colors.textSecondary
+                    font.pixelSize: AppStyle.fontSizes.xs
+                    verticalAlignment: Text.AlignVCenter
+                    horizontalAlignment: Text.AlignHCenter
+                }
+                background: Rectangle {
+                    color: parent.hovered ? AppStyle.colors.background : "transparent"
+                    border.color: parent.hovered ? AppStyle.colors.borderHover : "transparent"
+                    border.width: AppStyle.borderWidths.thin
+                    radius: AppStyle.radius.sm
+                }
                 onClicked: {
-                    if (updateChecker) {
+                    if (updateChecker)
                         updateChecker.dismissUpdate();
-                    }
                 }
             }
 
             Button {
                 objectName: "ignoreVersionButton"
                 text: qsTranslate("MainWindow", "忽略此版本")
-                flat: true
                 visible: updateChecker && updateChecker.hasUpdate
+                padding: AppStyle.spacing.sm
+                contentItem: Text {
+                    text: parent.text
+                    color: AppStyle.colors.textSecondary
+                    font.pixelSize: AppStyle.fontSizes.xs
+                    verticalAlignment: Text.AlignVCenter
+                    horizontalAlignment: Text.AlignHCenter
+                }
+                background: Rectangle {
+                    color: parent.hovered ? AppStyle.colors.background : "transparent"
+                    border.color: parent.hovered ? AppStyle.colors.borderHover : "transparent"
+                    border.width: AppStyle.borderWidths.thin
+                    radius: AppStyle.radius.sm
+                }
                 onClicked: {
                     if (updateChecker)
                         updateChecker.ignoreUpdate();
