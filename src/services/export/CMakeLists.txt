@@ -21,6 +21,7 @@ set(EXPORT_HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/TempFileManager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/TempFileTransactionUtils.h
     ${CMAKE_CURRENT_SOURCE_DIR}/FootprintModel3DPreparation.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/ParallelExportPreloadCoordinator.h
     ${CMAKE_CURRENT_SOURCE_DIR}/DebugExportHelper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/KiCadLibraryTableManager.h
     PARENT_SCOPE
@@ -46,6 +47,7 @@ set(EXPORT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/TempFileManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/TempFileTransactionUtils.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/FootprintModel3DPreparation.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ParallelExportPreloadCoordinator.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/DebugExportHelper.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/KiCadLibraryTableManager.cpp
     PARENT_SCOPE
