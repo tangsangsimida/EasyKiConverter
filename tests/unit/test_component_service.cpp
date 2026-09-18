@@ -1,5 +1,6 @@
 #include "services/ComponentDataMemoryStore.h"
 #include "services/ComponentService.h"
+#include "services/LcscProductParser.h"
 #include "services/PreviewImageDataEncoder.h"
 #include "tests/common/TestPaths.hpp"
 
@@ -198,6 +199,40 @@ private slots:
         QCOMPARE(result.imageData.at(2), QByteArray("third"));
         QCOMPARE(result.encodedImages.at(0), QString::fromLatin1(QByteArray("first").toBase64()));
         QCOMPARE(result.encodedImages.at(2), QString::fromLatin1(QByteArray("third").toBase64()));
+    }
+
+    /** @brief 验证 LCSC 产品解析器只选择精确匹配并限制预览图数量。 */
+    void testLcscProductParserSelectsExactProduct() {
+        const QByteArray response = R"({
+            "result": {
+                "productList": [
+                    {"component_code": "C99999", "image": "wrong.png"},
+                    {"component_code": "c54337", "image": "a.png<$>b.png<$>c.png<$>extra.png",
+                     "device_info": {"attributes": {"Manufacturer Part": "MP-54337", "Datasheet": "data.pdf"}}}
+                ]
+            }
+        })";
+
+        const auto product = LcscProductParser::parse(QStringLiteral("C54337"), response);
+        QVERIFY(product.has_value());
+        QCOMPARE(product->manufacturerPart, QStringLiteral("MP-54337"));
+        QCOMPARE(product->datasheetUrl, QStringLiteral("data.pdf"));
+        QCOMPARE(product->imageUrls,
+                 QStringList({QStringLiteral("https://image.lceda.cn/a.png"),
+                              QStringLiteral("https://image.lceda.cn/b.png"),
+                              QStringLiteral("https://image.lceda.cn/c.png")}));
+    }
+
+    /** @brief 验证没有精确匹配产品时不会错误回退到搜索结果第一项。 */
+    void testLcscProductParserRejectsNonMatchingProduct() {
+        const QByteArray response = R"({"result":{"productList":[{"component_code":"C99999","image":"wrong.png"}]}})";
+
+        QVERIFY(!LcscProductParser::parse(QStringLiteral("C54338"), response).has_value());
+    }
+
+    /** @brief 验证无效 JSON 响应会被产品解析器拒绝。 */
+    void testLcscProductParserRejectsInvalidJson() {
+        QVERIFY(!LcscProductParser::parse(QStringLiteral("C54339"), QByteArray("not-json")).has_value());
     }
 
     /** @brief 验证取消缓存加载后不会重新创建获取状态。 */
