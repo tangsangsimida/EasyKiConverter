@@ -3,6 +3,7 @@ ComponentListItem 1.0 ComponentListItem.qml
 Icon 1.0 Icon.qml
 ModernButton 1.0 ModernButton.qml
 ResultListItem 1.0 ResultListItem.qml
+ListItemInteraction 1.0 ListItemInteraction.qml
 StatItem 1.0 StatItem.qml
 StepItem 1.0 StepItem.qml
 TitleBar 1.0 TitleBar.qml

@@ -20,7 +20,7 @@ Rectangle {
     signal retryClicked
     signal descriptionEditRequested(string componentId, string description)
     // 悬停效果
-    color: itemMouseArea.containsMouse ? AppStyle.colors.background : AppStyle.colors.surface
+    color: itemInteraction.containsMouse ? AppStyle.colors.background : AppStyle.colors.surface
     radius: AppStyle.radius.md
     border.color: {
         if (exportSuccess)
@@ -216,32 +216,18 @@ Rectangle {
         onTriggered: copyFeedback.visible = false
     }
 
-    // 底层鼠标区域
-    MouseArea {
-        id: itemMouseArea
+    // 共享复制和外链点击判定，提示动画仍由本列表项保留。
+    ListItemInteraction {
+        id: itemInteraction
         anchors.fill: parent
-        hoverEnabled: true
-        cursorShape: Qt.ArrowCursor
-        acceptedButtons: Qt.RightButton | Qt.LeftButton // 同时响应右键和左键
-        onClicked: mouse => {
-            // 右键点击复制 ID
-            if (mouse.button === Qt.RightButton) {
-                if (itemData && itemData.componentId) {
-                    copyHelper.text = itemData.componentId;
-                    copyHelper.selectAll();
-                    copyHelper.copy();
-                    rootItem.copyClicked();
-                    copyFeedback.visible = true;
-                    copyFeedbackTimer.start();
-                }
-            } else
-            // Ctrl + 左键点击打开浏览器
-            if (mouse.button === Qt.LeftButton && (mouse.modifiers & Qt.ControlModifier)) {
-                if (itemData && itemData.componentId) {
-                    var url = "https://so.szlcsc.com/global.html?k=" + itemData.componentId;
-                    Qt.openUrlExternally(url);
-                }
-            }
+        itemId: itemData ? itemData.componentId : ""
+        onCopyClicked: {
+            copyHelper.text = itemId;
+            copyHelper.selectAll();
+            copyHelper.copy();
+            rootItem.copyClicked();
+            copyFeedback.visible = true;
+            copyFeedbackTimer.start();
         }
     }
 
