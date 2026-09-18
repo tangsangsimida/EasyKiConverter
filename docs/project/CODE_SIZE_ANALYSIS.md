@@ -8,13 +8,13 @@
 
 | 类型 | 文件数 | 过长 | 偏长 | 健康率 |
 |------|--------|------|------|--------|
-| 产品源码与资源 | 540 | 51 | 43 | -- |
+| 产品源码与资源 | 542 | 51 | 43 | -- |
 | Python 工具 | 13 | 5 | 4 | -- |
-| **合计** | **553** | **56** | **47** | -- |
+| **合计** | **555** | **56** | **47** | -- |
 
 当前统计工具按文件总行数使用统一阈值：高风险 >500 行，中风险 300-500 行，低风险 200-300 行。类型分项和代码/注释行数需要额外脚本才能精确拆分，因此本报告不再保留旧的推算健康率。
 
-当前基线：`src` 480 个文件、78,609 行；`tests` 58 个文件、18,726 行；翻译资源 2 个文件、3,303 行；`tools/python` 13 个文件、6,640 行。项目工具的 `--all` 统计覆盖产品源码、测试和翻译资源，工具目录单独统计后合计 553 个文件、107,278 行。
+当前基线：`src` 482 个文件、78,678 行；`tests` 58 个文件、18,726 行；翻译资源 2 个文件、3,303 行；`tools/python` 13 个文件、6,640 行。项目工具的 `--all` 统计覆盖产品源码、测试和翻译资源，工具目录单独统计后合计 555 个文件、107,347 行。
 
 ---
 
@@ -105,11 +105,12 @@
 | `src/core/altium/AltiumFootprintGeometryNormalizer.cpp` | 110 | 独立承载 PcbLib 图元包围盒计算、区域坐标边界处理和统一平移 |
 | `src/core/altium/compound/OLECompoundWriter.cpp` | 736 | OLE 存储树、流数据和扇区分配；目录条目与文件头序列化已提取 |
 | `src/core/altium/compound/OLECompoundSerializer.cpp` | 153 | 独立承载 OLE 目录条目和 512 字节文件头的 CFB V3 字节序列化 |
-| `src/core/altium/ExporterAltiumSymbol.cpp` | 786 | SchLib 符号转换；引脚、曲线图元、标注图元、几何归一化、部件 ID/方向/颜色/线型和坐标量化共享规则已提取 |
+| `src/core/altium/ExporterAltiumSymbol.cpp` | 742 | SchLib 符号转换；引脚、曲线图元、基础图元、标注图元、几何归一化、部件 ID/方向/颜色/线型和坐标量化共享规则已提取 |
 | `src/core/altium/AltiumSchSymbolGeometryNormalizer.cpp` | 348 | 独立承载符号包围盒归一化、引脚连接端网格量化、主体边界投影和重合文本布局 |
 | `src/core/altium/AltiumSymbolPinConverter.cpp` | 190 | 独立承载 IR 引脚到 Altium 引脚记录的电气类型、显示标志、IEEE 装饰和电源引脚识别 |
 | `src/core/altium/AltiumSymbolCurveConverter.cpp` | 155 | 独立承载圆弧、多边形、折线、路径、Bezier、椭圆、扇形和椭圆弧图元转换 |
 | `src/core/altium/AltiumSymbolAnnotationConverter.cpp` | 91 | 独立承载符号文本、文本框和图片的字体、样式、嵌入数据及部件归属转换 |
+| `src/core/altium/AltiumSymbolPrimitiveConverter.cpp` | 84 | 独立承载矩形、圆角矩形、圆和 IEEE 图元的几何、样式、颜色及部件归属转换 |
 | `src/core/altium/utils/AltiumSymbolConversionUtils.h` | 71 | 独立承载符号部件 ID、方向、颜色、线型和坐标量化等共享转换规则 |
 | `src/core/altium/writers/AltiumSchLibWriter.cpp` | 437 | SchLib 主记录写入；文本记录、图片记录、引脚记录、几何图元、文件级头部、字体表、图片 Storage、组件 Data 流、输入校验、几何校验、部件归属校验和来源顺序校验已提取 |
 | `src/core/altium/writers/AltiumSchInputValidator.cpp` | 177 | 独立协调组件名称、参数字段、字符串编码、重复名称、实现映射、几何和部件归属的写入前校验 |
@@ -158,11 +159,12 @@
 - `ComponentListMutationCoordinator.cpp`（185 行）：独立承载列表添加、删除、清空及其模型行、编号索引、请求取消、验证队列和状态计数同步，ComponentListViewModel 继续保留公开槽接口和信号
 - `ComponentListClipboardCoordinator.cpp`（64 行）：独立承载剪贴板文本读取、元件编号提取、列表去重、批量添加和全量编号复制，ComponentListViewModel 继续保留公开槽接口和信号
 - `ComponentListRetryCoordinator.cpp`（46 行）：独立承载可重试失败项筛选、列表项验证状态重置、服务请求和验证计数更新，ComponentListViewModel 继续保留公开槽接口和信号
-- `ExporterAltiumSymbol.cpp`（786 行）：已提取符号引脚、曲线图元、文本/文本框/图片图元、几何归一化、部件 ID/方向/颜色/线型和坐标量化共享规则，主文件继续负责符号记录编排、参数与引脚文本诊断、矩形转换和模型关联
+- `ExporterAltiumSymbol.cpp`（742 行）：已提取符号引脚、曲线图元、矩形/圆/IEEE 基础图元、文本/文本框/图片图元、几何归一化、部件 ID/方向/颜色/线型和坐标量化共享规则，主文件继续负责符号记录编排、参数与引脚文本诊断和模型关联
 - `AltiumSchSymbolGeometryNormalizer.cpp`（348 行）：独立承载符号原点归一化、引脚连接端吸附、主体边界投影和重合文本布局，保持 Altium 符号输出坐标规则不变
 - `AltiumSymbolPinConverter.cpp`（190 行）：独立承载 IR 引脚到 Altium 引脚记录的电气类型、显示标志、IEEE 装饰和电源引脚识别，保持主导出器的公开接口不变
 - `AltiumSymbolCurveConverter.cpp`（155 行）：独立承载圆弧、多边形、折线、路径、Bezier、椭圆、扇形和椭圆弧转换，保持坐标单位、线型、颜色和部件归属映射不变
 - `AltiumSymbolAnnotationConverter.cpp`（91 行）：独立承载符号文本、文本框和图片转换，保持字体、颜色、方向、边框、图片嵌入和部件归属映射不变
+- `AltiumSymbolPrimitiveConverter.cpp`（84 行）：独立承载矩形、圆角矩形、圆和 IEEE 图元转换，保持边界、半径归一化、颜色、线型和部件归属映射不变
 - `AltiumSymbolConversionUtils.h`（71 行）：集中维护 Altium 符号转换中跨参数、引脚和图元复用的部件 ID、方向、颜色、线型及坐标量化规则
 - `ComponentListTimerCoordinator.cpp`（73 行）：独立创建并连接预览图、批处理、列表统计和延迟获取定时器，保持防抖窗口及原有回调顺序
 - `ComponentListServiceConnectionCoordinator.cpp`（91 行）：独立连接验证完成、组件数据、预览图成功/失败和批量预览完成信号，保持图片编码、缓存更新和验证状态推进顺序
@@ -308,7 +310,7 @@ QML 文件过长是当前最严重的问题区域，建议按以下优先级处�
 
 | 目录 | 总行数 | 文件数 |
 |------|--------|--------|
-| `src` | 78,609 | 480 |
+| `src` | 78,678 | 482 |
 | `tests` | 18,726 | 58 |
 | `resources/translations` | 3,303 | 2 |
 | `tools/python` | 6,640 | 13 |
