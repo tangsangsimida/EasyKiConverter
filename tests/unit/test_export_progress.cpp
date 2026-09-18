@@ -1,5 +1,6 @@
 #include "models/ComponentData.h"
 #include "services/export/ExportProgress.h"
+#include "services/export/ExportProgressAggregator.h"
 #include "services/export/ExportRunPlan.h"
 
 #include <QtTest/QtTest>
@@ -12,6 +13,49 @@ class TestExportProgress : public QObject {
 private slots:
 
     // === ExportOptions 测试 ===
+
+    // 验证状态合并会保留先前到达且不重复的诊断信息。
+    void exportProgressAggregatorMergesDiagnostics() {
+        ExportTypeProgress progress;
+        ExportItemStatus firstStatus;
+        firstStatus.status = ExportItemStatus::Status::InProgress;
+        firstStatus.diagnostics = {QStringLiteral("first"), QStringLiteral("shared")};
+        ExportProgressAggregator::mergeItemStatus(progress, QStringLiteral("C1"), firstStatus);
+
+        ExportItemStatus finalStatus;
+        finalStatus.status = ExportItemStatus::Status::Success;
+        finalStatus.diagnostics = {QStringLiteral("shared"), QStringLiteral("second")};
+        ExportProgressAggregator::mergeItemStatus(progress, QStringLiteral("C1"), finalStatus);
+
+        QCOMPARE(progress.itemStatus.value(QStringLiteral("C1")).status, ExportItemStatus::Status::Success);
+        QCOMPARE(progress.itemStatus.value(QStringLiteral("C1")).diagnostics,
+                 QStringList({QStringLiteral("shared"), QStringLiteral("second"), QStringLiteral("first")}));
+        QCOMPARE(progress.successCount, 1);
+        QCOMPARE(progress.completedCount, 1);
+    }
+
+    // 验证最终统计只计算已经完成的元件，并区分成功和失败结果。
+    void exportProgressAggregatorCountsCompletedComponents() {
+        ExportTypeProgress symbolProgress;
+        symbolProgress.itemStatus[QStringLiteral("C1")].status = ExportItemStatus::Status::Success;
+        symbolProgress.itemStatus[QStringLiteral("C2")].status = ExportItemStatus::Status::Failed;
+        symbolProgress.itemStatus[QStringLiteral("C3")].status = ExportItemStatus::Status::Pending;
+
+        ExportTypeProgress footprintProgress;
+        footprintProgress.itemStatus[QStringLiteral("C1")].status = ExportItemStatus::Status::Skipped;
+        footprintProgress.itemStatus[QStringLiteral("C2")].status = ExportItemStatus::Status::Success;
+        footprintProgress.itemStatus[QStringLiteral("C3")].status = ExportItemStatus::Status::Success;
+
+        QMap<QString, ExportTypeProgress> progress;
+        progress.insert(QStringLiteral("Symbol"), symbolProgress);
+        progress.insert(QStringLiteral("Footprint"), footprintProgress);
+
+        const ExportCompletionTotals totals = ExportProgressAggregator::countCompletedComponents(
+            {QStringLiteral("C1"), QStringLiteral("C2"), QStringLiteral("C3")}, progress);
+
+        QCOMPARE(totals.successCount, 1);
+        QCOMPARE(totals.failedCount, 1);
+    }
 
     // 验证导出计划会区分完整缓存数据和缺失数据。
     void exportRunPlanSeparatesCachedData() {

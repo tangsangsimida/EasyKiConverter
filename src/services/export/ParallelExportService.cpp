@@ -2,6 +2,7 @@
 
 #include "ComponentService.h"
 #include "DatasheetExportStage.h"
+#include "ExportProgressAggregator.h"
 #include "ExportRunPlan.h"
 #include "FootprintExportStage.h"
 #include "Model3DExportStage.h"
@@ -568,13 +569,9 @@ void ParallelExportService::onExportTypeCompleted(const QString& typeName,
         QMutexLocker locker(&m_progressMutex);
 
         ExportTypeProgress typeProgress = m_progress.exportTypeProgress.value(typeName);
-        typeProgress.typeName = typeName;
-        typeProgress.totalCount = m_componentIds.size();
-        typeProgress.inProgressCount = 0;
-
         // 完成信号的阶段计数只覆盖实际启动的任务，必须保留预加载失败项的逐项状态。
         // 以 itemStatus 重新计算，确保统计与界面逐项结果保持一致。
-        ExportWorkerHelpers::recomputeTypeProgressCounts(typeProgress);
+        ExportProgressAggregator::finalizeTypeProgress(typeProgress, typeName, m_componentIds.size());
 
         m_progress.exportTypeProgress[typeName] = typeProgress;
 
@@ -610,16 +607,7 @@ void ParallelExportService::onExportItemStatusChanged(const QString& componentId
     }
 
     ExportTypeProgress& typeProgress = m_progress.exportTypeProgress[typeName];
-    ExportItemStatus mergedStatus = status;
-    const auto previousStatus = typeProgress.itemStatus.constFind(componentId);
-    if (previousStatus != typeProgress.itemStatus.cend()) {
-        for (const QString& diagnostic : previousStatus->diagnostics) {
-            if (!mergedStatus.diagnostics.contains(diagnostic))
-                mergedStatus.diagnostics.append(diagnostic);
-        }
-    }
-    typeProgress.itemStatus[componentId] = mergedStatus;
-    ExportWorkerHelpers::recomputeTypeProgressCounts(typeProgress);
+    ExportProgressAggregator::mergeItemStatus(typeProgress, componentId, status);
 
     // FootprintExportStage 会先发出真实的嵌入结果，再发出封装结果。
     // 只有在 3D 尚未收到独立结果时才使用封装状态兜底，避免封装成功覆盖
@@ -827,38 +815,12 @@ void ParallelExportService::checkAllExportCompleted() {
     m_progress.currentStage = ExportOverallProgress::Stage::Completed;
     m_progress.endTime = QDateTime::currentDateTime();
 
-    int totalSuccess = 0;
-    int totalFailed = 0;
-    for (const QString& componentId : m_componentIds) {
-        bool anyFailed = false;
-        bool allDone = true;
-
-        for (auto it = m_progress.exportTypeProgress.cbegin(); it != m_progress.exportTypeProgress.cend(); ++it) {
-            const ExportItemStatus itemStatus =
-                it.value().itemStatus.value(componentId, ExportItemStatus{ExportItemStatus::Status::Pending});
-            if (itemStatus.status == ExportItemStatus::Status::Failed) {
-                anyFailed = true;
-            }
-            if (itemStatus.status != ExportItemStatus::Status::Success &&
-                itemStatus.status != ExportItemStatus::Status::Failed &&
-                itemStatus.status != ExportItemStatus::Status::Skipped) {
-                allDone = false;
-            }
-        }
-
-        if (!allDone) {
-            continue;
-        }
-        if (anyFailed) {
-            totalFailed++;
-        } else {
-            totalSuccess++;
-        }
-    }
+    const ExportCompletionTotals totals =
+        ExportProgressAggregator::countCompletedComponents(m_componentIds, m_progress.exportTypeProgress);
 
     logNetworkRuntimeStats(QStringLiteral("export-completed"));
     writeExportDetailedReport(QStringLiteral("export-completed"));
-    emit completed(totalSuccess, totalFailed);
+    emit completed(totals.successCount, totals.failedCount);
     cleanupExportStages();
 }
 
