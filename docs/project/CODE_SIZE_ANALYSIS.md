@@ -8,13 +8,13 @@
 
 | 类型 | 文件数 | 过长 | 偏长 | 健康率 |
 |------|--------|------|------|--------|
-| 产品源码与资源 | 532 | 52 | 40 | -- |
+| 产品源码与资源 | 534 | 52 | 40 | -- |
 | Python 工具 | 13 | 5 | 4 | -- |
-| **合计** | **545** | **57** | **44** | -- |
+| **合计** | **547** | **57** | **44** | -- |
 
 当前统计工具按文件总行数使用统一阈值：高风险 >500 行，中风险 300-500 行，低风险 200-300 行。类型分项和代码/注释行数需要额外脚本才能精确拆分，因此本报告不再保留旧的推算健康率。
 
-当前基线：`src` 472 个文件、78,392 行；`tests` 58 个文件、18,726 行；翻译资源 2 个文件、3,303 行；`tools/python` 13 个文件、6,640 行。项目工具的 `--all` 统计覆盖产品源码、测试和翻译资源，工具目录单独统计后合计 545 个文件、107,061 行。
+当前基线：`src` 474 个文件、78,450 行；`tests` 58 个文件、18,726 行；翻译资源 2 个文件、3,303 行；`tools/python` 13 个文件、6,640 行。项目工具的 `--all` 统计覆盖产品源码、测试和翻译资源，工具目录单独统计后合计 547 个文件、107,119 行。
 
 ---
 
@@ -98,8 +98,9 @@
 | `src/main.cpp` | 859 | 入口文件混入了 CLI/GUI 切换逻辑 |
 | `src/workers/WriteWorker.cpp` | 612 | 文件写入工作线程；调试数据导出已提取 |
 | `src/workers/WriteWorkerDebugExporter.cpp` | 267 | 独立承载原始响应、模型数据和结构化调试摘要的文件写入 |
-| `src/core/altium/writers/AltiumPcbLibWriter.cpp` | 826 | PcbLib 文件级写入与元件记录编排；图元记录写入已提取 |
+| `src/core/altium/writers/AltiumPcbLibWriter.cpp` | 610 | PcbLib 文件级写入与元件记录编排；图元记录写入和输入校验已提取 |
 | `src/core/altium/writers/AltiumPcbPrimitiveWriter.cpp` | 384 | 独立承载 PcbLib 焊盘、走线、弧线、文本、填充、区域和组件实体图元记录写入 |
+| `src/core/altium/writers/AltiumPcbInputValidator.cpp` | 243 | 独立承载 PcbLib 封装名称、图元属性、三维模型和扩展记录的写入前校验 |
 | `src/core/altium/compound/OLECompoundWriter.cpp` | 736 | OLE 存储树、流数据和扇区分配；目录条目与文件头序列化已提取 |
 | `src/core/altium/compound/OLECompoundSerializer.cpp` | 153 | 独立承载 OLE 目录条目和 512 字节文件头的 CFB V3 字节序列化 |
 | `src/core/altium/ExporterAltiumSymbol.cpp` | 945 | SchLib 符号转换；引脚转换、几何归一化、部件 ID/方向/颜色/线型和坐标量化共享规则已提取 |
@@ -197,8 +198,9 @@
 - `AltiumSchComponentStorageWriter.cpp`（145 行）：独立承载单个组件 Data 流的默认/来源顺序选择、补充图元以及参数和实现记录的协调
 - `AltiumSchOwnershipValidator.cpp`（48 行）：独立校验所有 SchLib 记录的 OWNERPARTID 范围并复用主写入器诊断通道，保持拒绝写入行为不变
 - `AltiumSchGeometryValidator.cpp`（192 行）：独立校验图元几何边界、编码字符串和枚举范围，并复用主写入器诊断通道，保持拒绝写入行为不变
-- `AltiumPcbLibWriter.cpp`（826 行）：已提取焊盘、走线、弧线、文本、填充、区域和组件实体图元记录，主写入器继续负责文件级状态、封装数据、唯一标识表和元件记录编排
+- `AltiumPcbLibWriter.cpp`（610 行）：已提取焊盘、走线、弧线、文本、填充、区域和组件实体图元记录以及输入校验，主写入器继续负责文件级状态、封装数据、唯一标识表和元件记录编排
 - `AltiumPcbPrimitiveWriter.cpp`（384 行）：独立承载 PcbLib 图元记录编码，复用主写入器的层映射、标志编码、有限值归一化、广字符串和公共图元头部规则
+- `AltiumPcbInputValidator.cpp`（243 行）：独立承载封装名称、焊盘/走线/文本/区域属性、三维模型、三维实体和扩展记录的输入校验，复用主写入器诊断通道并保持拒绝写入行为不变
 - `OLECompoundWriter.cpp`（736 行）：继续负责 OLE 存储树、流登记、mini stream、FAT/DIFAT 扇区分配和文件落盘，固定结构编码已移出
 - `OLECompoundSerializer.cpp`（153 行）：独立承载目录条目、版本字段、FAT/DIFAT 索引和扇区布局的 CFB V3 序列化，保持 OLE 写入器的只读状态边界
 - `WriteWorker.cpp`（612 行）：继续负责写入任务调度、符号/封装/三维模型/预览图/数据手册写入和状态汇总，调试数据输出已提取
@@ -298,7 +300,7 @@ QML 文件过长是当前最严重的问题区域，建议按以下优先级处�
 
 | 目录 | 总行数 | 文件数 |
 |------|--------|--------|
-| `src` | 78,146 | 462 |
+| `src` | 78,450 | 474 |
 | `tests` | 18,726 | 58 |
 | `resources/translations` | 3,303 | 2 |
 | `tools/python` | 6,640 | 13 |
