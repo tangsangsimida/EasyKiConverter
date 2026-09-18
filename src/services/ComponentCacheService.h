@@ -28,6 +28,7 @@ class DatasheetDownloadService;
 class ComponentCacheMaintenance;
 class ComponentCacheModel3DCoordinator;
 class PreviewImageDownloadService;
+class CacheDirectoryCoordinator;
 
 namespace EasyKiConverter {
 
@@ -505,6 +506,7 @@ private:
     friend class ComponentCacheMaintenance;
     friend class ComponentCacheModel3DCoordinator;
     friend class PreviewImageDownloadService;
+    friend class CacheDirectoryCoordinator;
 
     /**
      * @brief 私有构造函数（单例模式）

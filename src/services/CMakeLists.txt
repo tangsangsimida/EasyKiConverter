@@ -66,6 +66,8 @@ add_library(EasyKiConverterServices STATIC
     DatasheetDownloadService.h
     CachePathResolver.cpp
     CachePathResolver.h
+    CacheDirectoryCoordinator.cpp
+    CacheDirectoryCoordinator.h
     PreviewImageDownloadService.cpp
     PreviewImageDownloadService.h
     ComponentCacheMaintenance.cpp
