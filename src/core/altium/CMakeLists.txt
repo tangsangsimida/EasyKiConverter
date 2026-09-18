@@ -7,6 +7,8 @@ target_sources(EasyKiConverterAltium
         # 导出器
         ExporterAltiumSymbol.h
         ExporterAltiumSymbol.cpp
+        AltiumSymbolPinConverter.h
+        AltiumSymbolPinConverter.cpp
         ExporterAltiumFootprint.h
         ExporterAltiumFootprint.cpp
 
@@ -60,6 +62,7 @@ target_sources(EasyKiConverterAltium
         utils/AltiumBinaryWriter.h
         utils/AltiumBinaryWriter.cpp
         utils/AltiumCoord.h
+        utils/AltiumSymbolConversionUtils.h
         utils/AltiumLayerMap.h
         utils/AltiumLayerMap.cpp
 

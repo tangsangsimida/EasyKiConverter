@@ -1,7 +1,8 @@
 #include "ExporterAltiumSymbol.h"
 
+#include "AltiumSymbolPinConverter.h"
 #include "utils/AltiumCoord.h"
-#include "utils/AltiumLayerMap.h"
+#include "utils/AltiumSymbolConversionUtils.h"
 
 #include <QDebug>
 #include <QFile>
@@ -15,79 +16,12 @@ namespace EasyKiConverter {
 
 namespace {
 
-/**
- * @brief 将 IR 部件索引转换为 Altium 的部件 ID。
- * @details 负索引表示公共 Part Zero，普通部件使用从 1 开始的编号。
- */
-int toAltiumOwnerPartId(int partIndex) {
-    if (partIndex == -1)
-        return -1;
-    if (partIndex < -1)
-        return partIndex;
-    if (partIndex >= 32767)
-        return 32768;
-    return qMax(1, partIndex + 1);
-}
-
-/**
- * @brief 将任意角度归一化为 Altium 的四向文字方向。
- * @param rotation 角度（度）
- * @return 0 到 3 的 90 度方向编号
- */
-int toAltiumOrientation(double rotation) {
-    return ((qRound(rotation / 90.0) % 4) + 4) % 4;
-}
-
-// 将非法或负数几何尺寸归一化为可写入的非负有限值。
-double finiteNonNegative(double value) {
-    return std::isfinite(value) ? qMax(0.0, value) : 0.0;
-}
-
-}  // namespace
-
-namespace {
-
-// 将 IR 线型映射为 Altium SchLib 的线型编号。
-int toAltiumLineStyle(IR::StrokeStyle style) {
-    // 保留实线作为未知线型的安全回退，避免生成无法识别的编号。
-    switch (style) {
-        case IR::StrokeStyle::Dashed:
-            return 1;
-        case IR::StrokeStyle::Dotted:
-            return 2;
-        case IR::StrokeStyle::Solid:
-        default:
-            return 0;
-    }
-}
-
-/**
- * @brief 将 Qt 颜色转换为 Altium 使用的 0x00BBGGRR 编码。
- * @details IR 统一使用 RGB，而 SchLib 参数保存的是 BGR 数值。此前转换器
- *          没有复制颜色字段，导致所有图元退化为 Altium 默认黑色。
- */
-uint32_t toAltiumColor(const QColor& color) {
-    // Altium 原理图库的默认符号色是深蓝色；黑色是 IR 的“未指定”默认值，
-    // 若直接写入 0，SchLib 写入器会省略 Color 参数并由 AD 使用不可预测的默认值。
-    constexpr uint32_t kDefaultSchematicColor = 0x68380B;
-    if (!color.isValid() || color.alpha() == 0 || color == QColor(Qt::black))
-        return kDefaultSchematicColor;
-    return (static_cast<uint32_t>(color.blue()) << 16) | (static_cast<uint32_t>(color.green()) << 8) |
-           static_cast<uint32_t>(color.red());
-}
-
-/**
- * @brief 将原始坐标量化到 Altium SchLib 的最小转换网格
- * @details SchLib 多边形使用 raw / 1000 的 Schematic Unit，而引脚和基本图元
- *          使用 raw。平移量必须落在 1000 raw 网格上，避免两套坐标写出后产生
- *          小于 0.1 mil 的相对偏移。
- */
-int quantizeSchematicOffset(int value) {
-    constexpr int kSchematicUnitRaw = 1000;
-    if (value >= 0)
-        return ((value + kSchematicUnitRaw / 2) / kSchematicUnitRaw) * kSchematicUnitRaw;
-    return ((value - kSchematicUnitRaw / 2) / kSchematicUnitRaw) * kSchematicUnitRaw;
-}
+using AltiumSymbolConversionUtils::finiteNonNegative;
+using AltiumSymbolConversionUtils::quantizeSchematicOffset;
+using AltiumSymbolConversionUtils::toAltiumColor;
+using AltiumSymbolConversionUtils::toAltiumLineStyle;
+using AltiumSymbolConversionUtils::toAltiumOrientation;
+using AltiumSymbolConversionUtils::toAltiumOwnerPartId;
 
 /**
  * @brief 量化坐标到 Altium 10 mil 吸附网格
@@ -800,177 +734,7 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
  * @brief SymbolPinIR → AltiumSchPin
  */
 AltiumSchPin ExporterAltiumSymbol::convertPin(const IR::SymbolPinIR& pin) {
-    AltiumSchPin altiumPin;
-    altiumPin.name = pin.name;
-    altiumPin.designator = pin.designator;
-    altiumPin.locationX = AltiumCoord::mmToRaw(pin.position.x());
-    altiumPin.locationY = AltiumCoord::mmToRaw(pin.position.y());
-    altiumPin.length = pin.length > 0.0 ? AltiumCoord::mmToRaw(pin.length) : 100000;
-    altiumPin.electricalType =
-        static_cast<AltiumModels::PinElectricalType>(AltiumLayerMap::toAltiumElectricalType(pin.electricalType));
-    altiumPin.orientation =
-        static_cast<AltiumModels::PinOrientation>(AltiumLayerMap::toAltiumPinOrientation(pin.direction));
-    // EasyEDA 的 pin name 显示标志在部分库中未设置，但名称字符串本身
-    // 仍是符号的一部分。Altium 的 PinConglomerate 必须显式打开 show-name，
-    // 否则 AD 只绘制 Pin Number，名称会表现为脱离引脚的独立文本。
-    // 优先从 display 控制层获取，兼容旧 showName 字段。
-    altiumPin.showName =
-        !pin.hasNamePosition && (pin.display.showName || pin.showName || !pin.name.trimmed().isEmpty());
-    altiumPin.showDesignator = !pin.hasNumberPosition && (pin.display.showDesignator || pin.showDesignator);
-    altiumPin.isHidden = !altiumPin.showName && !altiumPin.showDesignator;
-    altiumPin.color = toAltiumColor(QColor(Qt::black));
-    // EasyEDA 的反相圆点位于引脚外侧，时钟标记贴近主体内侧。
-    // 优先从 style 语义层获取，兼容旧 hasDot/hasClock 字段。
-    if (pin.style.inverted || pin.hasDot)
-        altiumPin.symbolOuterEdge = 1;  // Dot
-    if (pin.style.activeLow)
-        altiumPin.symbolOuterEdge = 4;  // Active Low Input
-    if (pin.style.clock || pin.hasClock)
-        altiumPin.symbolInnerEdge = 3;  // Clock
-
-    // 处理更丰富的 PinDecoration 枚举
-    switch (pin.style.decoration) {
-        case IR::PinDecoration::Dot:
-            altiumPin.symbolOuterEdge = 1;
-            break;
-        case IR::PinDecoration::ActiveLow:
-            altiumPin.symbolOuterEdge = 4;
-            break;
-        case IR::PinDecoration::Clock:
-            altiumPin.symbolInnerEdge = 3;
-            break;
-        case IR::PinDecoration::InvertedClock:
-            altiumPin.symbolInnerEdge = 3;
-            altiumPin.symbolOuterEdge = 1;
-            break;
-        case IR::PinDecoration::OpenCollector:
-            altiumPin.symbolInside = 9;
-            break;
-        case IR::PinDecoration::OpenEmitter:
-            altiumPin.symbolInside = 23;
-            break;
-        case IR::PinDecoration::HiZ:
-            altiumPin.symbolInside = 10;
-            break;
-        case IR::PinDecoration::Pulse:
-            altiumPin.symbolInside = 12;
-            break;
-        case IR::PinDecoration::Postponed:
-            altiumPin.symbolInside = 8;
-            break;
-        case IR::PinDecoration::ShiftLeft:
-            altiumPin.symbolInside = 30;
-            break;
-        case IR::PinDecoration::AnalogInput:
-            altiumPin.symbolOutside = 5;
-            break;
-        case IR::PinDecoration::NoConnect:
-            altiumPin.symbolOutside = 6;
-            break;
-        case IR::PinDecoration::GroupLine:
-            altiumPin.symbolOutside = 15;  // Group Line
-            break;
-        case IR::PinDecoration::FlagRight:
-            altiumPin.symbolOutside = 33;  // Left Right Signal Flow
-            break;
-        case IR::PinDecoration::FlagLeft:
-            altiumPin.symbolOutside = 2;  // Right Left Signal Flow
-            break;
-        case IR::PinDecoration::ShiftRight:
-            altiumPin.symbolInside = 7;
-            break;
-        case IR::PinDecoration::HighCurrent:
-            altiumPin.symbolInside = 11;
-            break;
-        case IR::PinDecoration::Schmitt:
-            altiumPin.symbolInside = 13;
-            break;
-        case IR::PinDecoration::Delay:
-            altiumPin.symbolInside = 14;
-            break;
-        case IR::PinDecoration::ActiveLowOutput:
-            altiumPin.symbolOuterEdge = 17;
-            break;
-        case IR::PinDecoration::OpenCollectorPullUp:
-            altiumPin.symbolInside = 22;
-            break;
-        case IR::PinDecoration::OpenEmitterPullUp:
-            altiumPin.symbolInside = 24;
-            break;
-        case IR::PinDecoration::DigitalInput:
-            altiumPin.symbolOutside = 25;
-            break;
-        case IR::PinDecoration::GroupBinary:
-            altiumPin.symbolOutside = 16;
-            break;
-        case IR::PinDecoration::InputOutput:
-            altiumPin.symbolOutside = 31;
-            break;
-        case IR::PinDecoration::OpenCircuitOutput:
-            altiumPin.symbolInside = 32;
-            break;
-        case IR::PinDecoration::Pi:
-            altiumPin.symbolOutside = 18;
-            break;
-        case IR::PinDecoration::GreaterEqual:
-            altiumPin.symbolOutside = 19;
-            break;
-        case IR::PinDecoration::LessEqual:
-            altiumPin.symbolOutside = 20;
-            break;
-        case IR::PinDecoration::Sigma:
-            altiumPin.symbolOutside = 21;
-            break;
-        case IR::PinDecoration::And:
-            altiumPin.symbolOutside = 26;
-            break;
-        case IR::PinDecoration::Inverter:
-            altiumPin.symbolOutside = 27;
-            break;
-        case IR::PinDecoration::Or:
-            altiumPin.symbolOutside = 28;
-            break;
-        case IR::PinDecoration::Xor:
-            altiumPin.symbolOutside = 29;
-            break;
-        case IR::PinDecoration::BidirectionalSignalFlow:
-            altiumPin.symbolOutside = 34;
-            break;
-        default:
-            break;
-    }
-
-    // 这些电气类型同时具有明确的 Altium IEEE 装饰
-    switch (pin.electricalType) {
-        case IR::PinElectricalType::OpenCollector:
-            altiumPin.symbolInside = 9;
-            break;
-        case IR::PinElectricalType::OpenEmitter:
-            altiumPin.symbolInside = 23;
-            break;
-        default:
-            break;
-    }
-    // Altium 使用 -1 表示 Part Zero 中的公共引脚；普通部件仍使用 1-based 编号。
-    altiumPin.ownerPartId = pin.commonToAllParts ? -1 : toAltiumOwnerPartId(pin.partIndex);
-    altiumPin.sourcePartIndex = pin.partIndex;
-
-    // 电源引脚检测：EasyEDA 通常不区分电源引脚（type=3/Bidirectional），
-    // 通过引脚名称匹配常见电源网络名称，强制设为 Power 类型
-    if (altiumPin.electricalType != AltiumModels::PinElectricalType::Power) {
-        static const QSet<QString> powerPinNames = {
-            "GND",      "AGND",    "DGND",     "PGND",      "SGND",  "CGND", "GNDP", "GNDN", "VCC",
-            "VDD",      "AVCC",    "AVDD",     "DVDD",      "IOVDD", "PVDD", "SVDD", "VDDA", "VDDIO",
-            "VDDS",     "VDDP",    "VBUS",     "VSYS",      "VIN",   "5V",   "3V3",  "1V8",  "USB_VDD",
-            "ADC_AVDD", "VREG_IN", "VREG_OUT", "VREG_VOUT", "VEE",   "VSS",  "VSSA",
-        };
-        QString upperName = pin.name.toUpper().trimmed();
-        if (powerPinNames.contains(upperName)) {
-            altiumPin.electricalType = AltiumModels::PinElectricalType::Power;
-        }
-    }
-
-    return altiumPin;
+    return AltiumSymbolPinConverter::convert(pin);
 }
 
 /**
