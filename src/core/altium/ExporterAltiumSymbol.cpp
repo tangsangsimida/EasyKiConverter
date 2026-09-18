@@ -3,6 +3,7 @@
 #include "AltiumSchSymbolGeometryNormalizer.h"
 #include "AltiumSymbolAnnotationConverter.h"
 #include "AltiumSymbolCurveConverter.h"
+#include "AltiumSymbolImplementationConverter.h"
 #include "AltiumSymbolPinConverter.h"
 #include "AltiumSymbolPrimitiveConverter.h"
 #include "utils/AltiumCoord.h"
@@ -10,7 +11,6 @@
 
 #include <QDebug>
 #include <QFile>
-#include <QSet>
 
 #include <algorithm>
 #include <climits>
@@ -565,55 +565,7 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
         component.ellipticalArcs.append(ellipticalArc);
     }
 
-    // 添加封装链接，保留多个候选封装
-    QStringList footprintNames = data.footprintNames;
-    if (footprintNames.isEmpty() && !data.footprintName.isEmpty())
-        footprintNames.append(data.footprintName);
-    QSet<QString> uniqueFootprints;
-    for (const QString& footprintName : footprintNames) {
-        const QString normalizedName = footprintName.trimmed();
-        if (normalizedName.isEmpty() || uniqueFootprints.contains(normalizedName))
-            continue;
-        AltiumSchComponent::Implementation impl;
-        impl.modelName = normalizedName;
-        impl.modelType = "PCBLIB";
-        impl.dataFileKind = "PCBLib";
-        component.implementations.append(impl);
-        uniqueFootprints.insert(normalizedName);
-    }
-
-    for (const IR::SymbolModelIR& model : data.models) {
-        const QString modelName = model.name.trimmed();
-        if (modelName.isEmpty())
-            continue;
-        AltiumSchComponent::Implementation impl;
-        impl.modelName = modelName;
-        impl.modelType = model.type.trimmed().isEmpty() ? QStringLiteral("SIM") : model.type.trimmed();
-        impl.dataFileKind = model.fileKind.trimmed();
-        impl.dataFileEntity = model.fileEntity.trimmed();
-        impl.parameters = model.parameters;
-        impl.pinMappings = model.pinMappings;
-        component.implementations.append(impl);
-    }
-
-    // 兼容没有显式 SymbolModelIR 的调用方，允许通过来源元数据关联模型。
-    const QMap<QString, QString> metadataModels = {
-        {QStringLiteral("spiceModel"), QStringLiteral("SPICE")},
-        {QStringLiteral("simulationModel"), QStringLiteral("SIM")},
-        {QStringLiteral("model3D"), QStringLiteral("STEP")},
-        {QStringLiteral("model3d"), QStringLiteral("STEP")},
-    };
-    for (auto it = metadataModels.constBegin(); it != metadataModels.constEnd(); ++it) {
-        const QString modelName = data.sourceMetadata.value(it.key()).trimmed();
-        if (modelName.isEmpty())
-            continue;
-        AltiumSchComponent::Implementation impl;
-        impl.modelName = modelName;
-        impl.modelType = it.value();
-        impl.dataFileKind = data.sourceMetadata.value(it.key() + QStringLiteral("FileKind")).trimmed();
-        impl.dataFileEntity = data.sourceMetadata.value(it.key() + QStringLiteral("File")).trimmed();
-        component.implementations.append(impl);
-    }
+    component.implementations = AltiumSymbolImplementationConverter::convert(data);
 
     // 坐标归一化：将符号中心移到原点
     centerComponent(component);
