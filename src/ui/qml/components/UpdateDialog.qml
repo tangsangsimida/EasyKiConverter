@@ -35,7 +35,7 @@ SliderDialogBase {
             visible: updateChecker && updateChecker.hasUpdate,
             action: function () {
                 if (updateChecker) {
-                    Qt.openUrlExternally(updateChecker.assetUrl || updateChecker.releaseUrl);
+                    Qt.openUrlExternally(updateChecker.releaseUrl);
                     root.close();
                 }
             }
