@@ -18,6 +18,7 @@
 #include "ConfigService.h"
 #include "DatasheetCacheFileStore.h"
 #include "DatasheetDownloadService.h"
+#include "PreviewImageDownloadService.h"
 #include "core/kicad/Exporter3DModel.h"
 #include "core/network/NetworkClient.h"
 #include "core/utils/UrlUtils.h"
@@ -455,99 +456,8 @@ QByteArray ComponentCacheService::downloadPreviewImage(const QString& lcscId,
                                                        QAtomicInt* cancelled,
                                                        bool weakNetwork,
                                                        uint64_t expectedGeneration) {
-    if (imageUrl.isEmpty() || imageIndex < 0 || imageIndex >= 3) {
-        return QByteArray();
-    }
-    const uint64_t gen = expectedGeneration != 0 ? expectedGeneration : currentGeneration();
-
-    QElapsedTimer timer;
-    timer.start();
-
-    // 缓存目录路径、文件检查和读取必须与目录迁移串行化。
-    {
-        QMutexLocker diskLocker(&m_diskWriteMutex);
-        const QString previewFilePath = previewImagePath(lcscId, imageIndex);
-        if (QFileInfo::exists(previewFilePath)) {
-            QFile file(previewFilePath);
-            if (file.open(QIODevice::ReadOnly)) {
-                const QByteArray data = file.readAll();
-                file.close();
-                if (CacheDataValidator::isValidPreviewImage(data)) {
-                    LOG_DEBUG(LogModule::Core, "Preview image loaded from disk cache: {}", previewFilePath);
-                    if (diag) {
-                        diag->url = imageUrl;
-                        diag->statusCode = 200;
-                        diag->errorString = "";
-                        diag->responseContentType.clear();
-                        diag->retryAfter.clear();
-                        diag->rateLimitRemaining.clear();
-                        diag->rateLimitReset.clear();
-                        diag->responseSummary.clear();
-                        diag->retryCount = 0;
-                        diag->latencyMs = timer.elapsed();
-                        diag->wasRateLimited = false;
-                        diag->hasRateLimitHint = false;
-                    }
-                    return data;
-                }
-                QFile::remove(previewFilePath);
-            }
-        }
-    }
-
-    // 检查取消标志
-    if (cancelled && cancelled->loadRelaxed()) {
-        LOG_DEBUG(LogModule::Core, "Preview image download cancelled for {} before start", lcscId);
-        return QByteArray();
-    }
-
-    const RetryPolicy policy = RetryPolicy::fromProfile(RequestProfiles::previewImage(), weakNetwork);
-    const NetworkResult result = NetworkClient::instance().get(QUrl(imageUrl), ResourceType::PreviewImage, policy);
-
-    QByteArray data;
-    int statusCode = result.statusCode;
-    QString errorString;
-    int retryCount = result.retryCount;
-    bool wasRateLimited = result.diagnostic.wasRateLimited;
-
-    if (cancelled && cancelled->loadRelaxed()) {
-        errorString = "Cancelled";
-    } else if (result.wasCancelled) {
-        errorString = "Cancelled";
-    } else if (result.success) {
-        data = result.data;
-        if (!CacheDataValidator::isValidPreviewImage(data)) {
-            data.clear();
-            errorString = QStringLiteral("Invalid preview image data");
-        }
-    } else {
-        errorString = result.error;
-    }
-
-    // 更新诊断信息
-    if (diag) {
-        diag->url = imageUrl;
-        diag->statusCode = statusCode;
-        diag->errorString = errorString;
-        diag->responseContentType = result.diagnostic.responseContentType;
-        diag->retryAfter = result.diagnostic.retryAfter;
-        diag->rateLimitRemaining = result.diagnostic.rateLimitRemaining;
-        diag->rateLimitReset = result.diagnostic.rateLimitReset;
-        diag->responseSummary = result.diagnostic.responseSummary;
-        diag->retryCount = retryCount;
-        diag->latencyMs = timer.elapsed();
-        diag->wasRateLimited = wasRateLimited;
-        diag->hasRateLimitHint = result.diagnostic.hasRateLimitHint;
-    }
-
-    if (errorString.isEmpty() && !data.isEmpty()) {
-        // 保存到磁盘缓存
-        savePreviewImage(lcscId, data, imageIndex, gen);
-    } else if (!errorString.isEmpty() && errorString != "Cancelled") {
-        LOG_WARN(LogModule::Core, "Preview image download failed for {}: {}", lcscId, errorString);
-    }
-
-    return data;
+    PreviewImageDownloadService downloader(*this);
+    return downloader.download(lcscId, imageUrl, imageIndex, diag, cancelled, weakNetwork, expectedGeneration);
 }
 
 // 从二级磁盘缓存读取数据手册。
