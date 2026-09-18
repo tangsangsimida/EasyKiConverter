@@ -7,6 +7,8 @@ target_sources(EasyKiConverterAltium
         # 导出器
         ExporterAltiumSymbol.h
         ExporterAltiumSymbol.cpp
+        AltiumSchSymbolGeometryNormalizer.h
+        AltiumSchSymbolGeometryNormalizer.cpp
         AltiumSymbolPinConverter.h
         AltiumSymbolPinConverter.cpp
         ExporterAltiumFootprint.h
