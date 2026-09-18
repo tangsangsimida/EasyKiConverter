@@ -22,6 +22,8 @@
 
 本轮还将 `NetworkClient`、`FetchWorker` 和 `NetworkWorker` 中同构的 `BlockingRequestContext` 合并为共享实现，保留请求方原有的取消、超时、回调线程和请求对象回收边界。
 
+导出阶段审查暂不合并 `FootprintExportStage` 与 `SymbolExportStage`：前者包含缓存代次、嵌入 STEP、重复封装重命名、已有库合并和回滚，后者包含符号兼容转换与调试导出；两者的生命周期相似但业务分支不同，继续按行数抽象会扩大行为回归风险。
+
 ---
 
 ## 一、头文件问题清单
