@@ -8,13 +8,13 @@
 
 | 类型 | 文件数 | 过长 | 偏长 | 健康率 |
 |------|--------|------|------|--------|
-| 产品源码与资源 | 552 | 51 | 43 | -- |
+| 产品源码与资源 | 554 | 51 | 43 | -- |
 | Python 工具 | 13 | 5 | 4 | -- |
-| **合计** | **565** | **56** | **47** | -- |
+| **合计** | **567** | **56** | **47** | -- |
 
 当前统计工具按文件总行数使用统一阈值：高风险 >500 行，中风险 300-500 行，低风险 200-300 行。类型分项和代码/注释行数需要额外脚本才能精确拆分，因此本报告不再保留旧的推算健康率。
 
-当前基线：`src` 492 个文件、78,975 行；`tests` 58 个文件、18,726 行；翻译资源 2 个文件、3,303 行；`tools/python` 13 个文件、7,231 行。项目工具的 `--all` 统计覆盖产品源码、测试和翻译资源，工具目录单独统计后合计 565 个文件、108,235 行。
+当前基线：`src` 494 个文件、79,004 行；`tests` 58 个文件、18,761 行；翻译资源 2 个文件、3,303 行；`tools/python` 13 个文件、7,703 行。项目工具的 `--all` 统计覆盖产品源码、测试和翻译资源，工具目录单独统计后合计 567 个文件、108,771 行。
 
 ---
 
@@ -67,6 +67,8 @@
 | `src/services/ComponentCacheQuotaEnforcer.cpp` | 40 | -- | -- | 独立协调磁盘缓存限制、冷却策略、目录清理和缓存大小信号 |
 | `src/services/ComponentCacheMemoryStore.cpp` | 92 | -- | -- | 独立承载一级缓存复合键、元数据 JSON、CAD 数据校验、LRU 数据访问和容量统计 |
 | `src/services/ComponentCacheModel3DCoordinator.cpp` | 91 | -- | -- | 独立协调三维模型缓存的锁边界、代次校验、文件读写、导出复制和磁盘配额触发 |
+| `src/services/LcscImageService.cpp` | 560 | -- | -- | LCSC 预览图和数据手册请求服务；产品搜索响应解析、精确匹配和媒体字段提取已提取 |
+| `src/services/LcscProductParser.cpp` | 115 | -- | -- | 独立解析 LCSC 产品搜索响应，执行元件精确匹配、图片地址规范化和媒体字段提取 |
 | `src/ui/viewmodels/ComponentListViewModel.cpp` | 445 | -- | -- | ViewModel 仍包含列表模型接口、搜索选择、状态统计、导出状态和公开槽转发；批量导入、列表生命周期、剪贴板处理、失败项重试、列表数据回调、预览图协调、预览更新缓冲、列表项更新缓冲、验证队列状态、验证错误分类、定时器初始化和服务信号连接已提取 |
 | `src/ui/viewmodels/ComponentListMutationCoordinator.cpp` | 185 | -- | -- | 独立协调列表添加、删除、清空、请求取消、验证队列移除和模型状态重置 |
 | `src/ui/viewmodels/ComponentListClipboardCoordinator.cpp` | 64 | -- | -- | 独立协调剪贴板文本读取、元件编号提取、列表去重、批量添加和全量编号复制 |
@@ -165,6 +167,8 @@
 - `ComponentListClipboardCoordinator.cpp`（64 行）：独立承载剪贴板文本读取、元件编号提取、列表去重、批量添加和全量编号复制，ComponentListViewModel 继续保留公开槽接口和信号
 - `ComponentListRetryCoordinator.cpp`（46 行）：独立承载可重试失败项筛选、列表项验证状态重置、服务请求和验证计数更新，ComponentListViewModel 继续保留公开槽接口和信号
 - `ComponentListPreviewCoordinator.cpp`（117 行）：独立承载预览图缓存批量更新、有效元件筛选、批量请求、完成状态和验证/预览提示清理，ComponentListViewModel 继续保留公开槽接口、定时器入口和服务信号边界
+- `LcscImageService.cpp`（560 行）：已提取 LCSC 产品搜索响应解析和媒体字段提取，服务继续负责网络请求、缓存读取、下载状态、取消和代次保护
+- `LcscProductParser.cpp`（115 行）：独立承载产品搜索 JSON 解析、元件编号精确匹配、预览图 URL 规范化以及制造商和数据手册字段提取
 - `ExporterAltiumSymbol.cpp`（501 行）：已提取符号引脚、参数、引脚名称/编号文本、路径与曲线图元、矩形/圆/IEEE 基础图元、文本/文本框/图片图元、实现关系、几何归一化、部件 ID/方向/颜色/线型和坐标量化共享规则，主文件继续负责符号记录编排、参数诊断和模型关联编排
 - `AltiumSchSymbolGeometryNormalizer.cpp`（348 行）：独立承载符号原点归一化、引脚连接端吸附、主体边界投影和重合文本布局，保持 Altium 符号输出坐标规则不变
 - `AltiumSymbolPinConverter.cpp`（190 行）：独立承载 IR 引脚到 Altium 引脚记录的电气类型、显示标志、IEEE 装饰和电源引脚识别，保持主导出器的公开接口不变
