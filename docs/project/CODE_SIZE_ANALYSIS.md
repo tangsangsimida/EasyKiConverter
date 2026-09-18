@@ -8,13 +8,13 @@
 
 | 类型 | 文件数 | 过长 | 偏长 | 健康率 |
 |------|--------|------|------|--------|
-| 产品源码与资源 | 512 | 53 | 40 | -- |
+| 产品源码与资源 | 514 | 53 | 40 | -- |
 | Python 工具 | 13 | 5 | 4 | -- |
-| **合计** | **525** | **58** | **44** | -- |
+| **合计** | **527** | **58** | **44** | -- |
 
 当前统计工具按文件总行数使用统一阈值：高风险 >500 行，中风险 300-500 行，低风险 200-300 行。类型分项和代码/注释行数需要额外脚本才能精确拆分，因此本报告不再保留旧的推算健康率。
 
-当前基线：`src` 452 个文件、77,859 行；`tests` 58 个文件、18,725 行；翻译资源 2 个文件、3,303 行；`tools/python` 13 个文件、6,640 行。项目工具的 `--all` 统计覆盖产品源码、测试和翻译资源，工具目录单独统计后合计 525 个文件、106,527 行。
+当前基线：`src` 454 个文件、77,925 行；`tests` 58 个文件、18,726 行；翻译资源 2 个文件、3,303 行；`tools/python` 13 个文件、6,640 行。项目工具的 `--all` 统计覆盖产品源码、测试和翻译资源，工具目录单独统计后合计 527 个文件、106,594 行。
 
 ---
 
@@ -90,7 +90,8 @@
 | `src/services/export/ExportRunPlan.cpp` | 57 | 独立计算导出类型、可导出元件和缺失缓存数据，保持服务启动阶段无副作用 |
 | `src/services/export/ExportProgressAggregator.cpp` | 65 | 独立合并阶段状态、重算阶段计数和汇总最终元件结果 |
 | `src/main.cpp` | 859 | 入口文件混入了 CLI/GUI 切换逻辑 |
-| `src/workers/WriteWorker.cpp` | 846 | 文件写入工作线程 |
+| `src/workers/WriteWorker.cpp` | 612 | 文件写入工作线程；调试数据导出已提取 |
+| `src/workers/WriteWorkerDebugExporter.cpp` | 267 | 独立承载原始响应、模型数据和结构化调试摘要的文件写入 |
 | `src/core/altium/writers/AltiumPcbLibWriter.cpp` | 826 | PcbLib 文件级写入与元件记录编排；图元记录写入已提取 |
 | `src/core/altium/writers/AltiumPcbPrimitiveWriter.cpp` | 384 | 独立承载 PcbLib 焊盘、走线、弧线、文本、填充、区域和组件实体图元记录写入 |
 | `src/core/altium/compound/OLECompoundWriter.cpp` | 736 | OLE 存储树、流数据和扇区分配；目录条目与文件头序列化已提取 |
@@ -184,6 +185,8 @@
 - `AltiumPcbPrimitiveWriter.cpp`（384 行）：独立承载 PcbLib 图元记录编码，复用主写入器的层映射、标志编码、有限值归一化、广字符串和公共图元头部规则
 - `OLECompoundWriter.cpp`（736 行）：继续负责 OLE 存储树、流登记、mini stream、FAT/DIFAT 扇区分配和文件落盘，固定结构编码已移出
 - `OLECompoundSerializer.cpp`（153 行）：独立承载目录条目、版本字段、FAT/DIFAT 索引和扇区布局的 CFB V3 序列化，保持 OLE 写入器的只读状态边界
+- `WriteWorker.cpp`（612 行）：继续负责写入任务调度、符号/封装/三维模型/预览图/数据手册写入和状态汇总，调试数据输出已提取
+- `WriteWorkerDebugExporter.cpp`（267 行）：独立承载调试原始文件、结构化 JSON 摘要和调试目录创建，复用 WriteWorker 的路径安全边界
 - KiCad 导出器系列（各 660-690 行）：与 IR 重构后的导出器接口调整一并处理
 
 ---
@@ -279,8 +282,8 @@ QML 文件过长是当前最严重的问题区域，建议按以下优先级处�
 
 | 目录 | 总行数 | 文件数 |
 |------|--------|--------|
-| `src` | 77,859 | 452 |
-| `tests` | 18,725 | 58 |
+| `src` | 77,925 | 454 |
+| `tests` | 18,726 | 58 |
 | `resources/translations` | 3,303 | 2 |
 | `tools/python` | 6,640 | 13 |
 
