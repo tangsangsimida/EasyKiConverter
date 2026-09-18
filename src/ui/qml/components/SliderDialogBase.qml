@@ -450,7 +450,8 @@ FocusScope {
         id: buttonDelegate
         Loader {
             Layout.fillWidth: true
-            Layout.preferredHeight: modelData.isSeparator ? 1 : buttonHeight
+            Layout.preferredHeight: modelData.visible === false ? 0 : (modelData.isSeparator ? 1 : buttonHeight)
+            visible: modelData.visible !== false
             property var specData: modelData  // 传递数据
             sourceComponent: modelData.isSeparator ? separatorComponent : buttonComponent
             // 暴露内部按钮引用，以便外部（ExitDialog键盘导航）可以获取实际按钮
@@ -471,6 +472,8 @@ FocusScope {
         id: buttonComponent
         ModernButton {
             id: btn
+            objectName: parent.specData && parent.specData.objectName ? parent.specData.objectName : ""
+            visible: parent.specData ? parent.specData.visible !== false : true
             // 标记自身以便父组件识别
             property bool isSliderButton: true
             // 关联的颜色 - parent是Loader，Loader.parent是ColumnLayout
