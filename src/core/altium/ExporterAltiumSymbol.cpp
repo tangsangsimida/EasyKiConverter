@@ -4,6 +4,7 @@
 #include "AltiumSymbolAnnotationConverter.h"
 #include "AltiumSymbolCurveConverter.h"
 #include "AltiumSymbolPinConverter.h"
+#include "AltiumSymbolPrimitiveConverter.h"
 #include "utils/AltiumCoord.h"
 #include "utils/AltiumSymbolConversionUtils.h"
 
@@ -19,7 +20,6 @@ namespace EasyKiConverter {
 
 namespace {
 
-using AltiumSymbolConversionUtils::finiteNonNegative;
 using AltiumSymbolConversionUtils::toAltiumColor;
 using AltiumSymbolConversionUtils::toAltiumLineStyle;
 using AltiumSymbolConversionUtils::toAltiumOrientation;
@@ -632,57 +632,21 @@ AltiumSchPin ExporterAltiumSymbol::convertPin(const IR::SymbolPinIR& pin) {
  * @brief SymbolRectangleIR → AltiumSchRectangle
  */
 AltiumSchRectangle ExporterAltiumSymbol::convertRectangle(const IR::SymbolRectangleIR& rect) {
-    AltiumSchRectangle altiumRect;
-    altiumRect.locationX = AltiumCoord::mmToRaw(rect.x0);
-    altiumRect.locationY = AltiumCoord::mmToRaw(rect.y0);
-    altiumRect.cornerX = AltiumCoord::mmToRaw(rect.x1);
-    altiumRect.cornerY = AltiumCoord::mmToRaw(rect.y1);
-    altiumRect.lineWidth = AltiumCoord::lineWidthMmToIndex(rect.strokeWidth);
-    altiumRect.lineStyle = toAltiumLineStyle(rect.strokeStyle);
-    altiumRect.color = toAltiumColor(rect.strokeColor);
-    altiumRect.areaColor = rect.isFilled ? toAltiumColor(rect.fillColor) : 0xFFFFFF;
-    altiumRect.isSolid = rect.isFilled;
-    altiumRect.ownerPartId = toAltiumOwnerPartId(rect.partIndex);
-    return altiumRect;
+    return AltiumSymbolPrimitiveConverter::convertRectangle(rect);
 }
 
 /**
  * @brief SymbolRectangleIR → AltiumSchRoundRectangle
  */
 AltiumSchRoundRectangle ExporterAltiumSymbol::convertRoundRectangle(const IR::SymbolRectangleIR& rect) {
-    AltiumSchRoundRectangle altiumRect;
-    altiumRect.locationX = AltiumCoord::mmToRaw(rect.x0);
-    altiumRect.locationY = AltiumCoord::mmToRaw(rect.y0);
-    altiumRect.cornerX = AltiumCoord::mmToRaw(rect.x1);
-    altiumRect.cornerY = AltiumCoord::mmToRaw(rect.y1);
-    altiumRect.cornerXRadius = AltiumCoord::mmToRaw(finiteNonNegative(rect.cornerRadiusX));
-    altiumRect.cornerYRadius = AltiumCoord::mmToRaw(finiteNonNegative(rect.cornerRadiusY));
-    altiumRect.lineWidth = AltiumCoord::lineWidthMmToIndex(rect.strokeWidth);
-    altiumRect.lineStyle = toAltiumLineStyle(rect.strokeStyle);
-    altiumRect.color = toAltiumColor(rect.strokeColor);
-    altiumRect.areaColor = rect.isFilled ? toAltiumColor(rect.fillColor) : 0xFFFFFF;
-    altiumRect.isSolid = rect.isFilled;
-    altiumRect.ownerPartId = toAltiumOwnerPartId(rect.partIndex);
-    return altiumRect;
+    return AltiumSymbolPrimitiveConverter::convertRoundRectangle(rect);
 }
 
 /**
  * @brief SymbolCircleIR → AltiumSchEllipse
  */
 AltiumSchEllipse ExporterAltiumSymbol::convertCircle(const IR::SymbolCircleIR& circle) {
-    AltiumSchEllipse altiumEllipse;
-    altiumEllipse.centerX = AltiumCoord::mmToRaw(circle.center.x());
-    altiumEllipse.centerY = AltiumCoord::mmToRaw(circle.center.y());
-    const double radius = finiteNonNegative(circle.radius);
-    altiumEllipse.radiusX = AltiumCoord::mmToRaw(radius);
-    altiumEllipse.radiusY = AltiumCoord::mmToRaw(radius);
-    altiumEllipse.lineWidth = AltiumCoord::lineWidthMmToIndex(circle.strokeWidth);
-    altiumEllipse.lineStyle = toAltiumLineStyle(circle.strokeStyle);
-    altiumEllipse.color = toAltiumColor(circle.strokeColor);
-    altiumEllipse.areaColor = circle.isFilled ? toAltiumColor(circle.fillColor) : 0xFFFFFF;
-    altiumEllipse.isSolid = circle.isFilled;
-    altiumEllipse.ownerPartId = toAltiumOwnerPartId(circle.partIndex);
-    return altiumEllipse;
+    return AltiumSymbolPrimitiveConverter::convertCircle(circle);
 }
 
 /**
@@ -724,16 +688,7 @@ AltiumSchBezier ExporterAltiumSymbol::convertBezier(const IR::SymbolBezierIR& be
  * @brief SymbolIeeeIR → AltiumSchIeee
  */
 AltiumSchIeee ExporterAltiumSymbol::convertIeee(const IR::SymbolIeeeIR& ieee) {
-    AltiumSchIeee altiumIeee;
-    altiumIeee.symbol = qBound(0, ieee.symbol, 34);
-    altiumIeee.locationX = AltiumCoord::mmToRaw(ieee.position.x());
-    altiumIeee.locationY = AltiumCoord::mmToRaw(ieee.position.y());
-    altiumIeee.scaleFactor = qMax(1, ieee.scaleFactor);
-    altiumIeee.orientation = ((ieee.orientation % 4) + 4) % 4;
-    altiumIeee.mirrored = ieee.mirrored;
-    altiumIeee.color = toAltiumColor(ieee.color);
-    altiumIeee.ownerPartId = toAltiumOwnerPartId(ieee.partIndex);
-    return altiumIeee;
+    return AltiumSymbolPrimitiveConverter::convertIeee(ieee);
 }
 
 /**
