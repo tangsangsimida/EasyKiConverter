@@ -27,6 +27,8 @@ add_library(EasyKiConverterViewModels STATIC
     ExportSettingsViewModel.cpp
     ExportTargetModel.cpp
     ExportProgressViewModel.cpp
+    ExportProgressResultsCoordinator.cpp
+    ExportProgressResultsCoordinator.h
     ThemeSettingsViewModel.cpp
     SystemTrayManager.cpp
     ValidationStateManager.cpp

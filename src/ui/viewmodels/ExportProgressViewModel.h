@@ -18,6 +18,7 @@ struct ExportOverallProgress;
 struct ExportTypeProgress;
 struct ExportItemStatus;
 struct ExportStatistics;
+class ExportProgressResultsCoordinator;
 
 /**
  * @brief 导出进度视图模型
@@ -58,34 +59,42 @@ public:
                                      QObject* parent = nullptr);
     ~ExportProgressViewModel() override;
 
+    /** @brief 返回总体导出进度百分比。 */
     int progress() const {
         return m_progress;
     }
 
+    /** @brief 返回当前导出状态文本。 */
     QString status() const {
         return m_status;
     }
 
+    /** @brief 返回是否正在导出。 */
     bool isExporting() const {
         return m_isExporting;
     }
 
+    /** @brief 返回成功结果数量。 */
     int successCount() const {
         return m_successCount;
     }
 
+    /** @brief 返回失败结果数量。 */
     int failureCount() const {
         return m_failureCount;
     }
 
+    /** @brief 返回结果总数量。 */
     int totalCount() const {
         return m_totalCount;
     }
 
+    /** @brief 返回当前结果过滤模式。 */
     QString filterMode() const {
         return m_filterMode;
     }
 
+    /** @brief 返回全部导出结果列表。 */
     QVariantList resultsList() const {
         return m_resultsList;
     }
@@ -95,26 +104,32 @@ public:
     int filteredFailedCount() const;
     int filteredPendingCount() const;
 
+    /** @brief 返回抓取阶段进度。 */
     int fetchProgress() const {
         return m_fetchProgress;
     }
 
+    /** @brief 返回处理阶段进度。 */
     int processProgress() const {
         return m_processProgress;
     }
 
+    /** @brief 返回写入阶段进度。 */
     int writeProgress() const {
         return m_writeProgress;
     }
 
+    /** @brief 返回是否正在停止导出。 */
     bool isStopping() const {
         return m_isStopping;
     }
 
+    /** @brief 返回统计面板显示的总数量。 */
     int statisticsTotal() const {
         return m_totalCount;
     }
 
+    /** @brief 返回最近一次导出是否已完成。 */
     bool hasCompletedExport() const {
         return m_hasCompletedExport;
     }
@@ -125,6 +140,7 @@ public:
     int previewSuccessCount() const;
     int datasheetSuccessCount() const;
 
+    /** @brief 返回供 QML 使用的缓存目录 URL。 */
     QString cacheDirUrl() const {
         auto cacheDir = ComponentCacheService::instance()->cacheDir();
         if (cacheDir.isEmpty()) {
@@ -191,13 +207,14 @@ private slots:
     void flushPendingUpdates();
 
 private:
+    friend class ExportProgressResultsCoordinator;
+
     QString typeStatusKey(const QString& typeName) const;
     void updateOverallItemStatus(QVariantMap& result) const;
     void resetItemForRetry(QVariantMap& result) const;
     void beginExportRun(const QStringList& componentIds, const QString& statusText);
     int averageTypeProgress(const ExportOverallProgress& progress, const QStringList& typeNames) const;
     int stageTypeProgress(const ExportOverallProgress& progress, const QStringList& typeNames) const;
-    int countItemsWithTypeStatus(const QString& key, const QString& expectedStatus) const;
     int weightedOverallProgress() const;
     void markResultsDirty();
 
