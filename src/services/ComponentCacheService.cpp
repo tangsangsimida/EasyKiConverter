@@ -1,6 +1,5 @@
 #include "ComponentCacheService.h"
 
-#include "CacheComponentDataReader.h"
 #include "CacheDataValidator.h"
 #include "CacheDirectoryCoordinator.h"
 #include "CacheFileLayout.h"
@@ -15,6 +14,7 @@
 #include "ComponentCacheModel3DCoordinator.h"
 #include "ComponentCachePreviewImageWriter.h"
 #include "ComponentCacheQuotaEnforcer.h"
+#include "ComponentCacheReadCoordinator.h"
 #include "ComponentCacheWritePolicy.h"
 #include "ConfigService.h"
 #include "DatasheetCacheFileStore.h"
@@ -41,21 +41,6 @@
 #include <QtConcurrent>
 
 namespace EasyKiConverter {
-
-namespace {
-
-// 从磁盘读取并校验 CAD 原始缓存文件。
-bool hasValidCadDataFile(const QString& path) {
-    QFile file(path);
-    if (!file.open(QIODevice::ReadOnly)) {
-        return false;
-    }
-    const QByteArray data = file.readAll();
-    file.close();
-    return CacheDataValidator::isValidCadData(data);
-}
-
-}  // namespace
 
 std::unique_ptr<ComponentCacheService> ComponentCacheService::s_instance;
 
@@ -135,28 +120,7 @@ bool ComponentCacheService::hasCache(const QString& lcscId) const {
 
 // 校验元数据、身份字段和 CAD 文件是否组成有效缓存。
 bool ComponentCacheService::isCacheValid(const QString& lcscId) const {
-    // 元数据和 CAD 文件必须在同一次目录迁移保护下完成检查。
-    QMutexLocker diskLocker(&m_diskWriteMutex);
-    const QJsonObject metadata = CacheMetadataStore::read(metadataPath(lcscId));
-    if (metadata.isEmpty()) {
-        return false;
-    }
-
-    if (metadata.contains(QStringLiteral("lcscId")) &&
-        (!metadata.value(QStringLiteral("lcscId")).isString() ||
-         metadata.value(QStringLiteral("lcscId")).toString().compare(lcscId, Qt::CaseInsensitive) != 0)) {
-        return false;
-    }
-
-    if (!CacheMetadataStore::hasValidModel3D(metadata)) {
-        return false;
-    }
-
-    const bool hasCadJson = hasValidCadDataFile(CacheFileLayout::cadDataFile(componentCacheDir(lcscId)));
-    const bool hasBasicIdentity =
-        !metadata.value("lcscId").toString().isEmpty() || !metadata.value("name").toString().isEmpty();
-
-    return hasCadJson || hasBasicIdentity;
+    return ComponentCacheReadCoordinator::isCacheValid(*this, lcscId);
 }
 
 // 判断元器件元数据是否存在于一级内存缓存。
@@ -211,34 +175,7 @@ void ComponentCacheService::saveFootprintDataToMemory(const QString& lcscId, con
 // ==================== L2 磁盘缓存操作 ====================
 
 QSharedPointer<ComponentData> ComponentCacheService::loadComponentData(const QString& lcscId) const {
-    // 锁住整个元数据读取过程，避免目录迁移在检查和读取之间切换路径。
-    QMutexLocker diskLocker(&m_diskWriteMutex);
-    // 先检查缓存是否存在（不使用锁，因为只是检查文件是否存在）
-    QString metaPath = metadataPath(lcscId);
-    if (!QFileInfo::exists(metaPath)) {
-        return nullptr;
-    }
-
-    // 再加载数据（使用锁保护）
-    QMutexLocker locker(&m_mutex);
-
-    QJsonObject metadata = CacheMetadataStore::read(metaPath);
-    if (metadata.isEmpty()) {
-        return nullptr;
-    }
-
-    if (!CacheMetadataStore::hasValidModel3D(metadata)) {
-        LOG_WARN(LogModule::Core, "Rejected component cache with invalid 3D metadata: {}", lcscId);
-        return nullptr;
-    }
-
-    auto componentData = CacheComponentDataReader::read(lcscId, metadata);
-    if (!componentData) {
-        return nullptr;
-    }
-
-    LOG_DEBUG(LogModule::Core, "Loaded component data from disk cache: {}", lcscId);
-    return componentData;
+    return ComponentCacheReadCoordinator::loadComponentData(*this, lcscId);
 }
 
 // 合并并持久化元器件元数据，同时保留有效的三维模型关联。
@@ -339,25 +276,7 @@ QByteArray ComponentCacheService::loadCadDataJson(const QString& lcscId) const {
 
 // 判断符号、封装和 CAD 数据缓存是否完整。
 bool ComponentCacheService::hasSymbolFootprintCache(const QString& lcscId) const {
-    // 缓存存在性和完整性检查必须使用稳定的缓存目录。
-    QMutexLocker diskLocker(&m_diskWriteMutex);
-    // 内存缓存命中时仍需验证 CAD JSON 内容，避免损坏文件仅因存在而通过检查。
-    if (m_memoryCache.containsMetadata(lcscId)) {
-        const QString cadDataPath = CacheFileLayout::cadDataFile(componentCacheDir(lcscId));
-        const bool exists = hasValidCadDataFile(cadDataPath);
-        LOG_DEBUG(
-            LogModule::Core, "hasSymbolFootprintCache: memory hit for {}, cad_data.json exists: {}", lcscId, exists);
-        return exists;
-    }
-
-    // 内存缓存未命中时直接校验磁盘中的 CAD JSON。
-    const QString cadDataPath = CacheFileLayout::cadDataFile(componentCacheDir(lcscId));
-    if (!hasValidCadDataFile(cadDataPath)) {
-        LOG_DEBUG(LogModule::Core, "hasSymbolFootprintCache: no cad_data.json for {}", lcscId);
-        return false;
-    }
-    LOG_DEBUG(LogModule::Core, "hasSymbolFootprintCache: valid CAD data for {}", lcscId);
-    return true;
+    return ComponentCacheReadCoordinator::hasSymbolFootprintCache(*this, lcscId);
 }
 
 // 从二级磁盘缓存读取指定预览图。
