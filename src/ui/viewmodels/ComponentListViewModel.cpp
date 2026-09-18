@@ -1,6 +1,7 @@
 #include "ComponentListViewModel.h"
 
 #include "ComponentListBatchCoordinator.h"
+#include "ComponentListClipboardCoordinator.h"
 #include "ComponentListDataCoordinator.h"
 #include "ComponentListServiceConnectionCoordinator.h"
 #include "ComponentListTimerCoordinator.h"
@@ -299,58 +300,12 @@ void ComponentListViewModel::onValidationComplete(const QString& componentId) {
 
 /** @brief 从系统剪贴板提取并批量添加元件编号。 */
 void ComponentListViewModel::pasteFromClipboard() {
-    QClipboard* clipboard = QGuiApplication::clipboard();
-    QString text = clipboard->text();
-
-    if (text.isEmpty()) {
-        qWarning() << "Clipboard is empty";
-        return;
-    }
-
-    QStringList extractedIds = extractComponentIdFromText(text);
-    if (extractedIds.isEmpty()) {
-        qWarning() << "No valid component IDs found in clipboard";
-        emit pasteCompleted(0, 0);
-        return;
-    }
-
-    int skipped = 0;
-    QStringList newIds;
-    for (const QString& id : extractedIds) {
-        if (componentExists(id)) {
-            skipped++;
-        } else {
-            newIds.append(id);
-        }
-    }
-
-    if (!newIds.isEmpty()) {
-        addComponentsBatch(newIds);
-    }
-
-    emit pasteCompleted(newIds.count(), skipped);
+    ComponentListClipboardCoordinator::paste(*this);
 }
 
 /** @brief 将当前全部元件编号复制到系统剪贴板。 */
 void ComponentListViewModel::copyAllComponentIds() {
-    if (m_componentList.isEmpty()) {
-        qWarning() << "Component list is empty, nothing to copy";
-        return;
-    }
-
-    QStringList componentIds;
-    for (const auto* item : m_componentList) {
-        if (item) {
-            componentIds.append(item->componentId());
-        }
-    }
-
-    QString textToCopy = componentIds.join("\n");
-
-    QClipboard* clipboard = QGuiApplication::clipboard();
-    clipboard->setText(textToCopy);
-
-    qDebug() << "Copied" << componentIds.size() << "component IDs to clipboard";
+    ComponentListClipboardCoordinator::copyAll(*this);
 }
 
 /** @brief 异步解析用户选择的 BOM 文件并添加元件。 */

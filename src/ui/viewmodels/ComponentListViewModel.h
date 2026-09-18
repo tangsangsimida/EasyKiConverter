@@ -22,6 +22,7 @@ class ValidationStateManager;
 class ComponentValidationCoordinator;
 class ComponentListDataCoordinator;
 class ComponentListBatchCoordinator;
+class ComponentListClipboardCoordinator;
 
 // 元件列表视图模型
 class ComponentListViewModel : public QAbstractListModel {
@@ -162,6 +163,7 @@ private:
     friend class ComponentListBatchCoordinator;
     friend class ComponentListTimerCoordinator;
     friend class ComponentListServiceConnectionCoordinator;
+    friend class ComponentListClipboardCoordinator;
 
     /**
      * @brief 创建批处理、预览和延迟调度所需的定时器。
