@@ -6,6 +6,7 @@
 #include "CacheFileLayout.h"
 #include "CacheHealthManager.h"
 #include "CacheMetadataStore.h"
+#include "CachePathResolver.h"
 #include "CachePruner.h"
 #include "ComponentCacheBinaryFileStore.h"
 #include "ComponentCacheCadDataWriter.h"
@@ -136,25 +137,12 @@ QString ComponentCacheService::cacheDir() const {
 
 // 获取指定元器件的缓存目录。
 QString ComponentCacheService::componentCacheDir(const QString& lcscId) const {
-    if (!BomParser::validateId(lcscId)) {
-        qWarning() << "componentCacheDir: invalid lcscId, rejecting:" << lcscId;
-        return QString();
-    }
-    const QString normalizedId = lcscId.toUpper();
     QMutexLocker locker(&m_cacheDirMutex);
-    const QString normalizedPath = QDir::cleanPath(m_cacheDir + "/" + normalizedId);
-    if (QFileInfo::exists(normalizedPath)) {
-        return normalizedPath;
+    const QString path = CachePathResolver::componentDir(m_cacheDir, lcscId);
+    if (path.isEmpty()) {
+        qWarning() << "componentCacheDir: invalid lcscId, rejecting:" << lcscId;
     }
-
-    // 兼容规范化前已经创建的大小写目录，避免升级后旧缓存失去可见性。
-    const QDir rootDir(m_cacheDir);
-    for (const QString& entry : rootDir.entryList(QDir::Dirs | QDir::NoDotAndDotDot)) {
-        if (entry.compare(normalizedId, Qt::CaseInsensitive) == 0) {
-            return QDir::cleanPath(rootDir.absoluteFilePath(entry));
-        }
-    }
-    return normalizedPath;
+    return path;
 }
 
 // 确保指定元器件的缓存目录存在。
@@ -708,48 +696,26 @@ QDateTime ComponentCacheService::getCacheAccessTime(const QString& lcscId) const
 
 // 构造元器件元数据文件路径。
 QString ComponentCacheService::metadataPath(const QString& lcscId) const {
-    const QString dir = componentCacheDir(lcscId);
-    if (dir.isEmpty()) {
-        return QString();
-    }
-    return CacheFileLayout::metadataFile(dir);
+    return CachePathResolver::metadataPath(cacheDir(), lcscId);
 }
 
 // 构造元器件预览图文件路径。
 QString ComponentCacheService::previewImagePath(const QString& lcscId, int index) const {
-    const QString dir = componentCacheDir(lcscId);
-    if (dir.isEmpty()) {
-        return QString();
-    }
-    return CacheFileLayout::previewImageFile(dir, index);
+    return CachePathResolver::previewImagePath(cacheDir(), lcscId, index);
 }
 
 // 构造元器件数据手册基础路径。
 QString ComponentCacheService::datasheetPath(const QString& lcscId) const {
-    const QString dir = componentCacheDir(lcscId);
-    if (dir.isEmpty()) {
-        return QString();
-    }
-    return CacheFileLayout::datasheetBase(dir);
+    return CachePathResolver::datasheetPath(cacheDir(), lcscId);
 }
 
 // 根据经过校验的模型标识构造三维模型缓存路径。
 QString ComponentCacheService::model3DPath(const QString& uuid, const QString& extension) const {
-    // 严格校验 uuid 格式：仅允许字母、数字、下划线、短横线，防止路径穿越
-    static const QRegularExpression uuidRe(QStringLiteral("^[A-Za-z0-9_-]+$"));
-    if (uuid.isEmpty() || !uuidRe.match(uuid).hasMatch()) {
-        qWarning() << "model3DPath: invalid uuid, rejecting:" << uuid;
-        return QString();
+    const QString path = CachePathResolver::model3DPath(cacheDir(), uuid, extension);
+    if (path.isEmpty()) {
+        qWarning() << "model3DPath: invalid uuid or extension, rejecting:" << uuid << extension;
     }
-    // 校验 extension：仅允许字母数字，并统一为小写以保证缓存键大小写一致。
-    const QString normalizedExtension = extension.toLower();
-    static const QRegularExpression extRe(QStringLiteral("^[A-Za-z0-9]+$"));
-    if (normalizedExtension.isEmpty() || !extRe.match(normalizedExtension).hasMatch()) {
-        qWarning() << "model3DPath: invalid extension, rejecting:" << extension;
-        return QString();
-    }
-    return CacheFileLayout::model3DFile(
-        QDir(cacheDir()).filePath(QStringLiteral("model3d")), uuid, normalizedExtension);
+    return path;
 }
 
 }  // namespace EasyKiConverter
