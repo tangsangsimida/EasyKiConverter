@@ -191,6 +191,7 @@ add_test(NAME test_process_worker COMMAND test_process_worker)
 add_executable(test_write_worker
     test_write_worker.cpp
     ${CMAKE_SOURCE_DIR}/src/workers/WriteWorker.cpp
+    ${CMAKE_SOURCE_DIR}/src/workers/WriteWorkerDebugExporter.cpp
 )
 target_link_libraries(test_write_worker PRIVATE
     Qt6::Test
