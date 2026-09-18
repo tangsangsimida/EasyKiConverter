@@ -7,6 +7,7 @@ set(QML_FILES
     ${CMAKE_SOURCE_DIR}/src/ui/qml/MainWindow.qml
     ${CMAKE_SOURCE_DIR}/src/ui/qml/components/Card.qml
     ${CMAKE_SOURCE_DIR}/src/ui/qml/components/ComponentListItem.qml
+    ${CMAKE_SOURCE_DIR}/src/ui/qml/components/ListItemInteraction.qml
     ${CMAKE_SOURCE_DIR}/src/ui/qml/components/ResultListItem.qml
     ${CMAKE_SOURCE_DIR}/src/ui/qml/components/Icon.qml
     ${CMAKE_SOURCE_DIR}/src/ui/qml/components/ModernButton.qml

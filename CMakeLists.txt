@@ -213,6 +213,7 @@ set(QML_FILES
     src/ui/qml/MainWindow.qml
     src/ui/qml/components/Card.qml
     src/ui/qml/components/ComponentListItem.qml
+    src/ui/qml/components/ListItemInteraction.qml
     src/ui/qml/components/ResultListItem.qml
     src/ui/qml/components/Icon.qml
     src/ui/qml/components/ModernButton.qml
