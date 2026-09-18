@@ -57,6 +57,8 @@ target_sources(EasyKiConverterAltium
         compound/OLECompoundReader.cpp
         compound/OLECompoundWriter.h
         compound/OLECompoundWriter.cpp
+        compound/OLECompoundSerializer.h
+        compound/OLECompoundSerializer.cpp
 
         # 工具类
         utils/AltiumBinaryReader.h

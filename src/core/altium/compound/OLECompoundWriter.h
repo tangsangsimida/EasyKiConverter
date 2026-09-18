@@ -8,6 +8,8 @@
 
 namespace EasyKiConverter {
 
+class OLECompoundSerializer;
+
 /**
  * @brief OLE 复合文档 V3 写入器
  * @details 仅支持写入，不支持读取。实现 OLE Structured Storage V3 格式（512 字节扇区）。
@@ -82,6 +84,9 @@ public:
     }
 
 private:
+    /** @brief 允许序列化协作者读取固定格式字段和当前文件状态。 */
+    friend class OLECompoundSerializer;
+
     /** @brief OLE 常量 */
     static constexpr uint32_t ENDOFCHAIN = 0xFFFFFFFE;
     static constexpr uint32_t FREESECT = 0xFFFFFFFF;

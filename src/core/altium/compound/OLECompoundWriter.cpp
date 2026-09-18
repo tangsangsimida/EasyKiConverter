@@ -1,5 +1,7 @@
 #include "OLECompoundWriter.h"
 
+#include "OLECompoundSerializer.h"
+
 #include <QDataStream>
 #include <QDebug>
 #include <QDir>
@@ -176,75 +178,7 @@ bool OLECompoundWriter::writeStream(const QString& name, const QByteArray& data)
  * @brief 将目录条目序列化为 128 字节
  */
 void OLECompoundWriter::serializeDirectoryEntry(const DirectoryEntry& entry, QByteArray& buffer) const {
-    buffer.resize(DIR_ENTRY_SIZE);
-    buffer.fill(0);
-    int offset = 0;
-
-    // 名称（64 字节，UTF-16LE）
-    for (int i = 0; i < 32; ++i) {
-        buffer[offset++] = static_cast<char>(entry.name[i] & 0xFF);
-        buffer[offset++] = static_cast<char>((entry.name[i] >> 8) & 0xFF);
-    }
-
-    // 名称大小（2 字节）
-    buffer[offset++] = static_cast<char>(entry.nameSize & 0xFF);
-    buffer[offset++] = static_cast<char>((entry.nameSize >> 8) & 0xFF);
-
-    // 对象类型（1 字节）
-    buffer[offset++] = static_cast<char>(entry.objectType);
-
-    // 颜色标志（1 字节）
-    buffer[offset++] = static_cast<char>(entry.colorFlag);
-
-    // 左子节点（4 字节）
-    buffer[offset++] = static_cast<char>(entry.leftChild & 0xFF);
-    buffer[offset++] = static_cast<char>((entry.leftChild >> 8) & 0xFF);
-    buffer[offset++] = static_cast<char>((entry.leftChild >> 16) & 0xFF);
-    buffer[offset++] = static_cast<char>((entry.leftChild >> 24) & 0xFF);
-
-    // 右子节点（4 字节）
-    buffer[offset++] = static_cast<char>(entry.rightChild & 0xFF);
-    buffer[offset++] = static_cast<char>((entry.rightChild >> 8) & 0xFF);
-    buffer[offset++] = static_cast<char>((entry.rightChild >> 16) & 0xFF);
-    buffer[offset++] = static_cast<char>((entry.rightChild >> 24) & 0xFF);
-
-    // 子节点（4 字节）
-    buffer[offset++] = static_cast<char>(entry.child & 0xFF);
-    buffer[offset++] = static_cast<char>((entry.child >> 8) & 0xFF);
-    buffer[offset++] = static_cast<char>((entry.child >> 16) & 0xFF);
-    buffer[offset++] = static_cast<char>((entry.child >> 24) & 0xFF);
-
-    // CLSID（16 字节）
-    for (int i = 0; i < 16; ++i) {
-        buffer[offset++] = static_cast<char>(entry.clsid[i]);
-    }
-
-    // StateBits（4 字节）
-    buffer[offset++] = static_cast<char>(entry.stateBits & 0xFF);
-    buffer[offset++] = static_cast<char>((entry.stateBits >> 8) & 0xFF);
-    buffer[offset++] = static_cast<char>((entry.stateBits >> 16) & 0xFF);
-    buffer[offset++] = static_cast<char>((entry.stateBits >> 24) & 0xFF);
-
-    // 创建时间（8 字节）
-    for (int i = 0; i < 8; ++i) {
-        buffer[offset++] = static_cast<char>((entry.creationTime >> (i * 8)) & 0xFF);
-    }
-
-    // 修改时间（8 字节）
-    for (int i = 0; i < 8; ++i) {
-        buffer[offset++] = static_cast<char>((entry.modifiedTime >> (i * 8)) & 0xFF);
-    }
-
-    // 起始扇区（4 字节）
-    buffer[offset++] = static_cast<char>(entry.startSector & 0xFF);
-    buffer[offset++] = static_cast<char>((entry.startSector >> 8) & 0xFF);
-    buffer[offset++] = static_cast<char>((entry.startSector >> 16) & 0xFF);
-    buffer[offset++] = static_cast<char>((entry.startSector >> 24) & 0xFF);
-
-    // 流大小（8 字节）
-    for (int i = 0; i < 8; ++i) {
-        buffer[offset++] = static_cast<char>((entry.streamSize >> (i * 8)) & 0xFF);
-    }
+    OLECompoundSerializer(*this).serializeDirectoryEntry(entry, buffer);
 }
 
 /**
@@ -429,123 +363,7 @@ void OLECompoundWriter::buildRedBlackTree() {
  * @brief 序列化文件头部（512 字节）
  */
 void OLECompoundWriter::serializeFileHeader(QByteArray& header) const {
-    header.resize(SECTOR_SIZE);
-    header.fill(0);
-    int offset = 0;
-
-    // Magic number (8 bytes)
-    header[offset++] = static_cast<char>(0xD0);
-    header[offset++] = static_cast<char>(0xCF);
-    header[offset++] = static_cast<char>(0x11);
-    header[offset++] = static_cast<char>(0xE0);
-    header[offset++] = static_cast<char>(0xA1);
-    header[offset++] = static_cast<char>(0xB1);
-    header[offset++] = static_cast<char>(0x1A);
-    header[offset++] = static_cast<char>(0xE1);
-
-    // CLSID (16 bytes, all zeros)
-    offset += 16;
-
-    // Minor version (2 bytes) = 0x003E
-    header[offset++] = 0x3E;
-    header[offset++] = 0x00;
-
-    // Major version (2 bytes) = 0x0003 (V3)
-    header[offset++] = 0x03;
-    header[offset++] = 0x00;
-
-    // Byte order (2 bytes) = 0xFFFE (little-endian)
-    header[offset++] = static_cast<char>(0xFE);
-    header[offset++] = static_cast<char>(0xFF);
-
-    // Sector shift (2 bytes) = 9 (512 bytes)
-    header[offset++] = 0x09;
-    header[offset++] = 0x00;
-
-    // Mini sector shift (2 bytes) = 6 (64 bytes)
-    header[offset++] = 0x06;
-    header[offset++] = 0x00;
-
-    // Reserved (6 bytes)
-    offset += 6;
-
-    // Total directory sectors (4 bytes) = 0 for V3
-    offset += 4;
-
-    // 计算 FAT 扇区数（每个扇区 128 个条目）
-    uint32_t totalFatSectors = static_cast<uint32_t>(m_fat.size()) / (SECTOR_SIZE / 4);
-    header[offset++] = static_cast<char>(totalFatSectors & 0xFF);
-    header[offset++] = static_cast<char>((totalFatSectors >> 8) & 0xFF);
-    header[offset++] = static_cast<char>((totalFatSectors >> 16) & 0xFF);
-    header[offset++] = static_cast<char>((totalFatSectors >> 24) & 0xFF);
-
-    // First directory sector
-    // CFB sector 0 starts right after the 512-byte header. FAT occupies sectors
-    // 0..totalFatSectors-1, so the directory begins at sector totalFatSectors.
-    const uint32_t totalDifatSectors = static_cast<uint32_t>(m_difatSectors.size());
-    uint32_t firstDirSector = totalFatSectors + totalDifatSectors;
-    header[offset++] = static_cast<char>(firstDirSector & 0xFF);
-    header[offset++] = static_cast<char>((firstDirSector >> 8) & 0xFF);
-    header[offset++] = static_cast<char>((firstDirSector >> 16) & 0xFF);
-    header[offset++] = static_cast<char>((firstDirSector >> 24) & 0xFF);
-
-    // Transaction signature (4 bytes)
-    offset += 4;
-
-    // Mini stream cutoff (4 bytes) = 4096
-    header[offset++] = 0x00;
-    header[offset++] = 0x10;
-    header[offset++] = 0x00;
-    header[offset++] = 0x00;
-
-    // First mini FAT sector
-    uint32_t firstMiniFatSector = ENDOFCHAIN;
-    if (!m_miniFat.isEmpty()) {
-        uint32_t dirSectors =
-            (static_cast<uint32_t>(m_directory.size()) * DIR_ENTRY_SIZE + SECTOR_SIZE - 1) / SECTOR_SIZE;
-        firstMiniFatSector = totalFatSectors + totalDifatSectors + dirSectors;
-    }
-    header[offset++] = static_cast<char>(firstMiniFatSector & 0xFF);
-    header[offset++] = static_cast<char>((firstMiniFatSector >> 8) & 0xFF);
-    header[offset++] = static_cast<char>((firstMiniFatSector >> 16) & 0xFF);
-    header[offset++] = static_cast<char>((firstMiniFatSector >> 24) & 0xFF);
-
-    // Total mini FAT sectors
-    uint32_t totalMiniFatSectors = static_cast<uint32_t>((m_miniFat.size() * 4 + SECTOR_SIZE - 1) / SECTOR_SIZE);
-    header[offset++] = static_cast<char>(totalMiniFatSectors & 0xFF);
-    header[offset++] = static_cast<char>((totalMiniFatSectors >> 8) & 0xFF);
-    header[offset++] = static_cast<char>((totalMiniFatSectors >> 16) & 0xFF);
-    header[offset++] = static_cast<char>((totalMiniFatSectors >> 24) & 0xFF);
-
-    // First DIFAT sector
-    uint32_t firstDifatSector = totalDifatSectors == 0 ? ENDOFCHAIN : totalFatSectors;
-    header[offset++] = static_cast<char>(firstDifatSector & 0xFF);
-    header[offset++] = static_cast<char>((firstDifatSector >> 8) & 0xFF);
-    header[offset++] = static_cast<char>((firstDifatSector >> 16) & 0xFF);
-    header[offset++] = static_cast<char>((firstDifatSector >> 24) & 0xFF);
-
-    // Total DIFAT sectors
-    header[offset++] = static_cast<char>(totalDifatSectors & 0xFF);
-    header[offset++] = static_cast<char>((totalDifatSectors >> 8) & 0xFF);
-    header[offset++] = static_cast<char>((totalDifatSectors >> 16) & 0xFF);
-    header[offset++] = static_cast<char>((totalDifatSectors >> 24) & 0xFF);
-
-    // DIFAT array (109 entries)
-    // The first FAT sector is CFB sector 0, immediately after the header.
-    for (uint32_t i = 0; i < 109; ++i) {
-        if (i < totalFatSectors) {
-            uint32_t sectorNum = i;
-            header[offset++] = static_cast<char>(sectorNum & 0xFF);
-            header[offset++] = static_cast<char>((sectorNum >> 8) & 0xFF);
-            header[offset++] = static_cast<char>((sectorNum >> 16) & 0xFF);
-            header[offset++] = static_cast<char>((sectorNum >> 24) & 0xFF);
-        } else {
-            header[offset++] = static_cast<char>(FREESECT & 0xFF);
-            header[offset++] = static_cast<char>((FREESECT >> 8) & 0xFF);
-            header[offset++] = static_cast<char>((FREESECT >> 16) & 0xFF);
-            header[offset++] = static_cast<char>((FREESECT >> 24) & 0xFF);
-        }
-    }
+    OLECompoundSerializer(*this).serializeFileHeader(header);
 }
 
 /**
