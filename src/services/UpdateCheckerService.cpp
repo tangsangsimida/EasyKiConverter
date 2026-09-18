@@ -11,12 +11,14 @@
 #include <QRegularExpression>
 #include <QSysInfo>
 #include <QUrl>
+#include <QXmlStreamReader>
 
 namespace EasyKiConverter {
 
 namespace {
 
 constexpr auto RELEASES_URL = "https://api.github.com/repos/tangsangsimida/EasyKiConverter/releases/latest";
+constexpr auto RELEASES_ATOM_URL = "https://github.com/tangsangsimida/EasyKiConverter/releases.atom";
 
 struct SemanticVersion {
     int major = 0;
@@ -131,6 +133,49 @@ QString chooseAsset(const QJsonArray& assets) {
     return QString();
 }
 
+// 将 GitHub Releases Atom 响应转换为更新服务使用的最小 Release 对象。
+QJsonObject parseAtomRelease(const QByteArray& data) {
+    QXmlStreamReader reader(data);
+    QString title;
+    QString releaseUrl;
+    bool inEntry = false;
+    while (!reader.atEnd()) {
+        reader.readNext();
+        if (reader.isStartElement() && reader.name() == QStringLiteral("entry")) {
+            inEntry = true;
+            title.clear();
+            releaseUrl.clear();
+            continue;
+        }
+        if (inEntry && reader.isEndElement() && reader.name() == QStringLiteral("entry")) {
+            const QRegularExpression tagExpression(
+                QStringLiteral("/tag/(v?[0-9]+\\.[0-9]+\\.[0-9]+(?:-[0-9A-Za-z.-]+)?)$"));
+            const QRegularExpressionMatch match = tagExpression.match(QUrl(releaseUrl).path());
+            if (match.hasMatch() && !title.isEmpty() && !releaseUrl.isEmpty()) {
+                const QString tag = match.captured(1);
+                return QJsonObject{{QStringLiteral("tag_name"), tag},
+                                   {QStringLiteral("name"), title},
+                                   {QStringLiteral("html_url"), releaseUrl},
+                                   {QStringLiteral("draft"), false},
+                                   {QStringLiteral("prerelease"), tag.contains(QLatin1Char('-'))},
+                                   {QStringLiteral("assets"), QJsonArray{}}};
+            }
+            inEntry = false;
+            continue;
+        }
+        if (!inEntry || !reader.isStartElement())
+            continue;
+        if (reader.name() == QStringLiteral("title")) {
+            title = reader.readElementText().trimmed();
+        } else if (reader.name() == QStringLiteral("link")) {
+            const auto attributes = reader.attributes();
+            if (attributes.value(QStringLiteral("rel")) == QStringLiteral("alternate"))
+                releaseUrl = attributes.value(QStringLiteral("href")).toString();
+        }
+    }
+    return {};
+}
+
 }  // namespace
 
 // 创建更新服务并载入最近一次有效的本地缓存。
@@ -217,42 +262,62 @@ void UpdateCheckerService::checkForUpdates(bool force) {
 
     const RetryPolicy policy =
         RetryPolicy::fromProfile(RequestProfiles::updateCheck(), config->getWeakNetworkSupport());
-    m_activeRequest =
-        m_networkClient->getAsync(QUrl(QString::fromLatin1(RELEASES_URL)), ResourceType::UpdateCheck, policy);
-    connect(m_activeRequest, &AsyncNetworkRequest::finished, this, [this](const NetworkResult& result) {
-        if (m_activeRequest) {
-            m_activeRequest->deleteLater();
-            m_activeRequest = nullptr;
+    startReleaseRequest(QUrl(QString::fromLatin1(RELEASES_URL)), policy, true);
+}
+
+// 发起更新源请求，并在 API 限流时保留 Atom 回退机会。
+void UpdateCheckerService::startReleaseRequest(const QUrl& url, const RetryPolicy& policy, bool allowAtomFallback) {
+    m_activeRequest = m_networkClient->getAsync(url, ResourceType::UpdateCheck, policy);
+    connect(m_activeRequest,
+            &AsyncNetworkRequest::finished,
+            this,
+            [this, policy, allowAtomFallback](const NetworkResult& result) {
+                handleReleaseResponse(result, policy, allowAtomFallback);
+            });
+}
+
+// 处理 JSON API 或 Atom 回退响应，并统一更新检查状态。
+void UpdateCheckerService::handleReleaseResponse(const NetworkResult& result,
+                                                 const RetryPolicy& policy,
+                                                 bool allowAtomFallback) {
+    if (m_activeRequest) {
+        m_activeRequest->deleteLater();
+        m_activeRequest = nullptr;
+    }
+    if (result.wasCancelled) {
+        setChecking(false);
+        m_rateLimited = false;
+        setError(QStringLiteral("Update check was cancelled"));
+        setStatus(Status::NotChecked);
+        return;
+    }
+
+    if (!result.success) {
+        const bool rateLimited = result.statusCode == 403 || result.statusCode == 429 ||
+                                 result.diagnostic.errorType == NetworkErrorType::Forbidden ||
+                                 result.diagnostic.errorType == NetworkErrorType::RateLimited ||
+                                 result.diagnostic.wasRateLimited;
+        if (allowAtomFallback && rateLimited) {
+            m_rateLimited = true;
+            startReleaseRequest(QUrl(QString::fromLatin1(RELEASES_ATOM_URL)), policy, false);
+            return;
         }
         setChecking(false);
-        if (result.wasCancelled) {
-            m_rateLimited = false;
-            setError(QStringLiteral("Update check was cancelled"));
-            setStatus(Status::NotChecked);
-            return;
-        }
+        loadCachedRelease();
+        m_rateLimited = m_rateLimited || rateLimited;
+        setError(result.error.isEmpty() ? QStringLiteral("Update check failed") : result.error);
+        setStatus(Status::Failed);
+        return;
+    }
 
-        if (!result.success) {
-            loadCachedRelease();
-            m_rateLimited = result.statusCode == 403 || result.statusCode == 429 ||
-                            result.diagnostic.errorType == NetworkErrorType::Forbidden ||
-                            result.diagnostic.errorType == NetworkErrorType::RateLimited ||
-                            result.diagnostic.wasRateLimited;
-            setError(result.error.isEmpty() ? QStringLiteral("Update check failed") : result.error);
-            setStatus(Status::Failed);
-            return;
-        }
-
-        m_rateLimited = false;
-        QJsonParseError parseError;
-        const QJsonDocument document = QJsonDocument::fromJson(result.data, &parseError);
-        if (parseError.error != QJsonParseError::NoError || !document.isObject()) {
-            setError(QStringLiteral("Invalid release response"));
-            setStatus(Status::Failed);
-            return;
-        }
-        applyRelease(document.object(), false);
-    });
+    setChecking(false);
+    m_rateLimited = false;
+    const QJsonObject release =
+        allowAtomFallback ? QJsonDocument::fromJson(result.data).object() : parseAtomRelease(result.data);
+    if (release.isEmpty() || !applyRelease(release, false)) {
+        setError(QStringLiteral("Invalid release response"));
+        setStatus(Status::Failed);
+    }
 }
 
 // 持久化当前版本的稍后提醒选择。

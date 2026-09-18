@@ -6,6 +6,7 @@
 #include <QJsonObject>
 #include <QObject>
 #include <QString>
+#include <QUrl>
 
 namespace EasyKiConverter {
 
@@ -145,6 +146,8 @@ private:
     void setChecking(bool checking);
     void setStatus(Status status);
     void setError(const QString& error);
+    void startReleaseRequest(const QUrl& url, const RetryPolicy& policy, bool allowAtomFallback);
+    void handleReleaseResponse(const NetworkResult& result, const RetryPolicy& policy, bool allowAtomFallback);
     bool applyRelease(const QJsonObject& release, bool fromCache);
     bool validateRelease(const QJsonObject& release, QString* reason) const;
     void applyUpdateInfo(const QString& latestVersion,
