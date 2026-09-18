@@ -6,6 +6,7 @@
 #include "AltiumSymbolImplementationConverter.h"
 #include "AltiumSymbolParameterConverter.h"
 #include "AltiumSymbolPinConverter.h"
+#include "AltiumSymbolPinTextConverter.h"
 #include "AltiumSymbolPrimitiveConverter.h"
 #include "utils/AltiumCoord.h"
 #include "utils/AltiumSymbolConversionUtils.h"
@@ -145,48 +146,7 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
             continue;
         }
         component.pins.append(convertPin(pin));
-        if (pin.hasNamePosition && !pin.name.isEmpty()) {
-            if (!isFinitePoint(pin.namePosition) || !std::isfinite(pin.nameFontSizeMm) || pin.nameFontSizeMm < 0.0 ||
-                !std::isfinite(pin.nameRotation)) {
-                m_diagnostics.append(
-                    QStringLiteral("符号 %1 引脚 %2 名称文本参数无效，已跳过").arg(data.name).arg(pin.designator));
-            } else {
-                AltiumSchText text;
-                text.locationX = AltiumCoord::mmToRaw(pin.namePosition.x());
-                text.locationY = AltiumCoord::mmToRaw(pin.namePosition.y());
-                text.text = pin.name;
-                text.fontSizeMm = pin.nameFontSizeMm;
-                text.anchor =
-                    normalizeTextAnchor(pin.nameAnchor, QStringLiteral("引脚 %1 名称文本").arg(pin.designator));
-                text.isDisplayed = true;
-                text.orientation = toAltiumOrientation(pin.nameRotation);
-                text.ownerPartId = pin.commonToAllParts ? -1 : toAltiumOwnerPartId(pin.partIndex);
-                text.isPinLabel = true;
-                text.sourcePartIndex = pin.commonToAllParts ? -1 : pin.partIndex;
-                component.texts.append(text);
-            }
-        }
-        if (pin.hasNumberPosition && !pin.designator.isEmpty()) {
-            if (!isFinitePoint(pin.numberPosition) || !std::isfinite(pin.numberFontSizeMm) ||
-                pin.numberFontSizeMm < 0.0 || !std::isfinite(pin.numberRotation)) {
-                m_diagnostics.append(
-                    QStringLiteral("符号 %1 引脚 %2 编号文本参数无效，已跳过").arg(data.name).arg(pin.designator));
-            } else {
-                AltiumSchText text;
-                text.locationX = AltiumCoord::mmToRaw(pin.numberPosition.x());
-                text.locationY = AltiumCoord::mmToRaw(pin.numberPosition.y());
-                text.text = pin.designator;
-                text.fontSizeMm = pin.numberFontSizeMm;
-                text.anchor =
-                    normalizeTextAnchor(pin.numberAnchor, QStringLiteral("引脚 %1 编号文本").arg(pin.designator));
-                text.isDisplayed = true;
-                text.orientation = toAltiumOrientation(pin.numberRotation);
-                text.ownerPartId = pin.commonToAllParts ? -1 : toAltiumOwnerPartId(pin.partIndex);
-                text.isPinLabel = true;
-                text.sourcePartIndex = pin.commonToAllParts ? -1 : pin.partIndex;
-                component.texts.append(text);
-            }
-        }
+        component.texts.append(AltiumSymbolPinTextConverter::convert(pin, data.name, &m_diagnostics));
     }
 
     // 转换图形元素
