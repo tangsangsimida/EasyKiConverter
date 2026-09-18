@@ -59,6 +59,7 @@ private:
     friend class AltiumSchComponentStorageWriter;
     friend class AltiumSchOwnershipValidator;
     friend class AltiumSchGeometryValidator;
+    friend class AltiumSchInputValidator;
 
     // ---- 文件级写入 ----
     void writeFileHeader(OLECompoundWriter& ole, const QList<AltiumSchComponent>& components);

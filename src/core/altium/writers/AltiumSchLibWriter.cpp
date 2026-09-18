@@ -5,6 +5,7 @@
 #include "AltiumSchGeometryValidator.h"
 #include "AltiumSchImageRecordWriter.h"
 #include "AltiumSchImageStorageWriter.h"
+#include "AltiumSchInputValidator.h"
 #include "AltiumSchLibraryHeaderWriter.h"
 #include "AltiumSchOwnershipValidator.h"
 #include "AltiumSchPinRecordWriter.h"
@@ -77,141 +78,8 @@ bool AltiumSchLibWriter::write(const QList<AltiumSchComponent>& components,
         qWarning() << "AltiumSchLibWriter: Refusing to write without an output path";
         return false;
     }
-    QSet<QString> componentNames;
-    for (const AltiumSchComponent& component : components) {
-        if (component.name.trimmed().isEmpty()) {
-            m_diagnostics.append(QStringLiteral("Altium SchLib 组件名称为空，已拒绝写入"));
-            qWarning() << "AltiumSchLibWriter: Refusing to write a component without a name";
-            return false;
-        }
-        if (component.name.toLatin1().size() > 255) {
-            const QString diagnostic =
-                QStringLiteral("Altium SchLib 组件 %1 名称超过 255 字节，已拒绝写入").arg(component.name);
-            m_diagnostics.append(diagnostic);
-            qWarning() << "AltiumSchLibWriter:" << diagnostic;
-            return false;
-        }
-        if (QString::fromLatin1(component.name.toLatin1()) != component.name) {
-            const QString diagnostic =
-                QStringLiteral("Altium SchLib 组件名称包含无法编码的字符: %1，已拒绝写入").arg(component.name);
-            m_diagnostics.append(diagnostic);
-            qWarning() << "AltiumSchLibWriter:" << diagnostic;
-            return false;
-        }
-        const auto validateParameterValue = [this, &component](const QString& value, const QString& context) {
-            if (!value.contains(QChar('|')) && !value.contains(QChar::Null))
-                return true;
-            const QString diagnostic = QStringLiteral("Altium SchLib 组件 %1 的%2包含参数分隔符或 NUL，已拒绝写入")
-                                           .arg(component.name, context);
-            m_diagnostics.append(diagnostic);
-            qWarning() << "AltiumSchLibWriter:" << diagnostic;
-            return false;
-        };
-        if (!validateParameterValue(component.name, QStringLiteral("组件名称")) ||
-            !validateParameterValue(component.description, QStringLiteral("组件描述")) ||
-            !validateParameterValue(component.designatorPrefix, QStringLiteral("位号前缀")))
-            return false;
-        for (const QString& alias : component.aliases) {
-            if (!validateParameterValue(alias, QStringLiteral("组件别名")))
-                return false;
-        }
-        for (const AltiumSchPin& pin : component.pins) {
-            if (!validateParameterValue(pin.name, QStringLiteral("引脚名称")) ||
-                !validateParameterValue(pin.designator, QStringLiteral("引脚编号")))
-                return false;
-        }
-        for (const AltiumSchText& text : component.texts) {
-            if (!validateParameterValue(text.text, QStringLiteral("文本内容")) ||
-                !validateParameterValue(text.fontName, QStringLiteral("文本字体名称")) ||
-                !validateParameterValue(text.anchor, QStringLiteral("文本对齐锚点")))
-                return false;
-        }
-        for (const AltiumSchTextFrame& frame : component.textFrames) {
-            if (!validateParameterValue(frame.text, QStringLiteral("文本框内容")) ||
-                !validateParameterValue(frame.fontName, QStringLiteral("文本框字体名称")))
-                return false;
-        }
-        for (const AltiumSchImage& image : component.images) {
-            // 有效的嵌入图片名称由 prepareImageStorageNames() 负责诊断并跳过；只有
-            // 外部引用或嵌入数据为空时，文件名才会直接进入参数块。
-            if ((!image.embedImage || image.data.isEmpty()) &&
-                !validateParameterValue(image.fileName, QStringLiteral("图片文件名")))
-                return false;
-        }
-        for (const AltiumSchParameter& parameter : component.parameters) {
-            if (!validateParameterValue(parameter.value, QStringLiteral("参数值")))
-                return false;
-        }
-        for (const auto& implementation : component.implementations) {
-            if (!validateParameterValue(implementation.modelName, QStringLiteral("实现模型名称")) ||
-                !validateParameterValue(implementation.modelType, QStringLiteral("实现模型类型")) ||
-                !validateParameterValue(implementation.dataFileKind, QStringLiteral("实现数据文件类型")) ||
-                !validateParameterValue(implementation.dataFileEntity, QStringLiteral("实现数据文件实体")))
-                return false;
-            for (auto it = implementation.parameters.cbegin(); it != implementation.parameters.cend(); ++it) {
-                if (!validateParameterValue(it.value(), QStringLiteral("实现参数值")))
-                    return false;
-            }
-            for (auto it = implementation.pinMappings.cbegin(); it != implementation.pinMappings.cend(); ++it) {
-                if (!validateParameterValue(it.value(), QStringLiteral("引脚映射值")))
-                    return false;
-            }
-        }
-        const QString foldedName = component.name.trimmed().toCaseFolded();
-        if (componentNames.contains(foldedName)) {
-            const QString diagnostic =
-                QStringLiteral("Altium SchLib 组件名称重复（不区分大小写）: %1，已拒绝写入").arg(component.name);
-            m_diagnostics.append(diagnostic);
-            qWarning() << "AltiumSchLibWriter:" << diagnostic;
-            return false;
-        }
-        componentNames.insert(foldedName);
-        if (component.partCount > 32767) {
-            const QString diagnostic = QStringLiteral("Altium SchLib 组件 %1 的 partCount 超出支持范围: %2，已拒绝写入")
-                                           .arg(component.name)
-                                           .arg(component.partCount);
-            m_diagnostics.append(diagnostic);
-            qWarning() << "AltiumSchLibWriter:" << diagnostic;
-            return false;
-        }
-        for (const AltiumSchComponent::Implementation& implementation : component.implementations) {
-            for (auto it = implementation.parameters.cbegin(); it != implementation.parameters.cend(); ++it) {
-                if (it.key().trimmed().isEmpty() || it.key().contains(QChar('|')) || it.key().contains(QChar::Null)) {
-                    const QString diagnostic = QStringLiteral("Altium SchLib 组件 %1 的实现参数键无效: %2，已拒绝写入")
-                                                   .arg(component.name, it.key());
-                    m_diagnostics.append(diagnostic);
-                    qWarning() << "AltiumSchLibWriter:" << diagnostic;
-                    return false;
-                }
-            }
-        }
-        const auto validateParameterName = [this, &component](const QString& name, const QString& context) {
-            if (!name.trimmed().isEmpty() && !name.contains(QChar('|')) && !name.contains(QChar::Null))
-                return true;
-            const QString diagnostic = QStringLiteral("Altium SchLib 组件 %1 的%2参数名无效: %3，已拒绝写入")
-                                           .arg(component.name, context, name);
-            m_diagnostics.append(diagnostic);
-            qWarning() << "AltiumSchLibWriter:" << diagnostic;
-            return false;
-        };
-        for (auto it = component.sourceMetadata.cbegin(); it != component.sourceMetadata.cend(); ++it) {
-            if (!validateParameterName(it.key(), QStringLiteral("源元数据")))
-                return false;
-            if (!validateParameterValue(it.value(), QStringLiteral("源元数据值")))
-                return false;
-        }
-        for (const AltiumSchParameter& parameter : component.parameters) {
-            if (!validateParameterName(parameter.name, QStringLiteral("参数")))
-                return false;
-        }
-        if (!validateGeometry(component))
-            return false;
-        if (!validatePartOwnership(component))
-            return false;
-        if (component.partCount <= 0) {
-            m_diagnostics.append(
-                QStringLiteral("Altium SchLib 组件 %1 的 partCount 无效，已规范化为 1").arg(component.name));
-        }
+    if (!AltiumSchInputValidator::validate(*this, components)) {
+        return false;
     }
     m_fontRegistry.clear();
     m_embeddedImageNames.clear();

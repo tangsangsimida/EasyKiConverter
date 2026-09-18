@@ -19,6 +19,8 @@ target_sources(EasyKiConverterAltium
         writers/AltiumSchImageStorageEncoder.cpp
         writers/AltiumSchImageStorageWriter.h
         writers/AltiumSchImageStorageWriter.cpp
+        writers/AltiumSchInputValidator.h
+        writers/AltiumSchInputValidator.cpp
         writers/AltiumSchComponentStorageWriter.h
         writers/AltiumSchComponentStorageWriter.cpp
         writers/AltiumSchOwnershipValidator.h
