@@ -8,13 +8,13 @@
 
 | 类型 | 文件数 | 过长 | 偏长 | 健康率 |
 |------|--------|------|------|--------|
-| 产品源码与资源 | 505 | 53 | 39 | -- |
+| 产品源码与资源 | 508 | 53 | 39 | -- |
 | Python 工具 | 13 | 5 | 4 | -- |
-| **合计** | **518** | **58** | **43** | -- |
+| **合计** | **521** | **58** | **43** | -- |
 
 当前统计工具按文件总行数使用统一阈值：高风险 >500 行，中风险 300-500 行，低风险 200-300 行。类型分项和代码/注释行数需要额外脚本才能精确拆分，因此本报告不再保留旧的推算健康率。
 
-当前基线：`src` 445 个文件、77,731 行；`tests` 58 个文件、18,725 行；翻译资源 2 个文件、3,303 行；`tools/python` 13 个文件、6,640 行。项目工具的 `--all` 统计覆盖产品源码、测试和翻译资源，工具目录单独统计后合计 518 个文件、106,399 行。
+当前基线：`src` 448 个文件、77,781 行；`tests` 58 个文件、18,725 行；翻译资源 2 个文件、3,303 行；`tools/python` 13 个文件、6,640 行。项目工具的 `--all` 统计覆盖产品源码、测试和翻译资源，工具目录单独统计后合计 521 个文件、106,449 行。
 
 ---
 
@@ -92,6 +92,9 @@
 | `src/main.cpp` | 859 | 入口文件混入了 CLI/GUI 切换逻辑 |
 | `src/workers/WriteWorker.cpp` | 846 | 文件写入工作线程 |
 | `src/core/altium/writers/AltiumPcbLibWriter.cpp` | 1,193 | PcbLib 二进制写入 |
+| `src/core/altium/ExporterAltiumSymbol.cpp` | 1,306 | SchLib 符号转换；引脚电气类型、显示标志、IEEE 装饰和共享转换工具已提取 |
+| `src/core/altium/AltiumSymbolPinConverter.cpp` | 190 | 独立承载 IR 引脚到 Altium 引脚记录的电气类型、显示标志、IEEE 装饰和电源引脚识别 |
+| `src/core/altium/utils/AltiumSymbolConversionUtils.h` | 71 | 独立承载符号部件 ID、方向、颜色、线型和坐标量化等共享转换规则 |
 | `src/core/altium/writers/AltiumSchLibWriter.cpp` | 761 | SchLib 主记录写入；来源顺序调度、文本记录、图片记录、引脚记录、几何图元、文件级头部、字体表、参数、图片 Storage、组件 Data 流、几何校验和部件归属校验已提取 |
 | `src/core/altium/writers/AltiumSchPinRecordWriter.cpp` | 61 | 独立承载 SchLib `RECORD=2` 二进制引脚记录编码，并复用主写入器的 Owner 校验与内容序号状态 |
 | `src/core/altium/writers/AltiumSchPrimitiveRecordWriter.cpp` | 273 | 独立承载矩形、弧线、多边形、折线、Bezier 和 IEEE 等文本参数图元记录编码 |
@@ -133,6 +136,9 @@
 - `ComponentListViewModel.cpp`（704 行）：已提取列表状态统计、编号索引、批量导入、剪贴板处理、失败项重试、组件服务数据回调、预览更新缓冲、列表项更新缓冲、验证队列状态、验证错误分类、定时器初始化、服务信号连接和验证队列协调职责，并移除失效的预览图编码线程池，后续继续拆分搜索和选择
 - `ComponentListClipboardCoordinator.cpp`（64 行）：独立承载剪贴板文本读取、元件编号提取、列表去重、批量添加和全量编号复制，ComponentListViewModel 继续保留公开槽接口和信号
 - `ComponentListRetryCoordinator.cpp`（46 行）：独立承载可重试失败项筛选、列表项验证状态重置、服务请求和验证计数更新，ComponentListViewModel 继续保留公开槽接口和信号
+- `ExporterAltiumSymbol.cpp`（1,306 行）：已提取符号引脚转换、部件 ID/方向/颜色/线型和坐标量化共享规则，主文件继续负责符号记录编排和图元转换，后续可按图元族继续拆分
+- `AltiumSymbolPinConverter.cpp`（190 行）：独立承载 IR 引脚到 Altium 引脚记录的电气类型、显示标志、IEEE 装饰和电源引脚识别，保持主导出器的公开接口不变
+- `AltiumSymbolConversionUtils.h`（71 行）：集中维护 Altium 符号转换中跨参数、引脚和图元复用的部件 ID、方向、颜色、线型及坐标量化规则
 - `ComponentListTimerCoordinator.cpp`（73 行）：独立创建并连接预览图、批处理、列表统计和延迟获取定时器，保持防抖窗口及原有回调顺序
 - `ComponentListServiceConnectionCoordinator.cpp`（91 行）：独立连接验证完成、组件数据、预览图成功/失败和批量预览完成信号，保持图片编码、缓存更新和验证状态推进顺序
 - `ComponentValidationCoordinator.cpp`（81 行）：独立协调验证队列启动、并发调度、完成回调和 BOM 导入状态推进，保持 ViewModel 的状态更新与服务请求顺序
