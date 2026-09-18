@@ -8,13 +8,13 @@
 
 | 类型 | 文件数 | 过长 | 偏长 | 健康率 |
 |------|--------|------|------|--------|
-| 产品源码与资源 | 554 | 51 | 43 | -- |
+| 产品源码与资源 | 556 | 51 | 43 | -- |
 | Python 工具 | 13 | 5 | 4 | -- |
-| **合计** | **567** | **56** | **47** | -- |
+| **合计** | **569** | **56** | **47** | -- |
 
 当前统计工具按文件总行数使用统一阈值：高风险 >500 行，中风险 300-500 行，低风险 200-300 行。类型分项和代码/注释行数需要额外脚本才能精确拆分，因此本报告不再保留旧的推算健康率。
 
-当前基线：`src` 494 个文件、79,014 行；`tests` 58 个文件、18,782 行；翻译资源 2 个文件、3,303 行；`tools/python` 13 个文件、7,703 行。项目工具的 `--all` 统计覆盖产品源码、测试和翻译资源，工具目录单独统计后合计 567 个文件、108,802 行。
+当前基线：`src` 496 个文件、79,086 行；`tests` 58 个文件、18,782 行；翻译资源 2 个文件、3,303 行；`tools/python` 13 个文件、7,703 行。项目工具的 `--all` 统计覆盖产品源码、测试和翻译资源，工具目录单独统计后合计 569 个文件、108,874 行。
 
 ---
 
@@ -133,7 +133,9 @@
 | `src/core/altium/writers/AltiumSchOwnershipValidator.cpp` | 48 | 独立承载 SchLib 图元和参数记录的 OWNERPARTID 范围校验与诊断 |
 | `src/core/altium/writers/AltiumSchGeometryValidator.cpp` | 192 | 独立承载 SchLib 图元的坐标、尺寸、方向、字符串和控制点约束校验 |
 | `src/models/SymbolDataSerializer.cpp` | 842 | IR 重构后自然解决 |
-| `src/services/export/TempFileManager.cpp` | 814 | 临时文件管理；共享临时目录清理增加引用保护 |
+| `src/services/export/TempFileManager.cpp` | 632 | 临时文件管理；备份事务路径操作已提取，保留共享目录引用保护 |
+| `src/services/export/TempFileTransactionUtils.cpp` | 204 | 独立承载备份事务路径移动、清单序列化和恢复数据解析 |
+| `src/services/export/TempFileTransactionUtils.h` | 48 | 备份事务工具的数据结构和路径操作接口 |
 | `src/core/kicad/SymbolGraphicsGenerator.cpp` | 443 | KiCad 符号图形生成 |
 | `src/core/kicad/ExporterSymbol.cpp` | 768 | KiCad 符号导出 |
 | `src/core/kicad/Exporter3DModel.cpp` | 702 | 3D 模型导出 |
