@@ -2,6 +2,7 @@
 
 #include "ComponentListBatchCoordinator.h"
 #include "ComponentListDataCoordinator.h"
+#include "ComponentListServiceConnectionCoordinator.h"
 #include "ComponentListTimerCoordinator.h"
 #include "ComponentValidationCoordinator.h"
 #include "services/ConfigService.h"
@@ -11,8 +12,6 @@
 #include <QClipboard>
 #include <QDebug>
 #include <QGuiApplication>
-#include <QImage>
-#include <QPointer>
 #include <QStringList>
 #include <QUrl>
 #include <QtConcurrent>
@@ -38,69 +37,7 @@ void ComponentListViewModel::initializeTimers() {
 
 /** @brief 连接验证完成、组件数据和预览图相关的异步服务信号。 */
 void ComponentListViewModel::initializeServiceConnections() {
-    // 所有元件验证完成后再请求预览图，避免验证和媒体请求同时争抢资源。
-    connect(m_validationStateManager,
-            &ValidationStateManager::validationCompleted,
-            this,
-            [this](const QStringList& validatedIds) {
-                qDebug() << "All validations completed, validated component count:" << validatedIds.size();
-                const int totalCount = componentCount();
-                m_validationReadyHint = !validatedIds.isEmpty() && validatedIds.size() == totalCount;
-                m_previewReadyHint = false;
-                emit attentionStateChanged();
-                emit previewFetchRequested();
-            });
-
-    connect(m_service, &ComponentService::componentInfoReady, this, &ComponentListViewModel::handleComponentInfoReady);
-    connect(m_service, &ComponentService::cadDataReady, this, &ComponentListViewModel::handleCadDataReady);
-    connect(m_service, &ComponentService::model3DReady, this, &ComponentListViewModel::handleModel3DReady);
-    connect(m_service, &ComponentService::lcscDataUpdated, this, &ComponentListViewModel::handleLcscDataUpdated);
-    connect(m_service, &ComponentService::datasheetReady, this, &ComponentListViewModel::handleDatasheetReady);
-    connect(m_service, &ComponentService::fetchError, this, &ComponentListViewModel::handleFetchError);
-    connect(m_service,
-            &ComponentService::previewImageReady,
-            this,
-            [this](const QString& componentId, const QImage& image, int imageIndex) {
-                if (image.isNull()) {
-                    return;
-                }
-
-                QByteArray byteArray;
-                QBuffer buffer(&byteArray);
-                if (!buffer.open(QIODevice::WriteOnly)) {
-                    return;
-                }
-                image.save(&buffer, "PNG");
-
-                m_previewUpdateBuffer.addIncremental(
-                    componentId, imageIndex, QString::fromLatin1(byteArray.toBase64().constData()));
-                if (!m_cachePreviewImageTimer->isActive()) {
-                    m_cachePreviewImageTimer->start();
-                }
-            });
-    connect(m_service,
-            &ComponentService::previewImageFailed,
-            this,
-            [this](const QString& componentId, const QString& error) {
-                // 预览图获取失败不影响验证状态，只记录日志并结束预览请求状态。
-                auto item = findItemData(componentId);
-                if (item && item->isValid() && item->validationPhase() == "fetching_preview") {
-                    item->setValidationPhase("completed");
-                    scheduleListUpdate();
-                }
-                markPreviewFetchCompleted(componentId);
-            });
-    connect(m_service,
-            &ComponentService::previewImagesReady,
-            this,
-            [this](const QString& componentId, const QStringList& encodedImages) {
-                // 收集到待处理列表，使用防抖避免频繁 UI 更新。
-                m_previewUpdateBuffer.addComplete(componentId, encodedImages);
-                if (!m_cachePreviewImageTimer->isActive()) {
-                    m_cachePreviewImageTimer->start();
-                }
-                markPreviewFetchCompleted(componentId);
-            });
+    ComponentListServiceConnectionCoordinator::initialize(*this);
 }
 
 ComponentListViewModel::~ComponentListViewModel() {
