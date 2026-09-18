@@ -442,7 +442,7 @@ void ConfigService::initializeDefaultConfig() {
     m_config["language"] = "en";
     m_config["cacheDir"] = defaultCacheDir();
     m_config["diskCacheLimitMB"] = DEFAULT_DISK_CACHE_LIMIT_MB;
-    m_config["updateAutoCheck"] = true;
+    m_config["updateAutoCheck"] = false;
     m_config["updateCheckIntervalHours"] = 24;
     m_config["updateLastCheckTime"] = 0;
     m_config["updateLastSuccessfulCheckTime"] = 0;
@@ -465,7 +465,7 @@ QString ConfigService::getDefaultConfigPath() const {
 // 读取启动时自动检查更新的持久化开关。
 bool ConfigService::getUpdateAutoCheck() const {
     QMutexLocker locker(&m_configMutex);
-    return m_config.value(QStringLiteral("updateAutoCheck")).toBool(true);
+    return m_config.value(QStringLiteral("updateAutoCheck")).toBool(false);
 }
 
 // 保存启动时自动检查更新的持久化开关。

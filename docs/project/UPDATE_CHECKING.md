@@ -2,7 +2,7 @@
 
 ## 当前行为
 
-应用启动后会在延迟两秒时尝试检查 GitHub 的最新稳定 Release。自动检查受配置中的开关和检查间隔控制，默认间隔为 24 小时；设置页中的“检查更新”始终执行手动检查并绕过间隔限制。所有请求都通过项目的 `NetworkClient` 和 `RequestProfiles::updateCheck()` 发起。
+应用启动后会在延迟两秒时，依据用户设置决定是否检查 GitHub 的最新稳定 Release。启动时自动检查默认关闭；启用后受 24 小时检查间隔控制。版本对话框中的“检查更新”始终执行手动检查并绕过间隔限制。所有请求都通过项目的 `NetworkClient` 和 `RequestProfiles::updateCheck()` 发起。
 
 ```mermaid
 stateDiagram-v2
@@ -21,7 +21,7 @@ stateDiagram-v2
 
 更新检查复用 `ConfigService`，不引入独立配置存储。保存字段包括：
 
-- `updateAutoCheck`：是否启用启动时自动检查，默认启用。
+- `updateAutoCheck`：是否启用启动时自动检查，默认关闭。
 - `updateCheckIntervalHours`：自动检查间隔，默认 24 小时，限制在 1 到 168 小时。
 - `updateLastCheckTime`：最近一次发起请求的时间。
 - `updateLastSuccessfulCheckTime`：最近一次成功校验 Release 的时间。
@@ -37,11 +37,11 @@ stateDiagram-v2
 
 版本比较遵循 SemVer 基本规则，接受 `v3.1.13`、`3.1.13-beta.1`、`3.1.13-rc.1` 和带构建元数据的版本。主版本、次版本和补丁版本依次比较；预发布版本低于同一基础版本的稳定版本，预发布标识按数字和字符串标识比较；构建元数据不影响版本优先级。无法解析的版本安全失败，不会误报更新。
 
-默认只接受已发布的稳定 Release。Draft、Pre-release、缺少 `tag_name`、`name`、合法 HTTPS `html_url` 或 `assets` 字段的响应会进入失败状态。更新链接优先选择当前平台和架构匹配的资产，找不到可靠匹配时回退到 Release 页面。
+默认只接受已发布的稳定 Release。Draft、Pre-release、缺少 `tag_name`、`name`、合法 HTTPS `html_url` 或 `assets` 字段的响应会进入失败状态。发现更新后始终通过系统浏览器打开 Release 页面，用户自行选择并下载适合平台的安装包。
 
 ## 用户界面
 
-更新 Banner 展示检查中、发现更新和检查失败状态。发现更新时可以查看平台资产或 Release 页面、稍后提醒、忽略当前版本；检查失败时提供重试。侧边栏的“版本更新”区域展示当前版本、检查状态、启动时自动检查开关和手动检查按钮。
+更新 Banner 展示检查中、发现更新和检查失败状态。发现更新时可以打开 Release 页面、稍后提醒、忽略当前版本；检查失败时提供重试。标题栏版本号打开的版本对话框展示当前版本、检查状态、启动时自动检查开关和手动检查按钮。
 
 ## 限制
 

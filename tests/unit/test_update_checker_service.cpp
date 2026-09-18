@@ -46,6 +46,7 @@ private slots:
     void invalidVersionDoesNotReportUpdate();
     void invalidReleaseIsRejected();
     void draftAndPrereleaseAreRejected();
+    void startupAutoCheckIsDisabledByDefault();
     void dismissAndIgnorePersistSeparately();
     void newerReleaseClearsIgnoredVersion();
     void automaticCheckHonorsIntervalAndManualCheckBypassesIt();
@@ -100,6 +101,11 @@ void TestUpdateCheckerService::semVerComparisonSupportsReleaseCandidates() {
 void TestUpdateCheckerService::invalidVersionDoesNotReportUpdate() {
     QVERIFY(UpdateCheckerService::normalizeVersion(QStringLiteral("not-a-version")).isEmpty());
     QVERIFY(!UpdateCheckerService::isRemoteVersionNewer(QStringLiteral("3.1.12"), QStringLiteral("release-latest")));
+}
+
+// 验证新配置默认关闭启动时自动检查，但不影响手动检查入口。
+void TestUpdateCheckerService::startupAutoCheckIsDisabledByDefault() {
+    QCOMPARE(ConfigService::instance()->getUpdateAutoCheck(), false);
 }
 
 // 验证缺少必需字段的 Release 会进入失败状态。
