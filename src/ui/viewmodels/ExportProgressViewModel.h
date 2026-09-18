@@ -20,6 +20,7 @@ struct ExportItemStatus;
 struct ExportStatistics;
 class ExportProgressResultsCoordinator;
 class ExportProgressRetryCoordinator;
+class ExportProgressStageCoordinator;
 
 /**
  * @brief 导出进度视图模型
@@ -209,6 +210,8 @@ private slots:
 
 private:
     friend class ExportProgressResultsCoordinator;
+    /** @brief 允许阶段进度协作者复用三段式进度状态和通知方法。 */
+    friend class ExportProgressStageCoordinator;
     /** @brief 允许重试协作者复用结果索引、导出选项和状态刷新流程。 */
     friend class ExportProgressRetryCoordinator;
 
@@ -216,9 +219,6 @@ private:
     void updateOverallItemStatus(QVariantMap& result) const;
     void resetItemForRetry(QVariantMap& result) const;
     void beginExportRun(const QStringList& componentIds, const QString& statusText);
-    int averageTypeProgress(const ExportOverallProgress& progress, const QStringList& typeNames) const;
-    int stageTypeProgress(const ExportOverallProgress& progress, const QStringList& typeNames) const;
-    int weightedOverallProgress() const;
     void markResultsDirty();
 
 private:
