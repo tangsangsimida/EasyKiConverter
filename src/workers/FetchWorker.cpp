@@ -1,6 +1,7 @@
 #include "FetchWorker.h"
 
 #include "BaseWorker.h"
+#include "core/network/BlockingRequestContext.h"
 #include "core/network/NetworkClient.h"
 #include "core/utils/GzipUtils.h"
 #include "services/ConfigService.h"
@@ -21,39 +22,6 @@
 #include <zlib.h>
 
 namespace EasyKiConverter {
-
-namespace {
-
-class BlockingRequestContext {
-public:
-    // 保存一次异步网络请求的结果并唤醒等待线程。
-    void complete(const NetworkResult& result) {
-        QMutexLocker locker(&m_mutex);
-        if (m_finished) {
-            return;
-        }
-        m_result = result;
-        m_finished = true;
-        m_condition.wakeAll();
-    }
-
-    // 阻塞读取网络请求结果，直到异步回调完成。
-    NetworkResult wait() {
-        QMutexLocker locker(&m_mutex);
-        while (!m_finished) {
-            m_condition.wait(&m_mutex);
-        }
-        return m_result;
-    }
-
-private:
-    QMutex m_mutex;
-    QWaitCondition m_condition;
-    NetworkResult m_result;
-    bool m_finished = false;
-};
-
-}  // namespace
 
 QAtomicInt FetchWorker::s_activeRequests = 0;
 QMutex FetchWorker::s_rateLimitMutex;

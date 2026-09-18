@@ -1,6 +1,7 @@
 #include "NetworkWorker.h"
 
 #include "core/network/AsyncNetworkRequest.h"
+#include "core/network/BlockingRequestContext.h"
 #include "core/network/NetworkClient.h"
 #include "core/utils/GzipUtils.h"
 #include "services/ConfigService.h"
@@ -17,51 +18,25 @@
 
 namespace EasyKiConverter {
 
-namespace {
-
-class BlockingRequestContext {
-public:
-    void complete(const NetworkResult& result) {
-        QMutexLocker locker(&m_mutex);
-        if (m_finished) {
-            return;
-        }
-        m_result = result;
-        m_finished = true;
-        m_condition.wakeAll();
-    }
-
-    NetworkResult wait() {
-        QMutexLocker locker(&m_mutex);
-        while (!m_finished) {
-            m_condition.wait(&m_mutex);
-        }
-        return m_result;
-    }
-
-private:
-    QMutex m_mutex;
-    QWaitCondition m_condition;
-    NetworkResult m_result;
-    bool m_finished = false;
-};
-
-}  // namespace
-
+/** @brief 创建指定网络任务类型的后台 Worker。 */
 NetworkWorker::NetworkWorker(const QString& componentId, TaskType taskType, const QString& uuid, QObject* parent)
+    // 保存任务参数并等待 run() 在工作线程中执行。
     : m_componentId(componentId), m_taskType(taskType), m_uuid(uuid), m_currentRequest(nullptr) {
     Q_UNUSED(parent);
 }
 
+/** @brief 记录 Worker 销毁并释放其请求关联。 */
 NetworkWorker::~NetworkWorker() {
     qDebug() << "NetworkWorker destroyed for:" << m_componentId;
 }
 
+/** @brief 根据任务类型执行对应的网络获取流程。 */
 void NetworkWorker::run() {
     qDebug() << "NetworkWorker started for:" << m_componentId << "- TaskType:" << static_cast<int>(m_taskType);
 
     bool success = false;
 
+    // 根据任务类型选择对应的请求和结果处理流程。
     switch (m_taskType) {
         case TaskType::FetchComponentInfo:
             success = fetchComponentInfo();
@@ -86,6 +61,7 @@ void NetworkWorker::run() {
     }
 }
 
+/** @brief 获取元器件基础信息。 */
 bool NetworkWorker::fetchComponentInfo() {
     QByteArray responseData;
     QString errorMsg;
@@ -109,6 +85,7 @@ bool NetworkWorker::fetchComponentInfo() {
     return true;
 }
 
+/** @brief 获取元器件 CAD 数据。 */
 bool NetworkWorker::fetchCadData() {
     QByteArray responseData;
     QString errorMsg;
@@ -134,6 +111,7 @@ bool NetworkWorker::fetchCadData() {
     return true;
 }
 
+/** @brief 获取元器件 OBJ 三维模型。 */
 bool NetworkWorker::fetch3DModelObj() {
     QByteArray responseData;
     QString errorMsg;
@@ -149,6 +127,7 @@ bool NetworkWorker::fetch3DModelObj() {
     return true;
 }
 
+/** @brief 获取元器件 MTL 三维材质文件。 */
 bool NetworkWorker::fetch3DModelMtl() {
     QByteArray responseData;
     QString errorMsg;
@@ -164,6 +143,7 @@ bool NetworkWorker::fetch3DModelMtl() {
     return true;
 }
 
+/** @brief 执行一次带重试策略的同步等待请求。 */
 bool NetworkWorker::executeRequest(const QUrl& url,
                                    ResourceType resourceType,
                                    int timeoutMs,
@@ -242,6 +222,7 @@ bool NetworkWorker::executeRequest(const QUrl& url,
     return true;
 }
 
+/** @brief 取消当前网络请求并标记 Worker 终止。 */
 void NetworkWorker::abort() {
     QMutexLocker locker(&m_mutex);
     if (m_currentRequest) {
