@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import EasyKiconverter_Cpp_Version.src.ui.qml.styles 1.0
+import EasyKiconverter_Cpp_Version 1.0
 
 ColumnLayout {
     id: exportButtonsSection

@@ -102,7 +102,7 @@ SliderDialogBase {
     extraContentSource: SidebarToggleRow {
         label: qsTranslate("MainWindow", "启动时自动检查")
         checked: root.updateChecker ? root.updateChecker.autoCheckEnabled : true
-        onToggled: {
+        onToggled: checked => {
             if (root.updateChecker)
                 root.updateChecker.setAutoCheckEnabled(checked);
         }
