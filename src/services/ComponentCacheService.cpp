@@ -11,13 +11,13 @@
 #include "ComponentCacheCadDataWriter.h"
 #include "ComponentCacheMaintenance.h"
 #include "ComponentCacheMetadataWriter.h"
+#include "ComponentCacheModel3DCoordinator.h"
 #include "ComponentCachePreviewImageWriter.h"
 #include "ComponentCacheQuotaEnforcer.h"
 #include "ComponentCacheWritePolicy.h"
 #include "ConfigService.h"
 #include "DatasheetCacheFileStore.h"
 #include "DatasheetDownloadService.h"
-#include "Model3DCacheFileStore.h"
 #include "core/kicad/Exporter3DModel.h"
 #include "core/network/NetworkClient.h"
 #include "core/utils/UrlUtils.h"
@@ -581,78 +581,32 @@ QByteArray ComponentCacheService::downloadDatasheet(const QString& lcscId,
 
 // 判断指定格式的三维模型文件是否存在且非空。
 bool ComponentCacheService::hasModel3DCached(const QString& uuid, const QString& extension) const {
-    // 与目录迁移和模型写入串行化，避免检查到迁移中的文件。
-    QMutexLocker diskLocker(&m_diskWriteMutex);
-    QMutexLocker locker(&m_mutex);
-    const QString path = model3DPath(uuid, extension);
-    return !Model3DCacheFileStore::read(path, extension).isEmpty();
+    // 协调器只读取缓存服务状态；const_cast 仅用于复用统一的私有锁边界，不会修改服务数据。
+    ComponentCacheModel3DCoordinator coordinator(const_cast<ComponentCacheService&>(*this));
+    return coordinator.hasCached(uuid, extension);
 }
 
 // 从公共三维模型缓存读取指定格式的数据。
 QByteArray ComponentCacheService::loadModel3D(const QString& uuid, const QString& extension) const {
-    // 与目录迁移和模型写入串行化，避免读取到不完整的文件。
-    QMutexLocker diskLocker(&m_diskWriteMutex);
-    QMutexLocker locker(&m_mutex);
-
-    QString path = model3DPath(uuid, extension);
-    if (!QFileInfo::exists(path)) {
-        return QByteArray();
-    }
-
-    return Model3DCacheFileStore::read(path, extension);
+    // 协调器只读取缓存服务状态；const_cast 仅用于复用统一的私有锁边界，不会修改服务数据。
+    ComponentCacheModel3DCoordinator coordinator(const_cast<ComponentCacheService&>(*this));
+    return coordinator.load(uuid, extension);
 }
 
 void ComponentCacheService::saveModel3D(const QString& uuid,
                                         const QByteArray& data,
                                         const QString& extension,
                                         uint64_t expectedGeneration) {
-    if (!CacheDataValidator::isUsableModel3D(data, extension)) {
-        return;
-    }
-
-    QMutexLocker diskLocker(&m_diskWriteMutex);
-    if (expectedGeneration != 0 && m_cacheGeneration.load() != expectedGeneration) {
-        return;
-    }
-    QString path;
-    {
-        QMutexLocker locker(&m_mutex);
-        ensureModel3DCacheDir();
-        path = model3DPath(uuid, extension);
-        if (path.isEmpty()) {
-            return;
-        }
-    }
-
-    if (Model3DCacheFileStore::write(path, data, extension)) {
-        LOG_DEBUG(LogModule::Core, "Saved 3D model to disk: {}", path);
-        enforceDiskCacheLimit();
-    } else {
-        LOG_WARN(LogModule::Core, "Failed to write 3D model: {}", path);
-    }
-    // 注意：3D模型数据量大，不存入L1内存缓存
+    ComponentCacheModel3DCoordinator coordinator(*this);
+    coordinator.save(uuid, data, extension, expectedGeneration);
 }
 
 bool ComponentCacheService::copyModel3DToFile(const QString& uuid,
                                               const QString& extension,
                                               const QString& destinationPath) const {
-    if (uuid.isEmpty() || extension.isEmpty() || destinationPath.isEmpty()) {
-        return false;
-    }
-
-    // 保证源文件在复制期间不会被缓存目录迁移或写入操作替换。
-    QMutexLocker diskLocker(&m_diskWriteMutex);
-    QString sourcePath = model3DPath(uuid, extension);
-    if (sourcePath.isEmpty()) {
-        LOG_WARN(LogModule::Core, "copyModel3DToFile: Source file does not exist: {}", sourcePath);
-        return false;
-    }
-    if (Model3DCacheFileStore::copy(sourcePath, destinationPath, extension)) {
-        LOG_DEBUG(LogModule::Core, "Copied 3D model from cache to: {}", destinationPath);
-        return true;
-    }
-    LOG_WARN(LogModule::Core, "copyModel3DToFile: Failed to copy {} -> {}", sourcePath, destinationPath);
-    return false;
+    // 协调器只读取缓存服务状态；const_cast 仅用于复用统一的私有锁边界，不会修改服务数据。
+    ComponentCacheModel3DCoordinator coordinator(const_cast<ComponentCacheService&>(*this));
+    return coordinator.copyToFile(uuid, extension, destinationPath);
 }
 
 // ==================== 缓存管理 ====================

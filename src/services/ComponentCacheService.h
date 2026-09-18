@@ -26,6 +26,7 @@ class ComponentCacheCadDataWriter;
 class DatasheetCacheFileStore;
 class DatasheetDownloadService;
 class ComponentCacheMaintenance;
+class ComponentCacheModel3DCoordinator;
 
 namespace EasyKiConverter {
 
@@ -501,6 +502,7 @@ private:
     friend class DatasheetCacheFileStore;
     friend class DatasheetDownloadService;
     friend class ComponentCacheMaintenance;
+    friend class ComponentCacheModel3DCoordinator;
 
     /**
      * @brief 私有构造函数（单例模式）
