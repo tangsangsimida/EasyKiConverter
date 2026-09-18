@@ -68,6 +68,8 @@ add_library(EasyKiConverterServices STATIC
     ComponentCacheMaintenance.h
     ComponentParallelFetchCoordinator.cpp
     ComponentParallelFetchCoordinator.h
+    ComponentRequestCancellationCoordinator.cpp
+    ComponentRequestCancellationCoordinator.h
     ComponentMediaCallbackCoordinator.cpp
     ComponentMediaCallbackCoordinator.h
     DatasheetExporter.cpp

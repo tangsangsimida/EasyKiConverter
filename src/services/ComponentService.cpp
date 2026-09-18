@@ -8,6 +8,7 @@
 #include "ComponentMediaCallbackCoordinator.h"
 #include "ComponentParallelFetchCoordinator.h"
 #include "ComponentQueueManager.h"
+#include "ComponentRequestCancellationCoordinator.h"
 #include "ConfigService.h"
 #include "PreviewImageDataEncoder.h"
 #include "core/easyeda/EasyedaApi.h"
@@ -437,51 +438,12 @@ void ComponentService::cancelAllPreviewImageFetches() {
 
 /** @brief 取消全部未完成的元器件请求。 */
 void ComponentService::cancelAllPendingRequests() {
-    qDebug() << "ComponentService: Cancelling all pending component data requests";
-
-    // 通过当前 API 实例取消请求，确保注入的网络客户端也能同步清理活动请求。
-    if (m_api) {
-        m_api->cancelRequest();
-    }
-    // 同步清理全局网络客户端中的排队请求，避免取消后的队列任务阻塞后续请求。
-    NetworkClient::instance().cancelAllRequests();
-
-    // 清空正在获取的组件记录，防止响应到达时更新已清除的数据
-    {
-        QMutexLocker locker(&m_fetchingComponentsMutex);
-        m_fetchingComponents.clear();
-    }
-
-    // 取消预览图获取
-    if (m_imageService) {
-        m_imageService->cancelAll();
-    }
-
-    qDebug() << "ComponentService: All pending requests cancelled";
+    ComponentRequestCancellationCoordinator::cancelAll(*this);
 }
 
 /** @brief 取消指定元器件的请求。 */
 void ComponentService::cancelRequestForComponent(const QString& componentId) {
-    QString normalizedId = componentId.toUpper();
-    qDebug() << "ComponentService: Cancelling request for component" << normalizedId;
-
-    // 从正在获取的组件记录中移除，防止响应到达时更新已清除的数据
-    {
-        QMutexLocker locker(&m_fetchingComponentsMutex);
-        m_fetchingComponents.remove(normalizedId);
-    }
-
-    // 同步取消 EasyEDA API 请求，避免单组件删除后仍占用网络请求配额。
-    if (m_api) {
-        m_api->cancelRequestForId(normalizedId);
-    }
-
-    // 取消预览图获取
-    if (m_imageService) {
-        m_imageService->cancelRequestForComponent(normalizedId);
-    }
-
-    qDebug() << "ComponentService: Request cancelled for component" << normalizedId;
+    ComponentRequestCancellationCoordinator::cancelForComponent(*this, componentId);
 }
 
 /** @brief 清理失败请求状态并发送错误信号。 */
