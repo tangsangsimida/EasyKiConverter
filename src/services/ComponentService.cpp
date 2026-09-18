@@ -2,9 +2,9 @@
 
 #include "BomParser.h"
 #include "CadDataLoader.h"
+#include "ComponentApiCallbackCoordinator.h"
 #include "ComponentCacheLoadWorker.h"
 #include "ComponentCadFetchCoordinator.h"
-#include "ComponentInfoParser.h"
 #include "ComponentMediaCallbackCoordinator.h"
 #include "ComponentParallelFetchCoordinator.h"
 #include "ComponentQueueManager.h"
@@ -420,19 +420,7 @@ void ComponentService::handleAllImagesReady(const QString& componentId, const QS
 
 /** @brief 处理元器件基础信息响应。 */
 void ComponentService::handleComponentInfoFetched(const QString& componentId, const QJsonObject& data) {
-    const QString normalizedId = componentId.toUpper();
-    {
-        QMutexLocker locker(&m_fetchingComponentsMutex);
-        const auto it = m_fetchingComponents.find(normalizedId);
-        if (it == m_fetchingComponents.end() ||
-            it->cacheGeneration != ComponentCacheService::instance()->currentGeneration()) {
-            qDebug() << "ComponentService: Discarding stale component info callback for" << componentId;
-            return;
-        }
-    }
-
-    const ComponentData componentData = ComponentInfoParser::parse(normalizedId, data);
-    emit componentInfoReady(normalizedId, componentData);
+    ComponentApiCallbackCoordinator::handleComponentInfoFetched(*this, componentId, data);
 }
 
 /** @brief 处理 CAD 数据响应并启动解析流程。 */
@@ -447,27 +435,12 @@ void ComponentService::handleCadFetchResult(const CadFetchTaskResult& result, ui
 
 /** @brief 处理未携带元器件编号的请求错误。 */
 void ComponentService::handleFetchError(const QString& errorMessage) {
-    emitFetchErrorAndClearState(m_currentComponentId, errorMessage);
+    ComponentApiCallbackCoordinator::handleFetchError(*this, errorMessage);
 }
 
 /** @brief 处理携带元器件编号或模型 UUID 的请求错误。 */
 void ComponentService::handleFetchErrorWithId(const QString& idOrUuid, const QString& error) {
-    QString componentId = idOrUuid;
-
-    // 如果在并行模式下，尝试解析 UUID 为组件 ID
-    if (m_parallelContext != nullptr) {
-        QMutexLocker locker(&m_fetchingComponentsMutex);
-        // 遍历查找匹配的 UUID
-        for (auto it = m_fetchingComponents.begin(); it != m_fetchingComponents.end(); ++it) {
-            if (it.value().data.model3DData() && it.value().data.model3DData()->uuid() == idOrUuid) {
-                componentId = it.key();
-                qDebug() << "Resolved UUID" << idOrUuid << "to component ID" << componentId;
-                break;
-            }
-        }
-    }
-
-    emitFetchErrorAndClearState(componentId, error);
+    ComponentApiCallbackCoordinator::handleFetchErrorWithId(*this, idOrUuid, error);
 }
 
 /** @brief 设置导出输出目录。 */
@@ -644,26 +617,7 @@ void ComponentService::cancelRequestForComponent(const QString& componentId) {
 void ComponentService::emitFetchErrorAndClearState(const QString& componentId,
                                                    const QString& error,
                                                    uint64_t expectedGeneration) {
-    qWarning() << "Fetch error for component" << componentId << ":" << error;
-
-    {
-        QMutexLocker locker(&m_fetchingComponentsMutex);
-        const auto it = m_fetchingComponents.find(componentId.toUpper());
-        if (it == m_fetchingComponents.end() ||
-            (expectedGeneration != 0 && it->cacheGeneration != expectedGeneration)) {
-            if (expectedGeneration != 0) {
-                qDebug() << "ComponentService: Discarding stale error for" << componentId;
-            }
-            return;
-        }
-        m_fetchingComponents.erase(it);
-    }
-    m_componentCache.removeIfInvalid(componentId.toUpper());
-
-    handleParallelFetchError(componentId, error);
-
-    // fetchError 必须最后发送，因为连接的槽函数可能会删除本对象
-    emit fetchError(componentId, error);
+    ComponentApiCallbackCoordinator::emitFetchErrorAndClearState(*this, componentId, error, expectedGeneration);
 }
 
 /** @brief 判断数据是否具有 PDF 文件签名。 */

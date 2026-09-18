@@ -28,6 +28,7 @@ struct CadFetchTaskResult;
 class ComponentParallelFetchCoordinator;
 class ComponentCadFetchCoordinator;
 class ComponentMediaCallbackCoordinator;
+class ComponentApiCallbackCoordinator;
 
 /**
  * @brief 元件服务类
@@ -360,6 +361,7 @@ private:
     friend class ComponentParallelFetchCoordinator;
     friend class ComponentCadFetchCoordinator;
     friend class ComponentMediaCallbackCoordinator;
+    friend class ComponentApiCallbackCoordinator;
 
     /**
      * @brief 创建并配置异步元件请求队列。
