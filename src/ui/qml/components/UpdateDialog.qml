@@ -45,7 +45,7 @@ SliderDialogBase {
             visible: updateChecker && updateChecker.hasUpdate
         },
         {
-            text: qsTranslate("MainWindow", "取消"),
+            text: qsTranslate("ExitDialog", "取消"),
             color: AppStyle.colors.textSecondary,
             objectName: "closeUpdateDialogButton",
             action: function () {

@@ -111,7 +111,14 @@ FocusScope {
     }
 
     function open() {
+        hideAnim.stop();
+        showAnim.stop();
         visible = true;
+        overlay.opacity = 0;
+        dialogBox.opacity = hasOverlay ? 0 : 1.0;
+        dialogBox.scale = hasOverlay ? 0.9 : 1.0;
+        dialogBoxTranslate.y = 0;
+        hideSlider();
         if (hasOverlay) {
             showAnimation.start();
         } else {
@@ -124,6 +131,8 @@ FocusScope {
     }
 
     function close() {
+        hideAnim.stop();
+        showAnim.stop();
         visible = false;
     }
 
@@ -456,6 +465,10 @@ FocusScope {
             sourceComponent: modelData.isSeparator ? separatorComponent : buttonComponent
             // 暴露内部按钮引用，以便外部（ExitDialog键盘导航）可以获取实际按钮
             property Item actualButton: item
+            onLoaded: {
+                if (item && specData.objectName)
+                    item.objectName = specData.objectName;
+            }
         }
     }
 
@@ -472,8 +485,6 @@ FocusScope {
         id: buttonComponent
         ModernButton {
             id: btn
-            objectName: parent.specData && parent.specData.objectName ? parent.specData.objectName : ""
-            visible: parent.specData ? parent.specData.visible !== false : true
             // 标记自身以便父组件识别
             property bool isSliderButton: true
             // 关联的颜色 - parent是Loader，Loader.parent是ColumnLayout

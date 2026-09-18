@@ -71,4 +71,14 @@ TestCase {
         action.clicked()
         compare(updateChecker.checkCount, 1)
     }
+
+    function test_cancelCanOpenDialogAgain() {
+        dialog.open()
+        var closeButton = findByObjectName(dialog, "closeUpdateDialogButton")
+        verify(closeButton !== null)
+        closeButton.clicked()
+        tryCompare(dialog, "visible", false, 500)
+        dialog.open()
+        tryCompare(dialog, "visible", true)
+    }
 }
