@@ -8,13 +8,13 @@
 
 | 类型 | 文件数 | 过长 | 偏长 | 健康率 |
 |------|--------|------|------|--------|
-| 产品源码与资源 | 550 | 51 | 43 | -- |
+| 产品源码与资源 | 552 | 51 | 43 | -- |
 | Python 工具 | 13 | 5 | 4 | -- |
-| **合计** | **563** | **56** | **47** | -- |
+| **合计** | **565** | **56** | **47** | -- |
 
 当前统计工具按文件总行数使用统一阈值：高风险 >500 行，中风险 300-500 行，低风险 200-300 行。类型分项和代码/注释行数需要额外脚本才能精确拆分，因此本报告不再保留旧的推算健康率。
 
-当前基线：`src` 490 个文件、78,912 行；`tests` 58 个文件、18,726 行；翻译资源 2 个文件、3,303 行；`tools/python` 13 个文件、7,358 行。项目工具的 `--all` 统计覆盖产品源码、测试和翻译资源，工具目录单独统计后合计 563 个文件、108,299 行。
+当前基线：`src` 492 个文件、78,975 行；`tests` 58 个文件、18,726 行；翻译资源 2 个文件、3,303 行；`tools/python` 13 个文件、7,231 行。项目工具的 `--all` 统计覆盖产品源码、测试和翻译资源，工具目录单独统计后合计 565 个文件、108,235 行。
 
 ---
 
@@ -67,10 +67,11 @@
 | `src/services/ComponentCacheQuotaEnforcer.cpp` | 40 | -- | -- | 独立协调磁盘缓存限制、冷却策略、目录清理和缓存大小信号 |
 | `src/services/ComponentCacheMemoryStore.cpp` | 92 | -- | -- | 独立承载一级缓存复合键、元数据 JSON、CAD 数据校验、LRU 数据访问和容量统计 |
 | `src/services/ComponentCacheModel3DCoordinator.cpp` | 91 | -- | -- | 独立协调三维模型缓存的锁边界、代次校验、文件读写、导出复制和磁盘配额触发 |
-| `src/ui/viewmodels/ComponentListViewModel.cpp` | 532 | -- | -- | ViewModel 仍包含搜索、选择、状态统计、预览处理和导出状态；批量导入、列表生命周期、剪贴板处理、失败项重试、列表数据回调、预览更新缓冲、列表项更新缓冲、验证队列状态、验证错误分类、定时器初始化和服务信号连接已提取 |
+| `src/ui/viewmodels/ComponentListViewModel.cpp` | 445 | -- | -- | ViewModel 仍包含列表模型接口、搜索选择、状态统计、导出状态和公开槽转发；批量导入、列表生命周期、剪贴板处理、失败项重试、列表数据回调、预览图协调、预览更新缓冲、列表项更新缓冲、验证队列状态、验证错误分类、定时器初始化和服务信号连接已提取 |
 | `src/ui/viewmodels/ComponentListMutationCoordinator.cpp` | 185 | -- | -- | 独立协调列表添加、删除、清空、请求取消、验证队列移除和模型状态重置 |
 | `src/ui/viewmodels/ComponentListClipboardCoordinator.cpp` | 64 | -- | -- | 独立协调剪贴板文本读取、元件编号提取、列表去重、批量添加和全量编号复制 |
 | `src/ui/viewmodels/ComponentListRetryCoordinator.cpp` | 46 | -- | -- | 独立协调可重试失败项筛选、状态重置、服务请求和验证计数更新 |
+| `src/ui/viewmodels/ComponentListPreviewCoordinator.cpp` | 117 | -- | -- | 独立协调预览图缓存更新、批量请求、完成状态和界面提示，保持公开槽接口及异步信号顺序 |
 | `src/ui/viewmodels/ComponentListTimerCoordinator.cpp` | 73 | -- | -- | 独立创建并连接预览图、批处理、列表统计和延迟获取定时器，保持防抖窗口及原有回调顺序 |
 | `src/ui/viewmodels/ComponentListServiceConnectionCoordinator.cpp` | 91 | -- | -- | 独立连接验证完成、组件数据、预览图成功/失败和批量预览完成信号，保持图片编码、缓存更新和验证状态推进顺序 |
 | `src/ui/viewmodels/ComponentValidationCoordinator.cpp` | 81 | -- | -- | 独立协调验证队列的启动、并发调度、完成回调和 BOM 导入状态推进 |
@@ -159,10 +160,11 @@
 - `ComponentCacheCadDataWriter.cpp`（86 行）：统一承载符号、封装和 CAD JSON 的磁盘写入流程，保持目录迁移锁、代次校验、配额维护和内存缓存同步顺序
 - `Model3DCacheFileStore.cpp`（64 行）：独立承载三维模型文件的校验读取、原子写入和导出复制，ComponentCacheService 继续负责锁、路径、代次和配额策略
 - `ComponentCacheModel3DCoordinator.cpp`（91 行）：独立协调三维模型缓存的锁边界、代次校验、文件读写、导出复制和磁盘配额触发，ComponentCacheService 继续保留公开接口和路径策略
-- `ComponentListViewModel.cpp`（532 行）：已提取列表状态统计、编号索引、批量导入、列表生命周期、剪贴板处理、失败项重试、组件服务数据回调、预览更新缓冲、列表项更新缓冲、验证队列状态、验证错误分类、定时器初始化、服务信号连接和验证队列协调职责，并移除失效的预览图编码线程池，后续继续拆分搜索和选择
+- `ComponentListViewModel.cpp`（445 行）：已提取列表状态统计、编号索引、批量导入、列表生命周期、剪贴板处理、失败项重试、组件服务数据回调、预览图协调、预览更新缓冲、列表项更新缓冲、验证队列状态、验证错误分类、定时器初始化、服务信号连接和验证队列协调职责，并移除失效的预览图编码线程池，后续继续拆分搜索和选择
 - `ComponentListMutationCoordinator.cpp`（185 行）：独立承载列表添加、删除、清空及其模型行、编号索引、请求取消、验证队列和状态计数同步，ComponentListViewModel 继续保留公开槽接口和信号
 - `ComponentListClipboardCoordinator.cpp`（64 行）：独立承载剪贴板文本读取、元件编号提取、列表去重、批量添加和全量编号复制，ComponentListViewModel 继续保留公开槽接口和信号
 - `ComponentListRetryCoordinator.cpp`（46 行）：独立承载可重试失败项筛选、列表项验证状态重置、服务请求和验证计数更新，ComponentListViewModel 继续保留公开槽接口和信号
+- `ComponentListPreviewCoordinator.cpp`（117 行）：独立承载预览图缓存批量更新、有效元件筛选、批量请求、完成状态和验证/预览提示清理，ComponentListViewModel 继续保留公开槽接口、定时器入口和服务信号边界
 - `ExporterAltiumSymbol.cpp`（501 行）：已提取符号引脚、参数、引脚名称/编号文本、路径与曲线图元、矩形/圆/IEEE 基础图元、文本/文本框/图片图元、实现关系、几何归一化、部件 ID/方向/颜色/线型和坐标量化共享规则，主文件继续负责符号记录编排、参数诊断和模型关联编排
 - `AltiumSchSymbolGeometryNormalizer.cpp`（348 行）：独立承载符号原点归一化、引脚连接端吸附、主体边界投影和重合文本布局，保持 Altium 符号输出坐标规则不变
 - `AltiumSymbolPinConverter.cpp`（190 行）：独立承载 IR 引脚到 Altium 引脚记录的电气类型、显示标志、IEEE 装饰和电源引脚识别，保持主导出器的公开接口不变
