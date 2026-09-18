@@ -2,6 +2,7 @@
 
 #include "ExportProgressResultsCoordinator.h"
 #include "ExportProgressRetryCoordinator.h"
+#include "ExportProgressStageCoordinator.h"
 #include "services/export/ExportProgress.h"
 #include "services/export/ParallelExportService.h"
 #include "utils/FileUtils.h"
@@ -16,19 +17,7 @@
 
 namespace EasyKiConverter {
 
-namespace {
-
-constexpr int FETCH_WEIGHT = 30;
-constexpr int PROCESS_WEIGHT = 50;
-constexpr int WRITE_WEIGHT = 20;
-
-const QString TYPE_SYMBOL = QStringLiteral("Symbol");
-const QString TYPE_FOOTPRINT = QStringLiteral("Footprint");
-const QString TYPE_MODEL3D = QStringLiteral("Model3D");
-const QString TYPE_PREVIEW = QStringLiteral("PreviewImages");
-const QString TYPE_DATASHEET = QStringLiteral("Datasheet");
-
-}  // namespace
+namespace {}  // namespace
 
 /** @brief 创建并连接导出进度视图模型。 */
 ExportProgressViewModel::ExportProgressViewModel(ParallelExportService* exportService,
@@ -285,17 +274,7 @@ void ExportProgressViewModel::handleCloseRequest() {
 
 /** @brief 响应组件预加载进度变化。 */
 void ExportProgressViewModel::handlePreloadProgressChanged(const PreloadProgress& progress) {
-    QString statusText = QString("Preloading... %1/%2").arg(progress.completedCount).arg(progress.totalCount);
-    if (!progress.currentComponentId.isEmpty()) {
-        statusText += QString(" (%1)").arg(progress.currentComponentId);
-    }
-    setStatus(statusText);
-
-    m_fetchProgress = qBound(0, progress.percentage(), 100);
-    m_processProgress = 0;
-    m_writeProgress = 0;
-    setProgress(weightedOverallProgress());
-    emit stageProgressChanged();
+    ExportProgressStageCoordinator::handlePreloadProgress(*this, progress);
 }
 
 /** @brief 响应组件预加载完成并安排正式导出。 */
@@ -322,59 +301,7 @@ void ExportProgressViewModel::handlePreloadCompleted(int successCount, int faile
 
 /** @brief 响应导出阶段进度并更新三段式进度条。 */
 void ExportProgressViewModel::handleProgressChanged(const ExportOverallProgress& progress) {
-    // Update stage progress values for QML binding
-    switch (progress.currentStage) {
-        case ExportOverallProgress::Stage::Preloading:
-            setStatus("Preloading components...");
-            m_fetchProgress = progress.preloadProgress.percentage();
-            m_processProgress = 0;
-            m_writeProgress = 0;
-            setProgress(weightedOverallProgress());
-            break;
-        case ExportOverallProgress::Stage::Exporting: {
-            setStatus("Exporting components...");
-            // 阶段定义统一为：
-            // 1. 抓取：需要额外获取的数据是否准备完成（预览图/手册/3D源数据）
-            // 2. 处理：符号/封装/3D转换任务是否完成
-            // 3. 写入：最终文件是否已经落盘
-            m_fetchProgress = stageTypeProgress(progress, {TYPE_PREVIEW, TYPE_DATASHEET, TYPE_MODEL3D});
-
-            const int rawProcessProgress = stageTypeProgress(progress, {TYPE_SYMBOL, TYPE_FOOTPRINT, TYPE_MODEL3D});
-            const int rawWriteProgress =
-                stageTypeProgress(progress, {TYPE_SYMBOL, TYPE_FOOTPRINT, TYPE_MODEL3D, TYPE_PREVIEW, TYPE_DATASHEET});
-
-            // UI 上的三段进度条必须遵守抓取 -> 处理 -> 写入的阶段依赖关系。
-            // 即使底层某些类型先完成，后续阶段也不能先于前置阶段显示完成。
-            m_processProgress = qMin(rawProcessProgress, m_fetchProgress);
-            m_writeProgress = qMin(rawWriteProgress, m_processProgress);
-            setProgress(weightedOverallProgress());
-            break;
-        }
-        case ExportOverallProgress::Stage::Completed:
-            m_fetchProgress = 100;
-            m_processProgress = 100;
-            m_writeProgress = 100;
-            setProgress(100);
-            setStatus("Export completed");
-            break;
-        case ExportOverallProgress::Stage::Cancelled:
-            m_fetchProgress = 0;
-            m_processProgress = 0;
-            m_writeProgress = 0;
-            setProgress(0);
-            setStatus("Export cancelled");
-            break;
-        case ExportOverallProgress::Stage::Failed:
-            m_fetchProgress = 0;
-            m_processProgress = 0;
-            m_writeProgress = 0;
-            setStatus("Export failed");
-            break;
-        default:
-            break;
-    }
-
-    emit stageProgressChanged();
+    ExportProgressStageCoordinator::handleProgress(*this, progress);
 }
 
 /** @brief 响应单个组件的类型导出状态变化。 */
@@ -747,54 +674,6 @@ void ExportProgressViewModel::updateOverallItemStatus(QVariantMap& result) const
 /** @brief 将结果项重置为可重试的初始状态。 */
 void ExportProgressViewModel::resetItemForRetry(QVariantMap& result) const {
     ExportProgressResultsCoordinator::resetItemForRetry(*this, result);
-}
-
-int ExportProgressViewModel::averageTypeProgress(const ExportOverallProgress& progress,
-                                                 const QStringList& typeNames) const {
-    int sum = 0;
-    int count = 0;
-    for (const QString& typeName : typeNames) {
-        auto it = progress.exportTypeProgress.constFind(typeName);
-        if (it == progress.exportTypeProgress.constEnd()) {
-            continue;
-        }
-        sum += it.value().percentage();
-        count++;
-    }
-
-    if (count == 0) {
-        return 0;
-    }
-    return qBound(0, sum / count, 100);
-}
-
-int ExportProgressViewModel::stageTypeProgress(const ExportOverallProgress& progress,
-                                               const QStringList& typeNames) const {
-    bool hasEnabledType = false;
-    for (const QString& typeName : typeNames) {
-        const bool enabled = (typeName == "Symbol" && m_exportSymbolEnabled) ||
-                             (typeName == "Footprint" && m_exportFootprintEnabled) ||
-                             (typeName == "Model3D" && m_exportModel3DEnabled) ||
-                             (typeName == "PreviewImages" && m_exportPreviewEnabled) ||
-                             (typeName == "Datasheet" && m_exportDatasheetEnabled);
-        if (enabled) {
-            hasEnabledType = true;
-            break;
-        }
-    }
-
-    if (!hasEnabledType) {
-        return 100;
-    }
-
-    return averageTypeProgress(progress, typeNames);
-}
-
-/** @brief 按阶段权重计算总体进度。 */
-int ExportProgressViewModel::weightedOverallProgress() const {
-    const int weighted =
-        (m_fetchProgress * FETCH_WEIGHT) + (m_processProgress * PROCESS_WEIGHT) + (m_writeProgress * WRITE_WEIGHT);
-    return qBound(0, weighted / 100, 100);
 }
 
 /** @brief 标记结果列表待刷新并启动节流计时器。 */
