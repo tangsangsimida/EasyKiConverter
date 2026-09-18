@@ -3,6 +3,7 @@
 #include "ComponentListBatchCoordinator.h"
 #include "ComponentListClipboardCoordinator.h"
 #include "ComponentListDataCoordinator.h"
+#include "ComponentListMutationCoordinator.h"
 #include "ComponentListRetryCoordinator.h"
 #include "ComponentListServiceConnectionCoordinator.h"
 #include "ComponentListTimerCoordinator.h"
@@ -77,195 +78,22 @@ QHash<int, QByteArray> ComponentListViewModel::roleNames() const {
 
 /** @brief 添加单个元件并启动其数据验证。 */
 void ComponentListViewModel::addComponent(const QString& componentId) {
-    clearAttentionHints();
-    m_bomImportComplete = false;
-    QString trimmedId = componentId.trimmed();
-
-    if (trimmedId.isEmpty()) {
-        qWarning() << "Component ID is empty";
-        return;
-    }
-
-    // 统一转换为大写，支持用户输入小写 c
-    trimmedId = trimmedId.toUpper();
-
-    // 验证元件ID格式
-    if (!validateComponentId(trimmedId)) {
-        qWarning() << "Invalid component ID format:" << trimmedId;
-
-        // 尝试从文本中智能提取元件编号
-        QStringList extractedIds = extractComponentIdFromText(trimmedId);
-        if (extractedIds.isEmpty()) {
-            qWarning() << "Failed to extract component ID from text:" << trimmedId;
-            emit componentAdded(trimmedId, false, "Invalid LCSC component ID format");
-            return;
-        }
-
-        addComponentsBatch(extractedIds);
-        return;
-    }
-
-    // 检查元件是否已存在（需要锁保护）
-    {
-        QMutexLocker locker(&m_listMutex);
-        if (m_componentIdIndex.contains(trimmedId)) {
-            qWarning() << "Component already exists:" << trimmedId;
-            emit componentAdded(trimmedId, false, "Component already exists");
-            return;
-        }
-    }
-
-    // 创建新元件项（在锁外创建，因为不涉及共享数据）
-    auto item = new ComponentListItemData(trimmedId, this);
-    item->setFetching(true);
-    item->setValid(false);
-    item->setValidationPhase("validating");
-
-    // 获取插入位置
-    int insertIndex;
-    {
-        QMutexLocker locker(&m_listMutex);
-        insertIndex = m_componentList.count();
-    }
-
-    // 通知视图即将插入
-    beginInsertRows(QModelIndex(), insertIndex, insertIndex);
-
-    // 修改列表（需要锁保护）
-    {
-        QMutexLocker locker(&m_listMutex);
-        m_componentList.append(item);
-        m_componentIdIndex.insert(trimmedId, m_componentList.count() - 1);
-    }
-
-    // 通知视图插入完成
-    endInsertRows();
-
-    m_service->fetchComponentData(trimmedId, false);
-
-    m_validationStateManager->addValidation(1);
-
-    scheduleListUpdate();
-    emit componentAdded(trimmedId, true, "Component added");
+    ComponentListMutationCoordinator::add(*this, componentId);
 }
 
 /** @brief 按列表位置删除元件并取消相关请求。 */
 void ComponentListViewModel::removeComponent(int index) {
-    clearAttentionHints();
-
-    // 检查是否是最后一个元器件（需要锁保护）
-    int listCount;
-    {
-        QMutexLocker locker(&m_listMutex);
-        listCount = m_componentList.count();
-        if (index < 0 || index >= listCount) {
-            return;
-        }
-    }
-
-    // 当删除最后一个元器件时，触发与清空列表相同的效果
-    if (listCount == 1) {
-        clearComponentList();
-        return;
-    }
-
-    // 获取要删除的 item 和 ID（需要锁保护）
-    ComponentListItemData* item = nullptr;
-    QString removedId;
-
-    {
-        QMutexLocker locker(&m_listMutex);
-        item = m_componentList.takeAt(index);
-        removedId = item->componentId();
-        m_componentIdIndex.remove(removedId);
-        m_validatedComponentIds.removeAll(removedId);
-    }
-
-    // 取消该元器件的网络请求
-    if (m_service) {
-        m_service->cancelRequestForComponent(removedId);
-    }
-
-    // 检查元器件是否已经在飞行中（已 dispatch）
-    const bool wasInFlight = m_validationQueue.isInFlight(removedId);
-
-    // 从验证队列和飞行中列表中移除
-    m_validationQueue.remove(removedId);
-
-    // 检查是否正在获取中（锁外操作，因为 m_pendingValidationCount 有自己的逻辑）
-    if (item->isFetching()) {
-        m_pendingValidationCount--;
-        // 只有当元器件已经在飞行中（已 dispatch）时才减少 m_validationPendingCount
-        // 因为 m_validationPendingCount 只在 dispatch 时增加
-        if (wasInFlight) {
-            m_validationPendingCount--;
-        }
-        // 通知 ValidationStateManager 取消验证
-        m_validationStateManager->cancelValidation(1);
-    }
-
-    beginRemoveRows(QModelIndex(), index, index);
-    delete item;
-    endRemoveRows();
-
-    rebuildComponentIdIndex();
-    updateHasInvalidComponents();
-
-    scheduleListUpdate();
-    emit componentRemoved(removedId);
+    ComponentListMutationCoordinator::remove(*this, index);
 }
 
 /** @brief 按元件编号删除元件。 */
 void ComponentListViewModel::removeComponentById(const QString& componentId) {
-    int indexToRemove = -1;
-    {
-        QMutexLocker locker(&m_listMutex);
-        indexToRemove = m_componentIdIndex.indexOf(componentId);
-    }
-    if (indexToRemove >= 0) {
-        removeComponent(indexToRemove);
-    }
+    ComponentListMutationCoordinator::removeById(*this, componentId);
 }
 
 /** @brief 清空元件列表及其缓存、验证状态。 */
 void ComponentListViewModel::clearComponentList() {
-    clearAttentionHints();
-    m_bomImportComplete = false;
-    m_listUpdatePending = false;
-    m_bomImportMode = false;
-    m_bomImportPendingUpdates = 0;
-    m_pendingPreviewFetchIds.clear();
-    m_previewUpdateBuffer.clear();
-    // 获取列表大小（需要锁保护）
-    int listCount;
-    {
-        QMutexLocker locker(&m_listMutex);
-        listCount = m_componentList.count();
-    }
-
-    if (listCount > 0) {
-        if (m_service) {
-            // 先取消所有正在进行的请求，防止悬空响应
-            m_service->cancelAllPendingRequests();
-            m_service->clearCache();
-        }
-
-        beginResetModel();
-        {
-            QMutexLocker locker(&m_listMutex);
-            qDeleteAll(m_componentList);
-            m_componentList.clear();
-            m_componentIdIndex.clear();
-        }
-        endResetModel();
-
-        m_validationStateManager->reset();
-        recomputeStateCounters();
-        updateHasInvalidComponents();
-
-        scheduleListUpdate();
-        emit listCleared();
-    }
+    ComponentListMutationCoordinator::clear(*this);
 }
 
 /** @brief 根据列表顺序重建元件编号索引。 */
