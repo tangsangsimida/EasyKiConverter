@@ -2,6 +2,7 @@
 
 #include "ComponentListBatchCoordinator.h"
 #include "ComponentListDataCoordinator.h"
+#include "ComponentListTimerCoordinator.h"
 #include "ComponentValidationCoordinator.h"
 #include "services/ConfigService.h"
 #include "ui/viewmodels/ComponentValidationErrorPolicy.h"
@@ -32,62 +33,7 @@ ComponentListViewModel::ComponentListViewModel(ComponentService* service, QObjec
 
 /** @brief 创建批处理、预览和延迟调度所需的定时器。 */
 void ComponentListViewModel::initializeTimers() {
-    // 缓存预览图使用固定时间窗批量更新，保证图片可以渐进显示。
-    m_cachePreviewImageTimer = new QTimer(this);
-    m_cachePreviewImageTimer->setSingleShot(true);
-    m_cachePreviewImageTimer->setInterval(120);
-    connect(m_cachePreviewImageTimer, &QTimer::timeout, this, &ComponentListViewModel::processCachePreviewImages);
-
-    // 普通添加模式和 BOM 导入模式共用添加批处理定时器。
-    m_batchAddTimer = new QTimer(this);
-    m_batchAddTimer->setSingleShot(false);
-    m_batchAddTimer->setInterval(50);
-    connect(m_batchAddTimer, &QTimer::timeout, this, &ComponentListViewModel::processNextBatchAdd);
-
-    // 聚合列表项属性通知，避免每个异步基础信息响应都刷新界面。
-    m_batchUpdateTimer = new QTimer(this);
-    m_batchUpdateTimer->setSingleShot(true);
-    m_batchUpdateTimer->setInterval(100);
-    connect(m_batchUpdateTimer, &QTimer::timeout, this, [this]() {
-        const QList<QPointer<ComponentListItemData>> items = m_batchUpdateItems.take();
-        for (const QPointer<ComponentListItemData>& item : items) {
-            if (item) {
-                emit item->dataChanged();
-            }
-        }
-    });
-
-    // 列表统计更新使用较短批处理窗口，减少批量操作时的界面抖动。
-    m_batchListUpdateTimer = new QTimer(this);
-    m_batchListUpdateTimer->setSingleShot(true);
-    m_batchListUpdateTimer->setInterval(150);
-    connect(m_batchListUpdateTimer, &QTimer::timeout, this, [this]() {
-        m_batchListUpdateMode = false;
-        m_listUpdatePending = false;
-        recomputeStateCounters();
-        updateHasInvalidComponents();
-        emit componentCountChanged();
-        emit filteredCountChanged();
-    });
-
-    // BOM 导入模式使用更长的窗口，集中处理累积的验证完成通知。
-    m_bomImportUpdateTimer = new QTimer(this);
-    m_bomImportUpdateTimer->setSingleShot(true);
-    m_bomImportUpdateTimer->setInterval(300);
-    connect(m_bomImportUpdateTimer, &QTimer::timeout, this, [this]() {
-        m_bomImportMode = false;
-        m_listUpdatePending = false;
-        if (m_bomImportPendingUpdates > 0) {
-            m_bomImportPendingUpdates = 0;
-            scheduleListUpdate();
-        }
-    });
-
-    // 延迟获取预览图，给验证完成信号和列表状态更新留出时间。
-    m_delayedFetchPreviewTimer = new QTimer(this);
-    m_delayedFetchPreviewTimer->setSingleShot(true);
-    m_delayedFetchPreviewTimer->setInterval(100);
-    connect(m_delayedFetchPreviewTimer, &QTimer::timeout, this, &ComponentListViewModel::delayedFetchPreviewImages);
+    ComponentListTimerCoordinator::initialize(*this);
 }
 
 /** @brief 连接验证完成、组件数据和预览图相关的异步服务信号。 */

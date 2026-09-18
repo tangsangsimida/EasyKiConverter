@@ -2,6 +2,8 @@
 
 add_library(EasyKiConverterViewModels STATIC
     ComponentListViewModel.cpp
+    ComponentListTimerCoordinator.cpp
+    ComponentListTimerCoordinator.h
     ComponentListIndex.cpp
     ComponentListIndex.h
     ComponentListStateTracker.cpp

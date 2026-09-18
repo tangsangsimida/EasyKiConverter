@@ -160,6 +160,7 @@ private:
     friend class ComponentValidationCoordinator;
     friend class ComponentListDataCoordinator;
     friend class ComponentListBatchCoordinator;
+    friend class ComponentListTimerCoordinator;
 
     /**
      * @brief 创建批处理、预览和延迟调度所需的定时器。
