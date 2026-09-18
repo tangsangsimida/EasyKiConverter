@@ -10,7 +10,7 @@
 
 namespace EasyKiConverter {
 
-// 返回应用默认的组件缓存目录。
+/** @brief 返回应用默认的组件缓存目录。 */
 QString ConfigService::defaultCacheDir() {
     return QDir::cleanPath(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + "/cache");
 }
@@ -29,7 +29,7 @@ ConfigService::~ConfigService() {
     saveConfig();
 }
 
-// 返回线程安全的配置服务单例。
+/** @brief 返回线程安全的配置服务单例。 */
 ConfigService* ConfigService::instance() {
     QMutexLocker locker(&s_mutex);
 
@@ -40,7 +40,7 @@ ConfigService* ConfigService::instance() {
     return s_instance;
 }
 
-// 从指定路径加载配置，并补全缺失的默认字段。
+/** @brief 从指定路径加载配置，并补全缺失的默认字段。 */
 bool ConfigService::loadConfig(const QString& path) {
     QString configPath = path.isEmpty() ? getDefaultConfigPath() : path;
 
@@ -86,7 +86,7 @@ bool ConfigService::loadConfig(const QString& path) {
     return true;
 }
 
-// 将当前配置序列化并保存到配置文件。
+/** @brief 将当前配置序列化并保存到配置文件。 */
 bool ConfigService::saveConfig(const QString& path) {
     QString configPath = path.isEmpty() ? (m_configPath.isEmpty() ? getDefaultConfigPath() : m_configPath) : path;
 
@@ -111,7 +111,7 @@ bool ConfigService::saveConfig(const QString& path) {
     return true;
 }
 
-// 重置所有配置为默认值并立即持久化。
+/** @brief 重置所有配置为默认值并立即持久化。 */
 void ConfigService::resetToDefaults() {
     QMutexLocker locker(&m_configMutex);
     initializeDefaultConfig();
@@ -124,13 +124,13 @@ void ConfigService::resetToDefaults() {
     qDebug() << "Config reset to defaults";
 }
 
-// 开始批量配置更新，暂缓重复写入配置文件。
+/** @brief 开始批量配置更新，暂缓重复写入配置文件。 */
 void ConfigService::beginBatchUpdate() {
     QMutexLocker locker(&m_configMutex);
     m_batchUpdateDepth++;
 }
 
-// 结束批量配置更新，并在需要时提交一次保存。
+/** @brief 结束批量配置更新，并在需要时提交一次保存。 */
 void ConfigService::endBatchUpdate() {
     QMutexLocker locker(&m_configMutex);
     if (m_batchUpdateDepth > 0) {
@@ -143,7 +143,7 @@ void ConfigService::endBatchUpdate() {
     }
 }
 
-// 在非批量更新期间保存当前配置。
+/** @brief 在非批量更新期间保存当前配置。 */
 void ConfigService::saveIfNotBatching() {
     QMutexLocker locker(&m_configMutex);
     if (m_batchUpdateDepth > 0) {
@@ -154,13 +154,13 @@ void ConfigService::saveIfNotBatching() {
     saveConfig();
 }
 
-// 读取导出输出目录。
+/** @brief 读取导出输出目录。 */
 QString ConfigService::getOutputPath() const {
     QMutexLocker locker(&m_configMutex);
     return m_config["outputPath"].toString(QStandardPaths::writableLocation(QStandardPaths::DesktopLocation));
 }
 
-// 保存导出输出目录。
+/** @brief 保存导出输出目录。 */
 void ConfigService::setOutputPath(const QString& path) {
     QMutexLocker locker(&m_configMutex);
     m_config["outputPath"] = path;
@@ -171,13 +171,13 @@ void ConfigService::setOutputPath(const QString& path) {
     saveIfNotBatching();
 }
 
-// 读取默认库名称。
+/** @brief 读取默认库名称。 */
 QString ConfigService::getLibName() const {
     QMutexLocker locker(&m_configMutex);
     return m_config["libName"].toString("easyeda_convertlib");
 }
 
-// 保存默认库名称。
+/** @brief 保存默认库名称。 */
 void ConfigService::setLibName(const QString& name) {
     QMutexLocker locker(&m_configMutex);
     m_config["libName"] = name;
@@ -188,13 +188,13 @@ void ConfigService::setLibName(const QString& name) {
     saveIfNotBatching();
 }
 
-// 读取符号导出开关。
+/** @brief 读取符号导出开关。 */
 bool ConfigService::getExportSymbol() const {
     QMutexLocker locker(&m_configMutex);
     return m_config["exportSymbol"].toBool(true);
 }
 
-// 保存符号导出开关。
+/** @brief 保存符号导出开关。 */
 void ConfigService::setExportSymbol(bool enabled) {
     QMutexLocker locker(&m_configMutex);
     m_config["exportSymbol"] = enabled;
@@ -205,13 +205,13 @@ void ConfigService::setExportSymbol(bool enabled) {
     saveIfNotBatching();
 }
 
-// 读取封装导出开关。
+/** @brief 读取封装导出开关。 */
 bool ConfigService::getExportFootprint() const {
     QMutexLocker locker(&m_configMutex);
     return m_config["exportFootprint"].toBool(true);
 }
 
-// 保存封装导出开关。
+/** @brief 保存封装导出开关。 */
 void ConfigService::setExportFootprint(bool enabled) {
     QMutexLocker locker(&m_configMutex);
     m_config["exportFootprint"] = enabled;
@@ -222,13 +222,13 @@ void ConfigService::setExportFootprint(bool enabled) {
     saveIfNotBatching();
 }
 
-// 读取三维模型导出开关。
+/** @brief 读取三维模型导出开关。 */
 bool ConfigService::getExportModel3D() const {
     QMutexLocker locker(&m_configMutex);
     return m_config["exportModel3D"].toBool(true);
 }
 
-// 保存三维模型导出开关。
+/** @brief 保存三维模型导出开关。 */
 void ConfigService::setExportModel3D(bool enabled) {
     QMutexLocker locker(&m_configMutex);
     m_config["exportModel3D"] = enabled;
@@ -239,13 +239,13 @@ void ConfigService::setExportModel3D(bool enabled) {
     saveIfNotBatching();
 }
 
-// 读取三维模型导出格式。
+/** @brief 读取三维模型导出格式。 */
 int ConfigService::getExportModel3DFormat() const {
     QMutexLocker locker(&m_configMutex);
     return m_config["exportModel3DFormat"].toInt(3);  // 默认 3=Both (WRL+STEP)
 }
 
-// 保存三维模型导出格式。
+/** @brief 保存三维模型导出格式。 */
 void ConfigService::setExportModel3DFormat(int format) {
     QMutexLocker locker(&m_configMutex);
     m_config["exportModel3DFormat"] = format;
@@ -256,13 +256,13 @@ void ConfigService::setExportModel3DFormat(int format) {
     saveIfNotBatching();
 }
 
-// 读取三维模型路径模式。
+/** @brief 读取三维模型路径模式。 */
 int ConfigService::getExportModel3DPathMode() const {
     QMutexLocker locker(&m_configMutex);
     return m_config["exportModel3DPathMode"].toInt(0);
 }
 
-// 保存三维模型路径模式。
+/** @brief 保存三维模型路径模式。 */
 void ConfigService::setExportModel3DPathMode(int mode) {
     const int normalized = ExportOptions::normalizePathMode(mode);
     QMutexLocker locker(&m_configMutex);
@@ -273,13 +273,13 @@ void ConfigService::setExportModel3DPathMode(int mode) {
     saveIfNotBatching();
 }
 
-// 读取预览图导出开关。
+/** @brief 读取预览图导出开关。 */
 bool ConfigService::getExportPreviewImages() const {
     QMutexLocker locker(&m_configMutex);
     return m_config["exportPreviewImages"].toBool(false);
 }
 
-// 保存预览图导出开关。
+/** @brief 保存预览图导出开关。 */
 void ConfigService::setExportPreviewImages(bool enabled) {
     QMutexLocker locker(&m_configMutex);
     m_config["exportPreviewImages"] = enabled;
@@ -290,13 +290,13 @@ void ConfigService::setExportPreviewImages(bool enabled) {
     saveIfNotBatching();
 }
 
-// 读取数据手册导出开关。
+/** @brief 读取数据手册导出开关。 */
 bool ConfigService::getExportDatasheet() const {
     QMutexLocker locker(&m_configMutex);
     return m_config["exportDatasheet"].toBool(false);
 }
 
-// 保存数据手册导出开关。
+/** @brief 保存数据手册导出开关。 */
 void ConfigService::setExportDatasheet(bool enabled) {
     QMutexLocker locker(&m_configMutex);
     m_config["exportDatasheet"] = enabled;
@@ -307,13 +307,13 @@ void ConfigService::setExportDatasheet(bool enabled) {
     saveIfNotBatching();
 }
 
-// 读取弱网络兼容开关。
+/** @brief 读取弱网络兼容开关。 */
 bool ConfigService::getWeakNetworkSupport() const {
     QMutexLocker locker(&m_configMutex);
     return m_config["weakNetworkSupport"].toBool(false);
 }
 
-// 保存弱网络兼容开关。
+/** @brief 保存弱网络兼容开关。 */
 void ConfigService::setWeakNetworkSupport(bool enabled) {
     QMutexLocker locker(&m_configMutex);
     m_config["weakNetworkSupport"] = enabled;
@@ -323,23 +323,23 @@ void ConfigService::setWeakNetworkSupport(bool enabled) {
     saveIfNotBatching();
 }
 
-// 根据网络模式返回元件校验并发数。
+/** @brief 根据网络模式返回元件校验并发数。 */
 int ConfigService::getValidationConcurrentCount() const {
     return getWeakNetworkSupport() ? 5 : 10;
 }
 
-// 根据网络模式返回预览图下载并发数。
+/** @brief 根据网络模式返回预览图下载并发数。 */
 int ConfigService::getPreviewConcurrentCount() const {
     return getWeakNetworkSupport() ? 3 : 6;
 }
 
-// 读取是否覆盖已有导出文件。
+/** @brief 读取是否覆盖已有导出文件。 */
 bool ConfigService::getOverwriteExistingFiles() const {
     QMutexLocker locker(&m_configMutex);
     return m_config["overwriteExistingFiles"].toBool(false);
 }
 
-// 保存是否覆盖已有导出文件。
+/** @brief 保存是否覆盖已有导出文件。 */
 void ConfigService::setOverwriteExistingFiles(bool enabled) {
     QMutexLocker locker(&m_configMutex);
     m_config["overwriteExistingFiles"] = enabled;
@@ -350,13 +350,13 @@ void ConfigService::setOverwriteExistingFiles(bool enabled) {
     saveIfNotBatching();
 }
 
-// 读取导出文件的写入模式。
+/** @brief 读取导出文件的写入模式。 */
 int ConfigService::getExportMode() const {
     QMutexLocker locker(&m_configMutex);
     return m_config["exportMode"].toInt(0);  // 默认 0=追加模式
 }
 
-// 保存导出文件的写入模式。
+/** @brief 保存导出文件的写入模式。 */
 void ConfigService::setExportMode(int mode) {
     QMutexLocker locker(&m_configMutex);
     m_config["exportMode"] = mode;
@@ -366,13 +366,13 @@ void ConfigService::setExportMode(int mode) {
     saveIfNotBatching();
 }
 
-// 读取深色主题开关。
+/** @brief 读取深色主题开关。 */
 bool ConfigService::getDarkMode() const {
     QMutexLocker locker(&m_configMutex);
     return m_config["darkMode"].toBool(false);
 }
 
-// 保存深色主题开关。
+/** @brief 保存深色主题开关。 */
 void ConfigService::setDarkMode(bool enabled) {
     QMutexLocker locker(&m_configMutex);
     m_config["darkMode"] = enabled;
@@ -383,13 +383,13 @@ void ConfigService::setDarkMode(bool enabled) {
     saveIfNotBatching();
 }
 
-// 读取当前调试模式状态。
+/** @brief 读取当前调试模式状态。 */
 bool ConfigService::getDebugMode() const {
     QMutexLocker locker(&m_configMutex);
     return m_config["debugMode"].toBool(false);
 }
 
-// 设置调试模式状态，并按需保存非持久化配置。
+/** @brief 设置调试模式状态，并按需保存非持久化配置。 */
 void ConfigService::setDebugMode(bool enabled, bool save) {
     QMutexLocker locker(&m_configMutex);
     m_config["debugMode"] = enabled;
@@ -405,7 +405,7 @@ void ConfigService::setDebugMode(bool enabled, bool save) {
     }
 }
 
-// 在锁已持有的前提下构造窗口状态快照。
+/** @brief 在锁已持有的前提下构造窗口状态快照。 */
 QVariantMap ConfigService::buildWindowState_locked() const {
     return {
         {"x", m_config["windowX"].toInt(DEFAULT_WINDOW_X)},
@@ -416,13 +416,13 @@ QVariantMap ConfigService::buildWindowState_locked() const {
     };
 }
 
-// 读取窗口位置、尺寸和最大化状态。
+/** @brief 读取窗口位置、尺寸和最大化状态。 */
 QVariantMap ConfigService::getWindowState() const {
     QMutexLocker locker(&m_configMutex);
     return buildWindowState_locked();
 }
 
-// 保存窗口位置、尺寸和最大化状态。
+/** @brief 保存窗口位置、尺寸和最大化状态。 */
 void ConfigService::setWindowState(const QVariantMap& state) {
     QMutexLocker locker(&m_configMutex);
     const QVariantMap currentState = buildWindowState_locked();
@@ -439,13 +439,13 @@ void ConfigService::setWindowState(const QVariantMap& state) {
     saveIfNotBatching();
 }
 
-// 读取退出行为偏好。
+/** @brief 读取退出行为偏好。 */
 QString ConfigService::getExitPreference() const {
     QMutexLocker locker(&m_configMutex);
     return m_config["exitPreference"].toString("");
 }
 
-// 保存退出行为偏好。
+/** @brief 保存退出行为偏好。 */
 void ConfigService::setExitPreference(const QString& preference) {
     QMutexLocker locker(&m_configMutex);
     m_config["exitPreference"] = preference;
@@ -456,7 +456,7 @@ void ConfigService::setExitPreference(const QString& preference) {
     saveIfNotBatching();
 }
 
-// 初始化应用全部配置项的默认值。
+/** @brief 初始化应用全部配置项的默认值。 */
 void ConfigService::initializeDefaultConfig() {
     m_config["outputPath"] = QStandardPaths::writableLocation(QStandardPaths::DesktopLocation);
     m_config["libName"] = "easyeda_convertlib";
@@ -495,7 +495,7 @@ void ConfigService::initializeDefaultConfig() {
     m_config["updateCachedRelease"] = QJsonObject();
 }
 
-// 返回用户配置文件路径，并确保配置目录存在。
+/** @brief 返回用户配置文件路径，并确保配置目录存在。 */
 QString ConfigService::getDefaultConfigPath() const {
     QString configDir = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);
     QDir dir(configDir);
@@ -612,13 +612,13 @@ void ConfigService::setUpdateCachedRelease(const QJsonObject& release) {
     saveIfNotBatching();
 }
 
-// 读取界面语言代码。
+/** @brief 读取界面语言代码。 */
 QString ConfigService::getLanguage() const {
     QMutexLocker locker(&m_configMutex);
     return m_config["language"].toString("en");
 }
 
-// 保存界面语言代码。
+/** @brief 保存界面语言代码。 */
 void ConfigService::setLanguage(const QString& languageCode) {
     QMutexLocker locker(&m_configMutex);
     m_config["language"] = languageCode;
@@ -629,13 +629,13 @@ void ConfigService::setLanguage(const QString& languageCode) {
     saveIfNotBatching();
 }
 
-// 读取组件缓存目录。
+/** @brief 读取组件缓存目录。 */
 QString ConfigService::getCacheDir() const {
     QMutexLocker locker(&m_configMutex);
     return m_config["cacheDir"].toString(defaultCacheDir());
 }
 
-// 保存并规范化组件缓存目录。
+/** @brief 保存并规范化组件缓存目录。 */
 void ConfigService::setCacheDir(const QString& path) {
     const QString normalizedPath = QDir::cleanPath(path);
 
@@ -647,13 +647,13 @@ void ConfigService::setCacheDir(const QString& path) {
     saveIfNotBatching();
 }
 
-// 读取并限制磁盘缓存容量。
+/** @brief 读取并限制磁盘缓存容量。 */
 int ConfigService::getDiskCacheLimitMB() const {
     QMutexLocker locker(&m_configMutex);
     return qBound(1, m_config["diskCacheLimitMB"].toInt(DEFAULT_DISK_CACHE_LIMIT_MB), MAX_DISK_CACHE_LIMIT_MB);
 }
 
-// 保存并限制磁盘缓存容量。
+/** @brief 保存并限制磁盘缓存容量。 */
 void ConfigService::setDiskCacheLimitMB(int maxSizeMB) {
     QMutexLocker locker(&m_configMutex);
     m_config["diskCacheLimitMB"] = qBound(1, maxSizeMB, MAX_DISK_CACHE_LIMIT_MB);

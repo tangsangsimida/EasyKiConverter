@@ -5,6 +5,7 @@
 #include <QCoreApplication>
 #include <QDateTime>
 #include <QDir>
+#include <QSysInfo>
 #include <QTemporaryDir>
 #include <QtTest>
 
@@ -25,12 +26,58 @@ QJsonObject release(const QString& tag, bool draft = false, bool prerelease = fa
         {QStringLiteral("draft"), draft},
         {QStringLiteral("prerelease"), prerelease},
         {QStringLiteral("assets"),
-         QJsonArray{QJsonObject{
-             {QStringLiteral("name"), QStringLiteral("EasyKiConverter-x86_64.AppImage")},
-             {QStringLiteral("browser_download_url"),
-              QStringLiteral("https://example.com/EasyKiConverter-linux.AppImage")},
-         }}},
+         QJsonArray{
+             QJsonObject{
+                 {QStringLiteral("name"), QStringLiteral("EasyKiConverter-x86_64.AppImage")},
+                 {QStringLiteral("browser_download_url"),
+                  QStringLiteral("https://example.com/EasyKiConverter-linux.AppImage")},
+             },
+             QJsonObject{
+                 {QStringLiteral("name"), QStringLiteral("EasyKiConverter-aarch64.AppImage")},
+                 {QStringLiteral("browser_download_url"),
+                  QStringLiteral("https://example.com/EasyKiConverter-linux-arm64.AppImage")},
+             },
+             QJsonObject{
+                 {QStringLiteral("name"), QStringLiteral("EasyKiConverter-x64.zip")},
+                 {QStringLiteral("browser_download_url"),
+                  QStringLiteral("https://example.com/EasyKiConverter-windows-x64.zip")},
+             },
+             QJsonObject{
+                 {QStringLiteral("name"), QStringLiteral("EasyKiConverter-arm64.msix")},
+                 {QStringLiteral("browser_download_url"),
+                  QStringLiteral("https://example.com/EasyKiConverter-windows-arm64.msix")},
+             },
+             QJsonObject{
+                 {QStringLiteral("name"), QStringLiteral("EasyKiConverter-intel.dmg")},
+                 {QStringLiteral("browser_download_url"),
+                  QStringLiteral("https://example.com/EasyKiConverter-macos-intel.dmg")},
+             },
+             QJsonObject{
+                 {QStringLiteral("name"), QStringLiteral("EasyKiConverter-arm64.dmg")},
+                 {QStringLiteral("browser_download_url"),
+                  QStringLiteral("https://example.com/EasyKiConverter-macos-arm64.dmg")},
+             },
+         }},
     };
+}
+
+/** @brief 返回当前测试平台应选择的资产地址。 */
+QString expectedAssetUrl() {
+#if defined(Q_OS_WIN)
+    if (QSysInfo::currentCpuArchitecture().contains(QStringLiteral("arm"), Qt::CaseInsensitive))
+        return QStringLiteral("https://example.com/EasyKiConverter-windows-arm64.msix");
+    return QStringLiteral("https://example.com/EasyKiConverter-windows-x64.zip");
+#elif defined(Q_OS_MACOS)
+    if (QSysInfo::currentCpuArchitecture().contains(QStringLiteral("arm"), Qt::CaseInsensitive))
+        return QStringLiteral("https://example.com/EasyKiConverter-macos-arm64.dmg");
+    return QStringLiteral("https://example.com/EasyKiConverter-macos-intel.dmg");
+#elif defined(Q_OS_LINUX)
+    if (QSysInfo::currentCpuArchitecture().contains(QStringLiteral("arm"), Qt::CaseInsensitive))
+        return QStringLiteral("https://example.com/EasyKiConverter-linux-arm64.AppImage");
+    return QStringLiteral("https://example.com/EasyKiConverter-linux.AppImage");
+#else
+    return QString();
+#endif
 }
 
 }  // namespace
@@ -192,7 +239,7 @@ void TestUpdateCheckerService::networkFailureFallsBackToCachedRelease() {
     QTRY_COMPARE(service.status(), UpdateCheckerService::Status::Failed);
     QVERIFY(service.hasUpdate());
     QCOMPARE(service.latestVersion(), QStringLiteral("3.1.13"));
-    QCOMPARE(service.assetUrl(), QStringLiteral("https://example.com/EasyKiConverter-linux.AppImage"));
+    QCOMPARE(service.assetUrl(), expectedAssetUrl());
 }
 
 // 验证 GitHub 限流响应会暴露专用状态，界面无需展示原始请求地址。

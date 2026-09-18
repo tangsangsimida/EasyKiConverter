@@ -734,6 +734,7 @@ Item {
                                 exportSettingsController: window.exportSettingsController
                                 exportTargetModel: window.exportTargetController
                                 componentListController: window.componentListController
+                                currentLanguage: window.currentLanguage
                             }
                         }
 
