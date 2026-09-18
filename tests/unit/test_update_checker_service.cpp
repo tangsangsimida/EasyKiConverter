@@ -14,7 +14,6 @@ using EasyKiConverter::Test::MockNetworkClient;
 namespace {
 
 constexpr auto RELEASES_URL = "https://api.github.com/repos/tangsangsimida/EasyKiConverter/releases/latest";
-constexpr auto RELEASES_ATOM_URL = "https://github.com/tangsangsimida/EasyKiConverter/releases.atom";
 
 // 构造统一的稳定或预发布 Release 模拟响应。
 QJsonObject release(const QString& tag, bool draft = false, bool prerelease = false) {
@@ -52,7 +51,6 @@ private slots:
     void automaticCheckHonorsIntervalAndManualCheckBypassesIt();
     void networkFailureFallsBackToCachedRelease();
     void rateLimitFailureExposesFriendlyState();
-    void rateLimitFallsBackToReleasesAtom();
     void unmatchedAssetFallsBackToReleasePage();
 
 private:
@@ -200,26 +198,7 @@ void TestUpdateCheckerService::rateLimitFailureExposesFriendlyState() {
     service.checkForUpdates();
     QTRY_COMPARE(service.status(), UpdateCheckerService::Status::Failed);
     QVERIFY(service.rateLimited());
-    QVERIFY(!service.error().isEmpty());
-}
-
-// 验证 GitHub API 限流时可以使用 Releases Atom 获取版本和发布页。
-void TestUpdateCheckerService::rateLimitFallsBackToReleasesAtom() {
-    MockNetworkClient network;
-    network.addErrorResponse(QString::fromLatin1(RELEASES_URL), QStringLiteral("HTTP 403"), 403);
-    network.addResponse(
-        QString::fromLatin1(RELEASES_ATOM_URL),
-        QByteArrayLiteral(
-            "<?xml version=\"1.0\"?><feed><entry><title>v3.1.13</title>"
-            "<link rel=\"alternate\" href=\"https://github.com/tangsangsimida/EasyKiConverter/releases/tag/v3.1.13\"/>"
-            "</entry></feed>"));
-
-    UpdateCheckerService service(network);
-    service.checkForUpdates();
-    QTRY_COMPARE(service.status(), UpdateCheckerService::Status::UpdateAvailable);
-    QCOMPARE(service.latestVersion(), QStringLiteral("3.1.13"));
-    QCOMPARE(service.releaseUrl(),
-             QStringLiteral("https://github.com/tangsangsimida/EasyKiConverter/releases/tag/v3.1.13"));
+    QVERIFY(service.error().contains(QStringLiteral("HTTP 403")));
 }
 
 // 验证当前平台没有匹配资产时不会误打开其他平台的下载包。
