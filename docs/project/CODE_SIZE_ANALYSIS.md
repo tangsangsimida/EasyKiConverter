@@ -8,13 +8,13 @@
 
 | 类型 | 文件数 | 过长 | 偏长 | 健康率 |
 |------|--------|------|------|--------|
-| 产品源码与资源 | 493 | 53 | 38 | -- |
+| 产品源码与资源 | 495 | 53 | 38 | -- |
 | Python 工具 | 13 | 5 | 4 | -- |
-| **合计** | **506** | **58** | **42** | -- |
+| **合计** | **508** | **58** | **42** | -- |
 
 当前统计工具按文件总行数使用统一阈值：高风险 >500 行，中风险 300-500 行，低风险 200-300 行。类型分项和代码/注释行数需要额外脚本才能精确拆分，因此本报告不再保留旧的推算健康率。
 
-当前基线：`src` 433 个文件、77,340 行；`tests` 58 个文件、18,681 行；翻译资源 2 个文件、3,303 行；`tools/python` 13 个文件、6,640 行。项目工具的 `--all` 统计覆盖产品源码、测试和翻译资源，工具目录单独统计后合计 506 个文件、105,964 行。
+当前基线：`src` 435 个文件、77,423 行；`tests` 58 个文件、18,725 行；翻译资源 2 个文件、3,303 行；`tools/python` 13 个文件、6,640 行。项目工具的 `--all` 统计覆盖产品源码、测试和翻译资源，工具目录单独统计后合计 508 个文件、106,091 行。
 
 ---
 
@@ -81,8 +81,9 @@
 |------|------|------|
 | `src/ui/viewmodels/ExportProgressViewModel.cpp` | 868 | 导出进度管理；结果列表状态计算、过滤统计和重试状态初始化已提取 |
 | `src/ui/viewmodels/ExportProgressResultsCoordinator.cpp` | 179 | 独立协调导出结果列表的状态计算、过滤、类型成功统计和重试重置 |
-| `src/services/export/ParallelExportService.cpp` | 881 | 并行导出协调；导出选项判定、缓存完整性筛选和阶段计划计算已提取 |
+| `src/services/export/ParallelExportService.cpp` | 843 | 并行导出协调；导出计划计算和进度状态聚合已提取 |
 | `src/services/export/ExportRunPlan.cpp` | 57 | 独立计算导出类型、可导出元件和缺失缓存数据，保持服务启动阶段无副作用 |
+| `src/services/export/ExportProgressAggregator.cpp` | 65 | 独立合并阶段状态、重算阶段计数和汇总最终元件结果 |
 | `src/main.cpp` | 859 | 入口文件混入了 CLI/GUI 切换逻辑 |
 | `src/workers/WriteWorker.cpp` | 846 | 文件写入工作线程 |
 | `src/core/altium/writers/AltiumPcbLibWriter.cpp` | 1,193 | PcbLib 二进制写入 |
