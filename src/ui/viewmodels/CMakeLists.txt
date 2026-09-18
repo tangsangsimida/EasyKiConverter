@@ -33,6 +33,8 @@ add_library(EasyKiConverterViewModels STATIC
     ExportProgressViewModel.cpp
     ExportProgressResultsCoordinator.cpp
     ExportProgressResultsCoordinator.h
+    ExportProgressRetryCoordinator.cpp
+    ExportProgressRetryCoordinator.h
     ThemeSettingsViewModel.cpp
     SystemTrayManager.cpp
     ValidationStateManager.cpp

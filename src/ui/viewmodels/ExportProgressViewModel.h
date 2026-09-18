@@ -19,6 +19,7 @@ struct ExportTypeProgress;
 struct ExportItemStatus;
 struct ExportStatistics;
 class ExportProgressResultsCoordinator;
+class ExportProgressRetryCoordinator;
 
 /**
  * @brief 导出进度视图模型
@@ -208,6 +209,8 @@ private slots:
 
 private:
     friend class ExportProgressResultsCoordinator;
+    /** @brief 允许重试协作者复用结果索引、导出选项和状态刷新流程。 */
+    friend class ExportProgressRetryCoordinator;
 
     QString typeStatusKey(const QString& typeName) const;
     void updateOverallItemStatus(QVariantMap& result) const;

@@ -1,6 +1,7 @@
 #include "ExportProgressViewModel.h"
 
 #include "ExportProgressResultsCoordinator.h"
+#include "ExportProgressRetryCoordinator.h"
 #include "services/export/ExportProgress.h"
 #include "services/export/ParallelExportService.h"
 #include "utils/FileUtils.h"
@@ -666,75 +667,12 @@ void ExportProgressViewModel::resetExport() {
 
 /** @brief 重试指定组件的失败导出。 */
 void ExportProgressViewModel::retryComponent(const QString& componentId) {
-    qDebug() << "Retry requested for component:" << componentId;
-
-    if (!m_idToIndexMap.contains(componentId)) {
-        qWarning() << "Component not found in results:" << componentId;
-        return;
-    }
-
-    int index = m_idToIndexMap[componentId];
-    QVariantMap result = m_resultsList[index].toMap();
-
-    resetItemForRetry(result);
-    m_resultsList[index] = result;
-
-    // Update counts and notify UI
-    markResultsDirty();
-    flushPendingUpdates();
-
-    // Re-trigger export if not currently exporting
-    if (!m_isExporting && m_exportService) {
-        QStringList idsToRetry = {componentId};
-        ExportOptions opts = m_exportService->options();
-        opts.retryMode = true;
-        m_exportService->setOptions(opts);
-        beginExportRun(idsToRetry, QStringLiteral("Preloading component data..."));
-        m_exportService->startPreload(idsToRetry);
-    }
+    ExportProgressRetryCoordinator::retryComponent(*this, componentId);
 }
 
 /** @brief 重试所有失败组件。 */
 void ExportProgressViewModel::retryFailedComponents() {
-    qDebug() << "Retry requested for all failed components";
-
-    // Collect all failed component IDs
-    QStringList failedIds;
-    for (const auto& item : m_resultsList) {
-        QVariantMap map = item.toMap();
-        if (map.value("status") == "failed") {
-            QString id = map.value("componentId").toString();
-            failedIds.append(id);
-
-            // Reset status to pending
-            if (m_idToIndexMap.contains(id)) {
-                int index = m_idToIndexMap[id];
-                QVariantMap result = m_resultsList[index].toMap();
-                resetItemForRetry(result);
-                m_resultsList[index] = result;
-            }
-        }
-    }
-
-    if (failedIds.isEmpty()) {
-        qDebug() << "No failed components to retry";
-        return;
-    }
-
-    qDebug() << "Retrying" << failedIds.size() << "failed components";
-
-    // Update counts and notify UI
-    markResultsDirty();
-    flushPendingUpdates();
-
-    // Re-trigger export if not currently exporting
-    if (!m_isExporting && m_exportService) {
-        ExportOptions opts = m_exportService->options();
-        opts.retryMode = true;
-        m_exportService->setOptions(opts);
-        beginExportRun(failedIds, QStringLiteral("Preloading component data..."));
-        m_exportService->startPreload(failedIds);
-    }
+    ExportProgressRetryCoordinator::retryFailedComponents(*this);
 }
 
 /** @brief 从结果列表移除指定组件。 */
