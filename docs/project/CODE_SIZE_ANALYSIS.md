@@ -8,13 +8,13 @@
 
 | 类型 | 文件数 | 过长 | 偏长 | 健康率 |
 |------|--------|------|------|--------|
-| 产品源码与资源 | 560 | 51 | 43 | -- |
+| 产品源码与资源 | 562 | 51 | 43 | -- |
 | Python 工具 | 13 | 5 | 4 | -- |
-| **合计** | **573** | **56** | **47** | -- |
+| **合计** | **575** | **56** | **47** | -- |
 
 当前统计工具按文件总行数使用统一阈值：高风险 >500 行，中风险 300-500 行，低风险 200-300 行。类型分项和代码/注释行数需要额外脚本才能精确拆分，因此本报告不再保留旧的推算健康率。
 
-当前基线：`src` 500 个文件、79,138 行；`tests` 58 个文件、18,782 行；翻译资源 2 个文件、3,303 行；`tools/python` 13 个文件、7,703 行。项目工具的 `--all` 统计覆盖产品源码、测试和翻译资源，工具目录单独统计后合计 573 个文件、108,926 行。
+当前基线：`src` 502 个文件、79,176 行；`tests` 58 个文件、18,782 行；翻译资源 2 个文件、3,303 行；`tools/python` 13 个文件、6,640 行。项目工具的 `--all` 统计覆盖产品源码、测试和翻译资源，工具目录单独统计后合计 575 个文件、107,901 行。
 
 ---
 
@@ -96,7 +96,9 @@
 | `src/ui/viewmodels/ExportProgressStageCoordinator.h` | 33 | 阶段进度协调接口 |
 | `src/ui/viewmodels/ExportProgressResultsCoordinator.cpp` | 179 | 独立协调导出结果列表的状态计算、过滤、类型成功统计和重试重置 |
 | `src/ui/viewmodels/ExportProgressRetryCoordinator.cpp` | 84 | 独立协调单个组件和批量失败结果的重试状态重置、请求启动和刷新节流 |
-| `src/services/export/ParallelExportService.cpp` | 703 | 并行导出协调；导出计划、进度状态聚合和导出阶段启动编排已提取 |
+| `src/services/export/ParallelExportService.cpp` | 561 | 并行导出生命周期协调；导出计划、进度状态聚合、导出阶段启动和预加载批次处理已提取 |
+| `src/services/export/ParallelExportPreloadCoordinator.cpp` | 147 | 独立协调磁盘缓存回退、网络批量结果合并、严格数据校验和预加载进度收敛 |
+| `src/services/export/ParallelExportPreloadCoordinator.h` | 29 | 预加载批次和网络结果合并协调接口 |
 | `src/services/export/ExportStageLaunchCoordinator.cpp` | 164 | 独立协调导出阶段进度初始化、缺失数据标记、目标格式分支和阶段启动 |
 | `src/services/export/ExportRunPlan.cpp` | 57 | 独立计算导出类型、可导出元件和缺失缓存数据，保持服务启动阶段无副作用 |
 | `src/services/export/ExportProgressAggregator.cpp` | 65 | 独立合并阶段状态、重算阶段计数和汇总最终元件结果 |
@@ -330,8 +332,8 @@ QML 文件过长是当前最严重的问题区域，建议按以下优先级处�
 
 | 目录 | 总行数 | 文件数 |
 |------|--------|--------|
-| `src` | 78,835 | 488 |
-| `tests` | 18,726 | 58 |
+| `src` | 79,176 | 502 |
+| `tests` | 18,782 | 58 |
 | `resources/translations` | 3,303 | 2 |
 | `tools/python` | 6,640 | 13 |
 
