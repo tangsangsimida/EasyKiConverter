@@ -671,6 +671,11 @@ void TempFileManager::cleanupTempDirectory() {
     if (tempDir.isEmpty() || !QDir(tempDir).exists()) {
         return;
     }
+    // 共享临时目录仍被其他导出阶段使用时，不能清理其中的文件。
+    if (hasOtherTempDirectoryUsers(tempDir)) {
+        qDebug() << "TempFileManager: Skip cleanup while another stage uses" << tempDir;
+        return;
+    }
 
     int deletedCount = 0;
     QDir dir(tempDir);
@@ -692,6 +697,11 @@ void TempFileManager::cleanupTempDirectory() {
 void TempFileManager::cleanupOrphanedTempFiles() {
     QString tempDir = tempDirectory();
     if (tempDir.isEmpty() || !QDir(tempDir).exists()) {
+        return;
+    }
+    // 孤立文件清理同样必须尊重共享目录引用，避免破坏并行导出任务。
+    if (hasOtherTempDirectoryUsers(tempDir)) {
+        qDebug() << "TempFileManager: Skip orphan cleanup while another stage uses" << tempDir;
         return;
     }
 
