@@ -11,6 +11,7 @@
 namespace EasyKiConverter {
 
 class AltiumPcbPrimitiveWriter;
+class AltiumPcbInputValidator;
 
 /**
  * @brief Altium PcbLib 文件写入器
@@ -69,6 +70,7 @@ private:
 
     /** @brief 允许图元写入器复用文件级校验、层映射和字符串状态。 */
     friend class AltiumPcbPrimitiveWriter;
+    friend class AltiumPcbInputValidator;
 
     // 广字符串管理
     int addWideString(const QString& text);

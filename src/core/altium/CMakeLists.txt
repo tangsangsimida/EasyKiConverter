@@ -49,6 +49,8 @@ target_sources(EasyKiConverterAltium
         writers/AltiumSchComponentRecordWriter.cpp
         writers/AltiumPcbLibWriter.h
         writers/AltiumPcbLibWriter.cpp
+        writers/AltiumPcbInputValidator.h
+        writers/AltiumPcbInputValidator.cpp
         writers/AltiumPcbPrimitiveWriter.h
         writers/AltiumPcbPrimitiveWriter.cpp
 
