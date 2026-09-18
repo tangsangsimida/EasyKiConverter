@@ -111,7 +111,14 @@ FocusScope {
     }
 
     function open() {
+        hideAnim.stop();
+        showAnim.stop();
         visible = true;
+        overlay.opacity = 0;
+        dialogBox.opacity = hasOverlay ? 0 : 1.0;
+        dialogBox.scale = hasOverlay ? 0.9 : 1.0;
+        dialogBoxTranslate.y = 0;
+        hideSlider();
         if (hasOverlay) {
             showAnimation.start();
         } else {
@@ -124,6 +131,8 @@ FocusScope {
     }
 
     function close() {
+        hideAnim.stop();
+        showAnim.stop();
         visible = false;
     }
 
@@ -450,11 +459,16 @@ FocusScope {
         id: buttonDelegate
         Loader {
             Layout.fillWidth: true
-            Layout.preferredHeight: modelData.isSeparator ? 1 : buttonHeight
+            Layout.preferredHeight: modelData.visible === false ? 0 : (modelData.isSeparator ? 1 : buttonHeight)
+            visible: modelData.visible !== false
             property var specData: modelData  // 传递数据
             sourceComponent: modelData.isSeparator ? separatorComponent : buttonComponent
             // 暴露内部按钮引用，以便外部（ExitDialog键盘导航）可以获取实际按钮
             property Item actualButton: item
+            onLoaded: {
+                if (item && specData.objectName)
+                    item.objectName = specData.objectName;
+            }
         }
     }
 

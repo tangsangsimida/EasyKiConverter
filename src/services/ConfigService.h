@@ -344,6 +344,48 @@ public:
      */
     Q_INVOKABLE void setDiskCacheLimitMB(int maxSizeMB);
 
+    /** @brief 获取是否启用启动时自动检查更新。 */
+    bool getUpdateAutoCheck() const;
+
+    /** @brief 设置是否启用启动时自动检查更新。 */
+    void setUpdateAutoCheck(bool enabled);
+
+    /** @brief 获取更新检查间隔（小时）。 */
+    int getUpdateCheckIntervalHours() const;
+
+    /** @brief 设置更新检查间隔（小时）。 */
+    void setUpdateCheckIntervalHours(int hours);
+
+    /** @brief 获取上次发起更新检查的时间戳。 */
+    qint64 getUpdateLastCheckTime() const;
+
+    /** @brief 保存上次发起更新检查的时间戳。 */
+    void setUpdateLastCheckTime(qint64 timestamp);
+
+    /** @brief 获取上次成功检查的时间戳。 */
+    qint64 getUpdateLastSuccessfulCheckTime() const;
+
+    /** @brief 保存上次成功检查的时间戳。 */
+    void setUpdateLastSuccessfulCheckTime(qint64 timestamp);
+
+    /** @brief 获取被用户忽略的版本号。 */
+    QString getUpdateIgnoredVersion() const;
+
+    /** @brief 保存被用户忽略的版本号。 */
+    void setUpdateIgnoredVersion(const QString& version);
+
+    /** @brief 获取用户选择稍后提醒的版本号。 */
+    QString getUpdateRemindedVersion() const;
+
+    /** @brief 保存用户选择稍后提醒的版本号。 */
+    void setUpdateRemindedVersion(const QString& version);
+
+    /** @brief 获取最近一次成功获取的 Release JSON 缓存。 */
+    QJsonObject getUpdateCachedRelease() const;
+
+    /** @brief 保存最近一次成功获取的 Release JSON 缓存。 */
+    void setUpdateCachedRelease(const QJsonObject& release);
+
 signals:
     /**
      * @brief 配置改变信号

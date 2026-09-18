@@ -29,6 +29,7 @@ set(QML_FILES
     ${CMAKE_SOURCE_DIR}/src/ui/qml/components/ExportButtonsSection.qml
     ${CMAKE_SOURCE_DIR}/src/ui/qml/components/SidebarExportControls.qml
     ${CMAKE_SOURCE_DIR}/src/ui/qml/components/UpdateBanner.qml
+    ${CMAKE_SOURCE_DIR}/src/ui/qml/components/UpdateDialog.qml
     ${CMAKE_SOURCE_DIR}/src/ui/qml/components/WindowController.qml
     ${CMAKE_SOURCE_DIR}/src/ui/qml/components/WindowPersistenceManager.qml
     ${CMAKE_SOURCE_DIR}/src/ui/qml/components/WindowStartupManager.qml
@@ -54,6 +55,8 @@ set(QML_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/tst_Card.qml
     ${CMAKE_CURRENT_SOURCE_DIR}/tst_ControllerBinding.qml
     ${CMAKE_CURRENT_SOURCE_DIR}/tst_ThemeBinding.qml
+    ${CMAKE_CURRENT_SOURCE_DIR}/tst_UpdateBanner.qml
+    ${CMAKE_CURRENT_SOURCE_DIR}/tst_UpdateDialog.qml
 )
 
 set(QML_RESOURCES

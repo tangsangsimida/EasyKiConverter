@@ -10,6 +10,8 @@ ColumnLayout {
     property var exportSettingsController
     property var exportTargetModel
     property var componentListController
+    // 由宿主窗口传入语言版本标识，用于触发翻译文本重新计算。
+    property string currentLanguage: ""
     property alias exportErrorDialog: errorDialog
     spacing: AppStyle.spacing.md
     // 错误提示对话框
@@ -73,7 +75,7 @@ ColumnLayout {
             Layout.fillWidth: true
             // 根据是否有失败项来决定按钮文本
             text: {
-                var lang = LanguageManager.currentLanguage; // Force update on language change
+                var lang = exportButtonsSection.currentLanguage;
                 var progressController = exportButtonsSection.exportProgressController;
                 if (progressController && progressController.isExporting)
                     return qsTranslate("MainWindow", "正在转换...");
