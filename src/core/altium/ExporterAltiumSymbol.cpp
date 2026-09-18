@@ -5,6 +5,7 @@
 #include "AltiumSymbolCurveConverter.h"
 #include "AltiumSymbolImplementationConverter.h"
 #include "AltiumSymbolParameterConverter.h"
+#include "AltiumSymbolPathConverter.h"
 #include "AltiumSymbolPinConverter.h"
 #include "AltiumSymbolPinTextConverter.h"
 #include "AltiumSymbolPrimitiveConverter.h"
@@ -252,150 +253,7 @@ AltiumSchComponent ExporterAltiumSymbol::convertSymbol(const IR::SymbolComponent
         polyline.sourcePartIndex = sourcePolyline.partIndex;
         component.polylines.append(polyline);
     }
-    for (int pathIndex = 0; pathIndex < data.paths.size(); ++pathIndex) {
-        const IR::SymbolPathIR& p = data.paths.at(pathIndex);
-        if (!isValidStrokeWidth(p.strokeWidth)) {
-            m_diagnostics.append(
-                QStringLiteral("符号 %1 路径图元 %2 的线宽无效，已跳过").arg(data.name).arg(pathIndex));
-            continue;
-        }
-        // 非填充路径可直接拆分为 Altium 原生线段和 Bézier 记录，避免曲线被
-        // 强制膨胀为大量折线；填充路径仍使用闭合点列以保留填充语义。
-        if (!p.isFilled && !p.segments.isEmpty()) {
-            int segmentIndex = 0;
-            for (const IR::SymbolPathSegmentIR& segment : p.segments) {
-                bool validSegment = isFinitePoint(segment.start) && isFinitePoint(segment.end);
-                // 按路径段类型校验所需控制点，避免将不完整曲线写入目标库。
-                switch (segment.type) {
-                    case IR::SymbolPathSegmentIR::Type::QuadraticBezier:
-                        validSegment = validSegment && isFinitePoint(segment.control1);
-                        break;
-                    case IR::SymbolPathSegmentIR::Type::CubicBezier:
-                        validSegment =
-                            validSegment && isFinitePoint(segment.control1) && isFinitePoint(segment.control2);
-                        break;
-                    case IR::SymbolPathSegmentIR::Type::CircularArc:
-                        validSegment = validSegment && isFinitePoint(segment.arcMid);
-                        break;
-                    case IR::SymbolPathSegmentIR::Type::EllipticalArc:
-                        validSegment = validSegment && isFinitePoint(segment.arcCenter) &&
-                                       std::isfinite(segment.radiusX) && std::isfinite(segment.radiusY) &&
-                                       segment.radiusX > 0.0 && segment.radiusY > 0.0 &&
-                                       std::isfinite(segment.arcStartAngle) && std::isfinite(segment.arcEndAngle);
-                        break;
-                    case IR::SymbolPathSegmentIR::Type::Line:
-                        break;
-                }
-                if (!validSegment) {
-                    m_diagnostics.append(QStringLiteral("符号 %1 路径图元 %2 的段 %3 参数无效，已跳过")
-                                             .arg(data.name)
-                                             .arg(pathIndex)
-                                             .arg(segmentIndex));
-                    ++segmentIndex;
-                    continue;
-                }
-                if (segment.type == IR::SymbolPathSegmentIR::Type::Line) {
-                    AltiumSchPath path;
-                    path.lineWidth = AltiumCoord::lineWidthMmToIndex(p.strokeWidth);
-                    path.lineStyle = toAltiumLineStyle(p.strokeStyle);
-                    path.color = toAltiumColor(p.strokeColor);
-                    path.ownerPartId = toAltiumOwnerPartId(p.partIndex);
-                    path.sourceGraphicType = QStringLiteral("PT");
-                    path.sourceGraphicIndex = sourceIndexForPart(data.paths, pathIndex, p.partIndex);
-                    path.sourceSegmentIndex = segmentIndex;
-                    path.sourcePartIndex = p.partIndex;
-                    path.vertices.append(QPointF(AltiumCoord::mmToSchematicUnits(segment.start.x()),
-                                                 AltiumCoord::mmToSchematicUnits(segment.start.y())));
-                    path.vertices.append(QPointF(AltiumCoord::mmToSchematicUnits(segment.end.x()),
-                                                 AltiumCoord::mmToSchematicUnits(segment.end.y())));
-                    component.paths.append(path);
-                } else if (segment.type == IR::SymbolPathSegmentIR::Type::QuadraticBezier ||
-                           segment.type == IR::SymbolPathSegmentIR::Type::CubicBezier) {
-                    IR::SymbolBezierIR bezier;
-                    if (segment.type == IR::SymbolPathSegmentIR::Type::QuadraticBezier) {
-                        // Altium SchLib 仅提供三次 Bézier 记录；二次曲线可用
-                        // C1=P0+2/3(Q-P0), C2=P1+2/3(Q-P1) 精确表示。
-                        const QPointF control1 = segment.start + (segment.control1 - segment.start) * (2.0 / 3.0);
-                        const QPointF control2 = segment.end + (segment.control1 - segment.end) * (2.0 / 3.0);
-                        bezier.controlPoints = {segment.start, control1, control2, segment.end};
-                    } else {
-                        bezier.controlPoints = {segment.start, segment.control1, segment.control2, segment.end};
-                    }
-                    bezier.strokeColor = p.strokeColor;
-                    bezier.strokeWidth = p.strokeWidth;
-                    bezier.strokeStyle = p.strokeStyle;
-                    bezier.partIndex = p.partIndex;
-                    AltiumSchBezier altiumBezier = convertBezier(bezier);
-                    altiumBezier.sourceGraphicType = QStringLiteral("PT");
-                    altiumBezier.sourceGraphicIndex = sourceIndexForPart(data.paths, pathIndex, p.partIndex);
-                    altiumBezier.sourceSegmentIndex = segmentIndex;
-                    altiumBezier.sourcePartIndex = p.partIndex;
-                    component.beziers.append(altiumBezier);
-                } else if (segment.type == IR::SymbolPathSegmentIR::Type::EllipticalArc) {
-                    IR::SymbolEllipticalArcIR ellipseArc;
-                    ellipseArc.center = segment.arcCenter;
-                    ellipseArc.radiusX = segment.radiusX;
-                    ellipseArc.radiusY = segment.radiusY;
-                    ellipseArc.startAngle = segment.arcStartAngle;
-                    ellipseArc.endAngle = segment.arcEndAngle;
-                    ellipseArc.strokeColor = p.strokeColor;
-                    ellipseArc.strokeWidth = p.strokeWidth;
-                    ellipseArc.strokeStyle = p.strokeStyle;
-                    ellipseArc.partIndex = p.partIndex;
-                    AltiumSchEllipticalArc altiumArc = convertEllipticalArc(ellipseArc);
-                    altiumArc.sourceGraphicType = QStringLiteral("PT");
-                    altiumArc.sourceGraphicIndex = sourceIndexForPart(data.paths, pathIndex, p.partIndex);
-                    altiumArc.sourceSegmentIndex = segmentIndex;
-                    altiumArc.sourcePartIndex = p.partIndex;
-                    if (altiumArc.radiusX <= 0 || altiumArc.radiusY <= 0) {
-                        m_diagnostics.append(QStringLiteral("符号 %1 路径图元 %2 的段 %3 椭圆弧半径量化后无效，已跳过")
-                                                 .arg(data.name)
-                                                 .arg(pathIndex)
-                                                 .arg(segmentIndex));
-                        ++segmentIndex;
-                        continue;
-                    }
-                    component.ellipticalArcs.append(altiumArc);
-                } else {
-                    IR::SymbolArcIR arc;
-                    arc.startPoint = segment.start;
-                    arc.midPoint = segment.arcMid;
-                    arc.endPoint = segment.end;
-                    arc.strokeColor = p.strokeColor;
-                    arc.strokeWidth = p.strokeWidth;
-                    arc.strokeStyle = p.strokeStyle;
-                    arc.partIndex = p.partIndex;
-                    AltiumSchArc altiumArc = convertArc(arc);
-                    if (altiumArc.radius <= 0) {
-                        m_diagnostics.append(QStringLiteral("符号 %1 路径图元 %2 的段 %3 圆弧半径量化后无效，已跳过")
-                                                 .arg(data.name)
-                                                 .arg(pathIndex)
-                                                 .arg(segmentIndex));
-                        ++segmentIndex;
-                        continue;
-                    }
-                    altiumArc.sourceGraphicType = QStringLiteral("PT");
-                    altiumArc.sourceGraphicIndex = sourceIndexForPart(data.paths, pathIndex, p.partIndex);
-                    altiumArc.sourceSegmentIndex = segmentIndex;
-                    altiumArc.sourcePartIndex = p.partIndex;
-                    component.arcs.append(altiumArc);
-                }
-                ++segmentIndex;
-            }
-        } else {
-            const int minimumPointCount = p.isFilled ? 3 : 2;
-            if (!hasFinitePoints(p.points, minimumPointCount)) {
-                m_diagnostics.append(
-                    QStringLiteral("符号 %1 路径图元 %2 的点列无效，已跳过").arg(data.name).arg(pathIndex));
-                continue;
-            }
-            AltiumSchPath path = convertPath(p);
-            path.sourceGraphicType = QStringLiteral("PT");
-            path.sourceGraphicIndex = sourceIndexForPart(data.paths, pathIndex, p.partIndex);
-            path.sourcePartIndex = p.partIndex;
-            component.paths.append(path);
-        }
-    }
+    AltiumSymbolPathConverter::append(data, component, m_diagnostics);
     for (int bezierIndex = 0; bezierIndex < data.beziers.size(); ++bezierIndex) {
         const IR::SymbolBezierIR& b = data.beziers.at(bezierIndex);
         if (b.controlPoints.size() == 4 && hasFinitePoints(b.controlPoints, 4) && isValidStrokeWidth(b.strokeWidth)) {
