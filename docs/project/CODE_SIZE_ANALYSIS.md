@@ -8,13 +8,13 @@
 
 | 类型 | 文件数 | 过长 | 偏长 | 健康率 |
 |------|--------|------|------|--------|
-| 产品源码与资源 | 534 | 52 | 40 | -- |
+| 产品源码与资源 | 536 | 52 | 40 | -- |
 | Python 工具 | 13 | 5 | 4 | -- |
-| **合计** | **547** | **57** | **44** | -- |
+| **合计** | **549** | **57** | **44** | -- |
 
 当前统计工具按文件总行数使用统一阈值：高风险 >500 行，中风险 300-500 行，低风险 200-300 行。类型分项和代码/注释行数需要额外脚本才能精确拆分，因此本报告不再保留旧的推算健康率。
 
-当前基线：`src` 474 个文件、78,450 行；`tests` 58 个文件、18,726 行；翻译资源 2 个文件、3,303 行；`tools/python` 13 个文件、6,640 行。项目工具的 `--all` 统计覆盖产品源码、测试和翻译资源，工具目录单独统计后合计 547 个文件、107,119 行。
+当前基线：`src` 476 个文件、78,455 行；`tests` 58 个文件、18,726 行；翻译资源 2 个文件、3,303 行；`tools/python` 13 个文件、6,640 行。项目工具的 `--all` 统计覆盖产品源码、测试和翻译资源，工具目录单独统计后合计 549 个文件、107,124 行。
 
 ---
 
@@ -101,6 +101,8 @@
 | `src/core/altium/writers/AltiumPcbLibWriter.cpp` | 610 | PcbLib 文件级写入与元件记录编排；图元记录写入和输入校验已提取 |
 | `src/core/altium/writers/AltiumPcbPrimitiveWriter.cpp` | 384 | 独立承载 PcbLib 焊盘、走线、弧线、文本、填充、区域和组件实体图元记录写入 |
 | `src/core/altium/writers/AltiumPcbInputValidator.cpp` | 243 | 独立承载 PcbLib 封装名称、图元属性、三维模型和扩展记录的写入前校验 |
+| `src/core/altium/ExporterAltiumFootprint.cpp` | 425 | Altium 封装 IR 转换和导出编排；几何包围盒与原点平移已提取 |
+| `src/core/altium/AltiumFootprintGeometryNormalizer.cpp` | 110 | 独立承载 PcbLib 图元包围盒计算、区域坐标边界处理和统一平移 |
 | `src/core/altium/compound/OLECompoundWriter.cpp` | 736 | OLE 存储树、流数据和扇区分配；目录条目与文件头序列化已提取 |
 | `src/core/altium/compound/OLECompoundSerializer.cpp` | 153 | 独立承载 OLE 目录条目和 512 字节文件头的 CFB V3 字节序列化 |
 | `src/core/altium/ExporterAltiumSymbol.cpp` | 945 | SchLib 符号转换；引脚转换、几何归一化、部件 ID/方向/颜色/线型和坐标量化共享规则已提取 |
@@ -201,6 +203,8 @@
 - `AltiumPcbLibWriter.cpp`（610 行）：已提取焊盘、走线、弧线、文本、填充、区域和组件实体图元记录以及输入校验，主写入器继续负责文件级状态、封装数据、唯一标识表和元件记录编排
 - `AltiumPcbPrimitiveWriter.cpp`（384 行）：独立承载 PcbLib 图元记录编码，复用主写入器的层映射、标志编码、有限值归一化、广字符串和公共图元头部规则
 - `AltiumPcbInputValidator.cpp`（243 行）：独立承载封装名称、焊盘/走线/文本/区域属性、三维模型、三维实体和扩展记录的输入校验，复用主写入器诊断通道并保持拒绝写入行为不变
+- `ExporterAltiumFootprint.cpp`（425 行）：已提取封装图元包围盒、区域坐标边界处理和原点平移，主导出器继续负责 IR 转换、3D 模型关联和 ComponentBody 生成
+- `AltiumFootprintGeometryNormalizer.cpp`（110 行）：独立承载 PcbLib 图元包围盒计算和统一平移，分别保留原点归一化与三维轮廓生成所需的区域坐标策略
 - `OLECompoundWriter.cpp`（736 行）：继续负责 OLE 存储树、流登记、mini stream、FAT/DIFAT 扇区分配和文件落盘，固定结构编码已移出
 - `OLECompoundSerializer.cpp`（153 行）：独立承载目录条目、版本字段、FAT/DIFAT 索引和扇区布局的 CFB V3 序列化，保持 OLE 写入器的只读状态边界
 - `WriteWorker.cpp`（612 行）：继续负责写入任务调度、符号/封装/三维模型/预览图/数据手册写入和状态汇总，调试数据输出已提取
@@ -300,7 +304,7 @@ QML 文件过长是当前最严重的问题区域，建议按以下优先级处�
 
 | 目录 | 总行数 | 文件数 |
 |------|--------|--------|
-| `src` | 78,450 | 474 |
+| `src` | 78,455 | 476 |
 | `tests` | 18,726 | 58 |
 | `resources/translations` | 3,303 | 2 |
 | `tools/python` | 6,640 | 13 |
