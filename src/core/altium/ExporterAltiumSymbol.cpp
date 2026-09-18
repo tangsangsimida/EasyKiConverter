@@ -1,6 +1,7 @@
 #include "ExporterAltiumSymbol.h"
 
 #include "AltiumSchSymbolGeometryNormalizer.h"
+#include "AltiumSymbolAnnotationConverter.h"
 #include "AltiumSymbolCurveConverter.h"
 #include "AltiumSymbolPinConverter.h"
 #include "utils/AltiumCoord.h"
@@ -739,78 +740,21 @@ AltiumSchIeee ExporterAltiumSymbol::convertIeee(const IR::SymbolIeeeIR& ieee) {
  * @brief SymbolTextIR → AltiumSchText
  */
 AltiumSchText ExporterAltiumSymbol::convertText(const IR::SymbolTextIR& text) {
-    AltiumSchText altiumText;
-    altiumText.locationX = AltiumCoord::mmToRaw(text.position.x());
-    altiumText.locationY = AltiumCoord::mmToRaw(text.position.y());
-    altiumText.text = text.text;
-    altiumText.fontId = 0;
-    altiumText.fontName = text.fontFamily;
-    altiumText.fontSizeMm = text.fontSizeMm;
-    altiumText.bold = text.bold;
-    altiumText.italic = text.italic;
-    altiumText.anchor = text.anchor.trimmed().isEmpty() ? QStringLiteral("middle") : text.anchor.trimmed();
-    altiumText.color = toAltiumColor(text.color);
-    altiumText.isHidden = !text.visible;
-    altiumText.orientation = toAltiumOrientation(text.rotation);
-    altiumText.ownerPartId = toAltiumOwnerPartId(text.partIndex);
-    return altiumText;
+    return AltiumSymbolAnnotationConverter::convertText(text);
 }
 
 /**
  * @brief SymbolTextFrameIR → AltiumSchTextFrame
  */
 AltiumSchTextFrame ExporterAltiumSymbol::convertTextFrame(const IR::SymbolTextFrameIR& frame) {
-    AltiumSchTextFrame altiumFrame;
-    altiumFrame.locationX = AltiumCoord::mmToRaw(frame.x0);
-    altiumFrame.locationY = AltiumCoord::mmToRaw(frame.y0);
-    altiumFrame.cornerX = AltiumCoord::mmToRaw(frame.x1);
-    altiumFrame.cornerY = AltiumCoord::mmToRaw(frame.y1);
-    altiumFrame.lineWidth = AltiumCoord::lineWidthMmToIndex(frame.strokeWidth);
-    altiumFrame.lineStyle = toAltiumLineStyle(frame.strokeStyle);
-    altiumFrame.color = toAltiumColor(frame.strokeColor);
-    altiumFrame.areaColor = frame.isFilled ? toAltiumColor(frame.fillColor) : 0;
-    altiumFrame.textColor = toAltiumColor(frame.textColor);
-    altiumFrame.fontName = frame.fontFamily;
-    altiumFrame.fontSizeMm = frame.fontSizeMm;
-    altiumFrame.bold = frame.bold;
-    altiumFrame.italic = frame.italic;
-    altiumFrame.fontId = qMax(0, frame.fontId);
-    altiumFrame.orientation = ((frame.orientation % 4) + 4) % 4;
-    altiumFrame.alignment = qMax(0, frame.alignment);
-    altiumFrame.textMargin = AltiumCoord::mmToRaw(qMax(0.0, frame.textMargin));
-    altiumFrame.text = frame.text;
-    altiumFrame.isSolid = frame.isFilled;
-    altiumFrame.showBorder = frame.showBorder;
-    altiumFrame.wordWrap = frame.wordWrap;
-    altiumFrame.clipToRect = frame.clipToRect;
-    altiumFrame.transparent = frame.transparent;
-    altiumFrame.ownerPartId = toAltiumOwnerPartId(frame.partIndex);
-    return altiumFrame;
+    return AltiumSymbolAnnotationConverter::convertTextFrame(frame);
 }
 
 /**
  * @brief SymbolImageIR → AltiumSchImage
  */
 AltiumSchImage ExporterAltiumSymbol::convertImage(const IR::SymbolImageIR& image) {
-    AltiumSchImage altiumImage;
-    altiumImage.locationX = AltiumCoord::mmToRaw(image.x0);
-    altiumImage.locationY = AltiumCoord::mmToRaw(image.y0);
-    altiumImage.cornerX = AltiumCoord::mmToRaw(image.x1);
-    altiumImage.cornerY = AltiumCoord::mmToRaw(image.y1);
-    altiumImage.rotation = image.rotation;
-    altiumImage.lineWidth = AltiumCoord::lineWidthMmToIndex(image.strokeWidth);
-    altiumImage.lineStyle = toAltiumLineStyle(image.strokeStyle);
-    altiumImage.color = toAltiumColor(image.strokeColor);
-    altiumImage.areaColor = image.isFilled ? toAltiumColor(image.fillColor) : 0;
-    altiumImage.fileName = image.fileName;
-    altiumImage.data = image.data;
-    altiumImage.isSolid = image.isFilled;
-    altiumImage.transparent = image.transparent;
-    altiumImage.showBorder = image.showBorder;
-    altiumImage.keepAspect = image.keepAspect;
-    altiumImage.embedImage = !image.data.isEmpty();
-    altiumImage.ownerPartId = toAltiumOwnerPartId(image.partIndex);
-    return altiumImage;
+    return AltiumSymbolAnnotationConverter::convertImage(image);
 }
 
 /**
