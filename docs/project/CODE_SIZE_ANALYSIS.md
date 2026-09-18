@@ -26,6 +26,8 @@
 
 本轮将 `ComponentListItem.qml` 和 `ResultListItem.qml` 的复制、外链点击和悬停判定提取到 `ListItemInteraction.qml`；预览图、导出徽标、验证状态、提示动画和按钮布局仍由各自列表项维护。
 
+Worker 审计结论：`DatasheetExportWorker` 和 `PreviewImagesExportWorker` 主要执行同步文件写入，`Model3DExportWorker` 还负责异步模型下载、网络错误回调、WRL/STEP 双路径和取消收敛；三者仅共享现有 `IExportWorker` 接口，不新增公共基类。
+
 ---
 
 ## 一、头文件问题清单
@@ -269,9 +271,8 @@
 | `src/ui/qml/components/ComponentListView.qml` | 187 | -- | 独立承载 DelegateModel、网格委托和可见区域预取 |
 | `src/ui/qml/components/ComponentPreviewPopup.qml` | 320 | -- | 独立承载预览图展示、缩略图切换和延迟隐藏 |
 | `src/ui/qml/MainWindow.qml` | 911 | -- | 主窗口布局+状态管理+对话框逻辑 |
-| `src/ui/qml/components/deprecated/ExportSettingsCard.qml` | 791 | 752 | 已标记 deprecated，可忽略 |
 | `src/ui/qml/components/SidebarSettingsView.qml` | 724 | -- | 侧边栏设置面板 |
-| `src/ui/qml/components/ComponentListItem.qml` | 629 | -- | 单个列表项组件过于复杂 |
+| `src/ui/qml/components/ComponentListItem.qml` | 615 | -- | 已提取复制、外链和悬停交互，预览图与验证状态仍集中 |
 | `src/ui/qml/components/SliderDialogBase.qml` | 608 | 530 | 滑动对话框基类 |
 | `src/ui/qml/components/ExportSettingsBaseCard.qml` | 533 | 483 | 导出设置卡片基类 |
 
@@ -281,7 +282,7 @@
 |------|------|------|
 | `HeaderSection.qml` | 402 | |
 | `ExitDialog.qml` | 400 | |
-| `ResultListItem.qml` | 379 | |
+| `ResultListItem.qml` | 370 | |
 | `tst_ExportFlow.qml` | 341 | 测试文件 |
 | `ExportResultsCard.qml` | 306 | |
 
@@ -291,9 +292,8 @@ QML 文件过长是当前最严重的问题区域，建议按以下优先级处�
 
 1. **`ComponentListCard.qml`（371 行）**：已提取预览弹窗、工具栏和列表视图，后续重点转向 ViewModel 与服务层拆分
 2. **`MainWindow.qml`（911 行）**：提取 `MenuBar`、`StatusBar`、`DialogManager` 等独立 QML 组件
-3. **`ComponentListItem.qml`（629 行）**：拆分渲染逻辑为更小的子委托组件
-4. **`ExportSettingsCard.qml`（deprecated，791 行）**：确认无引用后直接删除
-5. **`SidebarSettingsView.qml`（724 行）**：各设置区块提取为独立组件
+3. **`ComponentListItem.qml`（615 行）**：已提取共享交互层，后续仅在预览和验证职责出现明确边界时继续拆分
+4. **`SidebarSettingsView.qml`（724 行）**：各设置区块提取为独立组件
 
 ---
 
