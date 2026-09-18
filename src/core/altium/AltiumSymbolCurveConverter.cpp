@@ -9,6 +9,9 @@ namespace EasyKiConverter {
 
 namespace {
 
+/** @brief 跨平台的圆周率常量，避免依赖非标准的 M_PI 宏。 */
+constexpr double kPi = 3.141592653589793238462643383279502884;
+
 using AltiumSymbolConversionUtils::finiteNonNegative;
 using AltiumSymbolConversionUtils::toAltiumColor;
 using AltiumSymbolConversionUtils::toAltiumLineStyle;
@@ -40,8 +43,8 @@ AltiumSchArc AltiumSymbolCurveConverter::convertArc(const IR::SymbolArcIR& arc) 
     altiumArc.centerX = AltiumCoord::mmToRaw(center.x());
     altiumArc.centerY = AltiumCoord::mmToRaw(center.y());
     altiumArc.radius = AltiumCoord::mmToRaw(radius);
-    altiumArc.startAngle = std::atan2(arc.startPoint.y() - center.y(), arc.startPoint.x() - center.x()) * 180.0 / M_PI;
-    altiumArc.endAngle = std::atan2(arc.endPoint.y() - center.y(), arc.endPoint.x() - center.x()) * 180.0 / M_PI;
+    altiumArc.startAngle = std::atan2(arc.startPoint.y() - center.y(), arc.startPoint.x() - center.x()) * 180.0 / kPi;
+    altiumArc.endAngle = std::atan2(arc.endPoint.y() - center.y(), arc.endPoint.x() - center.x()) * 180.0 / kPi;
     altiumArc.lineWidth = AltiumCoord::lineWidthMmToIndex(arc.strokeWidth);
     altiumArc.lineStyle = toAltiumLineStyle(arc.strokeStyle);
     altiumArc.color = toAltiumColor(arc.strokeColor);
