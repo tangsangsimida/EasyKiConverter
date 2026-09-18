@@ -8,13 +8,13 @@
 
 | 类型 | 文件数 | 过长 | 偏长 | 健康率 |
 |------|--------|------|------|--------|
-| 产品源码与资源 | 556 | 51 | 43 | -- |
+| 产品源码与资源 | 558 | 51 | 43 | -- |
 | Python 工具 | 13 | 5 | 4 | -- |
-| **合计** | **569** | **56** | **47** | -- |
+| **合计** | **571** | **56** | **47** | -- |
 
 当前统计工具按文件总行数使用统一阈值：高风险 >500 行，中风险 300-500 行，低风险 200-300 行。类型分项和代码/注释行数需要额外脚本才能精确拆分，因此本报告不再保留旧的推算健康率。
 
-当前基线：`src` 496 个文件、79,086 行；`tests` 58 个文件、18,782 行；翻译资源 2 个文件、3,303 行；`tools/python` 13 个文件、7,703 行。项目工具的 `--all` 统计覆盖产品源码、测试和翻译资源，工具目录单独统计后合计 569 个文件、108,874 行。
+当前基线：`src` 498 个文件、79,089 行；`tests` 58 个文件、18,782 行；翻译资源 2 个文件、3,303 行；`tools/python` 13 个文件、7,703 行。项目工具的 `--all` 统计覆盖产品源码、测试和翻译资源，工具目录单独统计后合计 571 个文件、108,877 行。
 
 ---
 
@@ -145,7 +145,9 @@
 | `src/core/altium/compound/OLECompoundWriter.cpp` | 736 | OLE 存储树、流数据、扇区分配和文件落盘；固定结构序列化已提取 |
 | `src/core/altium/compound/OLECompoundSerializer.cpp` | 153 | 独立承载 OLE 目录条目和文件头的固定字节布局编码 |
 | `src/core/network/AsyncNetworkRequest.cpp` | 669 | 异步网络请求 |
-| `src/services/export/FootprintExportStage.cpp` | 758 | 封装导出阶段 |
+| `src/services/export/FootprintExportStage.cpp` | 437 | 封装导出阶段；3D 模型缓存准备和坐标偏移已提取 |
+| `src/services/export/FootprintModel3DPreparation.cpp` | 291 | 独立承载 STEP、OBJ、WRL 缓存读取、校验、回写和坐标偏移准备 |
+| `src/services/export/FootprintModel3DPreparation.h` | 31 | 封装 3D 模型准备接口 |
 | 其余高风险文件 | -- | 请以 `analyze_project.py --all --json` 的当前输出为准 |
 
 ### 处理建议
