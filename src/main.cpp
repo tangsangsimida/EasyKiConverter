@@ -61,6 +61,7 @@
 
 namespace {
 
+// 根据命令行参数和环境变量判断是否启用调试模式。
 bool isDebugMode(const EasyKiConverter::CommandLineParser& parser) {
     // 优先检查命令行参数
     if (parser.isDebugMode()) {
@@ -75,6 +76,7 @@ bool isDebugMode(const EasyKiConverter::CommandLineParser& parser) {
     return false;
 }
 
+// 解析命令行指定或便携模式使用的配置文件路径。
 QString resolveConfigFilePath(const EasyKiConverter::CommandLineParser& parser) {
     if (!parser.configFile().isEmpty()) {
         return parser.configFile();
@@ -85,6 +87,7 @@ QString resolveConfigFilePath(const EasyKiConverter::CommandLineParser& parser) 
     return QString();
 }
 
+// 将命令行中的缓存目录和容量设置应用到缓存服务。
 void applyCacheConfiguration(const EasyKiConverter::CommandLineParser& parser) {
     auto* configService = EasyKiConverter::ConfigService::instance();
     auto* cacheService = EasyKiConverter::ComponentCacheService::instance();
@@ -104,6 +107,7 @@ void applyCacheConfiguration(const EasyKiConverter::CommandLineParser& parser) {
 }
 
 #ifdef _WIN32
+// 在 Windows 调试控制台中重新打开标准输入输出流。
 bool reopenConsoleStream(FILE* stream, const char* device, const char* mode, const char* streamName) {
     FILE* reopened = nullptr;
     errno_t err = freopen_s(&reopened, device, mode, stream);
@@ -115,6 +119,7 @@ bool reopenConsoleStream(FILE* stream, const char* device, const char* mode, con
 }
 #endif
 
+// 初始化项目日志系统并配置平台相关的控制台输出。
 void setupLogging(bool debugMode, const QString& logLevelStr, const QString& logFilePath, bool syncLogging) {
     using namespace EasyKiConverter;
 
@@ -225,6 +230,7 @@ void setupLogging(bool debugMode, const QString& logLevelStr, const QString& log
     QtLogAdapter::install();
 }
 
+// 规范化 AppImage 挂载目录或开发构建目录的路径层级。
 QString normalizeMountedAppDir(QString appDir) {
     if (appDir.endsWith("/usr/bin")) {
         return appDir.chopped(8);  // 去掉 /usr/bin
@@ -235,6 +241,7 @@ QString normalizeMountedAppDir(QString appDir) {
     return appDir;
 }
 
+// 根据 AppImage 环境变量或应用路径解析运行时目录。
 QString resolveRuntimeAppDir(const QString& appImagePath) {
     if (!appImagePath.isEmpty()) {
         return QFileInfo(appImagePath).absolutePath();
@@ -242,6 +249,7 @@ QString resolveRuntimeAppDir(const QString& appImagePath) {
     return QCoreApplication::applicationDirPath();
 }
 
+// 从运行目录反推出项目根目录，供开发环境查找资源。
 QString resolveProjectRootFromAppDir(QString appDir) {
     appDir = normalizeMountedAppDir(std::move(appDir));
     if (appDir.endsWith("/build/bin")) {
@@ -256,6 +264,7 @@ QString resolveProjectRootFromAppDir(QString appDir) {
     return appDir;
 }
 
+// 按当前主题和运行环境生成任务栏图标候选路径。
 QStringList themedTaskbarIconPaths(bool darkMode) {
     const QString iconThemeDir = darkMode ? QStringLiteral("hicolor-dark") : QStringLiteral("hicolor");
     const QString fallbackIconThemeDir = QStringLiteral("hicolor");
@@ -319,6 +328,7 @@ QStringList themedTaskbarIconPaths(bool darkMode) {
     return iconPaths;
 }
 
+// 从候选路径中加载图标并应用到应用程序和窗口。
 bool applyTaskbarIcon(bool darkMode, QWindow* window = nullptr, const char* context = "应用程序") {
     const QStringList iconPaths = themedTaskbarIconPaths(darkMode);
 
@@ -352,6 +362,7 @@ bool applyTaskbarIcon(bool darkMode, QWindow* window = nullptr, const char* cont
 
 }  // anonymous namespace
 
+// 初始化应用程序、命令行模式和图形界面模式。
 int main(int argc, char* argv[]) {
     QSurfaceFormat surfaceFormat = QSurfaceFormat::defaultFormat();
     surfaceFormat.setAlphaBufferSize(8);
@@ -543,6 +554,7 @@ int main(int argc, char* argv[]) {
     QTimer::singleShot(0, []() {
         QQuickWindow tempWindow;
         const char* apiName = "Unknown";
+        // 将 Qt 图形 API 枚举转换为日志中的可读名称。
         switch (tempWindow.graphicsApi()) {
             case QSGRendererInterface::Unknown:
                 apiName = "Unknown";
