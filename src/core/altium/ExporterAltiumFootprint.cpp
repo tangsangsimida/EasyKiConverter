@@ -1,15 +1,12 @@
 #include "ExporterAltiumFootprint.h"
 
+#include "AltiumFootprintGeometryNormalizer.h"
 #include "utils/AltiumConstants.h"
 #include "utils/AltiumCoord.h"
 #include "utils/AltiumLayerMap.h"
 
 #include <QFile>
 #include <QFileInfo>
-
-#include <climits>
-#include <cmath>
-#include <limits>
 
 namespace EasyKiConverter {
 
@@ -358,104 +355,12 @@ QByteArray ExporterAltiumFootprint::loadStepData(const QString& stepPath) {
  *          Altium Designer 标准库的封装通常以原点为参考点。
  */
 void ExporterAltiumFootprint::centerComponent(AltiumPcbComponent& component) {
-    if (component.pads.isEmpty() && component.tracks.isEmpty() && component.arcs.isEmpty() &&
-        component.regions.isEmpty() && component.fills.isEmpty()) {
+    const AltiumFootprintBounds bounds = AltiumFootprintGeometryNormalizer::computeBounds(component, false);
+    if (!bounds.valid)
         return;
-    }
-
-    // 计算包围盒（使用焊盘位置和走线端点）
-    qint64 minX = std::numeric_limits<qint64>::max();
-    qint64 minY = std::numeric_limits<qint64>::max();
-    qint64 maxX = std::numeric_limits<qint64>::lowest();
-    qint64 maxY = std::numeric_limits<qint64>::lowest();
-    const auto toBoundedCoordinate = [](double value) {
-        if (!std::isfinite(value))
-            return qint64(0);
-        constexpr double maxValue = static_cast<double>(std::numeric_limits<qint64>::max());
-        constexpr double minValue = static_cast<double>(std::numeric_limits<qint64>::min());
-        if (value >= maxValue)
-            return std::numeric_limits<qint64>::max();
-        if (value <= minValue)
-            return std::numeric_limits<qint64>::min();
-        return static_cast<qint64>(value);
-    };
-
-    for (const auto& pad : component.pads) {
-        minX = qMin(minX, pad.locationX);
-        minY = qMin(minY, pad.locationY);
-        maxX = qMax(maxX, pad.locationX);
-        maxY = qMax(maxY, pad.locationY);
-    }
-    for (const auto& track : component.tracks) {
-        minX = qMin(minX, qMin(track.startX, track.endX));
-        minY = qMin(minY, qMin(track.startY, track.endY));
-        maxX = qMax(maxX, qMax(track.startX, track.endX));
-        maxY = qMax(maxY, qMax(track.startY, track.endY));
-    }
-    for (const auto& arc : component.arcs) {
-        minX = qMin(minX, static_cast<qint64>(arc.centerX) - arc.radius);
-        minY = qMin(minY, static_cast<qint64>(arc.centerY) - arc.radius);
-        maxX = qMax(maxX, static_cast<qint64>(arc.centerX) + arc.radius);
-        maxY = qMax(maxY, static_cast<qint64>(arc.centerY) + arc.radius);
-    }
-    for (const auto& fill : component.fills) {
-        minX = qMin(minX, qMin(fill.corner1X, fill.corner2X));
-        minY = qMin(minY, qMin(fill.corner1Y, fill.corner2Y));
-        maxX = qMax(maxX, qMax(fill.corner1X, fill.corner2X));
-        maxY = qMax(maxY, qMax(fill.corner1Y, fill.corner2Y));
-    }
-    for (const auto& region : component.regions) {
-        for (const QPointF& v : region.vertices) {
-            int vx = static_cast<int>(v.x());
-            int vy = static_cast<int>(v.y());
-            minX = qMin(minX, vx);
-            minY = qMin(minY, vy);
-            maxX = qMax(maxX, vx);
-            maxY = qMax(maxY, vy);
-        }
-    }
-
-    if (minX == INT_MAX)
-        return;  // 无图元
-
-    // 计算中心偏移
-    int offsetX = (minX + maxX) / 2;
-    int offsetY = (minY + maxY) / 2;
-
-    // 平移所有图元
-    for (auto& pad : component.pads) {
-        pad.locationX -= offsetX;
-        pad.locationY -= offsetY;
-    }
-    for (auto& track : component.tracks) {
-        track.startX -= offsetX;
-        track.startY -= offsetY;
-        track.endX -= offsetX;
-        track.endY -= offsetY;
-    }
-    for (auto& arc : component.arcs) {
-        arc.centerX -= offsetX;
-        arc.centerY -= offsetY;
-    }
-    for (auto& fill : component.fills) {
-        fill.corner1X -= offsetX;
-        fill.corner1Y -= offsetY;
-        fill.corner2X -= offsetX;
-        fill.corner2Y -= offsetY;
-    }
-    for (auto& region : component.regions) {
-        for (QPointF& v : region.vertices) {
-            v = QPointF(v.x() - offsetX, v.y() - offsetY);
-        }
-    }
-    for (auto& text : component.texts) {
-        text.locationX -= offsetX;
-        text.locationY -= offsetY;
-    }
-    for (auto& model : component.models) {
-        model.x -= offsetX;
-        model.y -= offsetY;
-    }
+    const int offsetX = static_cast<int>((bounds.minX + bounds.maxX) / 2);
+    const int offsetY = static_cast<int>((bounds.minY + bounds.maxY) / 2);
+    AltiumFootprintGeometryNormalizer::translate(component, offsetX, offsetY);
 }
 
 /**
@@ -467,59 +372,8 @@ void ExporterAltiumFootprint::generateComponentBody(AltiumPcbComponent& componen
     if (component.models.isEmpty())
         return;
 
-    // 计算包围盒（复用 centerComponent 的逻辑）
-    qint64 minX = std::numeric_limits<qint64>::max();
-    qint64 minY = std::numeric_limits<qint64>::max();
-    qint64 maxX = std::numeric_limits<qint64>::lowest();
-    qint64 maxY = std::numeric_limits<qint64>::lowest();
-    const auto toBoundedCoordinate = [](double value) {
-        if (!std::isfinite(value))
-            return qint64(0);
-        constexpr double maxValue = static_cast<double>(std::numeric_limits<qint64>::max());
-        constexpr double minValue = static_cast<double>(std::numeric_limits<qint64>::min());
-        if (value >= maxValue)
-            return std::numeric_limits<qint64>::max();
-        if (value <= minValue)
-            return std::numeric_limits<qint64>::min();
-        return static_cast<qint64>(value);
-    };
-
-    for (const auto& pad : component.pads) {
-        minX = qMin(minX, pad.locationX);
-        minY = qMin(minY, pad.locationY);
-        maxX = qMax(maxX, pad.locationX);
-        maxY = qMax(maxY, pad.locationY);
-    }
-    for (const auto& track : component.tracks) {
-        minX = qMin(minX, qMin(track.startX, track.endX));
-        minY = qMin(minY, qMin(track.startY, track.endY));
-        maxX = qMax(maxX, qMax(track.startX, track.endX));
-        maxY = qMax(maxY, qMax(track.startY, track.endY));
-    }
-    for (const auto& arc : component.arcs) {
-        minX = qMin(minX, static_cast<qint64>(arc.centerX) - arc.radius);
-        minY = qMin(minY, static_cast<qint64>(arc.centerY) - arc.radius);
-        maxX = qMax(maxX, static_cast<qint64>(arc.centerX) + arc.radius);
-        maxY = qMax(maxY, static_cast<qint64>(arc.centerY) + arc.radius);
-    }
-    for (const auto& fill : component.fills) {
-        minX = qMin(minX, qMin(fill.corner1X, fill.corner2X));
-        minY = qMin(minY, qMin(fill.corner1Y, fill.corner2Y));
-        maxX = qMax(maxX, qMax(fill.corner1X, fill.corner2X));
-        maxY = qMax(maxY, qMax(fill.corner1Y, fill.corner2Y));
-    }
-    for (const auto& region : component.regions) {
-        for (const QPointF& v : region.vertices) {
-            const qint64 x = toBoundedCoordinate(v.x());
-            const qint64 y = toBoundedCoordinate(v.y());
-            minX = qMin(minX, x);
-            minY = qMin(minY, y);
-            maxX = qMax(maxX, x);
-            maxY = qMax(maxY, y);
-        }
-    }
-
-    if (minX == std::numeric_limits<qint64>::max())
+    const AltiumFootprintBounds bounds = AltiumFootprintGeometryNormalizer::computeBounds(component, true);
+    if (!bounds.valid)
         return;  // 无图元，无法生成轮廓
 
     const auto makeModelId = [&component](int modelIndex) {
@@ -559,7 +413,10 @@ void ExporterAltiumFootprint::generateComponentBody(AltiumPcbComponent& componen
         body.overallHeightRaw = AltiumCoord::mmToRaw(qMax(component.height, 0.2));
 
         // 矩形轮廓
-        body.outline = {QPointF(minX, minY), QPointF(maxX, minY), QPointF(maxX, maxY), QPointF(minX, maxY)};
+        body.outline = {QPointF(bounds.minX, bounds.minY),
+                        QPointF(bounds.maxX, bounds.minY),
+                        QPointF(bounds.maxX, bounds.maxY),
+                        QPointF(bounds.minX, bounds.maxY)};
 
         component.bodies.append(body);
     }

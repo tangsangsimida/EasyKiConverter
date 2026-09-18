@@ -13,6 +13,8 @@ target_sources(EasyKiConverterAltium
         AltiumSymbolPinConverter.cpp
         ExporterAltiumFootprint.h
         ExporterAltiumFootprint.cpp
+        AltiumFootprintGeometryNormalizer.h
+        AltiumFootprintGeometryNormalizer.cpp
 
         # 写入器
         writers/AltiumSchFontRegistry.h
