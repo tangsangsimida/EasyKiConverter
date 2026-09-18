@@ -1257,9 +1257,11 @@ Output: Symbols %1 · Footprints %2 · 3D %3</translation>
         <translation>GitHub temporarily limited update checks. Please try again later.</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/UpdateBanner.qml" line="64"/>
-        <source>查看更新</source>
-        <translation>View Update</translation>
+        <location filename="../../src/ui/qml/components/UpdateBanner.qml" line="72"/>
+        <location filename="../../src/ui/qml/components/UpdateDialog.qml" line="32"/>
+        <location filename="../../src/ui/qml/components/UpdateDialog.qml" line="48"/>
+        <source>打开 Release 页面</source>
+        <translation>Open Release Page</translation>
     </message>
     <message>
         <location filename="../../src/ui/qml/components/UpdateBanner.qml" line="76"/>

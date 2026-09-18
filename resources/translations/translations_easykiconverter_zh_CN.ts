@@ -1336,9 +1336,11 @@
         <translation>GitHub 暂时限制了更新检查，请稍后重试。</translation>
     </message>
     <message>
-        <location filename="../../src/ui/qml/components/UpdateBanner.qml" line="64"/>
-        <source>查看更新</source>
-        <translation>查看更新</translation>
+        <location filename="../../src/ui/qml/components/UpdateBanner.qml" line="72"/>
+        <location filename="../../src/ui/qml/components/UpdateDialog.qml" line="32"/>
+        <location filename="../../src/ui/qml/components/UpdateDialog.qml" line="48"/>
+        <source>打开 Release 页面</source>
+        <translation>打开 Release 页面</translation>
     </message>
     <message>
         <location filename="../../src/ui/qml/components/UpdateBanner.qml" line="76"/>

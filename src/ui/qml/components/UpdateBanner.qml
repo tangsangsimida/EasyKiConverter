@@ -69,7 +69,7 @@ Rectangle {
             spacing: AppStyle.spacing.xs
             ModernButton {
                 objectName: "updateActionButton"
-                text: updateChecker && updateChecker.statusText === "failed" ? qsTranslate("MainWindow", "重试") : qsTranslate("MainWindow", "查看更新")
+                text: updateChecker && updateChecker.statusText === "failed" ? qsTranslate("MainWindow", "重试") : qsTranslate("MainWindow", "打开 Release 页面")
                 Layout.preferredHeight: 36
                 backgroundColor: updateChecker && updateChecker.statusText === "failed" ? AppStyle.colors.warning : AppStyle.colors.primary
                 hoverColor: updateChecker && updateChecker.statusText === "failed" ? AppStyle.colors.warningDark : AppStyle.colors.primaryHover

@@ -29,7 +29,7 @@ SliderDialogBase {
             visible: updateChecker && updateChecker.hasUpdate
         },
         {
-            text: qsTranslate("MainWindow", "查看更新"),
+            text: qsTranslate("MainWindow", "打开 Release 页面"),
             color: AppStyle.colors.textSecondary,
             objectName: "dialogViewReleaseButton",
             visible: updateChecker && updateChecker.hasUpdate,
@@ -45,7 +45,7 @@ SliderDialogBase {
             visible: updateChecker && updateChecker.statusText === "failed"
         },
         {
-            text: qsTranslate("MainWindow", "查看更新"),
+            text: qsTranslate("MainWindow", "打开 Release 页面"),
             color: AppStyle.colors.textSecondary,
             objectName: "dialogOpenLatestReleaseButton",
             visible: updateChecker && updateChecker.statusText === "failed",
