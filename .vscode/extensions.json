@@ -1,7 +1,7 @@
 {
     "recommendations": [
         "ms-vscode.cmake-tools",
-        "llvm-vs-code-extensions.vscode-clangd",
+        "ms-vscode.cpptools",
         "TheQtCompany.qt-qml",
         "ms-python.python",
         "redhat.vscode-yaml",
