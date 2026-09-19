@@ -113,11 +113,18 @@ runs:
           qt_modules=(qtshadertools qtimageformats)
         fi
 
-        aqt install-qt "${{ inputs.qt-host }}" "${{ inputs.qt-target }}" \
+        python -m aqt install-qt "${{ inputs.qt-host }}" "${{ inputs.qt-target }}" \
           "${{ inputs.qt-version }}" "$qt_arch" \
           --outputdir "$qt_root" --modules "${qt_modules[@]}"
 
-        qt_dir="$qt_root/${{ inputs.qt-version }}/$qt_arch"
+        qt_cmake_dir=$(find "$qt_root/${{ inputs.qt-version }}" -type d -path '*/lib/cmake/Qt6' -print -quit)
+        if [ -z "$qt_cmake_dir" ]; then
+          echo "Qt6 CMake directory was not found below $qt_root" >&2
+          find "$qt_root/${{ inputs.qt-version }}" -maxdepth 3 -type d >&2
+          exit 1
+        fi
+
+        qt_dir="${qt_cmake_dir%/lib/cmake/Qt6}"
         echo "$qt_dir/bin" >> "$GITHUB_PATH"
         echo "Qt6_DIR=$qt_dir/lib/cmake/Qt6" >> "$GITHUB_ENV"
 
