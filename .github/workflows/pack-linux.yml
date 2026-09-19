@@ -105,12 +105,7 @@ jobs:
 
       - name: 'Setup CCache'
         if: matrix.dist.name == 'amd64'
-        uses: hendrikmuhs/ccache-action@d62db5f07c26379fc4b4e0916f098a92573c3b03 # v1.2.23
-        with:
-          key: ${{ runner.os }}-pack-${{ hashFiles('**/CMakeLists.txt', '**/*.cmake') }}
-          restore-keys: |
-            ${{ runner.os }}-pack-
-          max-size: '2G'
+        run: ccache --version
 
       - name: Install Qt 6.10.2
         run: |
