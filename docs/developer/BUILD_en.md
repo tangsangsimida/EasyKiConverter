@@ -179,7 +179,7 @@ sudo pacman -S --needed base-devel cmake ninja zlib
 ### Clone the Repository
 
 ```bash
-git clone https://github.com/tangsangsimida/EasyKiConverter.git
+git clone https://github.com/EasyKiconverter/EasyKiConverter.git
 cd EasyKiConverter
 ```
 

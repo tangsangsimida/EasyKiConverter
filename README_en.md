@@ -7,18 +7,24 @@
 <p align="center">
     <a href="https://flathub.org/apps/details/io.github.tangsangsimida.easykiconverter"><img width="200" alt="Download on Flathub" src="https://flathub.org/assets/badges/flathub-badge-i-en.svg"/></a>
     <br/>
-    <img src="https://github.com/tangsangsimida/EasyKiConverter/workflows/Build/badge.svg" alt="Build Status" />
-    <img src="https://github.com/tangsangsimida/EasyKiConverter/workflows/Security/badge.svg" alt="Security Scan" />
-    <img src="https://img.shields.io/github/v/release/tangsangsimida/EasyKiConverter" alt="GitHub release" />
-    <img src="https://img.shields.io/github/downloads/tangsangsimida/EasyKiConverter/total" alt="GitHub downloads (total)" />
-    <img src="https://img.shields.io/github/license/tangsangsimida/EasyKiConverter" alt="License" />
-    <img src="https://img.shields.io/github/stars/tangsangsimida/EasyKiConverter" alt="Stars" />
-    <img src="https://img.shields.io/github/issues/tangsangsimida/EasyKiConverter" alt="Issues" />
+    <img src="https://github.com/EasyKiconverter/EasyKiConverter/actions/workflows/build.yml/badge.svg" alt="Build Status" />
+    <img src="https://github.com/EasyKiconverter/EasyKiConverter/actions/workflows/security.yml/badge.svg" alt="Security Scan" />
+    <img src="https://img.shields.io/github/v/release/EasyKiconverter/EasyKiConverter" alt="GitHub release" />
+    <img src="https://img.shields.io/github/downloads/EasyKiconverter/EasyKiConverter/total" alt="GitHub downloads (total)" />
+    <img src="https://img.shields.io/github/license/EasyKiconverter/EasyKiConverter" alt="License" />
+    <img src="https://img.shields.io/github/stars/EasyKiconverter/EasyKiConverter" alt="Stars" />
+    <img src="https://img.shields.io/github/issues/EasyKiconverter/EasyKiConverter" alt="Issues" />
 </p>
 
 
 
 **EasyKiConverter** is a modern C++ desktop tool based on Qt 6 and MVVM architecture, designed for electronics engineers to efficiently convert component data from LCSC and EasyEDA into KiCad, Altium, or Xpedition ASCII library files. Supports both GUI and CLI modes.
+
+### Version and Capability Boundaries
+
+- The latest stable release is **v3.1.11**. Stable downloads and capabilities are defined by the [v3.1.11 Release](https://github.com/EasyKiconverter/EasyKiConverter/releases/tag/v3.1.11).
+- **v3.1.12** is currently a pre-release. It contains subsequent cross-platform packaging and Xpedition improvements and is not the stable release line.
+- `master` is the development branch. The Altium, Xpedition, and unified IR capabilities described below reflect the source branch; check the relevant Release notes before using a stable package.
 
 ## Key Features
 
@@ -34,7 +40,7 @@
 ## Quick Start
 
 ### Installation
-Please visit the [Releases](https://github.com/tangsangsimida/EasyKiConverter/releases) page to download the version for your platform:
+Please visit the [Releases](https://github.com/EasyKiconverter/EasyKiConverter/releases) page to download the version for your platform:
 
 *   **Windows**: amd64 (the filenames use `x64`) and arm64 builds are available; download the matching `.exe` installer or `.zip` portable package for your device.
 *   **Linux**: Download the x86_64/ARM64 `.AppImage`. LoongArch64 currently requires separate build infrastructure and is not included in official release packages yet.
@@ -61,8 +67,8 @@ If you are a developer or wish to compile yourself, please refer to the [Build G
 
 We thank the following developers for their contributions to EasyKiConverter:
 
-<a href="https://github.com/tangsangsimida/EasyKiConverter/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=tangsangsimida/EasyKiConverter&max=50" />
+<a href="https://github.com/EasyKiconverter/EasyKiConverter/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=EasyKiconverter/EasyKiConverter&max=50" />
 </a>
 
 Issues and Pull Requests are welcome! Please see the [Contributing Guide](docs/developer/CONTRIBUTING.md) for details.

@@ -199,7 +199,7 @@ Fedora 和 Arch Linux 的系统包管理器仅用于安装编译器、CMake、Ni
 ### Clone 仓库
 
 ```bash
-git clone https://github.com/tangsangsimida/EasyKiConverter.git
+git clone https://github.com/EasyKiconverter/EasyKiConverter.git
 cd EasyKiConverter
 ```
 
@@ -809,7 +809,7 @@ EasyKiConverter 是一个 Qt Quick 应用，需要图形界面支持。在远程
 如果遇到编译问题：
 
 1. 查阅本文档的常见问题部分
-2. 搜索 [GitHub Issues](https://github.com/tangsangsimida/EasyKiConverter_QT/issues)
+2. 搜索 [GitHub Issues](https://github.com/EasyKiconverter/EasyKiConverter/issues)
 3. 提交新的 Issue，提供以下信息：
    - 操作系统版本
    - Qt 版本
@@ -843,14 +843,14 @@ python tools/python/manage_version.py 3.1.0
 - Python 3.6+
 - 建议在项目根目录运行
 
-详见: [GitHub 工具目录](https://github.com/tangsangsimida/EasyKiConverter_QT/tree/main/tools)
+详见: [GitHub 工具目录](https://github.com/EasyKiconverter/EasyKiConverter/tree/main/tools)
 
 ## 相关资源
 
 - [Qt 官网](https://www.qt.io/)
 - [CMake 官网](https://cmake.org/)
 - [MinGW-w64](https://www.mingw-w64.org/)
-- [项目主页](https://github.com/tangsangsimida/EasyKiConverter_QT)
+- [项目主页](https://github.com/EasyKiconverter/EasyKiConverter)
 
 ## CI/CD 架构
 

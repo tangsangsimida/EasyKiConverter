@@ -38,7 +38,7 @@ Before contributing, make sure you:
 Add the upstream repository:
 
 ```bash
-git remote add upstream https://github.com/tangsangsimida/EasyKiConverter.git
+git remote add upstream https://github.com/EasyKiconverter/EasyKiConverter.git
 ```
 
 ### 3. Create a Development Branch

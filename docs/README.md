@@ -102,5 +102,5 @@
 ## 相关资源
 
 - [项目主页](../README.md)
-- [GitHub Issues](https://github.com/tangsangsimida/EasyKiConverter/issues)
-- [GitHub Discussions](https://github.com/tangsangsimida/EasyKiConverter/discussions)
+- [GitHub Issues](https://github.com/EasyKiconverter/EasyKiConverter/issues)
+- [GitHub Discussions](https://github.com/EasyKiconverter/EasyKiConverter/discussions)

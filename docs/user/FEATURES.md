@@ -6,7 +6,7 @@
 
 ### 符号转换
 
-EasyKiConverter 可以将 EasyEDA 符号转换为 KiCad（.kicad_sym）或 Altium（.SchLib）符号库格式。
+EasyKiConverter 可以将 EasyEDA 符号转换为 KiCad（.kicad_sym）、Altium（.SchLib）或 Xpedition ASCII 符号库格式。
 
 - 支持完整的符号几何数据转换
 - 自动处理引脚信息和属性
@@ -15,7 +15,7 @@ EasyKiConverter 可以将 EasyEDA 符号转换为 KiCad（.kicad_sym）或 Altiu
 
 ### 封装生成
 
-从 EasyEDA 封装创建 KiCad（.kicad_mod）或 Altium（.PcbLib）封装库格式。
+从 EasyEDA 封装创建 KiCad（.kicad_mod）、Altium（.PcbLib）或 Xpedition ASCII 封装库格式。
 
 - 支持通孔和表面贴装封装
 - 完整的焊盘信息转换
@@ -29,6 +29,7 @@ EasyKiConverter 可以将 EasyEDA 符号转换为 KiCad（.kicad_sym）或 Altiu
 - 支持 WRL 格式
 - 支持 STEP 格式
 - Altium 目标将 STEP 模型嵌入 PcbLib，不生成外部 WRL 模型引用
+- Xpedition 目标当前导出符号和封装，不写入 3D 模型关联
 - 自动模型定位和缩放
 - 模型偏移参数自动计算
 
@@ -311,7 +312,7 @@ EasyKiConverter 可以将 EasyEDA 符号转换为 KiCad（.kicad_sym）或 Altiu
 - 支持版本检查和更新
 - 语义化版本验证
 
-详见: [GitHub 工具目录](https://github.com/tangsangsimida/EasyKiConverter_QT/tree/main/tools)
+详见: [GitHub 工具目录](https://github.com/EasyKiconverter/EasyKiConverter/tree/main/tools)
 
 ### 代码格式化工具
 
@@ -330,7 +331,7 @@ EasyKiConverter 可以将 EasyEDA 符号转换为 KiCad（.kicad_sym）或 Altiu
 - `convert_to_utf8.py`: 文件编码转换
 - `fix_qml_translations.py`: QML 翻译修复
 
-详见: [GitHub 工具目录](https://github.com/tangsangsimida/EasyKiConverter_QT/tree/main/tools)
+详见: [GitHub 工具目录](https://github.com/EasyKiconverter/EasyKiConverter/tree/main/tools)
 
 ### 设计模式
 

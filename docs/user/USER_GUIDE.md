@@ -24,19 +24,19 @@
 
 #### Windows
 
-1. 从 [GitHub Releases](https://github.com/tangsangsimida/EasyKiConverter_QT/releases) 下载最新版本
+1. 从 [GitHub Releases](https://github.com/EasyKiconverter/EasyKiConverter/releases) 下载最新版本
 2. 解压下载的压缩包
 3. 双击 `EasyKiConverter.exe` 运行应用程序
 
 #### macOS
 
-1. 从 [GitHub Releases](https://github.com/tangsangsimida/EasyKiConverter_QT/releases) 下载最新版本
+1. 从 [GitHub Releases](https://github.com/EasyKiconverter/EasyKiConverter/releases) 下载最新版本
 2. 解压下载的压缩包
 3. 双击 `EasyKiConverter.app` 运行应用程序
 
 #### Linux
 
-1. 从 [GitHub Releases](https://github.com/tangsangsimida/EasyKiConverter_QT/releases) 下载最新版本
+1. 从 [GitHub Releases](https://github.com/EasyKiconverter/EasyKiConverter/releases) 下载最新版本
 2. 解压下载的压缩包
 3. 运行 `./EasyKiConverter` 启动应用程序
 
@@ -422,7 +422,7 @@ export EASYKICONVERTER_DEBUG_MODE=true
 - [快速开始](GETTING_STARTED.md) - 快速入门指南
 - [功能特性](FEATURES.md) - 了解所有功能
 - [常见问题](FAQ.md) - 常见问题解答
-- [GitHub Issues](https://github.com/tangsangsimida/EasyKiConverter_QT/issues) - 报告问题和请求功能
+- [GitHub Issues](https://github.com/EasyKiconverter/EasyKiConverter/issues) - 报告问题和请求功能
 
 ## 支持
 

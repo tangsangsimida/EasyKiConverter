@@ -91,12 +91,7 @@ jobs:
             ninja-build
 
       - name: 'Setup CCache'
-        uses: hendrikmuhs/ccache-action@d62db5f07c26379fc4b4e0916f098a92573c3b03 # v1.2.23
-        with:
-          key: ${{ runner.os }}-${{ matrix.dist.name }}-linux-${{ hashFiles('**/CMakeLists.txt', '**/*.cmake') }}
-          restore-keys: |
-            ${{ runner.os }}-${{ matrix.dist.name }}-linux-
-          max-size: '2G'
+        run: ccache --version
 
       - name: 'Install Qt 6.10.2'
         run: |
@@ -199,15 +194,14 @@ jobs:
         run: echo "BUILD_START_TIME=$(Get-Date -Format o)" >> $env:GITHUB_ENV
 
       - name: 'Setup MSVC'
-        uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1
+        uses: ./.github/actions/setup-msvc
         with:
           arch: ${{ matrix.arch }}
 
       - name: 'Setup vcpkg'
-        uses: lukka/run-vcpkg@b1a0dd252f06b9e25b3c022a9a03bd7a427fb6a2 # v11.6
+        uses: ./.github/actions/setup-vcpkg
         with:
-          vcpkgJsonGlob: 'vcpkg.json'
-          runVcpkgInstall: true
+          triplet: ${{ matrix.vcpkg_triplet }}
 
       - name: 'Setup Build Environment (MSVC)'
         uses: ./.github/actions/setup-env

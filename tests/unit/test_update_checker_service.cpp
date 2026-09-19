@@ -14,7 +14,7 @@ using EasyKiConverter::Test::MockNetworkClient;
 
 namespace {
 
-constexpr auto RELEASES_URL = "https://api.github.com/repos/tangsangsimida/EasyKiConverter/releases/latest";
+constexpr auto RELEASES_URL = "https://api.github.com/repos/EasyKiconverter/EasyKiConverter/releases/latest";
 
 // 构造统一的稳定或预发布 Release 模拟响应。
 QJsonObject release(const QString& tag, bool draft = false, bool prerelease = false) {
@@ -22,7 +22,7 @@ QJsonObject release(const QString& tag, bool draft = false, bool prerelease = fa
         {QStringLiteral("tag_name"), tag},
         {QStringLiteral("name"), QStringLiteral("EasyKiConverter %1").arg(tag)},
         {QStringLiteral("html_url"),
-         QStringLiteral("https://github.com/tangsangsimida/EasyKiConverter/releases/tag/%1").arg(tag)},
+         QStringLiteral("https://github.com/EasyKiconverter/EasyKiConverter/releases/tag/%1").arg(tag)},
         {QStringLiteral("draft"), draft},
         {QStringLiteral("prerelease"), prerelease},
         {QStringLiteral("assets"),

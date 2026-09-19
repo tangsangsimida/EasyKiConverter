@@ -6,7 +6,7 @@ This document provides a detailed description of the features available in EasyK
 
 ### Symbol Conversion
 
-Convert EasyEDA symbols to KiCad (.kicad_sym) or Altium (.SchLib) symbol libraries.
+Convert EasyEDA symbols to KiCad (.kicad_sym), Altium (.SchLib), or Xpedition ASCII symbol libraries.
 
 **Features:**
 - Complete symbol geometry conversion
@@ -23,7 +23,7 @@ Convert EasyEDA symbols to KiCad (.kicad_sym) or Altium (.SchLib) symbol librari
 
 ### Footprint Generation
 
-Create KiCad (.kicad_mod) or Altium (.PcbLib) footprint libraries from EasyEDA packages.
+Create KiCad (.kicad_mod), Altium (.PcbLib), or Xpedition ASCII footprint libraries from EasyEDA packages.
 
 **Features:**
 - Complete footprint geometry conversion
@@ -55,6 +55,7 @@ Automatically download and convert 3D models.
 - Model scaling
 - Model verification
 - Altium embeds STEP models in PcbLib instead of creating external WRL references
+- Xpedition currently exports symbols and footprints without 3D model associations
 
 ## Performance Optimization
 
