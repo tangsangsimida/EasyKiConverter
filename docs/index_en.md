@@ -25,7 +25,7 @@ These documents help other developers understand the project, contribute, and ma
 - [Build Guide](developer/BUILD_en.md) - Build from source
 - [Contributing Guide](developer/CONTRIBUTING_en.md) - How to contribute code
 - [Architecture](developer/ARCHITECTURE_en.md) - Project architecture design
-- [Conversion Layer and Mapping](developer/CONVERSION_MAPPING.md) - EasyEDA, IR, KiCad, and Altium mapping (Chinese)
+- [Conversion Layer and Mapping](developer/CONVERSION_MAPPING.md) - EasyEDA, IR, KiCad, Altium, and Xpedition mapping (Chinese)
 - [EasyEDA API Raw Data](developer/EASYEDA_API_DATA.md) - Response structure, shape encoding, and field parsing (Chinese)
 - [Documentation Maintenance](developer/DOCUMENTATION_MAINTENANCE.md) - Documentation sources of truth and update checklist (Chinese)
 - [Testing Guide](developer/TESTING_GUIDE_en.md) - Testing architecture & Mocking strategy
@@ -101,5 +101,5 @@ If you want to improve documentation:
 ## Related Resources
 
 - [Project Homepage](../README_en.md)
-- [GitHub Issues](https://github.com/tangsangsimida/EasyKiConverter/issues)
-- [GitHub Discussions](https://github.com/tangsangsimida/EasyKiConverter/discussions)
+- [GitHub Issues](https://github.com/EasyKiconverter/EasyKiConverter/issues)
+- [GitHub Discussions](https://github.com/EasyKiconverter/EasyKiConverter/discussions)
