@@ -113,9 +113,28 @@ runs:
           qt_modules=(qtshadertools qtimageformats)
         fi
 
-        python -m aqt install-qt "${{ inputs.qt-host }}" "${{ inputs.qt-target }}" \
-          "${{ inputs.qt-version }}" "$qt_arch" \
-          --outputdir "$qt_root" --modules "${qt_modules[@]}"
+        qt_version_root="$qt_root/${{ inputs.qt-version }}"
+        qt_install_succeeded=false
+        for attempt in 1 2; do
+          echo "Installing Qt (attempt $attempt/2)"
+          rm -rf "$qt_version_root"
+          if python -m aqt install-qt "${{ inputs.qt-host }}" "${{ inputs.qt-target }}" \
+            "${{ inputs.qt-version }}" "$qt_arch" \
+            --outputdir "$qt_root" --modules "${qt_modules[@]}"; then
+            qt_install_succeeded=true
+            break
+          fi
+
+          if [ "$attempt" -lt 2 ]; then
+            echo "Qt installation failed; removing the incomplete archive before retrying." >&2
+            sleep 5
+          fi
+        done
+
+        if [ "$qt_install_succeeded" != "true" ]; then
+          echo "Qt installation failed after two clean attempts." >&2
+          exit 1
+        fi
 
         qt_cmake_dir=$(find "$qt_root/${{ inputs.qt-version }}" -type d -path '*/lib/cmake/Qt6' -print -quit)
         if [ -z "$qt_cmake_dir" ]; then
