@@ -77,30 +77,49 @@ runs:
           libdbus-1-dev \
           libglib2.0-0
 
-    - name: 'Setup CMake'
-      if: inputs.setup-cmake == 'true'
-      uses: jwlawson/actions-setup-cmake@0d6a7d60b009d01c9e7523be22153ff8f19460d3 # v2
-      with:
-        cmake-version: ${{ inputs.cmake-version }}
-
-    - name: 'Setup Python for macOS Qt installation'
-      if: runner.os == 'macOS'
+    - name: 'Setup Python for Qt installation'
       uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
       with:
         python-version: '3.12'
 
-    - name: 'Install Qt'
-      uses: jurplel/install-qt-action@48d3ad6db93f3627c8ee7a0454bc6f3744f7e730 # v4.3.1
-      with:
-        version: ${{ inputs.qt-version }}
-        host: ${{ inputs.qt-host }}
-        target: ${{ inputs.qt-target }}
-        arch: ${{ inputs.qt-arch }}
-        modules: ${{ inputs.qt-modules }}
-        cache: true
-        setup-python: false
-        add-tools-to-path: true
-        set-env: true
+    - name: 'Verify CMake'
+      if: inputs.setup-cmake == 'true'
+      shell: bash
+      run: |
+        cmake --version
+
+    - name: 'Install Qt with aqtinstall'
+      shell: bash
+      run: |
+        set -euo pipefail
+        python -m pip install --disable-pip-version-check --no-cache-dir aqtinstall==3.2.1
+
+        qt_arch="${{ inputs.qt-arch }}"
+        if [ -z "$qt_arch" ]; then
+          case "${{ runner.os }}" in
+            macOS) qt_arch="clang_64" ;;
+            *)
+              echo "qt-arch is required for ${{ runner.os }}" >&2
+              exit 1
+              ;;
+          esac
+        fi
+
+        qt_root="$RUNNER_TEMP/qt"
+        qt_modules=()
+        if [ -n "${{ inputs.qt-modules }}" ]; then
+          read -r -a qt_modules <<< "${{ inputs.qt-modules }}"
+        else
+          qt_modules=(qtshadertools qtimageformats)
+        fi
+
+        aqt install-qt "${{ inputs.qt-host }}" "${{ inputs.qt-target }}" \
+          "${{ inputs.qt-version }}" "$qt_arch" \
+          --outputdir "$qt_root" --modules "${qt_modules[@]}"
+
+        qt_dir="$qt_root/${{ inputs.qt-version }}/$qt_arch"
+        echo "$qt_dir/bin" >> "$GITHUB_PATH"
+        echo "Qt6_DIR=$qt_dir/lib/cmake/Qt6" >> "$GITHUB_ENV"
 
     - name: 'Setup CCache'
       if: inputs.enable-ccache == 'true' && (runner.os == 'Linux' || runner.os == 'macOS')
@@ -108,6 +127,11 @@ runs:
       with:
         key: ${{ runner.os }}-build-${{ hashFiles('**/CMakeLists.txt') }}
 
-    - name: 'Setup sccache'
-      if: inputs.enable-sccache == 'true' && runner.os == 'Windows'
-      uses: mozilla-actions/sccache-action@89e9040de88b577a072e3760aaf59f585da083af # v0.0.5
+    - name: 'Check CMake and Qt environment'
+      shell: bash
+      run: |
+        cmake --version
+        qmake --version
+
+    # Windows 当前工作流未启用 sccache，保留输入参数以兼容现有调用方。
+    # 不在此处加载额外的第三方 Action，避免突破仓库的 Actions 允许策略。

@@ -26,10 +26,11 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: 'Install clang-format'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang-format-18 python3
+          sudo ln -sf "$(command -v clang-format-18)" /usr/local/bin/clang-format
+
       - name: 'Run clang-format check'
-        uses: DoozyX/clang-format-lint-action@c71d0bf4e21876ebec3e5647491186f8797fde31 # v0.18
-        with:
-          source: './src'
-          extensions: 'h,cpp'
-          clangFormatVersion: 18
-          style: file
+        run: python3 tools/python/format_code.py --check --cpp --dirs src
