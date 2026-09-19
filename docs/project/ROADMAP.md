@@ -102,8 +102,8 @@
 
 我们欢迎您的反馈和建议：
 
-- 在 [GitHub Issues](https://github.com/tangsangsimida/EasyKiConverter/issues) 提交问题
-- 在 [GitHub Discussions](https://github.com/tangsangsimida/EasyKiConverter/discussions) 参与讨论
+- 在 [GitHub Issues](https://github.com/EasyKiconverter/EasyKiConverter/issues) 提交问题
+- 在 [GitHub Discussions](https://github.com/EasyKiconverter/EasyKiConverter/discussions) 参与讨论
 - 通过邮件联系项目维护者
 
 ## 更新日志

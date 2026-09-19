@@ -16,7 +16,7 @@ namespace EasyKiConverter {
 
 namespace {
 
-constexpr auto RELEASES_URL = "https://api.github.com/repos/tangsangsimida/EasyKiConverter/releases/latest";
+constexpr auto RELEASES_URL = "https://api.github.com/repos/EasyKiconverter/EasyKiConverter/releases/latest";
 
 struct SemanticVersion {
     int major = 0;

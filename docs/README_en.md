@@ -99,5 +99,5 @@ If you want to improve documentation:
 ## Related Resources
 
 - [Project Homepage](../README_en.md)
-- [GitHub Issues](https://github.com/tangsangsimida/EasyKiConverter/issues)
-- [GitHub Discussions](https://github.com/tangsangsimida/EasyKiConverter/discussions)
+- [GitHub Issues](https://github.com/EasyKiconverter/EasyKiConverter/issues)
+- [GitHub Discussions](https://github.com/EasyKiconverter/EasyKiConverter/discussions)

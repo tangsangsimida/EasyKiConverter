@@ -133,8 +133,8 @@ If you want to participate in project development:
 
 We welcome your feedback and suggestions:
 
-- Submit issues on [GitHub Issues](https://github.com/tangsangsimida/EasyKiConverter/issues)
-- Participate in discussions on [GitHub Discussions](https://github.com/tangsangsimida/EasyKiConverter/discussions)
+- Submit issues on [GitHub Issues](https://github.com/EasyKiconverter/EasyKiConverter/issues)
+- Participate in discussions on [GitHub Discussions](https://github.com/EasyKiconverter/EasyKiConverter/discussions)
 - Contact project maintainers via email
 
 ## Changelog

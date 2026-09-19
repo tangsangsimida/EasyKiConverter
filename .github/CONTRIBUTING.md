@@ -6,20 +6,20 @@
 
 如果您是第一次贡献，请阅读以下内容：
 
-1. 阅读 [项目文档](https://github.com/tangsangsimida/EasyKiConverter_QT#readme)
-2. 搜索现有的 [Issue](https://github.com/tangsangsimida/EasyKiConverter_QT/issues)
-3. 在 [Discussions](https://github.com/tangsangsimida/EasyKiConverter_QT/discussions) 中讨论您的想法
+1. 阅读 [项目文档](https://github.com/EasyKiconverter/EasyKiConverter#readme)
+2. 搜索现有的 [Issue](https://github.com/EasyKiconverter/EasyKiConverter/issues)
+3. 在 [Discussions](https://github.com/EasyKiconverter/EasyKiConverter/discussions) 中讨论您的想法
 4. 创建一个 fork，并提交您的更改，开始贡献！
 
 ## 如何贡献
 
 ### 报告 Bug
 
-在提交 Bug 报告之前，请先搜索现有的 Issue，确认该问题是否已经被报告。如果未被发现，请使用 [Bug 报告模板](https://github.com/tangsangsimida/EasyKiConverter_QT/issues/new?template=bug_report.md) 创建一个新的 Issue。
+在提交 Bug 报告之前，请先搜索现有的 Issue，确认该问题是否已经被报告。如果未被发现，请使用 [Bug 报告模板](https://github.com/EasyKiconverter/EasyKiConverter/issues/new?template=bug_report.md) 创建一个新的 Issue。
 
 ### 提出功能建议
 
-在提交功能建议之前，请先搜索现有的 Issue，确认该建议是否已经被提出。如果未被发现，请使用 [功能建议模板](https://github.com/tangsangsimida/EasyKiConverter_QT/issues/new?template=feature_request.md) 创建一个新的 Issue。
+在提交功能建议之前，请先搜索现有的 Issue，确认该建议是否已经被提出。如果未被发现，请使用 [功能建议模板](https://github.com/EasyKiconverter/EasyKiConverter/issues/new?template=feature_request.md) 创建一个新的 Issue。
 
 ### 提交代码
 
@@ -29,14 +29,14 @@
 2. **Clone 您的 Fork**到本地：
 
 ```bash
-git clone https://github.com/your-username/EasyKiConverter_QT.git
-cd EasyKiConverter_QT
+git clone https://github.com/your-username/EasyKiConverter.git
+cd EasyKiConverter
 ```
 
 3. **添加上游仓库**：
 
 ```bash
-git remote add upstream https://github.com/tangsangsimida/EasyKiConverter_QT.git
+git remote add upstream https://github.com/EasyKiconverter/EasyKiConverter.git
 ```
 
 4. **创建新的分支**：
@@ -104,7 +104,7 @@ git push origin feature/your-feature-name
 
 3. **在 GitHub 上创建 Pull Request**
 
-使用 [Pull Request 模板](https://github.com/tangsangsimida/EasyKiConverter_QT/compare) 创建 PR。
+使用 [Pull Request 模板](https://github.com/EasyKiconverter/EasyKiConverter/compare) 创建 PR。
 
 #### 提交信息规范
 
@@ -172,9 +172,9 @@ feat: add support for custom layer mapping
 
 如果您在贡献过程中遇到问题，可以通过以下方式获取帮助：
 
-- 在 [Issue](https://github.com/tangsangsimida/EasyKiConverter_QT/issues) 中提问
-- 在 [Pull Request](https://github.com/tangsangsimida/EasyKiConverter_QT/pulls) 中请求帮助
-- 在 [Discussions](https://github.com/tangsangsimida/EasyKiConverter_QT/discussions) 中讨论
+- 在 [Issue](https://github.com/EasyKiconverter/EasyKiConverter/issues) 中提问
+- 在 [Pull Request](https://github.com/EasyKiconverter/EasyKiConverter/pulls) 中请求帮助
+- 在 [Discussions](https://github.com/EasyKiconverter/EasyKiConverter/discussions) 中讨论
 - 联系项目维护者
 
 ## 许可证

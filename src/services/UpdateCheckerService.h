@@ -90,7 +90,7 @@ public:
 
     /** @brief 返回官方最新 Release 页面地址，供检查失败时人工访问。 */
     QString latestReleasePageUrl() const {
-        return QStringLiteral("https://github.com/tangsangsimida/EasyKiConverter/releases/latest");
+        return QStringLiteral("https://github.com/EasyKiconverter/EasyKiConverter/releases/latest");
     }
 
     /** @brief 返回匹配平台的资产地址。 */

@@ -19,7 +19,7 @@ TestCase {
         property string latestVersion: "3.1.13"
         property string releaseName: "EasyKiConverter 3.1.13"
         property string releaseUrl: "https://example.com/release"
-        property string latestReleasePageUrl: "https://github.com/tangsangsimida/EasyKiConverter/releases/latest"
+        property string latestReleasePageUrl: "https://github.com/EasyKiconverter/EasyKiConverter/releases/latest"
         property string assetUrl: "https://example.com/package"
         property string error: ""
         property int checkCount: 0
